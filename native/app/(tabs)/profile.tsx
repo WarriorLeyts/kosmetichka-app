@@ -121,7 +121,6 @@ export default function Profile() {
 
       {/* client card */}
       <Glass radius={24} fill={["rgba(114,12,72,0.78)", "rgba(62,10,46,0.82)", "rgba(46,5,40,0.86)"]} rim="#cd2a8b" glow="rgba(255,44,167,0.45)" gloss={0.12} style={styles.client}>
-        <View style={styles.cardGlow} pointerEvents="none" />
         <Image source={CARD_ART} style={styles.art} contentFit="contain" />
         <View style={styles.topRow}>
           <View style={styles.avatar}>
