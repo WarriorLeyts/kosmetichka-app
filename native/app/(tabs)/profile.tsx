@@ -9,8 +9,8 @@ import { useWaitlistStore } from "@/store/waitlist";
 import { gradient } from "@/theme";
 import { iosFont, iosText, sys, useIOS } from "@/ios";
 import { LOGO } from "@/components/PageTitle";
-import { LargeTitleScreen } from "@/components/ios/LargeTitleScreen";
-import { Row, Section } from "@/components/ios/List";
+import { LargeTitleScreen } from "@/components/iosui/LargeTitleScreen";
+import { Row, Section } from "@/components/iosui/List";
 import { tap } from "@/components/ui";
 
 const TIER: Record<string, string> = {
