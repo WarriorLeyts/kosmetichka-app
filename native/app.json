@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Косметичка",
+    "slug": "kosmetichka",
+    "scheme": "kosmetichka",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "bundleIdentifier": "ru.kosmetichkaopt.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Камера нужна, чтобы сканировать штрихкоды товаров.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "ru.kosmetichkaopt.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-foreground.png",
+        "backgroundImage": "./assets/adaptive-background.png"
+      },
+      "permissions": ["android.permission.CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 120,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-camera",
+        { "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды товаров." }
+      ],
+      [
+        "expo-build-properties",
+        { "android": { "usesCleartextTraffic": false } }
+      ]
+    ],
+    "experiments": { "typedRoutes": false }
+  }
+}

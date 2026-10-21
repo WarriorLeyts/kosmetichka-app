@@ -43,6 +43,7 @@
     "server-addon",
     "out",
     "android",
-    "ios"
+    "ios",
+    "native"
   ]
 }

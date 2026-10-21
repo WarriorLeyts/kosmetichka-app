@@ -1,0 +1,102 @@
+import { useRef, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
+import { api } from "@/api";
+import { useCatalog } from "@/store/catalog";
+import { Button } from "@/components/ui";
+
+export default function Scanner() {
+  const insets = useSafeAreaInsets();
+  const [permission, requestPermission] = useCameraPermissions();
+  const [torch, setTorch] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const handled = useRef(false);
+
+  const onCode = async (code: string) => {
+    if (handled.current) return;
+    handled.current = true;
+    setBusy(true);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    try {
+      const r = await api.catalog({ page: 1, search: code });
+      if (r.products.length === 1) {
+        router.replace(`/product/${r.products[0].id}`);
+        return;
+      }
+      if (r.products.length === 0) {
+        setMessage(`Товар со штрихкодом ${code} не найден`);
+        setBusy(false);
+        setTimeout(() => {
+          handled.current = false;
+          setMessage("");
+        }, 2500);
+        return;
+      }
+      useCatalog.getState().reset();
+      useCatalog.getState().set({ search: code });
+      router.back();
+      router.navigate("/catalog");
+    } catch {
+      setMessage("Нет связи с сервером");
+      setBusy(false);
+      handled.current = false;
+    }
+  };
+
+  if (!permission) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+
+  if (!permission.granted) {
+    return (
+      <View style={[styles.center, { paddingTop: insets.top }]}>
+        <Ionicons name="camera-outline" size={56} color="#fff" />
+        <Text style={styles.title}>Нужен доступ к камере</Text>
+        <Text style={styles.text}>Чтобы найти товар по штрихкоду на упаковке</Text>
+        <Button title="Разрешить" onPress={requestPermission} style={{ minWidth: 220, marginTop: 20 }} />
+        <Pressable onPress={() => router.back()} style={{ padding: 16 }}>
+          <Text style={{ color: "#fff", fontWeight: "700" }}>Закрыть</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: "#000" }}>
+      <CameraView
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        enableTorch={torch}
+        barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128", "code39", "qr"] }}
+        onBarcodeScanned={busy ? undefined : ({ data }) => onCode(String(data))}
+      />
+      <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
+        <Pressable onPress={() => router.back()} style={styles.round} hitSlop={10}>
+          <Ionicons name="close" size={24} color="#fff" />
+        </Pressable>
+        <Pressable onPress={() => setTorch(!torch)} style={styles.round} hitSlop={10}>
+          <Ionicons name={torch ? "flash" : "flash-outline"} size={22} color="#fff" />
+        </Pressable>
+      </View>
+      <View style={styles.frameWrap} pointerEvents="none">
+        <View style={styles.frame} />
+        <Text style={styles.hint}>{message || "Наведите камеру на штрихкод товара"}</Text>
+        {busy && <ActivityIndicator color="#fff" style={{ marginTop: 16 }} />}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  center: { flex: 1, backgroundColor: "#111", alignItems: "center", justifyContent: "center", padding: 24 },
+  title: { color: "#fff", fontSize: 20, fontWeight: "900", marginTop: 16 },
+  text: { color: "rgba(255,255,255,0.7)", textAlign: "center", marginTop: 6 },
+  top: { position: "absolute", left: 0, right: 0, flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 16 },
+  round: { width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(0,0,0,0.45)", alignItems: "center", justifyContent: "center" },
+  frameWrap: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
+  frame: { width: 280, height: 170, borderRadius: 20, borderWidth: 3, borderColor: "#fff" },
+  hint: { color: "#fff", fontWeight: "700", marginTop: 18, backgroundColor: "rgba(0,0,0,0.5)", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, overflow: "hidden" },
+});

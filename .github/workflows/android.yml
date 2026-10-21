@@ -3,6 +3,7 @@ name: Android
 on:
   push:
     branches: [main]
+    paths-ignore: ['**.md', 'native/**']
   workflow_dispatch:
 
 permissions:
