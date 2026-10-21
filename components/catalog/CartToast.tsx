@@ -1,5 +1,4 @@
 "use client";
-import { imageUrl as toImageUrl } from "@/lib/api";
 
 import { useEffect } from "react";
 import { CheckCircle2 } from "lucide-react";
@@ -36,7 +35,7 @@ export function CartToast() {
     <div className="cart-toast" role="status">
       <div className="cart-toast-image">
         <SafeImage
-          src={toImageUrl(notification.image) ?? undefined}
+          src={notification.image}
           alt=""
           placeholderText=""
           placeholderIconSize={16}
