@@ -1,32 +1,17 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "@/api";
+import { api, imageUrl } from "@/api";
 import { colors, themed } from "@/theme";
 import { date, money } from "@/format";
 import { useAuth } from "@/store/auth";
 import { orderCache } from "@/orderCache";
-import { Badge, Empty, ErrorView, Loading, tap } from "@/components/ui";
-import { GradientText } from "@/components/GradientText";
+import { Chip, Empty, ErrorView, Loading, tap } from "@/components/ui";
 import { LoginRequired } from "@/components/LoginRequired";
-import { PageTitle } from "@/components/PageTitle";
-import { STATUS_COLORS, STATUS_ICONS, STATUS_LABELS, type Order, type OrdersPage } from "@/types";
-
-// Tailwind colors used by the site's orders page
-const T = {
-  slate300: "#cbd5e1",
-  slate400: "#94a3b8",
-  slate500: "#64748b",
-  slate700: "#334155",
-  slate800: "#1e293b",
-  pink500: "#ec4899",
-  purple500: "#a855f7",
-  blue600: "#2563eb",
-  blue700: "#1d4ed8",
-};
+import { alpha, STATUS_LABELS, STATUS_TONE, type Order, type OrdersPage } from "@/types";
 
 const FILTERS: { key: string; label: string }[] = [
   { key: "", label: "Все" },
@@ -38,53 +23,61 @@ const FILTERS: { key: string; label: string }[] = [
   { key: "cancelled", label: "Отменены" },
 ];
 
-/** One order — same look as the site's OrderCard; tap opens the order with chat. */
 function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
-  const c = STATUS_COLORS[order.status] ?? { fg: colors.muted, bg: colors.soft, border: colors.border };
+  const tone = STATUS_TONE[order.status] ?? { color: "#9aa0ad", icon: "cube-outline" as const };
   const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
-  const confirmed = order.status === "consultation" && order.customerConfirmed;
+  const thumbs = order.items
+    .map((it) => (it.variantImageUrl ? imageUrl(it.variantImageUrl) : imageUrl(it.imagePath)))
+    .filter(Boolean)
+    .slice(0, 4) as string[];
+  const more = order.items.length - thumbs.length;
 
   return (
-    <View style={styles.card}>
-      <Pressable
-        onPress={() => {
-          tap();
-          router.push(`/order/${order.id}`);
-        }}
-        style={({ pressed }) => [styles.cardHead, pressed && { backgroundColor: colors.soft }]}
-      >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
-          <LinearGradient colors={[colors.pinkSoft, colors.violetSoft]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.icon}>
-            <Text style={{ fontSize: 20 }}>{STATUS_ICONS[order.status] ?? "📦"}</Text>
-          </LinearGradient>
-          <View style={{ gap: 2, flexShrink: 1 }}>
-            <Text style={styles.num}>Заказ №{order.id}</Text>
-            <Text style={styles.meta}>
-              {date(order.createdAt)} · {money(order.total)}
-            </Text>
-          </View>
+    <Pressable onPress={() => { tap(); router.push(`/order/${order.id}`); }} style={({ pressed }) => [styles.card, pressed && { opacity: 0.9 }]}>
+      <View style={styles.cardTop}>
+        <View style={[styles.icon, { backgroundColor: alpha(tone.color, 0.14) }]}>
+          <Ionicons name={tone.icon} size={18} color={tone.color} />
         </View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          {unread && <Ionicons name="chatbubble-ellipses" size={16} color={T.pink500} />}
-          <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} border={c.border} />
-          <Text style={{ color: colors.faint, fontSize: 12 }}>▼</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.num}>Заказ №{order.id}</Text>
+          <Text style={styles.meta}>
+            {date(order.createdAt)} · {money(order.total)}
+          </Text>
         </View>
-      </Pressable>
+        {unread && <Ionicons name="chatbubble-ellipses" size={16} color={colors.pink} style={{ marginRight: 4 }} />}
+        <View style={[styles.pill, { backgroundColor: alpha(tone.color, 0.14), borderColor: alpha(tone.color, 0.45) }]}>
+          <Text style={[styles.pillText, { color: tone.color }]}>{STATUS_LABELS[order.status] ?? order.status}</Text>
+        </View>
+      </View>
+
+      {thumbs.length > 0 && (
+        <View style={styles.thumbs}>
+          {thumbs.map((u, i) => (
+            <View key={u + i} style={styles.thumb}>
+              <Image source={{ uri: u }} style={{ width: "86%", height: "86%" }} contentFit="contain" />
+            </View>
+          ))}
+          {more > 0 ? (
+            <View style={[styles.thumb, { backgroundColor: colors.soft }]}>
+              <Text style={styles.moreText}>+{more}</Text>
+            </View>
+          ) : null}
+        </View>
+      )}
 
       {needsConfirm && (
-        <Pressable onPress={() => router.push(`/order/${order.id}`)} style={[styles.note, { backgroundColor: "#fff7ed", borderColor: "#fed7aa" }]}>
-          <Text style={{ color: "#9a3412", fontSize: 14, fontWeight: "600" }}>
-            Менеджер изменил заказ. Проверьте и подтвердите изменения →
-          </Text>
-        </Pressable>
-      )}
-      {confirmed && (
-        <View style={[styles.note, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
-          <Text style={{ color: "#15803d", fontSize: 14 }}>✓ Вы подтвердили изменения</Text>
+        <View style={styles.notice}>
+          <Ionicons name="create-outline" size={16} color={colors.pink} />
+          <Text style={styles.noticeText}>Менеджер изменил заказ. Проверьте и подтвердите изменения →</Text>
         </View>
       )}
-
-    </View>
+      {order.status === "consultation" && order.customerConfirmed && (
+        <View style={[styles.notice, { backgroundColor: colors.successBg }]}>
+          <Ionicons name="checkmark-circle-outline" size={16} color={colors.success} />
+          <Text style={[styles.noticeText, { color: colors.success }]}>Вы подтвердили изменения</Text>
+        </View>
+      )}
+    </Pressable>
   );
 }
 
@@ -134,153 +127,106 @@ export default function Orders() {
     }, [customer])
   );
 
-  const bg = (child: ReactNode) => (
-    <LinearGradient colors={colors.pageGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
-      {child}
-    </LinearGradient>
+  const title = (
+    <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <Text style={styles.title}>Мои заказы</Text>
+    </View>
   );
 
-  if (!customer) return bg(<LoginRequired text="Здесь появится история ваших заказов и переписка с менеджером" />);
-  if (error && orders.length === 0) return bg(<ErrorView message={error} onRetry={() => load(1, "replace")} />);
-  if (!data && loading) return bg(<Loading />);
+  if (!customer)
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        {title}
+        <LoginRequired text="Здесь появится история ваших заказов и переписка с менеджером" />
+      </View>
+    );
+  if (error && orders.length === 0)
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        {title}
+        <ErrorView message={error} onRetry={() => load(1, "replace")} />
+      </View>
+    );
+  if (!data && loading)
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        {title}
+        <Loading />
+      </View>
+    );
 
   const stats = data?.stats;
 
-  return bg(
-    <FlatList
-      data={orders}
-      keyExtractor={(o) => String(o.id)}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top + 16, paddingBottom: 32, gap: 12 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={T.purple500} />}
-      onEndReachedThreshold={0.5}
-      onEndReached={() => {
-        if (!loading && data && data.page < data.totalPages) load(data.page + 1, "append");
-      }}
-      ListHeaderComponent={
-        <View style={{ gap: 12 }}>
-          <PageTitle title="Мои заказы" colors={[T.pink500, T.purple500, T.blue700]} />
-
-          {stats && stats.totalOrders > 0 && (
-            <View style={styles.statsGrid}>
-              <View style={[styles.stat, { shadowColor: "#ec4899" }]}>
-                <Text style={styles.statLabel}>🛒 Заказов</Text>
-                <GradientText style={styles.statValueBig} colors={[T.pink500, T.purple500]}>{stats.totalOrders}</GradientText>
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      {title}
+      <FlatList
+        data={orders}
+        keyExtractor={(o) => String(o.id)}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 28, gap: 12 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.pink} />}
+        onEndReachedThreshold={0.5}
+        onEndReached={() => {
+          if (!loading && data && data.page < data.totalPages) load(data.page + 1, "append");
+        }}
+        ListHeaderComponent={
+          <View style={{ gap: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              {FILTERS.map((f) => (
+                <Chip key={f.key} label={f.label} active={status === f.key} onPress={() => setStatus(f.key)} />
+              ))}
+            </ScrollView>
+            {stats && stats.totalOrders > 0 && !status && (
+              <View style={styles.stats}>
+                <View style={styles.stat}>
+                  <Text style={styles.statLabel}>Заказов</Text>
+                  <Text style={styles.statValue}>{stats.totalOrders}</Text>
+                </View>
+                <View style={styles.stat}>
+                  <Text style={styles.statLabel}>На сумму</Text>
+                  <Text style={styles.statValue}>{money(stats.totalSum)}</Text>
+                </View>
               </View>
-              <View style={[styles.stat, { shadowColor: "#8b5cf6" }]}>
-                <Text style={styles.statLabel}>💰 Сумма</Text>
-                <GradientText style={styles.statValue} colors={[T.purple500, T.blue600]}>{money(stats.totalSum)}</GradientText>
-              </View>
-            </View>
-          )}
-
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {FILTERS.map((f) => {
-              const on = status === f.key;
-              return (
-                <Pressable key={f.key} onPress={() => { tap(); setStatus(f.key); }}>
-                  {on ? (
-                    <LinearGradient colors={[T.pink500, T.purple500, T.blue700]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.chip}>
-                      <Text style={[styles.chipText, { color: "#fff" }]}>{f.label}</Text>
-                    </LinearGradient>
-                  ) : (
-                    <View style={[styles.chip, styles.chipOff]}>
-                      <Text style={styles.chipText}>{f.label}</Text>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-      }
-      ListEmptyComponent={
-        loading ? (
-          <ActivityIndicator style={{ margin: 40 }} color={T.purple500} />
-        ) : status ? (
-          <View style={styles.emptyBox}>
-            <Text style={{ fontWeight: "700", color: colors.strong }}>Заказов не найдено</Text>
+            )}
           </View>
-        ) : (
-          <View style={[styles.emptyBox, { paddingVertical: 48 }]}>
-            <Text style={{ fontSize: 44, marginBottom: 12 }}>🛍️</Text>
-            <Text style={{ fontSize: 20, fontWeight: "900", color: colors.strong, marginBottom: 4 }}>Заказов пока нет</Text>
-            <Text style={{ color: colors.faint, marginBottom: 20, textAlign: "center" }}>Оформите первый заказ в каталоге</Text>
-            <Pressable onPress={() => router.navigate("/catalog")}>
-              <LinearGradient colors={[T.pink500, T.purple500, T.blue700]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.openBtn}>
-                <Text style={[styles.openText, { paddingHorizontal: 18 }]}>Перейти в каталог</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
-        )
-      }
-      ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={T.purple500} /> : null}
-      renderItem={({ item }) => <OrderCard order={item} unread={unread.has(item.id)} />}
-    />
+        }
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator style={{ margin: 40 }} color={colors.pink} />
+          ) : (
+            <Empty
+              icon="receipt-outline"
+              title={status ? "Нет заказов с таким статусом" : "Заказов пока нет"}
+              text={status ? undefined : "Соберите корзину в каталоге и оформите первый заказ"}
+              action={status ? undefined : "В каталог"}
+              onAction={() => router.navigate("/catalog")}
+            />
+          )
+        }
+        ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={colors.pink} /> : null}
+        renderItem={({ item }) => <OrderCard order={item} unread={unread.has(item.id)} />}
+      />
+    </View>
   );
 }
 
-const cardShadow = {
-  shadowOpacity: 0.08,
-  shadowRadius: 12,
-  shadowOffset: { width: 0, height: 2 },
-  elevation: 2,
-};
-
 const styles = themed(() => ({
-  title: { fontSize: 30, fontWeight: "900", lineHeight: 36 },
-  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  stat: {
-    flexGrow: 1,
-    flexBasis: "45%",
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...cardShadow,
-  },
-  statWide: { flexBasis: "100%" },
-  statLabel: { fontSize: 12, fontWeight: "600", color: colors.faint, marginBottom: 4 },
-  statValueBig: { fontSize: 24, fontWeight: "900", lineHeight: 30 },
-  statValue: { fontSize: 20, fontWeight: "900", lineHeight: 26 },
-  top: { fontSize: 14, fontWeight: "700", color: colors.strong },
-  chip: { height: 34, paddingHorizontal: 14, borderRadius: 999, justifyContent: "center" },
-  chipOff: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-  chipText: { fontWeight: "700", color: colors.strong, fontSize: 13 },
-  card: {
-    backgroundColor: colors.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: "#a855f7",
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
-    overflow: "hidden",
-  },
-  cardHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 16, paddingVertical: 16, gap: 8 },
-  icon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 1,
-    borderColor: colors.violetBorder,
-  },
-  num: { fontWeight: "900", color: colors.strong, fontSize: 16 },
-  meta: { fontSize: 12, color: colors.faint, fontWeight: "500" },
-  note: { marginHorizontal: 16, marginBottom: 12, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12 },
-  body: { borderTopWidth: 1, borderTopColor: colors.soft, paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
-  itemRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  itemName: { flex: 1, fontSize: 13, color: colors.strong },
-  itemQty: { fontSize: 12, color: colors.faint },
-  itemSum: { fontSize: 13, fontWeight: "700", color: colors.strong, minWidth: 70, textAlign: "right" },
-  comment: { fontSize: 13, color: colors.muted, fontStyle: "italic" },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: colors.soft, paddingTop: 10 },
-  openBtn: { height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center", marginTop: 4 },
-  openText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-  emptyBox: { backgroundColor: colors.card, borderRadius: 24, padding: 32, alignItems: "center" },
+  header: { paddingHorizontal: 18, paddingBottom: 12 },
+  title: { fontSize: 22, fontWeight: "700", color: colors.text },
+  stats: { flexDirection: "row", gap: 10 },
+  stat: { flex: 1, backgroundColor: colors.card, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: colors.border },
+  statLabel: { color: colors.muted, fontSize: 12 },
+  statValue: { color: colors.text, fontSize: 19, fontWeight: "800", marginTop: 2 },
+  card: { backgroundColor: colors.card, borderRadius: 18, padding: 14, borderWidth: 1, borderColor: colors.border, gap: 12 },
+  cardTop: { flexDirection: "row", alignItems: "center", gap: 10 },
+  icon: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  num: { fontWeight: "700", color: colors.text, fontSize: 15.5 },
+  meta: { fontSize: 12, color: colors.muted, marginTop: 2 },
+  pill: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, maxWidth: 150 },
+  pillText: { fontSize: 11, fontWeight: "700" },
+  thumbs: { flexDirection: "row", gap: 8 },
+  thumb: { width: 46, height: 52, borderRadius: 10, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center" },
+  moreText: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+  notice: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: colors.pinkSoft, borderRadius: 12, padding: 10 },
+  noticeText: { flex: 1, color: colors.pink, fontSize: 12.5, fontWeight: "600", lineHeight: 17 },
 }));

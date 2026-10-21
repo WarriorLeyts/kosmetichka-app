@@ -3,7 +3,7 @@ import {
   Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 } from "react-native";
 import { Image } from "expo-image";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
@@ -12,8 +12,8 @@ import { colors, radius, themed } from "@/theme";
 import { date, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
 import { useCartStore } from "@/store/cart";
-import { Badge, Button, ErrorView, Loading, Notice } from "@/components/ui";
-import { STATUS_COLORS, STATUS_LABELS, type ChatMessage, type Order } from "@/types";
+import { Button, ErrorView, Header, Loading, Notice } from "@/components/ui";
+import { alpha, STATUS_LABELS, STATUS_TONE, type ChatMessage, type Order } from "@/types";
 
 /** Messages can be plain text or JSON cards (photo / product) sent by the manager. */
 function MessageBody({ text, mine }: { text: string; mine: boolean }) {
@@ -80,10 +80,15 @@ export default function OrderScreen() {
     return () => clearInterval(t);
   }, [loadOrder, loadMessages]);
 
-  if (error) return <ErrorView message={error} onRetry={loadOrder} />;
-  if (!order) return <Loading />;
+  if (error || !order)
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg }}>
+        <Header back title={`Заказ №${orderId}`} />
+        {error ? <ErrorView message={error} onRetry={loadOrder} /> : <Loading />}
+      </View>
+    );
 
-  const c = STATUS_COLORS[order.status] ?? { fg: colors.muted, bg: colors.soft, border: colors.border };
+  const tone = STATUS_TONE[order.status] ?? { color: "#9aa0ad", icon: "cube-outline" as const };
   const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
 
   const send = async () => {
@@ -137,11 +142,13 @@ export default function OrderScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={100}>
-      <Stack.Screen options={{ title: `Заказ №${order.id}` }} />
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <Header back title={`Заказ №${order.id}`} />
       <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 14, paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
         <View style={styles.head}>
-          <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} border={c.border} />
+          <View style={{ borderRadius: 999, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 5, backgroundColor: alpha(tone.color, 0.14), borderColor: alpha(tone.color, 0.45) }}>
+            <Text style={{ color: tone.color, fontSize: 12, fontWeight: "700" }}>{STATUS_LABELS[order.status] ?? order.status}</Text>
+          </View>
           <Text style={styles.meta}>от {date(order.createdAt)}</Text>
         </View>
 
@@ -258,7 +265,7 @@ const styles = themed(() => ({
   actions: { flexDirection: "row", gap: 10, marginTop: 14 },
   h: { fontSize: 18, fontWeight: "900", color: colors.text, marginTop: 24, marginBottom: 10 },
   bubble: { maxWidth: "82%", borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8 },
-  mine: { alignSelf: "flex-end", backgroundColor: colors.violet, borderBottomRightRadius: 6 },
+  mine: { alignSelf: "flex-end", backgroundColor: colors.pink, borderBottomRightRadius: 6 },
   theirs: { alignSelf: "flex-start", backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 6 },
   from: { color: colors.pink, fontWeight: "800", fontSize: 12, marginBottom: 2 },
   time: { color: colors.faint, fontSize: 11, marginTop: 4, alignSelf: "flex-end" },

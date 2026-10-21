@@ -1,28 +1,24 @@
 import { useEffect, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { FlatList, Pressable, ScrollView, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { LOGO } from "@/components/PageTitle";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "@/api";
-import { colors, gradient, radius, themed, useTheme } from "@/theme";
-import { topCategories, useCatalog, type Quick } from "@/store/catalog";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { api, imageUrl } from "@/api";
+import { colors, fonts, themed, useTheme } from "@/theme";
+import { topCategories, useCatalog } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
 import { effectivePriceType } from "@/pricing";
+import { categoryIcon } from "@/categoryIcon";
 import { ProductCard } from "@/components/ProductCard";
-import { tap } from "@/components/ui";
+import { SideMenu } from "@/components/SideMenu";
+import { Silk } from "@/components/Silk";
+import { LOGO } from "@/components/PageTitle";
+import { IconButton, SearchBar, tap } from "@/components/ui";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product } from "@/types";
-
-const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: "new", label: "Новинки", icon: "sparkles-outline" },
-  { key: "sale", label: "Со скидкой", icon: "pricetag-outline" },
-  { key: "gift", label: "Подарочные наборы", icon: "gift-outline" },
-];
 
 export default function Home() {
   const insets = useSafeAreaInsets();
@@ -32,181 +28,228 @@ export default function Home() {
   const cart = useCartStore((s) => s.items);
   const favorites = useFavorites((s) => s.items);
   const toggleFav = useFavorites((s) => s.toggle);
-  const { categories, loadMeta, set: setFilters } = useCatalog();
+  const { categories, loadMeta } = useCatalog();
   const addToCart = useAddToCart();
 
-  const [stats, setStats] = useState<{ totalProducts: number; totalBrands: number } | null>(null);
+  const [menu, setMenu] = useState(false);
   const [fresh, setFresh] = useState<Product[]>([]);
+  const [sale, setSale] = useState<Product[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
 
   useEffect(() => {
     loadMeta();
-    api.homeStats().then(setStats).catch(() => {});
+    api.homeStats().then((s) => setTotal(s.totalProducts)).catch(() => {});
     api.catalog({ page: 1, quick: ["new"], onlyStock: true }).then((r) => setFresh(r.products.slice(0, 12))).catch(() => {});
+    api.catalog({ page: 1, quick: ["sale"], onlyStock: true }).then((r) => setSale(r.products.slice(0, 1))).catch(() => {});
   }, [loadMeta]);
 
   const active = effectivePriceType(cart, customer);
-  const tops = topCategories(categories).slice(0, 12);
+  const tops = topCategories(categories).filter((c) => !c.name.startsWith("<")).slice(0, 12);
+  const heroImg = imageUrl(fresh[0]?.images?.[0]?.path);
+  const saleImg = imageUrl(sale[0]?.images?.[0]?.path);
 
-  const openCatalog = (patch: Parameters<typeof setFilters>[0]) => {
+  const openCatalog = (patch: Parameters<ReturnType<typeof useCatalog.getState>["set"]>[0]) => {
     tap();
     useCatalog.getState().reset();
-    setFilters(patch);
+    useCatalog.getState().set(patch);
     router.navigate("/catalog");
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
-      <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 18 }]}>
-        <View style={styles.heroTop}>
-          <View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <Image source={LOGO} style={styles.logoImg} contentFit="contain" />
-              <Text style={styles.logo}>Косметичка</Text>
-            </View>
-            <Text style={styles.subtitle}>Косметика и парфюмерия оптом</Text>
-          </View>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <Pressable
-              onPress={() => {
-                tap();
-                toggleTheme();
-              }}
-              hitSlop={10}
-              style={styles.heroIcon}
-              accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"}
-            >
-              <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={21} color="#fff" />
-            </Pressable>
-            <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={styles.heroIcon}>
-              <Ionicons name="heart-outline" size={22} color="#fff" />
-            </Pressable>
-          </View>
-        </View>
-
-        <View style={styles.searchRow}>
-          <Pressable style={styles.search} onPress={() => openCatalog({})}>
-            <Ionicons name="search" size={18} color={colors.muted} />
-            <Text style={styles.searchText}>Название, бренд, артикул</Text>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top + 6, paddingBottom: 28 }} showsVerticalScrollIndicator={false}>
+        {/* header */}
+        <View style={styles.header}>
+          <Pressable onPress={() => { tap(); setMenu(true); }} hitSlop={8} style={styles.menuBtn}>
+            <Ionicons name="menu" size={24} color={colors.text} />
           </Pressable>
-          <Pressable
-            style={styles.scan}
-            onPress={() => {
-              tap();
-              router.push("/scanner");
-            }}
-          >
-            <Ionicons name="barcode-outline" size={24} color={colors.violet} />
-          </Pressable>
-        </View>
-
-        {stats && (
-          <Text style={styles.stats}>
-            {stats.totalProducts.toLocaleString("ru-RU")} товаров · {stats.totalBrands.toLocaleString("ru-RU")} брендов · остатки из 1С
-          </Text>
-        )}
-      </LinearGradient>
-
-      {!customer && (
-        <Pressable style={styles.loginBanner} onPress={() => router.push("/login")}>
-          <Ionicons name="pricetags-outline" size={22} color={colors.violet} />
+          <Image source={LOGO} style={{ width: 34, height: 34 }} contentFit="contain" />
           <View style={{ flex: 1 }}>
-            <Text style={styles.loginTitle}>Войдите, чтобы видеть оптовые цены</Text>
-            <Text style={styles.loginText}>И оформлять заказы с подтверждением менеджера</Text>
+            <Text style={styles.brand}>КОСМЕТИЧКА</Text>
+            <Text style={styles.sub} numberOfLines={1}>
+              {total ? `Опт и розница · ${total.toLocaleString("ru-RU")} товаров` : "Опт и розница"}
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.violet} />
+          <IconButton name={mode === "dark" ? "sunny-outline" : "moon-outline"} onPress={toggleTheme} />
+          <IconButton name="heart-outline" onPress={() => router.push("/favorites")} badge={favorites.length || undefined} />
+        </View>
+
+        <View style={{ paddingHorizontal: 16, marginTop: 8 }}>
+          <SearchBar
+            onPress={() => openCatalog({})}
+            right={
+              <Pressable onPress={() => { tap(); router.push("/scanner"); }} hitSlop={10}>
+                <Ionicons name="barcode-outline" size={21} color={colors.pink} />
+              </Pressable>
+            }
+          />
+        </View>
+
+        {/* hero banner */}
+        <Pressable onPress={() => openCatalog({ quick: ["new"] })} style={styles.hero}>
+          <Silk />
+          <View style={styles.heroText}>
+            <Text style={styles.heroTitle}>НОВАЯ{"\n"}КОЛЛЕКЦИЯ</Text>
+            <Text style={styles.heroSub}>Новинки этого месяца</Text>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>Смотреть</Text>
+              <Ionicons name="arrow-forward" size={14} color="#fff" />
+            </View>
+          </View>
+          {heroImg ? (
+            <View style={styles.heroPhoto}>
+              <Image source={{ uri: heroImg }} style={{ width: "86%", height: "86%" }} contentFit="contain" />
+            </View>
+          ) : null}
         </Pressable>
-      )}
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickRow}>
-        {QUICK.map((q) => (
-          <Pressable key={q.key} style={styles.quick} onPress={() => openCatalog({ quick: [q.key] })}>
-            <Ionicons name={q.icon} size={18} color={colors.pink} />
-            <Text style={styles.quickText}>{q.label}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {tops.length > 0 && (
-        <>
-          <Text style={styles.section}>Категории</Text>
-          <View style={styles.grid}>
+        {/* category tiles */}
+        {tops.length > 0 && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tiles}>
             {tops.map((c) => (
-              <Pressable key={c.guid} style={styles.cat} onPress={() => openCatalog({ categoryGuid: c.guid })}>
-                <Text style={styles.catText} numberOfLines={2}>{c.name}</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.faint} />
+              <Pressable key={c.guid} onPress={() => openCatalog({ categoryGuid: c.guid })} style={styles.tile}>
+                <Ionicons name={categoryIcon(c.name)} size={26} color={colors.pink} />
+                <Text style={styles.tileText} numberOfLines={2}>{c.name}</Text>
               </Pressable>
             ))}
+          </ScrollView>
+        )}
+
+        {/* promo banner */}
+        <Pressable onPress={() => openCatalog({ quick: ["sale"] })} style={[styles.hero, styles.promo]}>
+          <Silk intensity={1.3} />
+          <View style={[styles.heroText, { justifyContent: "center" }]}>
+            <Text style={[styles.heroTitle, { fontSize: 30 }]}>СКИДКИ</Text>
+            <Text style={styles.heroSub}>Товары со скидкой</Text>
           </View>
-          <Pressable onPress={() => openCatalog({})} style={{ alignSelf: "center", padding: 10 }}>
-            <Text style={{ color: colors.violet, fontWeight: "800" }}>Весь каталог →</Text>
+          {saleImg ? (
+            <View style={[styles.heroPhoto, { width: 104, height: 104 }]}>
+              <Image source={{ uri: saleImg }} style={{ width: "86%", height: "86%" }} contentFit="contain" />
+            </View>
+          ) : null}
+          <View style={styles.promoMore}>
+            <Text style={styles.pillText}>Смотреть</Text>
+            <Ionicons name="arrow-forward" size={14} color="#fff" />
+          </View>
+        </Pressable>
+
+        {!customer && (
+          <Pressable style={styles.login} onPress={() => router.push("/login")}>
+            <Ionicons name="pricetags-outline" size={20} color={colors.pink} />
+            <Text style={styles.loginText}>Войдите, чтобы видеть оптовые цены и оформлять заказы</Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.faint} />
           </Pressable>
-        </>
-      )}
+        )}
 
-      {fresh.length > 0 && (
-        <>
-          <Text style={styles.section}>Новинки</Text>
-          <FlatList
-            horizontal
-            data={fresh}
-            keyExtractor={(p) => String(p.id)}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 11 }}
-            renderItem={({ item }) => (
-              <View style={{ width: 180 }}>
-                <ProductCard
-                  product={item}
-                  customer={customer}
-                  activePrice={active}
-                  inCart={cart.find((c) => c.cartKey === String(item.id))?.quantity ?? 0}
-                  isFavorite={favorites.some((f) => f.id === item.id)}
-                  onAdd={addToCart}
-                  onFavorite={toggleFav}
-                />
-              </View>
-            )}
-          />
-        </>
-      )}
-
-      <Pressable style={styles.contacts} onPress={() => router.push("/info")}>
-        <Ionicons name="call-outline" size={18} color={colors.muted} />
-        <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
-      </Pressable>
-    </ScrollView>
+        {fresh.length > 0 && (
+          <>
+            <View style={styles.sectionRow}>
+              <Text style={styles.section}>НОВИНКИ</Text>
+              <Pressable onPress={() => openCatalog({ quick: ["new"] })} hitSlop={8}>
+                <Text style={styles.more}>Все →</Text>
+              </Pressable>
+            </View>
+            <FlatList
+              horizontal
+              data={fresh}
+              keyExtractor={(p) => String(p.id)}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingHorizontal: 11 }}
+              renderItem={({ item }) => (
+                <View style={{ width: 172 }}>
+                  <ProductCard
+                    product={item}
+                    customer={customer}
+                    activePrice={active}
+                    inCart={cart.find((c) => c.cartKey === String(item.id))?.quantity ?? 0}
+                    isFavorite={favorites.some((f) => f.id === item.id)}
+                    onAdd={addToCart}
+                    onFavorite={toggleFav}
+                  />
+                </View>
+              )}
+            />
+          </>
+        )}
+      </ScrollView>
+      <SideMenu open={menu} onClose={() => setMenu(false)} />
+    </View>
   );
 }
 
 const styles = themed(() => ({
-  hero: { paddingHorizontal: 18, paddingBottom: 22, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
-  heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
-  logo: { color: "#fff", fontSize: 26, fontWeight: "900" },
-  logoImg: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: "rgba(255,255,255,0.85)" },
-  subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, marginTop: 2, fontWeight: "600" },
-  heroIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
-  searchRow: { flexDirection: "row", gap: 10 },
-  search: { flex: 1, height: 48, borderRadius: radius.md, backgroundColor: colors.card, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },
-  searchText: { color: colors.faint, fontSize: 15 },
-  scan: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
-  stats: { color: "rgba(255,255,255,0.9)", fontSize: 12, fontWeight: "600", marginTop: 12 },
-  loginBanner: {
-    margin: 16, marginBottom: 0, padding: 14, borderRadius: radius.lg, backgroundColor: colors.violetSoft,
-    flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderColor: colors.violetBorder,
+  header: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10 },
+  menuBtn: { width: 36, height: 40, alignItems: "center", justifyContent: "center" },
+  brand: { fontFamily: fonts.serif, fontSize: 22, color: colors.text, letterSpacing: 1.2, lineHeight: 24 },
+  sub: { fontSize: 11.5, color: colors.muted, marginTop: 1 },
+  hero: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    height: 178,
+    borderRadius: 22,
+    overflow: "hidden",
+    flexDirection: "row",
+    borderWidth: 1,
+    borderColor: "rgba(255,79,168,0.35)",
   },
-  loginTitle: { fontWeight: "800", color: colors.text, fontSize: 14 },
-  loginText: { color: colors.muted, fontSize: 12, marginTop: 2 },
-  quickRow: { paddingHorizontal: 16, paddingTop: 16, gap: 8 },
-  quick: {
-    flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.card, borderRadius: 999,
-    paddingHorizontal: 14, height: 40, borderWidth: 1, borderColor: colors.border,
+  heroText: { flex: 1, padding: 18, justifyContent: "space-between" },
+  heroTitle: { fontFamily: fonts.serif, color: "#fff", fontSize: 30, lineHeight: 31, letterSpacing: 0.8 },
+  heroSub: { color: "rgba(255,255,255,0.85)", fontSize: 12.5, marginTop: 4 },
+  pill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    backgroundColor: "#ff1f8e",
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
   },
-  quickText: { fontWeight: "700", color: colors.text, fontSize: 13 },
-  section: { fontSize: 20, fontWeight: "900", color: colors.text, marginHorizontal: 16, marginTop: 24, marginBottom: 10 },
-  grid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, gap: 8 },
-  cat: {
-    width: "48%", flexGrow: 1, minHeight: 56, backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1,
-    borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6,
+  pillText: { color: "#fff", fontSize: 13, fontWeight: "700" },
+  heroPhoto: {
+    width: 128,
+    height: 148,
+    marginRight: 14,
+    alignSelf: "center",
+    borderRadius: 16,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    transform: [{ rotate: "6deg" }],
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 8,
   },
-  catText: { flex: 1, fontWeight: "700", color: colors.text, fontSize: 13 },
-  contacts: { flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center", marginTop: 28, padding: 10 },
+  tiles: { paddingHorizontal: 16, paddingTop: 16, gap: 10 },
+  tile: {
+    width: 82,
+    height: 92,
+    borderRadius: 16,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingHorizontal: 4,
+  },
+  tileText: { fontSize: 10.5, color: colors.text, textAlign: "center", lineHeight: 13 },
+  promo: { height: 128 },
+  promoMore: { position: "absolute", right: 14, bottom: 12, flexDirection: "row", alignItems: "center", gap: 6 },
+  login: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: colors.pinkSoft,
+  },
+  loginText: { flex: 1, color: colors.text, fontSize: 13.5, lineHeight: 18 },
+  sectionRow: { flexDirection: "row", alignItems: "baseline", justifyContent: "space-between", paddingHorizontal: 16, marginTop: 24, marginBottom: 6 },
+  section: { fontFamily: fonts.serif, fontSize: 24, color: colors.text, letterSpacing: 1 },
+  more: { color: colors.pink, fontWeight: "700", fontSize: 13 },
 }));
