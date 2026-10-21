@@ -89,12 +89,24 @@ export const STATUS_LABELS: Record<string, string> = {
   cancelled: "Отменён",
 };
 
-export const STATUS_COLORS: Record<string, { fg: string; bg: string }> = {
-  pending: { fg: "#92400e", bg: "#fef3c7" },
-  approved: { fg: "#065f46", bg: "#d1fae5" },
-  assembly: { fg: "#1e40af", bg: "#dbeafe" },
-  consultation: { fg: "#9a3412", bg: "#ffedd5" },
-  payment: { fg: "#065f46", bg: "#d1fae5" },
-  exported: { fg: "#475569", bg: "#f1f5f9" },
-  cancelled: { fg: "#b91c1c", bg: "#fee2e2" },
+/** Same as the site's STATUS_COLORS (Tailwind *-100 bg, *-800 text, *-200 border). */
+export const STATUS_COLORS: Record<string, { fg: string; bg: string; border: string }> = {
+  pending: { fg: "#92400e", bg: "#fef3c7", border: "#fde68a" },
+  approved: { fg: "#065f46", bg: "#d1fae5", border: "#a7f3d0" },
+  assembly: { fg: "#1e40af", bg: "#dbeafe", border: "#bfdbfe" },
+  consultation: { fg: "#9a3412", bg: "#ffedd5", border: "#fed7aa" },
+  payment: { fg: "#065f46", bg: "#d1fae5", border: "#a7f3d0" },
+  exported: { fg: "#475569", bg: "#f1f5f9", border: "#e2e8f0" },
+  cancelled: { fg: "#b91c1c", bg: "#fee2e2", border: "#fecaca" },
+};
+
+/** Same as the site's STATUS_ICONS */
+export const STATUS_ICONS: Record<string, string> = {
+  pending: "⏳",
+  approved: "✅",
+  assembly: "📦",
+  consultation: "💬",
+  payment: "💳",
+  exported: "🎉",
+  cancelled: "❌",
 };

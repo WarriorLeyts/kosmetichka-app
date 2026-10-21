@@ -159,9 +159,20 @@ export function Card({ children, style }: { children: ReactNode; style?: ViewSty
   return <View style={[styles.card, style]}>{children}</View>;
 }
 
-export function Badge({ text, fg, bg }: { text: string; fg: string; bg: string }) {
+/** Status pill like the site's: rounded-full px-3 py-1 text-xs font-bold + 1px border. */
+export function Badge({ text, fg, bg, border }: { text: string; fg: string; bg: string; border?: string }) {
   return (
-    <View style={{ backgroundColor: bg, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start" }}>
+    <View
+      style={{
+        backgroundColor: bg,
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 4,
+        alignSelf: "flex-start",
+        borderWidth: border ? 1 : 0,
+        borderColor: border,
+      }}
+    >
       <Text style={{ color: fg, fontSize: 12, fontWeight: "700" }}>{text}</Text>
     </View>
   );

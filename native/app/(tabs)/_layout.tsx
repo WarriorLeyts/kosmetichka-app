@@ -40,7 +40,7 @@ export default function TabsLayout() {
           tabBarBadgeStyle: { backgroundColor: colors.pink, fontSize: 10, fontWeight: "800" },
         }}
       />
-      <Tabs.Screen name="orders" options={{ title: "Заказы", tabBarIcon: icon("receipt", "receipt-outline") }} />
+      <Tabs.Screen name="orders" options={{ title: "Заказы", headerShown: false, tabBarIcon: icon("receipt", "receipt-outline") }} />
       <Tabs.Screen name="profile" options={{ title: "Профиль", tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>
   );

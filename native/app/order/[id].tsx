@@ -83,7 +83,7 @@ export default function OrderScreen() {
   if (error) return <ErrorView message={error} onRetry={loadOrder} />;
   if (!order) return <Loading />;
 
-  const c = STATUS_COLORS[order.status] ?? { fg: colors.muted, bg: colors.soft };
+  const c = STATUS_COLORS[order.status] ?? { fg: colors.muted, bg: colors.soft, border: colors.border };
   const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
 
   const send = async () => {
@@ -141,7 +141,7 @@ export default function OrderScreen() {
       <Stack.Screen options={{ title: `Заказ №${order.id}` }} />
       <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 14, paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
         <View style={styles.head}>
-          <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} />
+          <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} border={c.border} />
           <Text style={styles.meta}>от {date(order.createdAt)}</Text>
         </View>
 
