@@ -7,7 +7,6 @@ import { useAuth } from "@/store/auth";
 import { useFavorites } from "@/store/favorites";
 import { useWaitlistStore } from "@/store/waitlist";
 import { Button, tap } from "@/components/ui";
-import { TAB_BAR_SPACE } from "@/components/TabBar";
 
 const PRICE_LABELS: Record<string, string> = {
   retail: "Розница",
@@ -52,7 +51,7 @@ export default function Profile() {
 
   if (!customer) {
     return (
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: TAB_BAR_SPACE }}>
+      <ScrollView contentContainerStyle={{ padding: 16 }}>
         <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
           <Ionicons name="person-circle-outline" size={52} color="#fff" />
           <Text style={styles.name}>Добро пожаловать!</Text>
@@ -68,7 +67,7 @@ export default function Profile() {
   const title = customer.companyName || customer.name || customer.phone || "Мой профиль";
 
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: TAB_BAR_SPACE }}>
+    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
       <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.card}>
         <View style={styles.avatar}>
           <Text style={styles.avatarText}>{title.trim().charAt(0).toUpperCase()}</Text>
@@ -91,7 +90,7 @@ export default function Profile() {
         rows={[
           { icon: "person-outline", label: "Мои данные", onPress: () => router.push("/edit-profile") },
           { icon: "receipt-outline", label: "Мои заказы", onPress: () => router.navigate("/orders") },
-          { icon: "notifications-outline", label: "Лист ожидания", value: waitCount ? String(waitCount) : undefined, onPress: () => router.navigate("/waitlist") },
+          { icon: "notifications-outline", label: "Лист ожидания", value: waitCount ? String(waitCount) : undefined, onPress: () => router.push("/waitlist") },
           ...common,
         ]}
       />
@@ -123,10 +122,10 @@ const styles = StyleSheet.create({
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
   tag: { backgroundColor: "rgba(255,255,255,0.22)", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   tagText: { color: "#fff", fontWeight: "700", fontSize: 12 },
-  menu: { backgroundColor: "#fff", borderRadius: radius.xl, borderWidth: 1, borderColor: colors.border, marginTop: 16, overflow: "hidden" },
+  menu: { backgroundColor: "#fff", borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 16, overflow: "hidden" },
   row: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, minHeight: 56 },
   sep: { borderTopWidth: 1, borderTopColor: colors.soft },
-  rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.violetSoft, alignItems: "center", justifyContent: "center" },
+  rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: "#f5f3ff", alignItems: "center", justifyContent: "center" },
   rowText: { flex: 1, fontSize: 15, fontWeight: "700", color: colors.text },
   rowValue: { color: colors.muted, fontWeight: "700" },
 });

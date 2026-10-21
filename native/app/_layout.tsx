@@ -47,6 +47,7 @@ export default function RootLayout() {
         <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal" }} />
         <Stack.Screen name="register" options={{ title: "Регистрация" }} />
         <Stack.Screen name="forgot" options={{ title: "Восстановление пароля" }} />
+        <Stack.Screen name="waitlist" options={{ title: "Лист ожидания" }} />
         <Stack.Screen name="favorites" options={{ title: "Избранное" }} />
         <Stack.Screen name="edit-profile" options={{ title: "Мои данные" }} />
         <Stack.Screen name="info" options={{ title: "" }} />

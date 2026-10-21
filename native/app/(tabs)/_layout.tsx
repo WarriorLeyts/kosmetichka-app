@@ -1,28 +1,47 @@
 import { Tabs } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useCartStore } from "@/store/cart";
 import { colors } from "@/theme";
-import { TabBar } from "@/components/TabBar";
+import { tap } from "@/components/ui";
 
-export const unstable_settings = { initialRouteName: "catalog" };
+type IconName = keyof typeof Ionicons.glyphMap;
+
+function icon(active: IconName, inactive: IconName) {
+  return ({ color, focused, size }: { color: string; focused: boolean; size: number }) => (
+    <Ionicons name={focused ? active : inactive} size={size} color={color} />
+  );
+}
 
 export default function TabsLayout() {
+  const count = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
+
   return (
     <Tabs
-      initialRouteName="catalog"
-      tabBar={(props) => <TabBar {...props} />}
+      screenListeners={{ tabPress: () => tap() }}
       screenOptions={{
-        headerTitleStyle: { fontWeight: "900", fontSize: 22, color: colors.text },
+        tabBarActiveTintColor: colors.pink,
+        tabBarInactiveTintColor: colors.faint,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
+        tabBarStyle: { borderTopColor: colors.border, backgroundColor: "#fff" },
+        headerTitleStyle: { fontWeight: "800", fontSize: 20 },
         headerShadowVisible: false,
         headerStyle: { backgroundColor: colors.bg },
-        headerTitleAlign: "left",
         sceneStyle: { backgroundColor: colors.bg },
       }}
     >
-      <Tabs.Screen name="cart" options={{ title: "Корзина" }} />
-      <Tabs.Screen name="catalog" options={{ title: "Каталог", headerShown: false }} />
-      <Tabs.Screen name="orders" options={{ title: "Мои заказы" }} />
-      <Tabs.Screen name="waitlist" options={{ title: "Лист ожидания" }} />
-      <Tabs.Screen name="profile" options={{ title: "Мой профиль" }} />
-      <Tabs.Screen name="index" options={{ href: null, headerShown: false }} />
+      <Tabs.Screen name="index" options={{ title: "Главная", headerShown: false, tabBarIcon: icon("home", "home-outline") }} />
+      <Tabs.Screen name="catalog" options={{ title: "Каталог", headerShown: false, tabBarIcon: icon("grid", "grid-outline") }} />
+      <Tabs.Screen
+        name="cart"
+        options={{
+          title: "Корзина",
+          tabBarIcon: icon("bag", "bag-outline"),
+          tabBarBadge: count > 0 ? (count > 99 ? "99+" : count) : undefined,
+          tabBarBadgeStyle: { backgroundColor: colors.pink, fontSize: 10, fontWeight: "800" },
+        }}
+      />
+      <Tabs.Screen name="orders" options={{ title: "Заказы", tabBarIcon: icon("receipt", "receipt-outline") }} />
+      <Tabs.Screen name="profile" options={{ title: "Профиль", tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>
   );
 }

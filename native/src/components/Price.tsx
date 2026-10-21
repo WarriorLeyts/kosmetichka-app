@@ -1,6 +1,5 @@
 import { Text, View } from "react-native";
 import { colors } from "../theme";
-import { GradientText } from "./GradientText";
 import { money } from "../format";
 import { resolveCustomerPriceType, type PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
@@ -30,27 +29,25 @@ export function priceRows(product: Product, customer: Customer | null, active: P
   return rows;
 }
 
-/** Rows styled like the site's .price-row / .price-row-active / .price-row-muted. */
 export function PriceRows({ rows, large }: { rows: Row[]; large?: boolean }) {
-  const multi = rows.length > 1;
   return (
-    <View style={{ gap: large ? 8 : 3 }}>
-      {rows.map((r) => {
-        const highlighted = r.active;
-        const muted = multi && !r.active;
-        const label = { fontSize: large ? 15 : 12.5, fontWeight: highlighted ? "800" : "600", color: highlighted ? colors.violet : muted ? colors.faint : colors.muted } as const;
-        const value = { fontSize: large ? (highlighted ? 24 : 16) : highlighted ? 15 : 12.5, fontWeight: highlighted ? "900" : "700" } as const;
-        return (
-          <View key={r.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: large ? 28 : 20 }}>
-            <Text style={label}>{r.label}:</Text>
-            {highlighted ? (
-              <GradientText style={value}>{money(r.value)}</GradientText>
-            ) : (
-              <Text style={[value, { color: muted ? colors.slate : colors.text }]}>{money(r.value)}</Text>
-            )}
-          </View>
-        );
-      })}
+    <View style={{ gap: large ? 6 : 2 }}>
+      {rows.map((r) => (
+        <View key={r.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+          <Text style={{ fontSize: large ? 15 : 12, color: r.active ? colors.text : colors.faint, fontWeight: r.active ? "600" : "400" }}>
+            {r.label}
+          </Text>
+          <Text
+            style={{
+              fontSize: large ? (r.active ? 22 : 16) : r.active ? 15 : 12,
+              fontWeight: r.active ? "800" : "500",
+              color: r.active ? colors.pink : colors.faint,
+            }}
+          >
+            {money(r.value)}
+          </Text>
+        </View>
+      ))}
     </View>
   );
 }

@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputPro
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { colors, gradient, gradientEnd, gradientStart, pinkShadow, radius } from "../theme";
+import { colors, gradient, radius } from "../theme";
 
 export function tap() {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -22,17 +22,27 @@ type BtnProps = {
 
 export function Button({ title, onPress, loading, disabled, icon, variant = "primary", style, small }: BtnProps) {
   const inactive = disabled || loading;
-  const h = small ? 40 : 48;
-  const fg =
-    variant === "primary" ? "#fff" : variant === "danger" ? colors.danger : variant === "ghost" ? colors.violet : "#475569";
+  const h = small ? 40 : 52;
   const content = (
     <View style={[styles.btnInner, { height: h }]}>
       {loading ? (
-        <ActivityIndicator color={fg} />
+        <ActivityIndicator color={variant === "primary" ? "#fff" : colors.violet} />
       ) : (
         <>
-          {icon && <Ionicons name={icon} size={small ? 16 : 18} color={fg} />}
-          <Text style={[styles.btnText, { color: fg }, small && { fontSize: 13 }, variant !== "primary" && { fontWeight: "800" }]}>
+          {icon && (
+            <Ionicons
+              name={icon}
+              size={small ? 16 : 19}
+              color={variant === "primary" ? "#fff" : variant === "danger" ? colors.danger : colors.violet}
+            />
+          )}
+          <Text
+            style={[
+              styles.btnText,
+              small && { fontSize: 14 },
+              variant !== "primary" && { color: variant === "danger" ? colors.danger : colors.violet },
+            ]}
+          >
             {title}
           </Text>
         </>
@@ -46,23 +56,19 @@ export function Button({ title, onPress, loading, disabled, icon, variant = "pri
         tap();
         onPress();
       }}
-      style={({ pressed }) => [
-        { opacity: inactive ? 0.5 : pressed ? 0.9 : 1, transform: [{ translateY: pressed ? 1 : 0 }] },
-        variant === "primary" && !inactive && pinkShadow,
-        style,
-      ]}
+      style={({ pressed }) => [{ opacity: inactive ? 0.55 : pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }, style]}
     >
       {variant === "primary" ? (
-        <LinearGradient colors={gradient} start={gradientStart} end={gradientEnd} style={{ borderRadius: radius.md }}>
+        <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: radius.md }}>
           {content}
         </LinearGradient>
       ) : (
         <View
           style={{
             borderRadius: radius.md,
-            borderWidth: variant === "ghost" ? 0 : 1,
-            borderColor: variant === "danger" ? "#fecaca" : "#e2e8f0",
-            backgroundColor: variant === "danger" ? colors.dangerBg : variant === "ghost" ? "transparent" : "#fff",
+            borderWidth: variant === "ghost" ? 0 : 1.5,
+            borderColor: variant === "danger" ? "#fecaca" : "#ddd6fe",
+            backgroundColor: variant === "danger" ? colors.dangerBg : "#faf8ff",
           }}
         >
           {content}
@@ -112,7 +118,7 @@ export function Empty({
   return (
     <View style={styles.center}>
       <View style={styles.emptyIcon}>
-        <Ionicons name={icon} size={36} color={colors.pink} />
+        <Ionicons name={icon} size={36} color={colors.violet} />
       </View>
       <Text style={styles.emptyTitle}>{title}</Text>
       {text ? <Text style={[styles.muted, { textAlign: "center", marginBottom: 18 }]}>{text}</Text> : null}
@@ -121,9 +127,7 @@ export function Empty({
   );
 }
 
-/** Quantity control like the site's .cart-qty: small rounded-square buttons with the number between. */
-export function Stepper({ value, onChange, min = 0, step = 1, large }: { value: number; onChange: (v: number) => void; min?: number; step?: number; large?: boolean }) {
-  const size = large ? 40 : 30;
+export function Stepper({ value, onChange, min = 0, step = 1 }: { value: number; onChange: (v: number) => void; min?: number; step?: number }) {
   return (
     <View style={styles.stepper}>
       <Pressable
@@ -132,20 +136,20 @@ export function Stepper({ value, onChange, min = 0, step = 1, large }: { value: 
           tap();
           onChange(value - step < min ? 0 : value - step);
         }}
-        style={[styles.stepBtn, { width: size, height: size }]}
+        style={styles.stepBtn}
       >
-        <Ionicons name="remove" size={large ? 18 : 16} color={colors.text} />
+        <Ionicons name={value - step < Math.max(min, 1) ? "trash-outline" : "remove"} size={18} color={colors.violet} />
       </Pressable>
-      <Text style={[styles.stepValue, large && { fontSize: 17, minWidth: 40 }]}>{value}</Text>
+      <Text style={styles.stepValue}>{value}</Text>
       <Pressable
         hitSlop={8}
         onPress={() => {
           tap();
           onChange(value + step);
         }}
-        style={[styles.stepBtn, { width: size, height: size }]}
+        style={styles.stepBtn}
       >
-        <Ionicons name="add" size={large ? 18 : 16} color={colors.text} />
+        <Ionicons name="add" size={18} color={colors.violet} />
       </Pressable>
     </View>
   );
@@ -169,24 +173,24 @@ export function Notice({ tone, text }: { tone: "error" | "success" | "info"; tex
       ? { fg: colors.danger, bg: colors.dangerBg, icon: "alert-circle" as const }
       : tone === "success"
       ? { fg: colors.success, bg: colors.successBg, icon: "checkmark-circle" as const }
-      : { fg: colors.violet, bg: "#fdf4ff", icon: "information-circle" as const };
+      : { fg: colors.violet, bg: "#f5f3ff", icon: "information-circle" as const };
   return (
-    <View style={{ flexDirection: "row", gap: 8, backgroundColor: c.bg, padding: 12, borderRadius: 14, marginBottom: 14, borderWidth: tone === "info" ? 1.5 : 0, borderColor: "#e9d5ff" }}>
+    <View style={{ flexDirection: "row", gap: 8, backgroundColor: c.bg, padding: 12, borderRadius: radius.md, marginBottom: 14 }}>
       <Ionicons name={c.icon} size={18} color={c.fg} />
-      <Text style={{ color: c.fg, flex: 1, fontSize: 13, fontWeight: "700", lineHeight: 18 }}>{text}</Text>
+      <Text style={{ color: c.fg, flex: 1, fontSize: 14, fontWeight: "600" }}>{text}</Text>
     </View>
   );
 }
 
 export const styles = StyleSheet.create({
   btnInner: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 18 },
-  btnText: { color: "#fff", fontSize: 15, fontWeight: "900" },
+  btnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
   label: { fontSize: 13, fontWeight: "700", color: colors.text, marginBottom: 6 },
   input: {
-    height: 48,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
+    height: 50,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.border,
     backgroundColor: "#fff",
     paddingHorizontal: 14,
     fontSize: 16,
@@ -198,22 +202,21 @@ export const styles = StyleSheet.create({
   emptyIcon: {
     width: 80,
     height: 80,
-    borderRadius: 24,
-    backgroundColor: colors.pinkSoft,
+    borderRadius: 40,
+    backgroundColor: "#f5f3ff",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
   },
   emptyTitle: { fontSize: 18, fontWeight: "800", color: colors.text, marginBottom: 6, marginTop: 8, textAlign: "center" },
-  stepper: { flexDirection: "row", alignItems: "center", gap: 4 },
-  stepBtn: {
-    borderRadius: 9,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: "#fff",
+  stepper: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: "#f5f3ff",
+    borderRadius: 999,
+    padding: 3,
   },
-  stepValue: { minWidth: 28, textAlign: "center", fontSize: 14, fontWeight: "800", color: colors.text },
-  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 16, borderWidth: 1, borderColor: colors.border },
+  stepBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  stepValue: { minWidth: 36, textAlign: "center", fontSize: 15, fontWeight: "800", color: colors.text },
+  card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, borderWidth: 1, borderColor: colors.border },
 });
