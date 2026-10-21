@@ -8,98 +8,74 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { persistStorage } from "./store/storage";
 
-/*
- * Design from the mockup: deep plum «luxury» dark theme with hot-pink accents,
- * serif display headings (Cormorant Garamond). The light theme uses the same
- * accents on a warm off-white background.
- */
 const light = {
-  pink: "#e5157f",
-  pinkLight: "#ff5fae",
-  violet: "#9b2fd6",
-  blue: "#5b2bd9",
-  bg: "#fbf6f9",
+  pink: "#e82c87",
+  pinkLight: "#ff6aaa",
+  violet: "#8b3dff",
+  blue: "#0036b8",
+  bg: "#f6f7fb",
   card: "#ffffff",
-  card2: "#f7eef3",
-  text: "#24121c",
-  muted: "#7a6370",
-  faint: "#a8939f",
-  border: "#efdfe8",
-  soft: "#f6ecf2",
-  success: "#0f9f6e",
-  successBg: "#e5f8f0",
-  warning: "#b66a00",
-  warningBg: "#fff4e0",
-  danger: "#d92d4a",
-  dangerBg: "#fde9ed",
-  violetSoft: "#f6ecf6",
-  violetBorder: "#ead3e4",
-  pinkSoft: "#fde8f2",
-  strong: "#24121c",
-  /** accent (buttons, active tabs, prices) */
-  accent: "#e5157f",
-  accentText: "#ffffff",
-  /** hero/banner backdrop */
-  heroGradient: ["#3a0f2c", "#7a1450", "#d1137a"] as readonly [string, string, ...string[]],
-  pageGradient: ["#fbf6f9", "#f8eef4", "#f4ecf8"] as readonly [string, string, ...string[]],
-  glow: "rgba(229,21,127,0.18)",
-  overlay: "rgba(255,255,255,0.9)",
-  tabBar: "#ffffff",
+  text: "#1f2937",
+  muted: "#6b7280",
+  faint: "#9ca3af",
+  border: "#e8eaf0",
+  soft: "#f1f3f9",
+  success: "#059669",
+  successBg: "#ecfdf5",
+  warning: "#b45309",
+  warningBg: "#fffbeb",
+  danger: "#dc2626",
+  dangerBg: "#fef2f2",
+  // soft tints used for icons, chips, banners
+  violetSoft: "#f5f3ff",
+  violetBorder: "#ede9fe",
+  pinkSoft: "#fdf2f8",
+  /** text on the white «card» surfaces (site's slate-800 / slate-700) */
+  strong: "#1e293b",
+  /** «Мои заказы» page background (site: #fdf2f8 → #f5f3ff → #eff6ff) */
+  pageGradient: ["#fdf2f8", "#f5f3ff", "#eff6ff"] as readonly [string, string, ...string[]],
+  overlay: "rgba(255,255,255,0.92)",
   statusBar: "dark" as "dark" | "light",
 };
 
 type Palette = typeof light;
 
-// Dark palette from the design sources (assets/palette.json + web/style.css)
 const dark: Palette = {
-  pink: "#ff2ca7",
-  pinkLight: "#ff69d2",
-  violet: "#8100eb",
-  blue: "#6a0b50",
-  bg: "#130517",
-  card: "#290824",
-  card2: "#3b0a32",
-  text: "#fff6fd",
-  muted: "#cba3c6",
-  faint: "#8f6a89",
-  border: "#5a2246",
-  soft: "#2a0b26",
-  success: "#38d39f",
-  successBg: "#0f2a20",
-  warning: "#ffb547",
-  warningBg: "#2e2010",
-  danger: "#ff276b",
-  dangerBg: "#3a0a22",
-  violetSoft: "#3b0a32",
-  violetBorder: "#8f1b67",
-  pinkSoft: "#4a0c3a",
-  strong: "#fff6fd",
-  accent: "#ff2ca7",
-  accentText: "#ffffff",
-  heroGradient: ["#230821", "#6a0b50", "#c0157f"],
-  pageGradient: ["#210921", "#130715", "#220621"],
-  glow: "rgba(255,44,167,0.3)",
-  overlay: "rgba(41,8,36,0.88)",
-  tabBar: "#2a0b26",
+  pink: "#ff4fa3",
+  pinkLight: "#ff7cbc",
+  violet: "#a57aff",
+  blue: "#5b7cff",
+  bg: "#0f0f17",
+  card: "#1a1a26",
+  text: "#f1f2f6",
+  muted: "#a3a8b8",
+  faint: "#6f7487",
+  border: "#2a2a3a",
+  soft: "#232333",
+  success: "#34d399",
+  successBg: "#0f2a22",
+  warning: "#fbbf24",
+  warningBg: "#2b2210",
+  danger: "#f87171",
+  dangerBg: "#2d1517",
+  violetSoft: "#2a2342",
+  violetBorder: "#3a2f5c",
+  pinkSoft: "#331a2a",
+  strong: "#f1f2f6",
+  pageGradient: ["#1c1020", "#16122a", "#0f1426"],
+  overlay: "rgba(26,26,38,0.92)",
   statusBar: "light",
-};
-
-/** Serif display font for brand name, banners and big titles (loaded in app/_layout.tsx). */
-export const fonts = {
-  serif: "CormorantGaramond_600SemiBold",
-  serifMedium: "CormorantGaramond_500Medium",
-  serifBold: "CormorantGaramond_700Bold",
 };
 
 export type ThemeMode = "light" | "dark";
 
 /** Live palette — read it at render time. */
-export const colors: Palette = { ...dark };
+export const colors: Palette = { ...light };
 
-/** Accent gradient for primary buttons — the same in both themes. */
-export const gradient = ["#ff2d95", "#e5157f", "#b0106a"] as const;
+/** Brand gradient (buttons, hero) — the same in both themes. */
+export const gradient = ["#e82c87", "#8b3dff", "#0036b8"] as const;
 
-export const radius = { sm: 10, md: 14, lg: 18, xl: 24 };
+export const radius = { sm: 10, md: 14, lg: 20, xl: 28 };
 
 export const shadow = {
   shadowColor: "#1f2937",
@@ -139,7 +115,7 @@ type ThemeState = { mode: ThemeMode; toggle: () => void };
 export const useTheme = create<ThemeState>()(
   persist(
     (set, get) => ({
-      mode: "dark",
+      mode: "light",
       toggle: () => {
         const mode: ThemeMode = get().mode === "dark" ? "light" : "dark";
         applyTheme(mode);

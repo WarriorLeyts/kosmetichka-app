@@ -83,9 +83,9 @@ export const ProductCard = memo(ProductCardBase);
 
 /** Site's .stock-high / .stock-low / .stock-out */
 const STOCK_PILL = {
-  get high() { return { bg: colors.successBg, fg: colors.success }; },
-  get low() { return { bg: colors.warningBg, fg: colors.warning }; },
-  get out() { return { bg: colors.dangerBg, fg: colors.danger }; },
+  high: { bg: "#e8fff0", fg: "#16a34a" },
+  low: { bg: "#fff7e6", fg: "#b45309" },
+  out: { bg: "#fef2f2", fg: "#dc2626" },
 };
 
 const styles = themed(() => ({

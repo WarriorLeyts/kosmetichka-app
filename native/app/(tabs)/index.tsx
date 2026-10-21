@@ -7,8 +7,7 @@ import { Image } from "expo-image";
 import { LOGO } from "@/components/PageTitle";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
-import { colors, fonts, gradient, radius, themed, useTheme } from "@/theme";
-import { SideMenu } from "@/components/SideMenu";
+import { colors, gradient, radius, themed, useTheme } from "@/theme";
 import { topCategories, useCatalog, type Quick } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -29,7 +28,6 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const mode = useTheme((s) => s.mode);
   const toggleTheme = useTheme((s) => s.toggle);
-  const [menu, setMenu] = useState(false);
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const favorites = useFavorites((s) => s.items);
@@ -62,11 +60,8 @@ export default function Home() {
         <View style={styles.heroTop}>
           <View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <Pressable onPress={() => { tap(); setMenu(true); }} hitSlop={10}>
-                <Ionicons name="menu" size={26} color="#fff" />
-              </Pressable>
               <Image source={LOGO} style={styles.logoImg} contentFit="contain" />
-              <Text style={styles.logo}>КОСМЕТИЧКА</Text>
+              <Text style={styles.logo}>Косметичка</Text>
             </View>
             <Text style={styles.subtitle}>Косметика и парфюмерия оптом</Text>
           </View>
@@ -178,7 +173,6 @@ export default function Home() {
         <Ionicons name="call-outline" size={18} color={colors.muted} />
         <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
       </Pressable>
-      <SideMenu open={menu} onClose={() => setMenu(false)} />
     </ScrollView>
   );
 }
@@ -186,7 +180,7 @@ export default function Home() {
 const styles = themed(() => ({
   hero: { paddingHorizontal: 18, paddingBottom: 22, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
-  logo: { color: "#fff", fontSize: 26, fontFamily: fonts.serif, letterSpacing: 1.2 },
+  logo: { color: "#fff", fontSize: 26, fontWeight: "900" },
   logoImg: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: "rgba(255,255,255,0.85)" },
   subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, marginTop: 2, fontWeight: "600" },
   heroIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },

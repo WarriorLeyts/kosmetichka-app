@@ -110,20 +110,3 @@ export const STATUS_ICONS: Record<string, string> = {
   exported: "🎉",
   cancelled: "❌",
 };
-
-/** Status accent colors for the dark/light «luxury» design (pill = tinted bg + border). */
-export const STATUS_TONE: Record<string, { color: string; icon: "hourglass-outline" | "checkmark-circle-outline" | "cube-outline" | "chatbubbles-outline" | "card-outline" | "checkmark-done-outline" | "close-circle-outline" }> = {
-  pending: { color: "#f5a524", icon: "hourglass-outline" },
-  approved: { color: "#2fbf71", icon: "checkmark-circle-outline" },
-  assembly: { color: "#5b8cff", icon: "cube-outline" },
-  consultation: { color: "#ff7a45", icon: "chatbubbles-outline" },
-  payment: { color: "#2fbf71", icon: "card-outline" },
-  exported: { color: "#9aa0ad", icon: "checkmark-done-outline" },
-  cancelled: { color: "#ff4d6d", icon: "close-circle-outline" },
-};
-
-/** "#rrggbb" + alpha → rgba() */
-export function alpha(hex: string, a: number): string {
-  const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
-}

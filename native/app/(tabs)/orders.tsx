@@ -10,7 +10,7 @@ import { date, money } from "@/format";
 import { useAuth } from "@/store/auth";
 import { orderCache } from "@/orderCache";
 import { Badge, Empty, ErrorView, Loading, tap } from "@/components/ui";
-import { BRAND_GRADIENT, GradientText } from "@/components/GradientText";
+import { GradientText } from "@/components/GradientText";
 import { LoginRequired } from "@/components/LoginRequired";
 import { PageTitle } from "@/components/PageTitle";
 import { STATUS_COLORS, STATUS_ICONS, STATUS_LABELS, type Order, type OrdersPage } from "@/types";
@@ -65,7 +65,7 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
           </View>
         </View>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          {unread && <Ionicons name="chatbubble-ellipses" size={16} color={colors.pink} />}
+          {unread && <Ionicons name="chatbubble-ellipses" size={16} color={T.pink500} />}
           <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} border={c.border} />
           <Text style={{ color: colors.faint, fontSize: 12 }}>▼</Text>
         </View>
@@ -151,24 +151,24 @@ export default function Orders() {
       data={orders}
       keyExtractor={(o) => String(o.id)}
       contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top + 16, paddingBottom: 32, gap: 12 }}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.pink} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={T.purple500} />}
       onEndReachedThreshold={0.5}
       onEndReached={() => {
         if (!loading && data && data.page < data.totalPages) load(data.page + 1, "append");
       }}
       ListHeaderComponent={
         <View style={{ gap: 12 }}>
-          <PageTitle title="Мои заказы" />
+          <PageTitle title="Мои заказы" colors={[T.pink500, T.purple500, T.blue700]} />
 
           {stats && stats.totalOrders > 0 && (
             <View style={styles.statsGrid}>
               <View style={[styles.stat, { shadowColor: "#ec4899" }]}>
                 <Text style={styles.statLabel}>🛒 Заказов</Text>
-                <GradientText style={styles.statValueBig} colors={BRAND_GRADIENT}>{stats.totalOrders}</GradientText>
+                <GradientText style={styles.statValueBig} colors={[T.pink500, T.purple500]}>{stats.totalOrders}</GradientText>
               </View>
               <View style={[styles.stat, { shadowColor: "#8b5cf6" }]}>
                 <Text style={styles.statLabel}>💰 Сумма</Text>
-                <GradientText style={styles.statValue} colors={BRAND_GRADIENT}>{money(stats.totalSum)}</GradientText>
+                <GradientText style={styles.statValue} colors={[T.purple500, T.blue600]}>{money(stats.totalSum)}</GradientText>
               </View>
             </View>
           )}
@@ -179,7 +179,7 @@ export default function Orders() {
               return (
                 <Pressable key={f.key} onPress={() => { tap(); setStatus(f.key); }}>
                   {on ? (
-                    <LinearGradient colors={BRAND_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.chip}>
+                    <LinearGradient colors={[T.pink500, T.purple500, T.blue700]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.chip}>
                       <Text style={[styles.chipText, { color: "#fff" }]}>{f.label}</Text>
                     </LinearGradient>
                   ) : (
@@ -195,7 +195,7 @@ export default function Orders() {
       }
       ListEmptyComponent={
         loading ? (
-          <ActivityIndicator style={{ margin: 40 }} color={colors.pink} />
+          <ActivityIndicator style={{ margin: 40 }} color={T.purple500} />
         ) : status ? (
           <View style={styles.emptyBox}>
             <Text style={{ fontWeight: "700", color: colors.strong }}>Заказов не найдено</Text>
@@ -206,14 +206,14 @@ export default function Orders() {
             <Text style={{ fontSize: 20, fontWeight: "900", color: colors.strong, marginBottom: 4 }}>Заказов пока нет</Text>
             <Text style={{ color: colors.faint, marginBottom: 20, textAlign: "center" }}>Оформите первый заказ в каталоге</Text>
             <Pressable onPress={() => router.navigate("/catalog")}>
-              <LinearGradient colors={BRAND_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.openBtn}>
+              <LinearGradient colors={[T.pink500, T.purple500, T.blue700]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.openBtn}>
                 <Text style={[styles.openText, { paddingHorizontal: 18 }]}>Перейти в каталог</Text>
               </LinearGradient>
             </Pressable>
           </View>
         )
       }
-      ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={colors.pink} /> : null}
+      ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={T.purple500} /> : null}
       renderItem={({ item }) => <OrderCard order={item} unread={unread.has(item.id)} />}
     />
   );

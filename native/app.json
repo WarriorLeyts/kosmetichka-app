@@ -6,7 +6,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
       "bundleIdentifier": "ru.kosmetichkaopt.app",
@@ -32,9 +32,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 130,
+          "imageWidth": 150,
           "resizeMode": "contain",
-          "backgroundColor": "#110910"
+          "backgroundColor": "#ffffff"
         }
       ],
       [

@@ -10,7 +10,7 @@ const WANT = [
   "@expo/vector-icons", "@react-native-async-storage/async-storage", "expo-build-properties", "expo-camera",
   "expo-constants", "expo-haptics", "expo-image", "expo-linear-gradient", "expo-linking", "expo-router",
   "expo-splash-screen", "expo-status-bar", "expo-web-browser", "react", "react-native",
-  "@react-native-masked-view/masked-view", "expo-font",
+  "@react-native-masked-view/masked-view",
   "react-native-safe-area-context", "react-native-screens", "react-native-webview",
 ];
 const DEV = ["typescript", "@types/react"];
