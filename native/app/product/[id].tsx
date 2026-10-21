@@ -184,7 +184,7 @@ export default function ProductScreen() {
                         style={styles.variantAdd}
                         onPress={() => { tap(); setVariantQty({ ...variantQty, [v.id]: min }); }}
                       >
-                        <Ionicons name="add" size={20} color={colors.violet} />
+                        <Ionicons name="add" size={20} color={colors.pink} />
                       </Pressable>
                     )}
                   </View>
@@ -259,7 +259,7 @@ export default function ProductScreen() {
           />
         ) : inCart > 0 ? (
           <>
-            <Stepper value={inCart} min={min} step={1} onChange={(n) => setQty(key, n < min ? 0 : n)} />
+            <Stepper large value={inCart} min={min} step={1} onChange={(n) => setQty(key, n < min ? 0 : n)} />
             <Button title="Перейти в корзину" icon="bag-outline" style={{ flex: 1 }} onPress={() => router.navigate("/cart")} />
           </>
         ) : (
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 },
   stock: { fontWeight: "800", fontSize: 13 },
   meta: { color: colors.muted, fontSize: 13, marginTop: 4 },
-  priceCard: { backgroundColor: "#fff", borderRadius: radius.lg, padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.border },
+  priceCard: { backgroundColor: "#fff", borderRadius: radius.xl, padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.border },
   h: { fontSize: 18, fontWeight: "900", color: colors.text, marginTop: 22, marginBottom: 10 },
   desc: { color: colors.text, fontSize: 15, lineHeight: 22 },
   variantBox: { marginTop: 4 },
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
   },
   variantImg: { width: 48, height: 48, borderRadius: 10, backgroundColor: colors.soft },
   variantName: { flex: 1, fontWeight: "700", color: colors.text, fontSize: 14 },
-  variantAdd: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#f5f3ff", alignItems: "center", justifyContent: "center" },
+  variantAdd: { width: 40, height: 40, borderRadius: 14, borderWidth: 1, borderColor: colors.border, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
   bottom: {
     position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", alignItems: "center", gap: 12,
     paddingHorizontal: 16, paddingTop: 12, backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: colors.border,

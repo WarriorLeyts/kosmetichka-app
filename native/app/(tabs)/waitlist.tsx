@@ -9,11 +9,15 @@ import { stockLabel } from "@/format";
 import { useWaitlistStore } from "@/store/waitlist";
 import { Empty, ErrorView, Loading } from "@/components/ui";
 import type { Product } from "@/types";
+import { useAuth } from "@/store/auth";
+import { LoginRequired } from "@/components/LoginRequired";
+import { TAB_BAR_SPACE } from "@/components/TabBar";
 
 type Row = Product & { notified: boolean };
 
 export default function Waitlist() {
   const toggle = useWaitlistStore((s) => s.toggle);
+  const customer = useAuth((s) => s.customer);
   const [items, setItems] = useState<Row[] | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
@@ -31,9 +35,10 @@ export default function Waitlist() {
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (customer) load();
+  }, [customer, load]);
 
+  if (!customer) return <LoginRequired text="Добавляйте товары, которых нет в наличии, — мы сообщим, когда они появятся" />;
   if (error) return <ErrorView message={error} onRetry={load} />;
   if (!items) return <Loading />;
   if (items.length === 0)
@@ -51,7 +56,7 @@ export default function Waitlist() {
     <FlatList
       data={items}
       keyExtractor={(p) => String(p.id)}
-      contentContainerStyle={{ padding: 12 }}
+      contentContainerStyle={{ padding: 12, paddingBottom: TAB_BAR_SPACE }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={colors.violet} />}
       renderItem={({ item }) => {
         const s = stockLabel(item.stock);
@@ -85,7 +90,7 @@ export default function Waitlist() {
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#fff", borderRadius: radius.lg, padding: 12,
+    flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#fff", borderRadius: radius.xl, padding: 12,
     marginBottom: 10, borderWidth: 1, borderColor: colors.border,
   },
   img: { width: 60, height: 60, borderRadius: 10, backgroundColor: colors.soft },

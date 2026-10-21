@@ -9,6 +9,7 @@ import { useAuth } from "@/store/auth";
 import { orderCache } from "@/orderCache";
 import { Badge, Empty, ErrorView, Loading, tap } from "@/components/ui";
 import { LoginRequired } from "@/components/LoginRequired";
+import { TAB_BAR_SPACE } from "@/components/TabBar";
 import { STATUS_COLORS, STATUS_LABELS, type Order, type OrdersPage } from "@/types";
 
 const FILTERS: { key: string; label: string }[] = [
@@ -75,7 +76,7 @@ export default function Orders() {
     <FlatList
       data={orders}
       keyExtractor={(o) => String(o.id)}
-      contentContainerStyle={{ padding: 12, paddingBottom: 24 }}
+      contentContainerStyle={{ padding: 12, paddingBottom: TAB_BAR_SPACE }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.violet} />}
       onEndReachedThreshold={0.5}
       onEndReached={() => {
@@ -151,13 +152,13 @@ export default function Orders() {
 
 const styles = StyleSheet.create({
   stats: { flexDirection: "row", gap: 10, marginBottom: 4 },
-  stat: { flex: 1, backgroundColor: "#fff", borderRadius: radius.lg, padding: 14, borderWidth: 1, borderColor: colors.border },
+  stat: { flex: 1, backgroundColor: "#fff", borderRadius: radius.xl, padding: 14, borderWidth: 1, borderColor: colors.border },
   statValue: { fontSize: 18, fontWeight: "900", color: colors.text },
   statLabel: { color: colors.muted, fontSize: 12, marginTop: 2 },
   chip: { height: 34, paddingHorizontal: 14, borderRadius: 999, backgroundColor: "#fff", borderWidth: 1, borderColor: colors.border, justifyContent: "center" },
   chipActive: { backgroundColor: colors.violet, borderColor: colors.violet },
   chipText: { fontWeight: "700", color: colors.text, fontSize: 13 },
-  card: { backgroundColor: "#fff", borderRadius: radius.lg, padding: 14, marginTop: 10, borderWidth: 1, borderColor: colors.border },
+  card: { backgroundColor: "#fff", borderRadius: radius.xl, padding: 16, marginTop: 10, borderWidth: 1, borderColor: colors.border },
   cardTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   num: { fontSize: 16, fontWeight: "900", color: colors.text },
   meta: { color: colors.muted, fontSize: 12, marginTop: 6 },

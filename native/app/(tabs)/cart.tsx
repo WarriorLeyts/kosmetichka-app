@@ -5,7 +5,8 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { api, imageUrl } from "@/api";
-import { colors, radius } from "@/theme";
+import { colors, gradient, gradientEnd, gradientStart, radius } from "@/theme";
+import { LinearGradient } from "expo-linear-gradient";
 import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -13,6 +14,9 @@ import {
   amountUntilBigWholesale, amountUntilWholesale, effectivePriceType, priceFor, priceTypeLabel, rawCartTotal,
 } from "@/pricing";
 import { Button, Empty, Notice, Stepper } from "@/components/ui";
+import { GradientText } from "@/components/GradientText";
+import { TAB_BAR_SPACE } from "@/components/TabBar";
+import { BIG_WHOLESALE_THRESHOLD, WHOLESALE_THRESHOLD } from "@/pricing";
 import type { CartItem } from "@/types";
 
 export default function Cart() {
@@ -75,27 +79,29 @@ export default function Cart() {
     const min = Math.max(1, item.minOrderQty ?? 1);
     return (
       <View style={styles.item}>
-        <Pressable onPress={() => router.push(`/product/${item.id}`)}>
+        <Pressable onPress={() => router.push(`/product/${item.id}`)} style={styles.imgBox}>
           {img ? (
             <Image source={{ uri: img }} style={styles.img} contentFit="contain" />
           ) : (
-            <View style={[styles.img, { alignItems: "center", justifyContent: "center" }]}>
-              <Ionicons name="image-outline" size={24} color={colors.faint} />
-            </View>
+            <Ionicons name="image-outline" size={24} color="#b6bbcc" />
           )}
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
+          <View style={{ flexDirection: "row", gap: 6 }}>
+            <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
+            <Pressable hitSlop={10} onPress={() => remove(item.cartKey)}>
+              <Ionicons name="trash-outline" size={17} color="#ef4444" />
+            </Pressable>
+          </View>
           {item.variantName ? <Text style={styles.variant}>{item.variantName}</Text> : null}
-          <Text style={styles.unit}>{money(price)} × {item.quantity}</Text>
-          <View style={styles.itemBottom}>
+          <View style={{ flexDirection: "row", alignItems: "baseline", gap: 8, marginTop: 4 }}>
+            <Text style={styles.price}>{money(price)}</Text>
+            <Text style={styles.lineTotal}>= {money(price * item.quantity)}</Text>
+          </View>
+          <View style={{ marginTop: 8 }}>
             <Stepper value={item.quantity} min={min} onChange={(n) => setQty(item.cartKey, n < min ? 0 : n)} />
-            <Text style={styles.sum}>{money(price * item.quantity)}</Text>
           </View>
         </View>
-        <Pressable hitSlop={10} onPress={() => remove(item.cartKey)} style={{ padding: 2 }}>
-          <Ionicons name="close" size={20} color={colors.faint} />
-        </Pressable>
       </View>
     );
   };
@@ -106,15 +112,34 @@ export default function Cart() {
         data={items}
         keyExtractor={(i) => i.cartKey}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 12, paddingBottom: 24 }}
+        contentContainerStyle={{ padding: 12, paddingBottom: TAB_BAR_SPACE }}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View style={{ marginBottom: 4 }}>
-            {customer && toWholesale > 0 && (
-              <Notice tone="info" text={`Добавьте товаров ещё на ${money(toWholesale)} — включится оптовая цена`} />
+            {customer && (toWholesale > 0 || (active === "wholesale" && toBig > 0)) && (
+              <View style={styles.progress}>
+                <Text style={styles.progressText}>
+                  {toWholesale > 0 ? "До оптовой цены осталось " : "До цены «Крупный опт» осталось "}
+                  <Text style={{ color: colors.text, fontWeight: "900" }}>{money(toWholesale > 0 ? toWholesale : toBig)}</Text>
+                </Text>
+                <View style={styles.bar}>
+                  <LinearGradient
+                    colors={gradient}
+                    start={gradientStart}
+                    end={gradientEnd}
+                    style={{
+                      height: "100%",
+                      borderRadius: 99,
+                      width: `${Math.min(100, Math.round((rawCartTotal(items, "wholesale") / (toWholesale > 0 ? WHOLESALE_THRESHOLD : BIG_WHOLESALE_THRESHOLD)) * 100))}%` as `${number}%`,
+                    }}
+                  />
+                </View>
+              </View>
             )}
-            {customer && toWholesale === 0 && toBig > 0 && active === "wholesale" && (
-              <Notice tone="info" text={`До цены «Крупный опт» осталось ${money(toBig)}`} />
+            {!customer && (
+              <View style={styles.guest}>
+                <Text style={styles.guestText}>Вы видите розничные цены. Войдите, чтобы получить оптовые цены и оформить заказ.</Text>
+              </View>
             )}
           </View>
         }
@@ -146,8 +171,8 @@ export default function Cart() {
                 <Text style={styles.sumLabel}>Цена: {priceTypeLabel(active)}</Text>
               </View>
               <View style={styles.sumRow}>
-                <Text style={styles.totalLabel}>Итого</Text>
-                <Text style={styles.total}>{money(total)}</Text>
+                <Text style={styles.totalLabel}>Итого:</Text>
+                <GradientText style={styles.total}>{money(total)}</GradientText>
               </View>
             </View>
             {error ? <Notice tone="error" text={error} /> : null}
@@ -167,24 +192,29 @@ export default function Cart() {
 
 const styles = StyleSheet.create({
   item: {
-    flexDirection: "row", gap: 12, backgroundColor: "#fff", borderRadius: radius.lg, padding: 12, marginBottom: 10,
+    flexDirection: "row", gap: 12, backgroundColor: "#fafbff", borderRadius: 18, padding: 12, marginBottom: 10,
     borderWidth: 1, borderColor: colors.border,
   },
-  img: { width: 72, height: 72, borderRadius: 12, backgroundColor: colors.soft },
-  name: { fontWeight: "700", color: colors.text, fontSize: 14, lineHeight: 19 },
+  imgBox: { width: 74, height: 74, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  img: { width: 65, height: 65 },
+  name: { flex: 1, fontWeight: "700", color: colors.text, fontSize: 13, lineHeight: 17.5 },
   variant: { color: colors.violet, fontSize: 12, fontWeight: "700", marginTop: 2 },
-  unit: { color: colors.muted, fontSize: 12, marginTop: 4 },
-  itemBottom: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 8 },
-  sum: { fontWeight: "900", color: colors.text, fontSize: 15 },
+  price: { fontWeight: "800", color: colors.pink, fontSize: 15 },
+  lineTotal: { fontSize: 11, fontWeight: "700", color: colors.muted },
+  progress: { padding: 12, borderRadius: 14, backgroundColor: "#f8fafc", borderWidth: 1.5, borderColor: colors.border, marginBottom: 12, gap: 8 },
+  progressText: { fontSize: 12.5, fontWeight: "600", color: colors.muted },
+  bar: { height: 6, borderRadius: 99, backgroundColor: "#e2e8f0", overflow: "hidden" },
+  guest: { padding: 12, borderRadius: 12, backgroundColor: "#fff7e6", marginBottom: 12 },
+  guestText: { color: "#b45309", fontSize: 12.5, fontWeight: "700", lineHeight: 18 },
   label: { fontSize: 13, fontWeight: "700", color: colors.text, marginBottom: 6, marginTop: 6 },
   comment: {
-    minHeight: 70, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: "#fff",
+    minHeight: 70, borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#fff",
     padding: 12, fontSize: 15, textAlignVertical: "top", color: colors.text,
   },
-  summary: { backgroundColor: "#fff", borderRadius: radius.lg, padding: 16, marginVertical: 14, borderWidth: 1, borderColor: colors.border, gap: 8 },
-  sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
-  sumLabel: { color: colors.muted, fontWeight: "600" },
+  summary: { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 14, marginVertical: 14, gap: 6 },
+  sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  sumLabel: { color: colors.muted, fontWeight: "600", fontSize: 13 },
   totalLabel: { fontSize: 18, fontWeight: "800", color: colors.text },
-  total: { fontSize: 24, fontWeight: "900", color: colors.pink },
+  total: { fontSize: 24, fontWeight: "900" },
   hint: { color: colors.faint, fontSize: 12, textAlign: "center", marginTop: 10 },
 });
