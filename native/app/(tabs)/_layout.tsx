@@ -45,7 +45,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen name="orders" options={{ title: "Заказы", headerShown: false, tabBarIcon: icon("receipt", "receipt-outline") }} />
-      <Tabs.Screen name="profile" options={{ title: "Профиль", headerTitle: () => <PageTitle title="Профиль" />, headerTitleAlign: "left", tabBarIcon: icon("person", "person-outline") }} />
+      <Tabs.Screen name="profile" options={{ title: "Профиль", headerShown: false, tabBarIcon: icon("person", "person-outline") }} />
     </Tabs>
   );
 }

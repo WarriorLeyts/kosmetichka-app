@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
 
@@ -13,6 +14,8 @@ export default function RootLayout() {
   const loading = useAuth((s) => s.loading);
   // re-mount the whole UI when the theme changes so every screen re-reads the palette
   const mode = useTheme((s) => s.mode);
+  // Inter is the Android stand-in for Apple's SF Pro in iOS-style screens (iPhone uses the system font)
+  useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
 
   useEffect(() => {
     refresh();
