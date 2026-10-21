@@ -12,6 +12,7 @@ import { orderCache } from "@/orderCache";
 import { Badge, Empty, ErrorView, Loading, tap } from "@/components/ui";
 import { GradientText } from "@/components/GradientText";
 import { LoginRequired } from "@/components/LoginRequired";
+import { PageTitle } from "@/components/PageTitle";
 import { STATUS_COLORS, STATUS_ICONS, STATUS_LABELS, type Order, type OrdersPage } from "@/types";
 
 // Tailwind colors used by the site's orders page
@@ -157,7 +158,7 @@ export default function Orders() {
       }}
       ListHeaderComponent={
         <View style={{ gap: 12 }}>
-          <GradientText style={styles.title}>Мои заказы</GradientText>
+          <PageTitle title="Мои заказы" colors={[T.pink500, T.purple500, T.blue700]} />
 
           {stats && stats.totalOrders > 0 && (
             <View style={styles.statsGrid}>

@@ -22,7 +22,9 @@
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundImage": "./assets/adaptive-background.png"
       },
-      "permissions": ["android.permission.CAMERA"]
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
     },
     "plugins": [
       "expo-router",
@@ -30,20 +32,28 @@
         "expo-splash-screen",
         {
           "image": "./assets/splash-icon.png",
-          "imageWidth": 120,
+          "imageWidth": 150,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
       ],
       [
         "expo-camera",
-        { "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды товаров." }
+        {
+          "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды товаров."
+        }
       ],
       [
         "expo-build-properties",
-        { "android": { "usesCleartextTraffic": false } }
+        {
+          "android": {
+            "usesCleartextTraffic": false
+          }
+        }
       ]
     ],
-    "experiments": { "typedRoutes": false }
+    "experiments": {
+      "typedRoutes": false
+    }
   }
 }

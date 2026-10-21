@@ -3,6 +3,8 @@ import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { Image } from "expo-image";
+import { LOGO } from "@/components/PageTitle";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
 import { colors, gradient, radius } from "@/theme";
@@ -55,7 +57,10 @@ export default function Home() {
       <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 18 }]}>
         <View style={styles.heroTop}>
           <View>
-            <Text style={styles.logo}>♡ Косметичка</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <Image source={LOGO} style={styles.logoImg} contentFit="contain" />
+              <Text style={styles.logo}>Косметичка</Text>
+            </View>
             <Text style={styles.subtitle}>Косметика и парфюмерия оптом</Text>
           </View>
           <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={styles.heroIcon}>
@@ -161,6 +166,7 @@ const styles = StyleSheet.create({
   hero: { paddingHorizontal: 18, paddingBottom: 22, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
   logo: { color: "#fff", fontSize: 26, fontWeight: "900" },
+  logoImg: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: "rgba(255,255,255,0.85)" },
   subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, marginTop: 2, fontWeight: "600" },
   heroIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
   searchRow: { flexDirection: "row", gap: 10 },
