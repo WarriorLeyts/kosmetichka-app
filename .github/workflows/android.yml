@@ -21,14 +21,14 @@ jobs:
           java-version: 21
 
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: scripts/ci-run.sh npm install --no-audit --no-fund
 
       - name: Build web + Android project
-        run: scripts/prepare-native.sh android
+        run: scripts/ci-run.sh scripts/prepare-native.sh android
 
       - name: Build APK
         working-directory: android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ../scripts/ci-run.sh ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
