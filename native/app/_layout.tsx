@@ -4,13 +4,15 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuth } from "@/store/auth";
-import { colors } from "@/theme";
+import { colors, useTheme } from "@/theme";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
+  // re-mount the whole UI when the theme changes so every screen re-reads the palette
+  const mode = useTheme((s) => s.mode);
 
   useEffect(() => {
     refresh();
@@ -28,8 +30,9 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar style={colors.statusBar} />
       <Stack
+        key={mode}
         screenOptions={{
           headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: "800" },

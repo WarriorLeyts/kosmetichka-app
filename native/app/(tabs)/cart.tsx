@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { api, imageUrl } from "@/api";
-import { colors, radius } from "@/theme";
+import { colors, radius, themed } from "@/theme";
 import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -166,12 +166,12 @@ export default function Cart() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   item: {
-    flexDirection: "row", gap: 12, backgroundColor: "#fff", borderRadius: radius.lg, padding: 12, marginBottom: 10,
+    flexDirection: "row", gap: 12, backgroundColor: colors.card, borderRadius: radius.lg, padding: 12, marginBottom: 10,
     borderWidth: 1, borderColor: colors.border,
   },
-  img: { width: 72, height: 72, borderRadius: 12, backgroundColor: colors.soft },
+  img: { width: 72, height: 72, borderRadius: 12, backgroundColor: "#ffffff" },
   name: { fontWeight: "700", color: colors.text, fontSize: 14, lineHeight: 19 },
   variant: { color: colors.violet, fontSize: 12, fontWeight: "700", marginTop: 2 },
   unit: { color: colors.muted, fontSize: 12, marginTop: 4 },
@@ -179,14 +179,14 @@ const styles = StyleSheet.create({
   sum: { fontWeight: "900", color: colors.text, fontSize: 15 },
   label: { fontSize: 13, fontWeight: "700", color: colors.text, marginBottom: 6, marginTop: 6 },
   comment: {
-    minHeight: 70, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: "#fff",
+    minHeight: 70, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.card,
     padding: 12, fontSize: 15, textAlignVertical: "top", color: colors.text,
   },
-  summary: { backgroundColor: "#fff", borderRadius: radius.lg, padding: 16, marginVertical: 14, borderWidth: 1, borderColor: colors.border, gap: 8 },
+  summary: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginVertical: 14, borderWidth: 1, borderColor: colors.border, gap: 8 },
   sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   sumLabel: { color: colors.muted, fontWeight: "600" },
   totalLabel: { fontSize: 18, fontWeight: "800", color: colors.text },
   // like the site's .cart-total strong: 24px, 900, brand gradient text
   total: { fontSize: 24, fontWeight: "900", lineHeight: 30 },
   hint: { color: colors.faint, fontSize: 12, textAlign: "center", marginTop: 10 },
-});
+}));

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { themed } from "@/theme";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router } from "expo-router";
@@ -90,7 +91,7 @@ export default function Scanner() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   center: { flex: 1, backgroundColor: "#111", alignItems: "center", justifyContent: "center", padding: 24 },
   title: { color: "#fff", fontSize: 20, fontWeight: "900", marginTop: 16 },
   text: { color: "rgba(255,255,255,0.7)", textAlign: "center", marginTop: 6 },
@@ -99,4 +100,4 @@ const styles = StyleSheet.create({
   frameWrap: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center" },
   frame: { width: 280, height: 170, borderRadius: 20, borderWidth: 3, borderColor: "#fff" },
   hint: { color: "#fff", fontWeight: "700", marginTop: 18, backgroundColor: "rgba(0,0,0,0.5)", paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, overflow: "hidden" },
-});
+}));

@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_GRADIENT } from "./GradientText";
 import { Ionicons } from "@expo/vector-icons";
 import { imageUrl } from "../api";
-import { colors, radius } from "../theme";
+import { colors, radius, themed } from "../theme";
 import { stockLabel } from "../format";
 import { priceRows, PriceRows } from "./Price";
 import { tap } from "./ui";
@@ -88,10 +88,10 @@ const STOCK_PILL = {
   out: { bg: "#fef2f2", fg: "#dc2626" },
 };
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   card: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
     borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   imageWrap: {
     height: 150,
-    backgroundColor: "#fff",
+    backgroundColor: "#ffffff", // product photos have white backgrounds — keep the tile white in dark mode too
     alignItems: "center",
     justifyContent: "center",
     borderBottomWidth: 1,
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: "rgba(255,255,255,0.92)",
+    backgroundColor: colors.overlay,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -133,4 +133,4 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   addText: { color: "#fff", fontWeight: "800", fontSize: 13 },
-});
+}));

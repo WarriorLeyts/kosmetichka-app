@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, TextInputPro
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { colors, gradient, radius } from "../theme";
+import { colors, gradient, radius, themed } from "../theme";
 
 export function tap() {
   Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -67,8 +67,8 @@ export function Button({ title, onPress, loading, disabled, icon, variant = "pri
           style={{
             borderRadius: radius.md,
             borderWidth: variant === "ghost" ? 0 : 1.5,
-            borderColor: variant === "danger" ? "#fecaca" : "#ddd6fe",
-            backgroundColor: variant === "danger" ? colors.dangerBg : "#faf8ff",
+            borderColor: variant === "danger" ? colors.dangerBg : colors.violetBorder,
+            backgroundColor: variant === "danger" ? colors.dangerBg : colors.violetSoft,
           }}
         >
           {content}
@@ -184,7 +184,7 @@ export function Notice({ tone, text }: { tone: "error" | "success" | "info"; tex
       ? { fg: colors.danger, bg: colors.dangerBg, icon: "alert-circle" as const }
       : tone === "success"
       ? { fg: colors.success, bg: colors.successBg, icon: "checkmark-circle" as const }
-      : { fg: colors.violet, bg: "#f5f3ff", icon: "information-circle" as const };
+      : { fg: colors.violet, bg: colors.violetSoft, icon: "information-circle" as const };
   return (
     <View style={{ flexDirection: "row", gap: 8, backgroundColor: c.bg, padding: 12, borderRadius: radius.md, marginBottom: 14 }}>
       <Ionicons name={c.icon} size={18} color={c.fg} />
@@ -193,7 +193,7 @@ export function Notice({ tone, text }: { tone: "error" | "success" | "info"; tex
   );
 }
 
-export const styles = StyleSheet.create({
+export const styles = themed(() => ({
   btnInner: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 18 },
   btnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
   label: { fontSize: 13, fontWeight: "700", color: colors.text, marginBottom: 6 },
@@ -202,7 +202,7 @@ export const styles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.border,
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
     paddingHorizontal: 14,
     fontSize: 16,
     color: colors.text,
@@ -214,7 +214,7 @@ export const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: "#f5f3ff",
+    backgroundColor: colors.violetSoft,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -223,11 +223,11 @@ export const styles = StyleSheet.create({
   stepper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f5f3ff",
+    backgroundColor: colors.violetSoft,
     borderRadius: 999,
     padding: 3,
   },
-  stepBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  stepBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
   stepValue: { minWidth: 36, textAlign: "center", fontSize: 15, fontWeight: "800", color: colors.text },
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, borderWidth: 1, borderColor: colors.border },
-});
+}));

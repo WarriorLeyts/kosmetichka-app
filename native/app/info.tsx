@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
 import { BASE_URL } from "@/api";
-import { colors, radius } from "@/theme";
+import { colors, radius, themed } from "@/theme";
 
 const REQUISITES: [string, string][] = [
   ["Организация", "ООО «ВЕДУЧИ-1»"],
@@ -49,9 +49,9 @@ export default function Info() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   lead: { color: colors.muted, lineHeight: 21, marginBottom: 4 },
-  box: { backgroundColor: "#fff", borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 14, overflow: "hidden" },
+  box: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 14, overflow: "hidden" },
   row: { padding: 14 },
   sep: { borderTopWidth: 1, borderTopColor: colors.soft },
   k: { color: colors.muted, fontSize: 12, fontWeight: "700" },
@@ -59,4 +59,4 @@ const styles = StyleSheet.create({
   link: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, minHeight: 54 },
   linkText: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 15 },
   version: { color: colors.faint, textAlign: "center", marginTop: 24, fontSize: 12 },
-});
+}));

@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { api, BASE_URL } from "@/api";
-import { colors, radius } from "@/theme";
+import { colors, radius, themed } from "@/theme";
 import { useAuth } from "@/store/auth";
 import { Captcha } from "@/components/Captcha";
 import { Button, Field, Notice, tap } from "@/components/ui";
@@ -148,14 +148,14 @@ export default function Register() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   h: { fontSize: 17, fontWeight: "900", color: colors.text, marginBottom: 10 },
   types: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 },
-  type: { width: "48%", flexGrow: 1, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: "#fff", padding: 12 },
-  typeActive: { borderColor: colors.pink, backgroundColor: "#fdf2f8" },
+  type: { width: "48%", flexGrow: 1, borderRadius: radius.md, borderWidth: 1.5, borderColor: colors.border, backgroundColor: colors.card, padding: 12 },
+  typeActive: { borderColor: colors.pink, backgroundColor: colors.pinkSoft },
   typeLabel: { fontWeight: "900", color: colors.text, fontSize: 15 },
   typeDesc: { color: colors.muted, fontSize: 12, marginTop: 2 },
   consent: { flexDirection: "row", gap: 10, alignItems: "flex-start", marginVertical: 16 },
   consentText: { flex: 1, color: colors.muted, fontSize: 13, lineHeight: 19 },
   link: { color: colors.violet, fontWeight: "700" },
-});
+}));

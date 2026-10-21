@@ -2,7 +2,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-nati
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { colors, gradient, radius } from "@/theme";
+import { colors, gradient, radius, themed } from "@/theme";
 import { useAuth } from "@/store/auth";
 import { useFavorites } from "@/store/favorites";
 import { useWaitlistStore } from "@/store/waitlist";
@@ -113,7 +113,7 @@ export default function Profile() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   card: { borderRadius: radius.xl, padding: 22, alignItems: "flex-start" },
   avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: "rgba(255,255,255,0.25)", alignItems: "center", justifyContent: "center" },
   avatarText: { color: "#fff", fontSize: 24, fontWeight: "900" },
@@ -122,10 +122,10 @@ const styles = StyleSheet.create({
   tags: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 },
   tag: { backgroundColor: "rgba(255,255,255,0.22)", borderRadius: 999, paddingHorizontal: 12, paddingVertical: 5 },
   tagText: { color: "#fff", fontWeight: "700", fontSize: 12 },
-  menu: { backgroundColor: "#fff", borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 16, overflow: "hidden" },
+  menu: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 16, overflow: "hidden" },
   row: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, minHeight: 56 },
   sep: { borderTopWidth: 1, borderTopColor: colors.soft },
-  rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: "#f5f3ff", alignItems: "center", justifyContent: "center" },
+  rowIcon: { width: 34, height: 34, borderRadius: 10, backgroundColor: colors.violetSoft, alignItems: "center", justifyContent: "center" },
   rowText: { flex: 1, fontSize: 15, fontWeight: "700", color: colors.text },
   rowValue: { color: colors.muted, fontWeight: "700" },
-});
+}));

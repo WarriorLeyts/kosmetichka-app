@@ -23,7 +23,7 @@ export default function TabsLayout() {
         tabBarActiveTintColor: colors.pink,
         tabBarInactiveTintColor: colors.faint,
         tabBarLabelStyle: { fontSize: 11, fontWeight: "700" },
-        tabBarStyle: { borderTopColor: colors.border, backgroundColor: "#fff" },
+        tabBarStyle: { borderTopColor: colors.border, backgroundColor: colors.card },
         headerTitleStyle: { fontWeight: "800", fontSize: 20 },
         headerShadowVisible: false,
         headerStyle: { backgroundColor: colors.bg },

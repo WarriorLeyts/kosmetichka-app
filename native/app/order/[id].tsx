@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import { api, BASE_URL, imageUrl } from "@/api";
-import { colors, radius } from "@/theme";
+import { colors, radius, themed } from "@/theme";
 import { date, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
 import { useCartStore } from "@/store/cart";
@@ -26,7 +26,7 @@ function MessageBody({ text, mine }: { text: string; mine: boolean }) {
       return (
         <View style={{ width: 210 }}>
           {obj.imagePath ? (
-            <Image source={{ uri: imageUrl(obj.imagePath) ?? undefined }} style={{ width: 210, height: 120, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" />
+            <Image source={{ uri: imageUrl(obj.imagePath) ?? undefined }} style={{ width: 210, height: 120, borderRadius: 10, backgroundColor: colors.card }} contentFit="contain" />
           ) : null}
           <Text style={{ fontWeight: "700", marginTop: 6, color: mine ? "#fff" : colors.text }}>{obj.name}</Text>
           {typeof obj.price === "number" ? <Text style={{ color: mine ? "#fff" : colors.pink, fontWeight: "800" }}>{money(obj.price)}</Text> : null}
@@ -241,13 +241,13 @@ export default function OrderScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   meta: { color: colors.muted, fontSize: 12, marginTop: 2 },
-  box: { backgroundColor: "#fff", borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 12, overflow: "hidden" },
+  box: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 12, overflow: "hidden" },
   item: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12 },
   sep: { borderTopWidth: 1, borderTopColor: colors.soft },
-  img: { width: 46, height: 46, borderRadius: 8, backgroundColor: colors.soft },
+  img: { width: 46, height: 46, borderRadius: 8, backgroundColor: "#ffffff" },
   itemName: { fontWeight: "700", color: colors.text, fontSize: 13 },
   variant: { color: colors.violet, fontSize: 12, fontWeight: "700" },
   itemSum: { fontWeight: "800", color: colors.text },
@@ -259,16 +259,16 @@ const styles = StyleSheet.create({
   h: { fontSize: 18, fontWeight: "900", color: colors.text, marginTop: 24, marginBottom: 10 },
   bubble: { maxWidth: "82%", borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8 },
   mine: { alignSelf: "flex-end", backgroundColor: colors.violet, borderBottomRightRadius: 6 },
-  theirs: { alignSelf: "flex-start", backgroundColor: "#fff", borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 6 },
+  theirs: { alignSelf: "flex-start", backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 6 },
   from: { color: colors.pink, fontWeight: "800", fontSize: 12, marginBottom: 2 },
   time: { color: colors.faint, fontSize: 11, marginTop: 4, alignSelf: "flex-end" },
   composer: {
     flexDirection: "row", alignItems: "flex-end", gap: 8, padding: 10, paddingBottom: Platform.OS === "ios" ? 28 : 10,
-    backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: colors.border,
+    backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border,
   },
   input: {
     flex: 1, minHeight: 42, maxHeight: 120, borderRadius: 21, backgroundColor: colors.soft, paddingHorizontal: 16,
     paddingTop: 11, paddingBottom: 11, fontSize: 15, color: colors.text,
   },
   send: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.pink, alignItems: "center", justifyContent: "center" },
-});
+}));

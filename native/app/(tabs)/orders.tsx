@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
-import { colors } from "@/theme";
+import { colors, themed } from "@/theme";
 import { date, money } from "@/format";
 import { useAuth } from "@/store/auth";
 import { orderCache } from "@/orderCache";
@@ -40,7 +40,7 @@ const FILTERS: { key: string; label: string }[] = [
 
 /** One order — same look as the site's OrderCard; tap opens the order with chat. */
 function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
-  const c = STATUS_COLORS[order.status] ?? { fg: T.slate500, bg: "#f1f5f9", border: "#e2e8f0" };
+  const c = STATUS_COLORS[order.status] ?? { fg: colors.muted, bg: colors.soft, border: colors.border };
   const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
   const confirmed = order.status === "consultation" && order.customerConfirmed;
 
@@ -51,10 +51,10 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
           tap();
           router.push(`/order/${order.id}`);
         }}
-        style={({ pressed }) => [styles.cardHead, pressed && { backgroundColor: "rgba(248,250,252,0.5)" }]}
+        style={({ pressed }) => [styles.cardHead, pressed && { backgroundColor: colors.soft }]}
       >
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
-          <LinearGradient colors={["#fdf2f8", "#faf5ff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.icon}>
+          <LinearGradient colors={[colors.pinkSoft, colors.violetSoft]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.icon}>
             <Text style={{ fontSize: 20 }}>{STATUS_ICONS[order.status] ?? "📦"}</Text>
           </LinearGradient>
           <View style={{ gap: 2, flexShrink: 1 }}>
@@ -67,7 +67,7 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           {unread && <Ionicons name="chatbubble-ellipses" size={16} color={T.pink500} />}
           <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} border={c.border} />
-          <Text style={{ color: T.slate300, fontSize: 12 }}>▼</Text>
+          <Text style={{ color: colors.faint, fontSize: 12 }}>▼</Text>
         </View>
       </Pressable>
 
@@ -135,7 +135,7 @@ export default function Orders() {
   );
 
   const bg = (child: ReactNode) => (
-    <LinearGradient colors={["#fdf2f8", "#f5f3ff", "#eff6ff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
+    <LinearGradient colors={colors.pageGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }}>
       {child}
     </LinearGradient>
   );
@@ -198,13 +198,13 @@ export default function Orders() {
           <ActivityIndicator style={{ margin: 40 }} color={T.purple500} />
         ) : status ? (
           <View style={styles.emptyBox}>
-            <Text style={{ fontWeight: "700", color: T.slate700 }}>Заказов не найдено</Text>
+            <Text style={{ fontWeight: "700", color: colors.strong }}>Заказов не найдено</Text>
           </View>
         ) : (
           <View style={[styles.emptyBox, { paddingVertical: 48 }]}>
             <Text style={{ fontSize: 44, marginBottom: 12 }}>🛍️</Text>
-            <Text style={{ fontSize: 20, fontWeight: "900", color: T.slate700, marginBottom: 4 }}>Заказов пока нет</Text>
-            <Text style={{ color: T.slate400, marginBottom: 20, textAlign: "center" }}>Оформите первый заказ в каталоге</Text>
+            <Text style={{ fontSize: 20, fontWeight: "900", color: colors.strong, marginBottom: 4 }}>Заказов пока нет</Text>
+            <Text style={{ color: colors.faint, marginBottom: 20, textAlign: "center" }}>Оформите первый заказ в каталоге</Text>
             <Pressable onPress={() => router.navigate("/catalog")}>
               <LinearGradient colors={[T.pink500, T.purple500, T.blue700]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.openBtn}>
                 <Text style={[styles.openText, { paddingHorizontal: 18 }]}>Перейти в каталог</Text>
@@ -226,33 +226,33 @@ const cardShadow = {
   elevation: 2,
 };
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   title: { fontSize: 30, fontWeight: "900", lineHeight: 36 },
   statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   stat: {
     flexGrow: 1,
     flexBasis: "45%",
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
     borderRadius: 16,
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.6)",
+    borderColor: colors.border,
     ...cardShadow,
   },
   statWide: { flexBasis: "100%" },
-  statLabel: { fontSize: 12, fontWeight: "600", color: T.slate400, marginBottom: 4 },
+  statLabel: { fontSize: 12, fontWeight: "600", color: colors.faint, marginBottom: 4 },
   statValueBig: { fontSize: 24, fontWeight: "900", lineHeight: 30 },
   statValue: { fontSize: 20, fontWeight: "900", lineHeight: 26 },
-  top: { fontSize: 14, fontWeight: "700", color: T.slate800 },
+  top: { fontSize: 14, fontWeight: "700", color: colors.strong },
   chip: { height: 34, paddingHorizontal: 14, borderRadius: 999, justifyContent: "center" },
-  chipOff: { backgroundColor: "#fff", borderWidth: 1, borderColor: "#e2e8f0" },
-  chipText: { fontWeight: "700", color: T.slate700, fontSize: 13 },
+  chipOff: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
+  chipText: { fontWeight: "700", color: colors.strong, fontSize: 13 },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.6)",
+    borderColor: colors.border,
     shadowColor: "#a855f7",
     shadowOpacity: 0.06,
     shadowRadius: 16,
@@ -268,19 +268,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1,
-    borderColor: "#f3e8ff",
+    borderColor: colors.violetBorder,
   },
-  num: { fontWeight: "900", color: T.slate800, fontSize: 16 },
-  meta: { fontSize: 12, color: T.slate400, fontWeight: "500" },
+  num: { fontWeight: "900", color: colors.strong, fontSize: 16 },
+  meta: { fontSize: 12, color: colors.faint, fontWeight: "500" },
   note: { marginHorizontal: 16, marginBottom: 12, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 12 },
-  body: { borderTopWidth: 1, borderTopColor: "#f1f5f9", paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
+  body: { borderTopWidth: 1, borderTopColor: colors.soft, paddingHorizontal: 16, paddingVertical: 12, gap: 8 },
   itemRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  itemName: { flex: 1, fontSize: 13, color: T.slate700 },
-  itemQty: { fontSize: 12, color: T.slate400 },
-  itemSum: { fontSize: 13, fontWeight: "700", color: T.slate800, minWidth: 70, textAlign: "right" },
-  comment: { fontSize: 13, color: T.slate500, fontStyle: "italic" },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: "#f1f5f9", paddingTop: 10 },
+  itemName: { flex: 1, fontSize: 13, color: colors.strong },
+  itemQty: { fontSize: 12, color: colors.faint },
+  itemSum: { fontSize: 13, fontWeight: "700", color: colors.strong, minWidth: 70, textAlign: "right" },
+  comment: { fontSize: 13, color: colors.muted, fontStyle: "italic" },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", borderTopWidth: 1, borderTopColor: colors.soft, paddingTop: 10 },
   openBtn: { height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center", marginTop: 4 },
   openText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-  emptyBox: { backgroundColor: "#fff", borderRadius: 24, padding: 32, alignItems: "center" },
-});
+  emptyBox: { backgroundColor: colors.card, borderRadius: 24, padding: 32, alignItems: "center" },
+}));

@@ -8,7 +8,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { api, BASE_URL, imageUrl } from "@/api";
-import { colors, radius } from "@/theme";
+import { colors, radius, themed } from "@/theme";
 import { stockLabel } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -278,8 +278,8 @@ export default function ProductScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  gallery: { backgroundColor: "#fff", paddingBottom: 12, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+const styles = themed(() => ({
+  gallery: { backgroundColor: "#ffffff", paddingBottom: 12, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
   dots: { flexDirection: "row", justifyContent: "center", gap: 6 },
   dotItem: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
   dotActive: { width: 18, backgroundColor: colors.pink },
@@ -288,19 +288,19 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 },
   stock: { fontWeight: "800", fontSize: 13 },
   meta: { color: colors.muted, fontSize: 13, marginTop: 4 },
-  priceCard: { backgroundColor: "#fff", borderRadius: radius.lg, padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.border },
+  priceCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.border },
   h: { fontSize: 18, fontWeight: "900", color: colors.text, marginTop: 22, marginBottom: 10 },
   desc: { color: colors.text, fontSize: 15, lineHeight: 22 },
   variantBox: { marginTop: 4 },
   variantRow: {
-    flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#fff", borderRadius: radius.md,
+    flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.card, borderRadius: radius.md,
     padding: 10, marginBottom: 8, borderWidth: 1, borderColor: colors.border,
   },
   variantImg: { width: 48, height: 48, borderRadius: 10, backgroundColor: colors.soft },
   variantName: { flex: 1, fontWeight: "700", color: colors.text, fontSize: 14 },
-  variantAdd: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#f5f3ff", alignItems: "center", justifyContent: "center" },
+  variantAdd: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.violetSoft, alignItems: "center", justifyContent: "center" },
   bottom: {
     position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", alignItems: "center", gap: 12,
-    paddingHorizontal: 16, paddingTop: 12, backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: colors.border,
+    paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border,
   },
-});
+}));

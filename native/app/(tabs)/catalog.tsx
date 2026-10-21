@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
-import { colors, radius } from "@/theme";
+import { colors, radius, themed } from "@/theme";
 import { LinearGradient } from "expo-linear-gradient";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { BRAND_GRADIENT } from "@/components/GradientText";
@@ -213,10 +213,10 @@ export default function Catalog() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   top: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 },
   searchBox: {
-    flex: 1, height: 46, borderRadius: radius.md, backgroundColor: "#fff", borderWidth: 1, borderColor: colors.border,
+    flex: 1, height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
     flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 8,
   },
   searchInput: { flex: 1, fontSize: 16, color: colors.text, height: "100%" },
@@ -230,22 +230,22 @@ const styles = StyleSheet.create({
   },
   gradBtn: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   iconBtn: {
-    width: 46, height: 46, borderRadius: radius.md, backgroundColor: "#fff", borderWidth: 1, borderColor: colors.border,
+    width: 46, height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
     alignItems: "center", justifyContent: "center",
   },
   dot: {
-    position: "absolute", top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#fff",
+    position: "absolute", top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.card,
     alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 1, borderColor: colors.pink,
   },
   dotText: { color: colors.pink, fontSize: 10, fontWeight: "900" },
   chips: { paddingHorizontal: 5, paddingVertical: 6, gap: 8 },
   chip: {
     flexDirection: "row", alignItems: "center", gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 999,
-    backgroundColor: "#fff", borderWidth: 1, borderColor: colors.border, maxWidth: 240,
+    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, maxWidth: 240,
   },
   chipActive: { backgroundColor: colors.violet, borderColor: colors.violet },
   chipText: { fontWeight: "700", color: colors.text, fontSize: 13 },
   countRow: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 6, paddingVertical: 6 },
   count: { color: colors.muted, fontWeight: "700", fontSize: 13 },
   sort: { color: colors.violet, fontWeight: "700", fontSize: 13 },
-});
+}));

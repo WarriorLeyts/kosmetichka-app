@@ -7,7 +7,7 @@ import { Image } from "expo-image";
 import { LOGO } from "@/components/PageTitle";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
-import { colors, gradient, radius } from "@/theme";
+import { colors, gradient, radius, themed, useTheme } from "@/theme";
 import { topCategories, useCatalog, type Quick } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -26,6 +26,8 @@ const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }
 
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const mode = useTheme((s) => s.mode);
+  const toggleTheme = useTheme((s) => s.toggle);
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const favorites = useFavorites((s) => s.items);
@@ -63,9 +65,22 @@ export default function Home() {
             </View>
             <Text style={styles.subtitle}>Косметика и парфюмерия оптом</Text>
           </View>
-          <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={styles.heroIcon}>
-            <Ionicons name="heart-outline" size={22} color="#fff" />
-          </Pressable>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <Pressable
+              onPress={() => {
+                tap();
+                toggleTheme();
+              }}
+              hitSlop={10}
+              style={styles.heroIcon}
+              accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"}
+            >
+              <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={21} color="#fff" />
+            </Pressable>
+            <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={styles.heroIcon}>
+              <Ionicons name="heart-outline" size={22} color="#fff" />
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.searchRow}>
@@ -162,7 +177,7 @@ export default function Home() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   hero: { paddingHorizontal: 18, paddingBottom: 22, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
   logo: { color: "#fff", fontSize: 26, fontWeight: "900" },
@@ -170,28 +185,28 @@ const styles = StyleSheet.create({
   subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, marginTop: 2, fontWeight: "600" },
   heroIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
   searchRow: { flexDirection: "row", gap: 10 },
-  search: { flex: 1, height: 48, borderRadius: radius.md, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },
+  search: { flex: 1, height: 48, borderRadius: radius.md, backgroundColor: colors.card, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },
   searchText: { color: colors.faint, fontSize: 15 },
-  scan: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  scan: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
   stats: { color: "rgba(255,255,255,0.9)", fontSize: 12, fontWeight: "600", marginTop: 12 },
   loginBanner: {
-    margin: 16, marginBottom: 0, padding: 14, borderRadius: radius.lg, backgroundColor: "#f5f3ff",
-    flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderColor: "#ede9fe",
+    margin: 16, marginBottom: 0, padding: 14, borderRadius: radius.lg, backgroundColor: colors.violetSoft,
+    flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderColor: colors.violetBorder,
   },
   loginTitle: { fontWeight: "800", color: colors.text, fontSize: 14 },
   loginText: { color: colors.muted, fontSize: 12, marginTop: 2 },
   quickRow: { paddingHorizontal: 16, paddingTop: 16, gap: 8 },
   quick: {
-    flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "#fff", borderRadius: 999,
+    flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.card, borderRadius: 999,
     paddingHorizontal: 14, height: 40, borderWidth: 1, borderColor: colors.border,
   },
   quickText: { fontWeight: "700", color: colors.text, fontSize: 13 },
   section: { fontSize: 20, fontWeight: "900", color: colors.text, marginHorizontal: 16, marginTop: 24, marginBottom: 10 },
   grid: { flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, gap: 8 },
   cat: {
-    width: "48%", flexGrow: 1, minHeight: 56, backgroundColor: "#fff", borderRadius: radius.md, borderWidth: 1,
+    width: "48%", flexGrow: 1, minHeight: 56, backgroundColor: colors.card, borderRadius: radius.md, borderWidth: 1,
     borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 6,
   },
   catText: { flex: 1, fontWeight: "700", color: colors.text, fontSize: 13 },
   contacts: { flexDirection: "row", gap: 8, alignItems: "center", justifyContent: "center", marginTop: 28, padding: 10 },
-});
+}));

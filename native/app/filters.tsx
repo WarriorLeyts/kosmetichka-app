@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radius } from "@/theme";
+import { colors, radius, themed } from "@/theme";
 import { SORT_LABELS, useCatalog, type Quick, type Sort } from "@/store/catalog";
 import { Button, tap } from "@/components/ui";
 
@@ -117,18 +117,18 @@ export default function Filters() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   h: { fontSize: 13, fontWeight: "800", color: colors.muted, textTransform: "uppercase", marginTop: 18, marginBottom: 8, marginLeft: 4 },
-  box: { backgroundColor: "#fff", borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: "hidden" },
+  box: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, overflow: "hidden" },
   row: { minHeight: 52, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   sep: { borderTopWidth: 1, borderTopColor: colors.soft },
   rowText: { fontSize: 15, color: colors.text, fontWeight: "600", flex: 1, marginRight: 8 },
   search: {
-    height: 46, borderRadius: radius.md, backgroundColor: "#fff", borderWidth: 1, borderColor: colors.border,
+    height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: 14, fontSize: 16, marginBottom: 10, color: colors.text,
   },
   footer: {
     position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", gap: 10, padding: 16,
-    backgroundColor: "#fff", borderTopWidth: 1, borderTopColor: colors.border,
+    backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border,
   },
-});
+}));

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { colors, themed } from "../theme";
 import { Animated, Dimensions, Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -73,13 +74,13 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
                 tap();
                 setExpanded(isExpanded ? null : cat.guid);
               }}
-              style={({ pressed }) => [styles.toggle, pressed && { backgroundColor: "#fdf2f8" }]}
+              style={({ pressed }) => [styles.toggle, pressed && { backgroundColor: colors.pinkSoft }]}
               hitSlop={4}
             >
               <Ionicons
                 name="chevron-forward"
                 size={16}
-                color={isExpanded ? "#e82c87" : "#94a3b8"}
+                color={isExpanded ? colors.pink : colors.faint}
                 style={{ transform: [{ rotate: isExpanded ? "90deg" : "0deg" }] }}
               />
             </Pressable>
@@ -99,7 +100,7 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
         <View style={styles.header}>
           <Text style={styles.title}>Категории</Text>
           <Pressable onPress={onClose} style={styles.close} hitSlop={6}>
-            <Ionicons name="close" size={18} color="#64748b" />
+            <Ionicons name="close" size={18} color={colors.muted} />
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 6, paddingTop: 8, paddingBottom: insets.bottom + 16 }}>
@@ -119,7 +120,7 @@ function Item({ label, active, depth, onPress }: { label: string; active: boolea
       style={[
         styles.itemText,
         depth > 0 && { fontSize: 13 },
-        active && { color: "#e82c87" },
+        active && { color: colors.pink },
       ]}
     >
       {label}
@@ -127,10 +128,10 @@ function Item({ label, active, depth, onPress }: { label: string; active: boolea
   );
   const pad = { paddingLeft: 14 + depth * 10 };
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [styles.item, pad, pressed && !active && { backgroundColor: "#f8fafc" }]}>
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.item, pad, pressed && !active && { backgroundColor: colors.soft }]}>
       {active ? (
         <LinearGradient
-          colors={["#fdf2f8", "#f5f3ff"]}
+          colors={["#fdf2f8", colors.violetSoft]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={[StyleSheet.absoluteFill, { borderRadius: 12 }]}
@@ -141,14 +142,14 @@ function Item({ label, active, depth, onPress }: { label: string; active: boolea
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   backdrop: { backgroundColor: "rgba(0,0,0,0.45)" },
   drawer: {
     position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: "#fff",
+    backgroundColor: colors.card,
     shadowColor: "#000",
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -163,12 +164,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 13,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    borderBottomColor: colors.border,
   },
-  title: { fontSize: 17, fontWeight: "900", color: "#1f2937" },
-  close: { width: 34, height: 34, borderRadius: 12, backgroundColor: "#f8fafc", alignItems: "center", justifyContent: "center" },
+  title: { fontSize: 17, fontWeight: "900", color: colors.text },
+  close: { width: 34, height: 34, borderRadius: 12, backgroundColor: colors.soft, alignItems: "center", justifyContent: "center" },
   row: { flexDirection: "row", alignItems: "center", marginBottom: 2 },
   item: { flex: 1, paddingVertical: 9, paddingRight: 14, borderRadius: 12, overflow: "hidden" },
-  itemText: { fontWeight: "700", fontSize: 13.5, color: "#374151" },
+  itemText: { fontWeight: "700", fontSize: 13.5, color: colors.text },
   toggle: { width: 32, height: 32, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-});
+}));
