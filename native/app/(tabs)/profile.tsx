@@ -1,4 +1,4 @@
-import { Alert, ImageBackground, Pressable, ScrollView, Text, View } from "react-native";
+import { Alert, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -10,10 +10,10 @@ import { useFavorites } from "@/store/favorites";
 import { useWaitlistStore } from "@/store/waitlist";
 import { LOGO } from "@/components/PageTitle";
 import { Button, tap } from "@/components/ui";
+import { Glass } from "@/components/Glass";
 
 // Design sources: «Косметичка — исходники экрана Профиль» (palette.json, web/style.css)
 const SCREEN_BG = require("../../assets/profile/screen_bg.jpg");
-const CARD_BG = require("../../assets/profile/card_bg.png");
 const CARD_ART = require("../../assets/profile/card_art.png");
 
 const TIER: Record<string, { label: string; pill: string }> = {
@@ -28,24 +28,44 @@ type Row = { icon: IconName; title: string; sub: string; badge?: number; onPress
 
 function Chevron({ red }: { red?: boolean }) {
   return (
-    <View style={[styles.chev, red && { borderColor: "rgba(255,39,107,0.35)" }]}>
-      <Ionicons name="chevron-forward" size={18} color={red ? "#ff377f" : "#fff6fd"} />
-    </View>
+    <Glass
+      radius={16}
+      gloss={0.16}
+      fill={red ? ["rgba(110,14,52,0.55)", "rgba(60,8,32,0.6)"] : ["rgba(90,24,78,0.6)", "rgba(52,12,46,0.6)"]}
+      rim={red ? "rgba(255,55,127,0.45)" : "rgba(190,80,160,0.4)"}
+      glow="rgba(0,0,0,0)"
+      style={styles.chev}
+    >
+      <Ionicons name="chevron-forward" size={15} color={red ? "#ff377f" : "#fff6fd"} />
+    </Glass>
+  );
+}
+
+function IconBox({ name, red }: { name: IconName; red?: boolean }) {
+  return (
+    <Glass
+      radius={11}
+      gloss={0.18}
+      fill={red ? ["rgba(150,20,70,0.55)", "rgba(80,10,40,0.6)"] : ["rgba(128,18,88,0.75)", "rgba(80,10,58,0.75)"]}
+      rim={red ? "rgba(255,55,127,0.7)" : "rgba(214,70,160,0.75)"}
+      glow={red ? "rgba(255,39,107,0.35)" : "rgba(255,44,167,0.3)"}
+      style={styles.iconbox}
+    >
+      <Ionicons name={name} size={19} color={red ? "#ff377f" : "#ffc6ec"} />
+    </Glass>
   );
 }
 
 function MenuPanel({ rows }: { rows: Row[] }) {
   return (
-    <LinearGradient colors={[colors.card2, colors.card]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.menu}>
+    <Glass radius={22} fill={["rgba(58,24,56,0.72)", "rgba(36,8,32,0.78)"]} rim="rgba(160,50,125,0.75)" glow="rgba(255,44,167,0.22)" gloss={0.08} style={styles.menu}>
       {rows.map((r, i) => (
         <Pressable
           key={r.title}
           onPress={() => { tap(); r.onPress(); }}
           style={({ pressed }) => [styles.item, i < rows.length - 1 && styles.itemSep, pressed && { opacity: 0.75 }]}
         >
-          <View style={styles.iconbox}>
-            <Ionicons name={r.icon} size={25} color={colors.pinkLight} />
-          </View>
+          <IconBox name={r.icon} />
           <View style={{ flex: 1 }}>
             <Text style={styles.itemTitle}>{r.title}</Text>
             <Text style={styles.itemSub} numberOfLines={1}>{r.sub}</Text>
@@ -58,7 +78,7 @@ function MenuPanel({ rows }: { rows: Row[] }) {
           <Chevron />
         </Pressable>
       ))}
-    </LinearGradient>
+    </Glass>
   );
 }
 
@@ -89,10 +109,10 @@ export default function Profile() {
       ];
 
   const body = (
-    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 14, paddingHorizontal: 17, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+    <ScrollView contentContainerStyle={{ paddingTop: insets.top + 10, paddingHorizontal: 16, paddingBottom: 26 }} showsVerticalScrollIndicator={false}>
       {/* header: logo + serif title + subheading (no settings button) */}
       <View style={styles.header}>
-        <Image source={LOGO} style={{ width: 52, height: 52 }} contentFit="contain" />
+        <Image source={LOGO} style={{ width: 44, height: 44 }} contentFit="contain" />
         <View>
           <Text style={styles.heading}>Профиль</Text>
           <Text style={styles.subheading}>КОСМЕТИКА И ПАРФЮМЕРИЯ</Text>
@@ -100,17 +120,18 @@ export default function Profile() {
       </View>
 
       {/* client card */}
-      <ImageBackground source={CARD_BG} resizeMode="cover" style={styles.client} imageStyle={{ borderRadius: 27 }}>
+      <Glass radius={24} fill={["rgba(114,12,72,0.78)", "rgba(62,10,46,0.82)", "rgba(46,5,40,0.86)"]} rim="#cd2a8b" glow="rgba(255,44,167,0.45)" gloss={0.12} style={styles.client}>
+        <View style={styles.cardGlow} pointerEvents="none" />
         <Image source={CARD_ART} style={styles.art} contentFit="contain" />
         <View style={styles.topRow}>
           <View style={styles.avatar}>
             {customer ? (
               <Text style={styles.avatarText}>{name.trim().charAt(0).toUpperCase()}</Text>
             ) : (
-              <Ionicons name="person-outline" size={32} color="#fff6fd" />
+              <Ionicons name="person-outline" size={28} color="#fff6fd" />
             )}
           </View>
-          <View style={{ flex: 1, paddingRight: 110 }}>
+          <View style={{ flex: 1, paddingRight: 96 }}>
             <Text style={styles.name} numberOfLines={2}>{name}</Text>
             <Text style={styles.tierText} numberOfLines={2}>
               {customer ? tier.label : "Войдите, чтобы видеть свои цены и заказы"}
@@ -126,23 +147,23 @@ export default function Profile() {
 
         {/* bonus panel — MAXMA integration later; no fake amount */}
         {customer ? (
-          <View style={styles.balance}>
-            <View style={styles.gift}>
-              <Ionicons name="gift-outline" size={29} color="#ffd6f0" />
-            </View>
+          <Glass radius={17} fill={["rgba(110,24,90,0.62)", "rgba(74,14,57,0.7)"]} rim="rgba(224,91,164,0.8)" glow="rgba(255,44,167,0.3)" gloss={0.14} style={styles.balance}>
+            <Glass radius={13} fill={["#a0186e", "#801258"]} rim="rgba(255,120,200,0.6)" glow="rgba(255,44,167,0.45)" gloss={0.2} style={styles.gift}>
+              <Ionicons name="gift-outline" size={23} color="#ffd6f0" />
+            </Glass>
             <View style={{ flex: 1 }}>
               <Text style={styles.balanceLabel}>Бонусный баланс</Text>
               <Text style={styles.balanceValue}>Скоро</Text>
             </View>
             <Chevron />
-          </View>
+          </Glass>
         ) : (
           <View style={{ marginTop: 18, gap: 10 }}>
             <Button title="Войти" onPress={() => router.push("/login")} />
             <Button title="Зарегистрироваться" variant="outline" onPress={() => router.push("/register")} />
           </View>
         )}
-      </ImageBackground>
+      </Glass>
 
       <MenuPanel rows={rows} />
 
@@ -157,13 +178,11 @@ export default function Profile() {
           }}
           style={({ pressed }) => [pressed && { opacity: 0.8 }]}
         >
-          <LinearGradient colors={["#4e0a30", "#520d39"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.logout}>
-            <View style={[styles.iconbox, styles.logoutIcon]}>
-              <Ionicons name="log-out-outline" size={25} color="#ff377f" />
-            </View>
+          <Glass radius={20} fill={["rgba(78,10,48,0.75)", "rgba(41,8,29,0.8)"]} rim="rgba(222,44,112,0.85)" glow="rgba(255,39,107,0.35)" gloss={0.1} style={styles.logout}>
+            <IconBox name="log-out-outline" red />
             <Text style={styles.logoutText}>Выйти</Text>
             <Chevron red />
-          </LinearGradient>
+          </Glass>
         </Pressable>
       ) : null}
     </ScrollView>
@@ -171,7 +190,12 @@ export default function Profile() {
 
   // dark theme = exactly the mockup (photo background); light theme keeps the same layout on the light palette
   return dark ? (
-    <ImageBackground source={SCREEN_BG} resizeMode="cover" style={{ flex: 1, backgroundColor: "#130517" }}>
+    <ImageBackground source={SCREEN_BG} resizeMode="cover" style={{ flex: 1, backgroundColor: "#1a041b" }}>
+      <LinearGradient
+        colors={["rgba(26,4,27,0.82)", "rgba(20,3,21,0.78)", "rgba(26,4,27,0.7)"]}
+        style={StyleSheet.absoluteFill}
+        pointerEvents="none"
+      />
       {body}
     </ImageBackground>
   ) : (
@@ -180,101 +204,59 @@ export default function Profile() {
 }
 
 const styles = themed(() => ({
-  header: { flexDirection: "row", alignItems: "center", gap: 13, marginBottom: 22 },
-  heading: { fontFamily: fonts.serif, fontSize: 38, lineHeight: 42, color: colors.text },
-  subheading: { fontSize: 9, letterSpacing: 3, color: colors.muted, marginTop: 2 },
-  client: {
-    borderWidth: 1,
-    borderColor: "#c02682",
-    borderRadius: 27,
-    paddingTop: 22,
-    paddingHorizontal: 17,
-    paddingBottom: 17,
-    backgroundColor: "#4f0c39",
-    overflow: "hidden",
+  header: { flexDirection: "row", alignItems: "center", gap: 11, marginBottom: 16 },
+  heading: { fontFamily: fonts.serif, fontSize: 31, lineHeight: 34, color: colors.text },
+  subheading: { fontSize: 8, letterSpacing: 2.6, color: colors.muted, marginTop: 1 },
+  client: { paddingTop: 16, paddingHorizontal: 14, paddingBottom: 14 },
+  cardGlow: {
+    position: "absolute",
+    right: -40,
+    top: -30,
+    width: 220,
+    height: 200,
+    borderRadius: 110,
+    backgroundColor: "rgba(255,44,167,0.16)",
   },
-  art: { position: "absolute", right: -2, top: -12, width: 210, height: 202 },
-  topRow: { flexDirection: "row", alignItems: "center", gap: 14 },
+  art: { position: "absolute", right: -4, top: -10, width: 172, height: 166 },
+  topRow: { flexDirection: "row", alignItems: "center", gap: 12 },
   avatar: {
-    width: 74,
-    height: 74,
-    borderRadius: 37,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     borderWidth: 1,
     borderColor: "#e168b9",
-    backgroundColor: "rgba(177,43,138,0.44)",
+    backgroundColor: "rgba(177,43,138,0.35)",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#ff6ac0",
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 0 },
+    boxShadow: "0 0 14px rgba(255,106,192,0.45)",
   },
-  avatarText: { fontFamily: fonts.serif, fontSize: 36, color: "#fff6fd" },
-  name: { fontFamily: fonts.serif, fontSize: 30, lineHeight: 33, color: "#fff6fd" },
-  tierText: { color: "#f2d4ea", fontSize: 14.5, marginTop: 4 },
+  avatarText: { fontFamily: fonts.serif, fontSize: 30, color: "#fff6fd" },
+  name: { fontFamily: fonts.serif, fontSize: 26, lineHeight: 29, color: "#fff6fd" },
+  tierText: { color: "#e7c3de", fontSize: 13, marginTop: 3 },
   pill: {
     alignSelf: "flex-start",
-    marginTop: 12,
+    marginTop: 10,
     backgroundColor: "#a41970",
-    borderRadius: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 7,
+    borderRadius: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 5,
+    boxShadow: "0 0 10px rgba(255,44,167,0.35)",
   },
-  pillText: { color: "#fff6fd", fontSize: 14, fontWeight: "700" },
-  manager: { color: "#f2d4ea", fontSize: 12.5, marginTop: 10 },
-  balance: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: "#e05ba4",
-    borderRadius: 20,
-    backgroundColor: "rgba(91,18,80,0.85)",
-    paddingVertical: 12,
-    paddingHorizontal: 13,
-  },
-  gift: { width: 56, height: 56, borderRadius: 16, backgroundColor: "#9c0c72", alignItems: "center", justifyContent: "center" },
-  balanceLabel: { color: "#d6a4ce", fontSize: 13 },
-  balanceValue: { color: "#fff6fd", fontSize: 24, fontWeight: "700", marginTop: 1 },
-  chev: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    borderColor: "rgba(165,42,127,0.6)",
-    backgroundColor: "rgba(85,18,61,0.56)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  menu: { marginTop: 17, paddingHorizontal: 16, paddingVertical: 4, borderWidth: 1, borderColor: "#9d286d", borderRadius: 25 },
-  item: { flexDirection: "row", alignItems: "center", gap: 16, minHeight: 82 },
-  itemSep: { borderBottomWidth: 1, borderBottomColor: colors.border },
-  iconbox: {
-    width: 49,
-    height: 49,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#8f1b67",
-    backgroundColor: colors.violetSoft,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  itemTitle: { color: colors.text, fontSize: 16, fontWeight: "600" },
-  itemSub: { color: colors.muted, fontSize: 12, marginTop: 3 },
-  count: { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: colors.pink, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
-  countText: { color: "#fff", fontSize: 12, fontWeight: "800" },
-  logout: {
-    marginTop: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: "#de2c70",
-    borderRadius: 22,
-  },
-  logoutIcon: { borderColor: "#ae1d55", backgroundColor: "rgba(174,29,85,0.25)" },
-  logoutText: { flex: 1, color: "#ff377f", fontSize: 17, fontWeight: "700" },
+  pillText: { color: "#fff6fd", fontSize: 12.5, fontWeight: "700" },
+  manager: { color: "#e7c3de", fontSize: 11.5, marginTop: 8 },
+  balance: { flexDirection: "row", alignItems: "center", gap: 11, marginTop: 13, paddingVertical: 9, paddingHorizontal: 10 },
+  gift: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  balanceLabel: { color: "#d6a4ce", fontSize: 11.5 },
+  balanceValue: { color: "#fff6fd", fontSize: 20, fontWeight: "700", marginTop: 1 },
+  chev: { width: 30, height: 30, alignItems: "center", justifyContent: "center" },
+  menu: { marginTop: 14, paddingHorizontal: 13 },
+  item: { flexDirection: "row", alignItems: "center", gap: 13, minHeight: 64 },
+  itemSep: { borderBottomWidth: 1, borderBottomColor: "rgba(120,40,95,0.55)" },
+  iconbox: { width: 38, height: 38, alignItems: "center", justifyContent: "center" },
+  itemTitle: { color: colors.text, fontSize: 14.5, fontWeight: "600" },
+  itemSub: { color: colors.muted, fontSize: 11, marginTop: 2 },
+  count: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: colors.pink, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
+  countText: { color: "#fff", fontSize: 11, fontWeight: "800" },
+  logout: { marginTop: 14, flexDirection: "row", alignItems: "center", gap: 13, paddingVertical: 9, paddingHorizontal: 13 },
+  logoutText: { flex: 1, color: "#ff377f", fontSize: 15.5, fontWeight: "700" },
 }));
