@@ -14,6 +14,7 @@ import {
 } from "@/pricing";
 import { Button, Empty, Notice, Stepper } from "@/components/ui";
 import type { CartItem } from "@/types";
+import { BRAND_GRADIENT, GradientText } from "@/components/GradientText";
 
 export default function Cart() {
   const customer = useAuth((s) => s.customer);
@@ -147,7 +148,7 @@ export default function Cart() {
               </View>
               <View style={styles.sumRow}>
                 <Text style={styles.totalLabel}>Итого</Text>
-                <Text style={styles.total}>{money(total)}</Text>
+                <GradientText style={styles.total} colors={BRAND_GRADIENT}>{money(total)}</GradientText>
               </View>
             </View>
             {error ? <Notice tone="error" text={error} /> : null}
@@ -182,9 +183,10 @@ const styles = StyleSheet.create({
     padding: 12, fontSize: 15, textAlignVertical: "top", color: colors.text,
   },
   summary: { backgroundColor: "#fff", borderRadius: radius.lg, padding: 16, marginVertical: 14, borderWidth: 1, borderColor: colors.border, gap: 8 },
-  sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" },
+  sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   sumLabel: { color: colors.muted, fontWeight: "600" },
   totalLabel: { fontSize: 18, fontWeight: "800", color: colors.text },
-  total: { fontSize: 24, fontWeight: "900", color: colors.pink },
+  // like the site's .cart-total strong: 24px, 900, brand gradient text
+  total: { fontSize: 24, fontWeight: "900", lineHeight: 30 },
   hint: { color: colors.faint, fontSize: 12, textAlign: "center", marginTop: 10 },
 });

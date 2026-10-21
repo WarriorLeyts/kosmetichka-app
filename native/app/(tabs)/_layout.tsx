@@ -2,6 +2,7 @@ import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartStore } from "@/store/cart";
 import { colors } from "@/theme";
+import { BRAND_GRADIENT, GradientText } from "@/components/GradientText";
 import { tap } from "@/components/ui";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -35,6 +36,13 @@ export default function TabsLayout() {
         name="cart"
         options={{
           title: "Корзина",
+          // like the site's .cart-header h2: 30px, 900, brand gradient text
+          headerTitle: () => (
+            <GradientText style={{ fontSize: 30, fontWeight: "900", lineHeight: 36 }} colors={BRAND_GRADIENT}>
+              Корзина
+            </GradientText>
+          ),
+          headerTitleAlign: "left",
           tabBarIcon: icon("bag", "bag-outline"),
           tabBarBadge: count > 0 ? (count > 99 ? "99+" : count) : undefined,
           tabBarBadgeStyle: { backgroundColor: colors.pink, fontSize: 10, fontWeight: "800" },

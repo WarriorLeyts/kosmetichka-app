@@ -6,6 +6,9 @@ import { LinearGradient } from "expo-linear-gradient";
  * Text filled with a gradient — the site's `bg-gradient-to-r ... bg-clip-text text-transparent`.
  * Default colors: from-pink-500 via-purple-500 to-blue-700.
  */
+/** var(--gradient) on the site: #e82c87 → #8b3dff → #0036b8 */
+export const BRAND_GRADIENT = ["#e82c87", "#8b3dff", "#0036b8"] as const;
+
 export function GradientText({
   children,
   style,
