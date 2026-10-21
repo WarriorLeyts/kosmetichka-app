@@ -4,19 +4,42 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
-import { colors, fonts, themed } from "@/theme";
-import { categoryIcon } from "@/categoryIcon";
+import { colors, radius, themed } from "@/theme";
+import { LinearGradient } from "expo-linear-gradient";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
-import { childCategories, SORT_LABELS, topCategories, useCatalog } from "@/store/catalog";
+import { BRAND_GRADIENT } from "@/components/GradientText";
+import { SORT_LABELS, useCatalog } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
 import { effectivePriceType } from "@/pricing";
 import { ProductCard } from "@/components/ProductCard";
-import { Empty, ErrorView, IconButton, SearchBar, tap } from "@/components/ui";
+import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product } from "@/types";
+
+/** Square gradient button like the site's mobile .catalog-button (☰). */
+function GradientButton({ icon, onPress, badge = 0 }: { icon: keyof typeof Ionicons.glyphMap; onPress: () => void; badge?: number }) {
+  return (
+    <Pressable
+      onPress={() => {
+        tap();
+        onPress();
+      }}
+      style={({ pressed }) => [styles.gradBtnWrap, { opacity: pressed ? 0.9 : 1, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+    >
+      <LinearGradient colors={BRAND_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradBtn}>
+        <Ionicons name={icon} size={20} color="#fff" />
+      </LinearGradient>
+      {badge > 0 && (
+        <View style={styles.dot}>
+          <Text style={styles.dotText}>{badge}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
 
 export default function Catalog() {
   const insets = useSafeAreaInsets();
@@ -99,63 +122,40 @@ export default function Catalog() {
   const filterCount = f.activeFilterCount();
   const selectedCat = f.categories.find((c) => c.guid === f.categoryGuid);
 
-  // tiles: subcategories of the selected category, or top-level ones
-  const tiles = (f.categoryGuid ? childCategories(f.categories, f.categoryGuid) : topCategories(f.categories)).filter(
-    (c) => !c.name.startsWith("<")
-  );
-
   const header = (
     <View>
-      {tiles.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tiles}>
-          {tiles.map((c) => (
-            <Pressable key={c.guid} onPress={() => { tap(); f.set({ categoryGuid: c.guid }); }} style={styles.tile}>
-              <Ionicons name={categoryIcon(c.name)} size={24} color={colors.pink} />
-              <Text style={styles.tileText} numberOfLines={2}>{c.name}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
-      )}
-      {selectedCat && (
-        <Pressable
-          onPress={() => {
-            tap();
-            const parent = selectedCat.parentGuid;
-            const parentIsRoot = !parent || f.categories.find((c) => c.guid === parent)?.name.toLowerCase() === "каталог";
-            f.set({ categoryGuid: parentIsRoot ? null : parent });
-          }}
-          style={styles.crumb}
-        >
-          <Ionicons name="chevron-back" size={15} color={colors.pink} />
-          <Text style={styles.crumbText} numberOfLines={1}>{selectedCat.name}</Text>
-          <Ionicons name="close" size={15} color={colors.faint} />
-        </Pressable>
-      )}
-      <View style={styles.controls}>
-        <Pressable onPress={() => { tap(); router.push("/filters"); }} style={styles.filterBtn}>
-          <Ionicons name="options-outline" size={16} color={colors.text} />
-          <Text style={styles.filterText}>Фильтры{filterCount > 0 ? ` · ${filterCount}` : ""}</Text>
-        </Pressable>
-        <Pressable onPress={() => { tap(); router.push("/filters"); }} style={styles.sortBtn} hitSlop={6}>
-          <Text style={styles.sortText} numberOfLines={1}>{SORT_LABELS[f.sort]}</Text>
-          <Ionicons name="chevron-down" size={14} color={colors.muted} />
+      <View style={styles.countRow}>
+        <Text style={styles.count} numberOfLines={1}>
+          {selectedCat ? `${selectedCat.name} · ` : ""}
+          {loading && products.length === 0 ? "Загрузка…" : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
+        </Text>
+        <Pressable onPress={() => router.push("/filters")} hitSlop={8}>
+          <Text style={styles.sort}>{SORT_LABELS[f.sort]}</Text>
         </Pressable>
       </View>
-      <Text style={styles.count}>
-        {loading && products.length === 0 ? "Загрузка…" : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
-      </Text>
     </View>
   );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
-      <View style={styles.titleRow}>
-        <IconButton name="menu" onPress={() => setCatOpen(true)} />
-        <Text style={styles.title}>Каталог</Text>
-        <IconButton name="barcode-outline" onPress={() => router.push("/scanner")} />
-      </View>
-      <View style={{ paddingHorizontal: 14, paddingBottom: 4 }}>
-        <SearchBar value={query} onChangeText={setQuery} onSubmit={() => f.set({ search: query.trim() })} placeholder="Поиск товаров" />
+      <View style={styles.top}>
+        <GradientButton icon="menu" onPress={() => setCatOpen(true)} />
+        <View style={styles.searchBox}>
+          <Ionicons name="search" size={18} color={colors.muted} />
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Название, бренд, артикул"
+            placeholderTextColor={colors.faint}
+            style={styles.searchInput}
+            returnKeyType="search"
+            onSubmitEditing={() => f.set({ search: query.trim() })}
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+          />
+        </View>
+        <GradientButton icon="barcode-outline" onPress={() => router.push("/scanner")} />
+        <GradientButton icon="options-outline" onPress={() => router.push("/filters")} badge={filterCount} />
       </View>
 
       <CategoryDrawer
@@ -194,7 +194,7 @@ export default function Catalog() {
           onEndReached={() => {
             if (!loading && hasMore && products.length > 0) load(page + 1, "append");
           }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.pink} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.violet} />}
           ListEmptyComponent={
             loading ? null : (
               <Empty
@@ -206,7 +206,7 @@ export default function Catalog() {
               />
             )
           }
-          ListFooterComponent={loading ? <ActivityIndicator style={{ margin: 24 }} color={colors.pink} /> : null}
+          ListFooterComponent={loading ? <ActivityIndicator style={{ margin: 24 }} color={colors.violet} /> : null}
         />
       )}
     </View>
@@ -214,50 +214,38 @@ export default function Catalog() {
 }
 
 const styles = themed(() => ({
-  titleRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 6, paddingBottom: 6 },
-  title: { flex: 1, fontSize: 22, fontWeight: "700", color: colors.text, marginLeft: 4 },
-  tiles: { paddingHorizontal: 5, paddingTop: 10, gap: 10 },
-  tile: {
-    width: 80,
-    height: 88,
-    borderRadius: 16,
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 4,
+  top: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 },
+  searchBox: {
+    flex: 1, height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
+    flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 8,
   },
-  tileText: { fontSize: 10.5, color: colors.text, textAlign: "center", lineHeight: 13 },
-  crumb: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    alignSelf: "flex-start",
-    marginLeft: 5,
-    marginTop: 12,
-    paddingHorizontal: 12,
-    height: 32,
-    borderRadius: 999,
-    backgroundColor: colors.pinkSoft,
-    maxWidth: "90%",
+  searchInput: { flex: 1, fontSize: 16, color: colors.text, height: "100%" },
+  gradBtnWrap: {
+    borderRadius: 15,
+    shadowColor: "#e82c87",
+    shadowOpacity: 0.18,
+    shadowRadius: 11,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
   },
-  crumbText: { color: colors.pink, fontWeight: "700", fontSize: 13, flexShrink: 1 },
-  controls: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 5, marginTop: 12 },
-  filterBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    height: 34,
-    paddingHorizontal: 14,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.card,
+  gradBtn: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center" },
+  iconBtn: {
+    width: 46, height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
+    alignItems: "center", justifyContent: "center",
   },
-  filterText: { color: colors.text, fontSize: 13, fontWeight: "600" },
-  sortBtn: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: "55%" },
-  sortText: { color: colors.muted, fontSize: 13 },
-  count: { color: colors.faint, fontSize: 12, marginHorizontal: 6, marginTop: 10, marginBottom: 2 },
+  dot: {
+    position: "absolute", top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.card,
+    alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 1, borderColor: colors.pink,
+  },
+  dotText: { color: colors.pink, fontSize: 10, fontWeight: "900" },
+  chips: { paddingHorizontal: 5, paddingVertical: 6, gap: 8 },
+  chip: {
+    flexDirection: "row", alignItems: "center", gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 999,
+    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, maxWidth: 240,
+  },
+  chipActive: { backgroundColor: colors.violet, borderColor: colors.violet },
+  chipText: { fontWeight: "700", color: colors.text, fontSize: 13 },
+  countRow: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 6, paddingVertical: 6 },
+  count: { color: colors.muted, fontWeight: "700", fontSize: 13 },
+  sort: { color: colors.violet, fontWeight: "700", fontSize: 13 },
 }));

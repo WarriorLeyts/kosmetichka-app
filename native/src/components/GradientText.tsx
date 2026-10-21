@@ -6,13 +6,13 @@ import { LinearGradient } from "expo-linear-gradient";
  * Text filled with a gradient — the site's `bg-gradient-to-r ... bg-clip-text text-transparent`.
  * Default colors: from-pink-500 via-purple-500 to-blue-700.
  */
-/** var(--gradient) on the site: #e82c87 → #8b3dff → #0036b8 */
-export const BRAND_GRADIENT = ["#e82c87", "#8b3dff", "#0036b8"] as const;
+/** Brand accent gradient (pink) from the new design */
+export const BRAND_GRADIENT = ["#ff2d95", "#e5157f", "#b0106a"] as const;
 
 export function GradientText({
   children,
   style,
-  colors = ["#ec4899", "#a855f7", "#1d4ed8"],
+  colors = ["#ff2d95", "#e5157f", "#b0106a"],
 }: {
   children: string | number;
   style?: TextStyle | TextStyle[];

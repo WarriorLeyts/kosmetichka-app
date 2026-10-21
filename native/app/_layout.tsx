@@ -53,28 +53,27 @@ export default function RootLayout() {
           <Stack
             key={mode}
             screenOptions={{
-              headerShown: false,
               headerTintColor: colors.text,
-              headerTitleStyle: { fontWeight: "700" },
+              headerTitleStyle: { fontWeight: "800" },
               headerShadowVisible: false,
               headerStyle: { backgroundColor: colors.bg },
               contentStyle: { backgroundColor: colors.bg },
               headerBackTitle: "Назад",
             }}
           >
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="product/[id]" />
-            <Stack.Screen name="order/[id]" />
-            <Stack.Screen name="stores" />
-            <Stack.Screen name="filters" options={{ headerShown: true, title: "Фильтры", presentation: "modal" }} />
-            <Stack.Screen name="scanner" options={{ presentation: "fullScreenModal" }} />
-            <Stack.Screen name="login" options={{ headerShown: true, title: "", presentation: "modal" }} />
-            <Stack.Screen name="register" options={{ headerShown: true, title: "Регистрация" }} />
-            <Stack.Screen name="forgot" options={{ headerShown: true, title: "Восстановление пароля" }} />
-            <Stack.Screen name="waitlist" options={{ headerShown: true, title: "Лист ожидания" }} />
-            <Stack.Screen name="favorites" options={{ headerShown: true, title: "Избранное" }} />
-            <Stack.Screen name="edit-profile" options={{ headerShown: true, title: "Мои данные" }} />
-            <Stack.Screen name="info" options={{ headerShown: true, title: "О компании" }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="product/[id]" options={{ title: "" }} />
+            <Stack.Screen name="order/[id]" options={{ title: "Заказ" }} />
+            <Stack.Screen name="stores" options={{ headerShown: false }} />
+            <Stack.Screen name="filters" options={{ title: "Фильтры", presentation: "modal" }} />
+            <Stack.Screen name="scanner" options={{ title: "Сканер штрихкода", presentation: "fullScreenModal", headerShown: false }} />
+            <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal" }} />
+            <Stack.Screen name="register" options={{ title: "Регистрация" }} />
+            <Stack.Screen name="forgot" options={{ title: "Восстановление пароля" }} />
+            <Stack.Screen name="waitlist" options={{ title: "Лист ожидания" }} />
+            <Stack.Screen name="favorites" options={{ title: "Избранное" }} />
+            <Stack.Screen name="edit-profile" options={{ title: "Мои данные" }} />
+            <Stack.Screen name="info" options={{ title: "" }} />
           </Stack>
         ) : null}
 
