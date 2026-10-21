@@ -5,7 +5,10 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
 import { colors, radius } from "@/theme";
-import { childCategories, SORT_LABELS, topCategories, useCatalog } from "@/store/catalog";
+import { LinearGradient } from "expo-linear-gradient";
+import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { BRAND_GRADIENT } from "@/components/GradientText";
+import { SORT_LABELS, useCatalog } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
@@ -15,6 +18,28 @@ import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product } from "@/types";
+
+/** Square gradient button like the site's mobile .catalog-button (☰). */
+function GradientButton({ icon, onPress, badge = 0 }: { icon: keyof typeof Ionicons.glyphMap; onPress: () => void; badge?: number }) {
+  return (
+    <Pressable
+      onPress={() => {
+        tap();
+        onPress();
+      }}
+      style={({ pressed }) => [styles.gradBtnWrap, { opacity: pressed ? 0.9 : 1, transform: [{ translateY: pressed ? 1 : 0 }] }]}
+    >
+      <LinearGradient colors={BRAND_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradBtn}>
+        <Ionicons name={icon} size={20} color="#fff" />
+      </LinearGradient>
+      {badge > 0 && (
+        <View style={styles.dot}>
+          <Text style={styles.dotText}>{badge}</Text>
+        </View>
+      )}
+    </Pressable>
+  );
+}
 
 export default function Catalog() {
   const insets = useSafeAreaInsets();
@@ -33,6 +58,7 @@ export default function Catalog() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  const [catOpen, setCatOpen] = useState(false);
   const reqId = useRef(0);
   const listRef = useRef<FlatList<Product>>(null);
 
@@ -95,33 +121,12 @@ export default function Catalog() {
   const active = effectivePriceType(cart, customer);
   const filterCount = f.activeFilterCount();
   const selectedCat = f.categories.find((c) => c.guid === f.categoryGuid);
-  const chips = f.categoryGuid ? childCategories(f.categories, f.categoryGuid) : topCategories(f.categories);
 
   const header = (
     <View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-        {f.categoryGuid && (
-          <Pressable
-            style={[styles.chip, styles.chipActive]}
-            onPress={() => {
-              tap();
-              const parent = selectedCat?.parentGuid;
-              const parentIsRoot = !parent || f.categories.find((c) => c.guid === parent)?.name.toLowerCase() === "каталог";
-              f.set({ categoryGuid: parentIsRoot ? null : parent });
-            }}
-          >
-            <Ionicons name="arrow-back" size={14} color="#fff" />
-            <Text style={[styles.chipText, { color: "#fff" }]} numberOfLines={1}>{selectedCat?.name ?? "Категория"}</Text>
-          </Pressable>
-        )}
-        {chips.map((c) => (
-          <Pressable key={c.guid} style={styles.chip} onPress={() => { tap(); f.set({ categoryGuid: c.guid }); }}>
-            <Text style={styles.chipText} numberOfLines={1}>{c.name}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
       <View style={styles.countRow}>
-        <Text style={styles.count}>
+        <Text style={styles.count} numberOfLines={1}>
+          {selectedCat ? `${selectedCat.name} · ` : ""}
           {loading && products.length === 0 ? "Загрузка…" : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
         </Text>
         <Pressable onPress={() => router.push("/filters")} hitSlop={8}>
@@ -134,6 +139,7 @@ export default function Catalog() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
       <View style={styles.top}>
+        <GradientButton icon="menu" onPress={() => setCatOpen(true)} />
         <View style={styles.searchBox}>
           <Ionicons name="search" size={18} color={colors.muted} />
           <TextInput
@@ -148,18 +154,17 @@ export default function Catalog() {
             autoCorrect={false}
           />
         </View>
-        <Pressable style={styles.iconBtn} onPress={() => { tap(); router.push("/scanner"); }}>
-          <Ionicons name="barcode-outline" size={22} color={colors.violet} />
-        </Pressable>
-        <Pressable style={styles.iconBtn} onPress={() => { tap(); router.push("/filters"); }}>
-          <Ionicons name="options-outline" size={22} color={colors.violet} />
-          {filterCount > 0 && (
-            <View style={styles.dot}>
-              <Text style={styles.dotText}>{filterCount}</Text>
-            </View>
-          )}
-        </Pressable>
+        <GradientButton icon="barcode-outline" onPress={() => router.push("/scanner")} />
+        <GradientButton icon="options-outline" onPress={() => router.push("/filters")} badge={filterCount} />
       </View>
+
+      <CategoryDrawer
+        open={catOpen}
+        onClose={() => setCatOpen(false)}
+        categories={f.categories}
+        selected={f.categoryGuid}
+        onSelect={(guid) => f.set({ categoryGuid: guid })}
+      />
 
       {error && products.length === 0 ? (
         <ErrorView message={error} onRetry={() => load(1, "replace")} />
@@ -215,15 +220,24 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 8,
   },
   searchInput: { flex: 1, fontSize: 16, color: colors.text, height: "100%" },
+  gradBtnWrap: {
+    borderRadius: 15,
+    shadowColor: "#e82c87",
+    shadowOpacity: 0.18,
+    shadowRadius: 11,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 4,
+  },
+  gradBtn: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center" },
   iconBtn: {
     width: 46, height: 46, borderRadius: radius.md, backgroundColor: "#fff", borderWidth: 1, borderColor: colors.border,
     alignItems: "center", justifyContent: "center",
   },
   dot: {
-    position: "absolute", top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.pink,
-    alignItems: "center", justifyContent: "center", paddingHorizontal: 4,
+    position: "absolute", top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: "#fff",
+    alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 1, borderColor: colors.pink,
   },
-  dotText: { color: "#fff", fontSize: 10, fontWeight: "800" },
+  dotText: { color: colors.pink, fontSize: 10, fontWeight: "900" },
   chips: { paddingHorizontal: 5, paddingVertical: 6, gap: 8 },
   chip: {
     flexDirection: "row", alignItems: "center", gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 999,

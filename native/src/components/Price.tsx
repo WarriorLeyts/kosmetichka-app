@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 import { colors } from "../theme";
+import { BRAND_GRADIENT, GradientText } from "./GradientText";
 import { money } from "../format";
 import { resolveCustomerPriceType, type PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
@@ -33,19 +34,26 @@ export function PriceRows({ rows, large }: { rows: Row[]; large?: boolean }) {
   return (
     <View style={{ gap: large ? 6 : 2 }}>
       {rows.map((r) => (
-        <View key={r.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "baseline" }}>
+        <View key={r.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <Text style={{ fontSize: large ? 15 : 12, color: r.active ? colors.text : colors.faint, fontWeight: r.active ? "600" : "400" }}>
             {r.label}
           </Text>
-          <Text
-            style={{
-              fontSize: large ? (r.active ? 22 : 16) : r.active ? 15 : 12,
-              fontWeight: r.active ? "800" : "500",
-              color: r.active ? colors.pink : colors.faint,
-            }}
-          >
-            {money(r.value)}
-          </Text>
+          {r.active && !large ? (
+            // catalog card: active price in the site's brand gradient (like .price-row-active b)
+            <GradientText style={{ fontSize: 15, fontWeight: "800" }} colors={BRAND_GRADIENT}>
+              {money(r.value)}
+            </GradientText>
+          ) : (
+            <Text
+              style={{
+                fontSize: large ? (r.active ? 22 : 16) : r.active ? 15 : 12,
+                fontWeight: r.active ? "800" : "500",
+                color: r.active ? colors.pink : colors.faint,
+              }}
+            >
+              {money(r.value)}
+            </Text>
+          )}
         </View>
       ))}
     </View>
