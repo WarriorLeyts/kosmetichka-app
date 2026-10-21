@@ -250,7 +250,7 @@ export default function ComparePage() {
                         <Link href={`/product?id=${product.id}`}>
                           <div className="mx-auto mb-3 h-32 w-32 overflow-hidden rounded-xl border bg-slate-50">
                             <SafeImage
-                              src={toImageUrl(product.imagePath) ?? undefined}
+                              src={product.imagePath}
                               alt={product.name}
                               placeholderIconSize={24}
                             />
