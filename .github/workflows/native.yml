@@ -27,7 +27,7 @@ jobs:
         with:
           node-version: 22
       - name: Install (versions matched to the Expo SDK)
-        run: ../scripts/ci-run.sh bash -c "npm install --no-audit --no-fund && npm run deps"
+        run: ../scripts/ci-run.sh npm run deps
       - name: Type check
         run: ../scripts/ci-run.sh npx tsc --noEmit --pretty false
       - name: Bundle JS (catches import errors)
@@ -50,7 +50,7 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: Install
-        run: ../scripts/ci-run.sh bash -c "npm install --no-audit --no-fund && npm run deps"
+        run: ../scripts/ci-run.sh npm run deps
       - name: Generate Android project
         run: ../scripts/ci-run.sh npx expo prebuild --platform android --no-install
       - name: Version
@@ -81,7 +81,7 @@ jobs:
         with:
           node-version: 22
       - name: Install
-        run: ../scripts/ci-run.sh bash -c "npm install --no-audit --no-fund && npm run deps"
+        run: ../scripts/ci-run.sh npm run deps
       - name: Generate iOS project
         run: ../scripts/ci-run.sh npx expo prebuild --platform ios
       - name: Version

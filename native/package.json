@@ -8,10 +8,12 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "deps": "expo install @expo/vector-icons @react-native-async-storage/async-storage expo-build-properties expo-camera expo-constants expo-haptics expo-image expo-linear-gradient expo-linking expo-router expo-splash-screen expo-status-bar expo-web-browser react react-native react-native-safe-area-context react-native-screens react-native-webview && expo install typescript @types/react -- --save-dev"
+    "deps": "npm install --no-audit --no-fund --legacy-peer-deps && node scripts-deps.js && npm install --no-audit --no-fund --legacy-peer-deps"
   },
   "dependencies": {
     "expo": "~54.0.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
     "zustand": "^5.0.0"
   },
   "devDependencies": {}
