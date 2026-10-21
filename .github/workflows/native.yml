@@ -71,6 +71,8 @@ jobs:
           gh release edit native-android-latest --notes "Нативное приложение, сборка 1.0.${GITHUB_RUN_NUMBER} от $(date -u +'%d.%m.%Y %H:%M') UTC. Скачайте kosmetichka-native.apk на телефон и установите."
 
   ios:
+    # iOS пока не нужен: запускается только вручную (Actions → Native app → Run workflow)
+    if: github.event_name == 'workflow_dispatch'
     needs: check
     runs-on: macos-15
     env:
