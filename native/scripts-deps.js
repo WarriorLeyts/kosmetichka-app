@@ -22,6 +22,7 @@ for (const name of WANT) {
   else pkg.dependencies[name] = bundled[name];
 }
 pkg.devDependencies = pkg.devDependencies || {};
-for (const name of DEV) pkg.devDependencies[name] = bundled[name] || pkg.devDependencies[name] || "*";
+const DEV_DEFAULTS = { typescript: "~5.9.2", "@types/react": "~19.1.10" };
+for (const name of DEV) pkg.devDependencies[name] = bundled[name] || DEV_DEFAULTS[name];
 fs.writeFileSync("package.json", JSON.stringify(pkg, null, 2) + "\n");
 console.log("pinned:", WANT.length - missing.length, "missing from SDK list:", missing.join(", ") || "none");
