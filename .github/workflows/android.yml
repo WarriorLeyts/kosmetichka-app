@@ -11,6 +11,8 @@ permissions:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.SMARTCAPTCHA_CLIENT_KEY }}
     steps:
       - uses: actions/checkout@v4
 

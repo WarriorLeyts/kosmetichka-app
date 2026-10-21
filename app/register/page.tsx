@@ -1,4 +1,5 @@
 "use client";
+import { NotOnServerYet } from "@/components/AppStates";
 
 import Link from "next/link";
 import Script from "next/script";
@@ -49,7 +50,7 @@ const PRICE_TYPE_OPTIONS = [
   },
 ];
 
-export default function RegisterPage() {
+function RegisterForm() {
   const [name, setName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [phone, setPhone] = useState("");
@@ -455,4 +456,23 @@ export default function RegisterPage() {
       </main>
     </>
   );
+}
+
+/**
+ * Registration needs the site's Yandex SmartCaptcha key (NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY,
+ * set as a GitHub Actions variable). Without it the captcha can't render, so send people
+ * to the website instead of showing a form that can't be submitted.
+ */
+export default function RegisterPage() {
+  if (!SMARTCAPTCHA_CLIENT_KEY) {
+    return (
+      <main className="min-h-screen bg-slate-50 p-4 pt-10">
+        <NotOnServerYet title="Регистрация" sitePath="/register" />
+        <p className="mt-4 text-center text-sm text-slate-500">
+          Уже есть аккаунт? <Link href="/login" className="font-bold text-pink-500">Войти</Link>
+        </p>
+      </main>
+    );
+  }
+  return <RegisterForm />;
 }

@@ -18,6 +18,7 @@ jobs:
   ios:
     runs-on: macos-15
     env:
+      NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.SMARTCAPTCHA_CLIENT_KEY }}
       HAS_SIGNING: ${{ secrets.APPSTORE_API_KEY_P8 != '' }}
     steps:
       - uses: actions/checkout@v4
