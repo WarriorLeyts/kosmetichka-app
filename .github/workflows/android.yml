@@ -12,7 +12,7 @@ jobs:
   apk:
     runs-on: ubuntu-latest
     env:
-      NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.SMARTCAPTCHA_CLIENT_KEY }}
+      NEXT_PUBLIC_SMARTCAPTCHA_CLIENT_KEY: ${{ vars.SMARTCAPTCHA_CLIENT_KEY || 'ysc1_zPBcrJYGrC7s0G9CVZLokJ1ekpa0sKcqvAZoqBjObd8ec5f9' }}
     steps:
       - uses: actions/checkout@v4
 
