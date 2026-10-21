@@ -37,9 +37,8 @@ const FILTERS: { key: string; label: string }[] = [
   { key: "cancelled", label: "Отменены" },
 ];
 
-/** One order — same header as the site's OrderCard; tap ▼ to expand, «Подробнее» opens the order with chat. */
+/** One order — same look as the site's OrderCard; tap opens the order with chat. */
 function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
-  const [expanded, setExpanded] = useState(false);
   const c = STATUS_COLORS[order.status] ?? { fg: T.slate500, bg: "#f1f5f9", border: "#e2e8f0" };
   const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
   const confirmed = order.status === "consultation" && order.customerConfirmed;
@@ -49,7 +48,7 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
       <Pressable
         onPress={() => {
           tap();
-          setExpanded((v) => !v);
+          router.push(`/order/${order.id}`);
         }}
         style={({ pressed }) => [styles.cardHead, pressed && { backgroundColor: "rgba(248,250,252,0.5)" }]}
       >
@@ -67,7 +66,7 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           {unread && <Ionicons name="chatbubble-ellipses" size={16} color={T.pink500} />}
           <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} border={c.border} />
-          <Text style={{ color: T.slate300, fontSize: 12 }}>{expanded ? "▲" : "▼"}</Text>
+          <Text style={{ color: T.slate300, fontSize: 12 }}>▼</Text>
         </View>
       </Pressable>
 
@@ -84,32 +83,6 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
         </View>
       )}
 
-      {expanded && (
-        <View style={styles.body}>
-          {order.items.map((it) => (
-            <View key={it.id} style={styles.itemRow}>
-              <Text style={styles.itemName} numberOfLines={2}>
-                {it.productName}
-                {it.variantName ? <Text style={{ color: "#6366f1" }}> ({it.variantName})</Text> : null}
-              </Text>
-              <Text style={styles.itemQty}>
-                {it.quantity} × {money(it.price)}
-              </Text>
-              <Text style={styles.itemSum}>{money(it.total)}</Text>
-            </View>
-          ))}
-          {order.comment ? <Text style={styles.comment}>💬 {order.comment}</Text> : null}
-          <View style={styles.totalRow}>
-            <Text style={{ color: T.slate500, fontWeight: "600" }}>Итого</Text>
-            <Text style={{ color: T.slate800, fontWeight: "900", fontSize: 16 }}>{money(order.total)}</Text>
-          </View>
-          <Pressable onPress={() => router.push(`/order/${order.id}`)}>
-            <LinearGradient colors={[T.pink500, T.purple500, T.blue700]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.openBtn}>
-              <Text style={styles.openText}>Открыть заказ и чат</Text>
-            </LinearGradient>
-          </Pressable>
-        </View>
-      )}
     </View>
   );
 }
