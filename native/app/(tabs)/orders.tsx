@@ -169,12 +169,6 @@ export default function Orders() {
                 <Text style={styles.statLabel}>💰 Сумма</Text>
                 <GradientText style={styles.statValue} colors={[T.purple500, T.blue600]}>{money(stats.totalSum)}</GradientText>
               </View>
-              {stats.topProduct ? (
-                <View style={[styles.stat, styles.statWide, { shadowColor: "#3b82f6" }]}>
-                  <Text style={styles.statLabel}>⭐ Топ товар</Text>
-                  <Text style={styles.top} numberOfLines={2}>{stats.topProduct}</Text>
-                </View>
-              ) : null}
             </View>
           )}
 
