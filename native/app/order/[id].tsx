@@ -19,6 +19,7 @@ import { BackBar } from "@/components/iosui/BrandHeader";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
+import { clearOrderStatus } from "@/unread";
 import type { ChatMessage, Order, Product, Variant } from "@/types";
 
 const VIOLET = "#8b3dff";
@@ -27,7 +28,9 @@ const PINK = "#e82c87";
 type Pending = { key: string; text: string; createdAt: string; failed: boolean; sent?: boolean };
 
 /** Messages can be plain text or JSON cards (photo / product) sent by the manager. */
-function MessageBody({ text, color }: { text: string; color: string }) {
+function MessageBody({ text, color, fromManager }: { text: string; color: string; fromManager: boolean }) {
+  // cards (photo / product) only from the manager — a customer can't fake them by typing JSON
+  if (!fromManager) return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
   try {
     const obj = JSON.parse(text);
     if (obj?._t === "img" && typeof obj.url === "string") {
@@ -96,9 +99,12 @@ export default function OrderScreen() {
   const loadMessages = useCallback(async () => {
     try {
       const r = await api.messages(orderId);
-      setMessages(r.messages);
+      setMessages((prev) =>
+        prev.length === r.messages.length && prev[prev.length - 1]?.id === r.messages[r.messages.length - 1]?.id ? prev : r.messages
+      );
       // messages already sent are now in the server list
-      setPending((p) => p.filter((x) => !x.sent));
+      setPending((p) => (p.some((x) => x.sent) ? p.filter((x) => !x.sent) : p));
+      clearOrderStatus(); // messages were read — refresh the bell next time
       setChatError(false);
       return true;
     } catch {
@@ -264,7 +270,7 @@ export default function OrderScreen() {
   const bubble = (key: string | number, mine: boolean, body: string, at: string, extra?: ReactNode) => (
     <View key={key} style={[styles.bubble, mine ? [styles.mine, { backgroundColor: outBubble }] : [styles.theirs, { backgroundColor: dark ? "#2C2C2E" : "#F2F2F7" }]]}>
       {!mine ? <Text style={styles.from}>Менеджер</Text> : null}
-      <MessageBody text={body} color={c.label} />
+      <MessageBody text={body} color={c.label} fromManager={!mine} />
       <View style={styles.metaRow}>
         {extra}
         <Text style={[styles.time, { color: c.secondary }]}>{time(at)}</Text>

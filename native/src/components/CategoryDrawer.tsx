@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AccessibilityInfo, Animated, BackHandler, Easing, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View,
 } from "react-native";
@@ -98,7 +98,7 @@ function ScalePress({ onPress, style, children, label, reduce }: { onPress: () =
 }
 
 /** Category menu: tall bottom panel — main categories as an emoji grid, children as a separate level. */
-export function CategoryDrawer({ open, onClose, categories, selected, onSelect }: Props) {
+function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: Props) {
   const insets = useSafeAreaInsets();
   const { height: H } = useWindowDimensions();
   const c = useIOS();
@@ -137,9 +137,31 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
   }, [open]);
 
   // Like the site: if there is a single root wrapper («Каталог»), show its children
-  const roots = categories.filter((x) => !x.parentGuid);
-  const topLevel = roots.length === 1 ? categories.filter((x) => x.parentGuid === roots[0].guid) : roots;
-  const childrenOf = (guid: string) => categories.filter((x) => x.parentGuid === guid);
+  // children index built once per category list (not on every render)
+  const byParent = useMemo(() => {
+    const m = new Map<string, Category[]>();
+    for (const x of categories) {
+      const k = x.parentGuid ?? "";
+      const arr = m.get(k);
+      if (arr) arr.push(x);
+      else m.set(k, [x]);
+    }
+    return m;
+  }, [categories]);
+  const roots = byParent.get("") ?? [];
+  const topLevel = roots.length === 1 ? byParent.get(roots[0].guid) ?? [] : roots;
+  const childrenOf = (guid: string) => byParent.get(guid) ?? [];
+  // the selected category and all its parents — «is it in this branch» becomes a set lookup
+  const selectedPath = useMemo(() => {
+    const set = new Set<string>();
+    const byGuid = new Map(categories.map((x) => [x.guid, x]));
+    let g: string | null | undefined = selected;
+    while (g && !set.has(g)) {
+      set.add(g);
+      g = byGuid.get(g)?.parentGuid;
+    }
+    return set;
+  }, [categories, selected]);
   const current = stack.length ? categories.find((x) => x.guid === stack[stack.length - 1]) : undefined;
   const subItems = current ? childrenOf(current.guid) : [];
 
@@ -185,11 +207,10 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
   }, [visible, stack]);
 
   // is the selected category inside this branch?
-  const inBranch = (guid: string): boolean => {
-    if (!selected) return false;
-    if (selected === guid) return true;
-    return childrenOf(guid).some((ch) => inBranch(ch.guid));
-  };
+  const inBranch = (guid: string) => selectedPath.has(guid);
+
+  // closed: render nothing (no work on every catalog keystroke)
+  if (!visible) return null;
 
   const sheetBg = dark ? "#1C1C1E" : "#F7F4FC";
   const tileBg = dark ? "#2C2C2E" : "#fff";
@@ -350,3 +371,5 @@ const styles = StyleSheet.create({
   subCard: { flexDirection: "row", alignItems: "center", gap: 10, minHeight: 60, borderRadius: 18, borderWidth: 1.5, paddingHorizontal: 18, paddingVertical: 14 },
   subText: { flex: 1, fontSize: 17, fontWeight: "600", lineHeight: 22 },
 });
+
+export const CategoryDrawer = memo(CategoryDrawerBase);

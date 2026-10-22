@@ -4,6 +4,7 @@ import { api, ApiError } from "../api";
 import type { Customer } from "../types";
 import { useCartStore } from "./cart";
 import { useWaitlistStore } from "./waitlist";
+import { clearOrderStatus } from "../unread";
 
 type AuthState = {
   customer: Customer | null;
@@ -84,6 +85,7 @@ export const useAuth = create<AuthState>((set) => ({
     }
     useCartStore.getState().clear();
     useWaitlistStore.getState().reset();
+    clearOrderStatus();
     set({ customer: null });
   },
 

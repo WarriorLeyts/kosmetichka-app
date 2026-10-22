@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,6 +23,42 @@ import type { Product } from "@/types";
 const SORT_OPTIONS = (Object.keys(SORT_LABELS) as Sort[]).map((v) => ({ value: v, label: SORT_LABELS[v] }));
 
 /** Catalog — iOS style (large title, rounded search, two-column grid, floating tab bar). */
+/** Search field with its own state: typing re-renders only this field, not the whole catalog. */
+function SearchInput() {
+  const c = useIOS();
+  const search = useCatalog((s) => s.search);
+  const [query, setQuery] = useState(search);
+
+  // keep in sync when search is set from elsewhere (home, scanner, reset); not while typing ("крем " keeps its space)
+  useEffect(() => {
+    setQuery((q) => (q.trim() === search ? q : search));
+  }, [search]);
+
+  // debounce typing
+  useEffect(() => {
+    if (query.trim() === search) return;
+    const t = setTimeout(() => useCatalog.getState().set({ search: query.trim() }), 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  return (
+    <TextInput
+      value={query}
+      onChangeText={setQuery}
+      placeholder="Название, бренд, артикул"
+      placeholderTextColor={c.secondary}
+      style={[styles.searchInput, { color: c.label }]}
+      returnKeyType="search"
+      onSubmitEditing={() => useCatalog.getState().set({ search: query.trim() })}
+      clearButtonMode="while-editing"
+      autoCorrect={false}
+      accessibilityLabel="Поиск по каталогу"
+      keyboardAppearance={c.blurTint}
+    />
+  );
+}
+
 export default function Catalog() {
   const insets = useSafeAreaInsets();
   const c = useIOS();
@@ -36,7 +72,6 @@ export default function Catalog() {
   const toggleFav = useFavorites((s) => s.toggle);
   const addToCart = useAddToCart();
 
-  const [query, setQuery] = useState(f.search);
   const [products, setProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -53,12 +88,6 @@ export default function Catalog() {
     f.loadMeta();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // keep the input in sync when search is set from elsewhere (home, scanner)
-  // (not while typing: "крем " must keep its trailing space)
-  useEffect(() => {
-    setQuery((q) => (q.trim() === f.search ? q : f.search));
-  }, [f.search]);
 
   const load = useCallback(
     async (nextPage: number, mode: "replace" | "append" | "refresh") => {
@@ -100,15 +129,28 @@ export default function Catalog() {
     load(1, "replace");
   }, [f.version, f.metaLoaded, load]);
 
-  // debounce typing
-  useEffect(() => {
-    if (query.trim() === f.search) return;
-    const t = setTimeout(() => f.set({ search: query.trim() }), 450);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
   const active = effectivePriceType(cart, customer);
+  // lookups built once per change instead of scanning arrays for every card
+  const inCartMap = useMemo(() => new Map(cart.map((x) => [x.cartKey, x.quantity])), [cart]);
+  const favSet = useMemo(() => new Set(favorites.map((x) => x.id)), [favorites]);
+  const renderItem = useCallback(
+    ({ item }: { item: Product }) => (
+      <View style={{ flex: 1 / columns }}>
+        <CatalogCard
+          product={item}
+          customer={customer}
+          activePrice={active}
+          inCart={inCartMap.get(String(item.id)) ?? 0}
+          isFavorite={favSet.has(item.id)}
+          onAdd={addToCart}
+          onFavorite={toggleFav}
+        />
+      </View>
+    ),
+    [columns, customer, active, inCartMap, favSet, addToCart, toggleFav]
+  );
+  const closeCats = useCallback(() => setCatOpen(false), []);
+  const selectCat = useCallback((guid: string | null) => useCatalog.getState().set({ categoryGuid: guid }), []);
   const filterCount = f.activeFilterCount() - (f.sort !== "popularity" ? 1 : 0);
   const selectedCat = f.categories.find((x) => x.guid === f.categoryGuid);
 
@@ -135,19 +177,7 @@ export default function Catalog() {
           <Ionicons name="apps-outline" size={20} color="#8b3dff" />
         </Pressable>
         <Ionicons name="search-outline" size={21} color={c.secondary} />
-        <TextInput
-          value={query}
-          onChangeText={setQuery}
-          placeholder="Название, бренд, артикул"
-          placeholderTextColor={c.secondary}
-          style={[styles.searchInput, { color: c.label }]}
-          returnKeyType="search"
-          onSubmitEditing={() => f.set({ search: query.trim() })}
-          clearButtonMode="while-editing"
-          autoCorrect={false}
-          accessibilityLabel="Поиск по каталогу"
-          keyboardAppearance={c.blurTint}
-        />
+        <SearchInput />
         <Pressable
           onPress={() => { tap(); router.push("/scanner"); }}
           accessibilityRole="button"
@@ -218,19 +248,12 @@ export default function Catalog() {
           contentContainerStyle={{ paddingHorizontal: 11, paddingBottom: bottomSpace }}
           ListHeaderComponent={header}
           keyboardDismissMode="on-drag"
-          renderItem={({ item }) => (
-            <View style={{ flex: 1 / columns }}>
-              <CatalogCard
-                product={item}
-                customer={customer}
-                activePrice={active}
-                inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
-                isFavorite={favorites.some((x) => x.id === item.id)}
-                onAdd={addToCart}
-                onFavorite={toggleFav}
-              />
-            </View>
-          )}
+          renderItem={renderItem}
+          // keep fewer cards mounted on mid-range phones
+          initialNumToRender={6}
+          maxToRenderPerBatch={6}
+          windowSize={7}
+          removeClippedSubviews={Platform.OS === "android"}
           onEndReachedThreshold={0.6}
           onEndReached={() => {
             if (!loading && hasMore && products.length > 0) load(page + 1, "append");
@@ -245,7 +268,7 @@ export default function Catalog() {
                 title="Ничего не нашлось"
                 text="Попробуйте изменить запрос или сбросить фильтры"
                 action={filterCount > 0 || f.search || f.categoryGuid ? "Сбросить фильтры" : undefined}
-                onAction={() => { setQuery(""); f.reset(); }}
+                onAction={() => f.reset()}
               />
             )
           }
@@ -265,10 +288,10 @@ export default function Catalog() {
       </Sheet>
       <CategoryDrawer
         open={catOpen}
-        onClose={() => setCatOpen(false)}
+        onClose={closeCats}
         categories={f.categories}
         selected={f.categoryGuid}
-        onSelect={(guid) => f.set({ categoryGuid: guid })}
+        onSelect={selectCat}
       />
     </View>
   );

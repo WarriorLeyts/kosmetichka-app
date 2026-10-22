@@ -42,6 +42,13 @@ export function Captcha({ onToken, onExpired }: { onToken: (token: string) => vo
         javaScriptEnabled
         domStorageEnabled
         setSupportMultipleWindows={false}
+        // the captcha page may only load itself and Yandex SmartCaptcha — nothing else
+        onShouldStartLoadWithRequest={(r) =>
+          r.url.startsWith("about:") ||
+          r.url.startsWith("data:") ||
+          r.url.startsWith("https://kosmetichka-opt.ru") ||
+          r.url.startsWith("https://smartcaptcha.yandexcloud.net")
+        }
         onMessage={(e) => {
           try {
             const m = JSON.parse(e.nativeEvent.data);

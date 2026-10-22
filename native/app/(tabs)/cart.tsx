@@ -27,6 +27,45 @@ function shortLabel(t: PriceType) {
   return t === "big_wholesale" ? "Кр. опт" : priceTypeLabel(t);
 }
 
+// latest typed comment (the store is written with a small delay so typing doesn't save the whole cart on every key)
+let draft: string | null = null;
+const currentComment = () => draft ?? useCartStore.getState().comment;
+
+/** «Комментарий к заказу» with its own state: typing re-renders only this field. */
+function CommentInput({ style, placeholderColor }: { style: object; placeholderColor: string }) {
+  const stored = useCartStore((s) => s.comment);
+  const [value, setValue] = useState(stored);
+  useEffect(() => {
+    // cleared after an order / changed elsewhere
+    if (draft === null) setValue(stored);
+  }, [stored]);
+  useEffect(() => {
+    if (draft === null) return;
+    const t = setTimeout(() => {
+      useCartStore.getState().setComment(value);
+      draft = null;
+    }, 400);
+    return () => clearTimeout(t);
+  }, [value]);
+  return (
+    <TextInput
+      value={value}
+      onChangeText={(v) => {
+        draft = v;
+        setValue(v);
+      }}
+      onBlur={() => {
+        if (draft !== null) useCartStore.getState().setComment(draft);
+        draft = null;
+      }}
+      placeholder="Например: позвонить перед доставкой"
+      placeholderTextColor={placeholderColor}
+      multiline
+      style={style}
+    />
+  );
+}
+
 /** Cart — iOS style, same look as the catalog and profile. Pricing, thresholds and checkout are the existing logic. */
 export default function Cart() {
   const c = useIOS();
@@ -38,7 +77,6 @@ export default function Cart() {
   const setQty = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
-  const comment = useCartStore((s) => s.comment);
   const setComment = useCartStore((s) => s.setComment);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -84,9 +122,10 @@ export default function Cart() {
     try {
       const r = await api.createOrder(
         items.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
-        comment.trim()
+        currentComment().trim()
       );
       clear();
+      draft = null;
       setComment("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       Alert.alert(`Заказ №${r.orderId} принят`, "Менеджер свяжется с вами для подтверждения.", [
@@ -235,14 +274,7 @@ export default function Cart() {
             </Pressable>
 
             <Text style={[styles.label, { color: c.label }]}>Комментарий к заказу</Text>
-            <TextInput
-              value={comment}
-              onChangeText={setComment}
-              placeholder="Например: позвонить перед доставкой"
-              placeholderTextColor={c.secondary}
-              multiline
-              style={[styles.comment, { backgroundColor: dark ? "#1C1C1E" : "#EEEEF3", color: c.label }]}
-            />
+            <CommentInput style={[styles.comment, { backgroundColor: dark ? "#1C1C1E" : "#EEEEF3", color: c.label }]} placeholderColor={c.secondary} />
 
             <View style={[styles.summary, { backgroundColor: pinkSoft }]}>
               <View style={styles.sumRow}>

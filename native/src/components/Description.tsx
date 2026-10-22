@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useIOS } from "../ios";
@@ -80,10 +81,10 @@ function splitLabel(s: string): [string, string] | null {
 }
 
 /** Product description as rounded panels, without visible markdown. Only filled sections are shown. */
-export function Description({ text }: { text: string }) {
+function DescriptionBase({ text }: { text: string }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
-  const sections = parseDescription(text);
+  const sections = useMemo(() => parseDescription(text), [text]);
   if (!sections.length) return null;
   return (
     <View style={{ gap: 12 }}>
@@ -157,3 +158,5 @@ const styles = StyleSheet.create({
   subLabel: { fontSize: 15, fontWeight: "600" },
   subText: { fontSize: 14, lineHeight: 19, marginTop: 2 },
 });
+
+export const Description = memo(DescriptionBase);

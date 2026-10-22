@@ -61,13 +61,17 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: Math.max(insets.bottom, 10) }]}>
       <View style={[styles.bar, { borderColor: dark ? "rgba(255,255,255,0.08)" : "rgba(81,91,137,0.08)" }]} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
-        <BlurView
-          intensity={70}
-          tint={c.blurTint}
-          experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
-          style={StyleSheet.absoluteFill}
+        {/* real blur only on iOS; on Android it re-renders the content behind on every scroll frame */}
+        {Platform.OS === "ios" ? <BlurView intensity={70} tint={c.blurTint} style={StyleSheet.absoluteFill} /> : null}
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor:
+                Platform.OS === "ios" ? (dark ? "rgba(28,28,30,0.65)" : "rgba(250,250,255,0.78)") : dark ? "rgba(28,28,30,0.96)" : "rgba(250,250,255,0.96)",
+            },
+          ]}
         />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? "rgba(28,28,30,0.65)" : "rgba(250,250,255,0.78)" }]} />
 
         {/* sliding capsule */}
         {itemW > 0 ? (

@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "../../api";
+import { orderStatus } from "../../unread";
 import { useAuth } from "../../store/auth";
 import { iosText, useIOS } from "../../ios";
 import { tap } from "../ui";
@@ -22,7 +22,7 @@ export function BrandHeader({ title }: { title?: string }) {
         setUnread(false);
         return;
       }
-      api.orderStatus().then((r) => setUnread(r.managerMessages.length > 0)).catch(() => {});
+      orderStatus().then((r) => setUnread(r.managerMessages.length > 0)).catch(() => {});
     }, [customer])
   );
 

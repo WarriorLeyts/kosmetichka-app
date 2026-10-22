@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
+import { orderStatus } from "@/unread";
 import { dateLong, money } from "@/format";
 import { useAuth } from "@/store/auth";
 import { orderCache } from "@/orderCache";
@@ -110,8 +111,7 @@ export default function Orders() {
           const seen = new Set(prev.map((o) => o.id));
           return [...prev, ...r.orders.filter((o) => !seen.has(o.id))];
         });
-        api
-          .orderStatus()
+        orderStatus(true)
           .then((s) => setUnread(new Set(s.managerMessages.map((m) => m.orderId))))
           .catch(() => {});
       } catch (e) {

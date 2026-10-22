@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, FlatList, LayoutAnimation, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack } from "expo-router";
@@ -17,7 +17,7 @@ import { useAddToCart } from "@/useAddToCart";
 import type { Product } from "@/types";
 
 /** Card wrapper that fades out before the product leaves the list. */
-function Removable({ leaving, onGone, children }: { leaving: boolean; onGone: () => void; children: ReactNode }) {
+const Removable = memo(function Removable({ leaving, onGone, children }: { leaving: boolean; onGone: () => void; children: ReactNode }) {
   const reduce = useReduceMotion();
   const v = useRef(new Animated.Value(1)).current;
   useEffect(() => {
@@ -30,7 +30,7 @@ function Removable({ leaving, onGone, children }: { leaving: boolean; onGone: ()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leaving]);
   return <Animated.View style={{ flex: 1, opacity: v, transform: [{ scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1] }) }] }}>{children}</Animated.View>;
-}
+});
 
 /** «Избранное» — the same CatalogCard as in the catalog, two columns. */
 export default function Favorites() {
@@ -48,6 +48,7 @@ export default function Favorites() {
   const active = effectivePriceType(cart, customer);
   const [leaving, setLeaving] = useState<Set<number>>(new Set());
 
+  const startLeaving = useCallback((p: Product) => setLeaving((s) => new Set(s).add(p.id)), []);
   const remove = (p: Product) => {
     if (!reduce) LayoutAnimation.configureNext(LayoutAnimation.create(240, "easeInEaseOut", "opacity"));
     toggle(p); // removes from favourites (synced with the catalog)
@@ -99,7 +100,7 @@ export default function Favorites() {
                 inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
                 isFavorite
                 onAdd={addToCart}
-                onFavorite={(p) => setLeaving((s) => new Set(s).add(p.id))}
+                onFavorite={startLeaving}
               />
             </Removable>
           </View>
