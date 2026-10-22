@@ -67,7 +67,7 @@ export function LoyaltyCardPanel({ card, width }: { card: Card; width: number })
 
       <Pressable onPress={toggle} accessibilityRole="button" accessibilityLabel={open ? "Скрыть штрихкод" : "Показать штрихкод"}>
         <Animated.View style={[styles.card, { width, height, borderRadius: 9 * k }]}>
-          <LinearGradient colors={["#0A468E", "#094181"]} style={StyleSheet.absoluteFill} />
+          <LinearGradient colors={["#024697", "#004290"]} style={StyleSheet.absoluteFill} />
 
           {/* header: logo, name, level */}
           <View style={{ height: 41 * k, flexDirection: "row", alignItems: "center", paddingHorizontal: 9 * k }}>
