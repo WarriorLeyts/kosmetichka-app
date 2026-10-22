@@ -5,6 +5,9 @@ import type { CartItem, OrderItem, Product, Variant } from "../types";
 
 type CartState = {
   items: CartItem[];
+  /** «Комментарий к заказу» — kept while the cart changes, cleared after checkout */
+  comment: string;
+  setComment: (comment: string) => void;
   add: (product: Product, quantity?: number) => void;
   addVariants: (product: Product, entries: { variant: Variant; quantity: number }[]) => void;
   setQuantity: (cartKey: string, quantity: number) => void;
@@ -37,6 +40,8 @@ export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
       items: [],
+      comment: "",
+      setComment: (comment) => set({ comment }),
 
       add: (product, quantity) => {
         const key = String(product.id);
@@ -111,6 +116,6 @@ export const useCartStore = create<CartState>()(
       count: () => get().items.reduce((s, i) => s + i.quantity, 0),
       quantityOf: (cartKey) => get().items.find((i) => i.cartKey === cartKey)?.quantity ?? 0,
     }),
-    { name: "kosmetichka-cart", storage: persistStorage, partialize: (s) => ({ items: s.items }) }
+    { name: "kosmetichka-cart", storage: persistStorage, partialize: (s) => ({ items: s.items, comment: s.comment }) }
   )
 );

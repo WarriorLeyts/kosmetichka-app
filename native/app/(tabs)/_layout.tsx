@@ -36,9 +36,7 @@ export default function TabsLayout() {
         name="cart"
         options={{
           title: "Корзина",
-          // like the site's .cart-header h2: 30px, 900, brand gradient text
-          headerTitle: () => <PageTitle title="Корзина" />,
-          headerTitleAlign: "left",
+          headerShown: false,
           tabBarIcon: icon("bag", "bag-outline"),
           tabBarBadge: count > 0 ? (count > 99 ? "99+" : count) : undefined,
           tabBarBadgeStyle: { backgroundColor: colors.pink, fontSize: 10, fontWeight: "800" },
