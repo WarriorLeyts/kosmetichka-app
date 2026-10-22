@@ -4,6 +4,10 @@ name: iOS simulator check (Expo Go)
 # takes screenshots, taps the tabs and collects JS logs (for debugging).
 on:
   workflow_dispatch:
+    inputs:
+      channel:
+        description: "Канал Expo Go"
+        default: main
 
 permissions:
   contents: write
@@ -36,7 +40,7 @@ jobs:
           xcrun simctl launch "$UDID" host.exp.Exponent || true
           sleep 8
           xcrun simctl io "$UDID" screenshot shots/0-expogo.png
-          xcrun simctl openurl "$UDID" "exp://u.expo.dev/79cf0a1d-4e68-4bdf-9389-10a7fc8bdc48?runtime-version=exposdk%3A58.0.0&channel-name=main"
+          xcrun simctl openurl "$UDID" "exp://u.expo.dev/79cf0a1d-4e68-4bdf-9389-10a7fc8bdc48?runtime-version=exposdk%3A58.0.0&channel-name=${{ inputs.channel || 'main' }}"
           sleep 45
           xcrun simctl io "$UDID" screenshot shots/1-opened.png
           sleep 15

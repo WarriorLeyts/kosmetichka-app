@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { disabled } from "../debugFlags";
 import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
@@ -61,12 +62,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: Math.max(insets.bottom, 10) }]}>
       <View style={[styles.bar, { borderColor: dark ? "rgba(255,255,255,0.08)" : "rgba(81,91,137,0.08)" }]} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
-        <BlurView
+        {disabled("blur") ? null : <BlurView
           intensity={70}
           tint={c.blurTint}
           experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
           style={StyleSheet.absoluteFill}
-        />
+        />}
         <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? "rgba(28,28,30,0.65)" : "rgba(250,250,255,0.78)" }]} />
 
         {/* sliding capsule */}

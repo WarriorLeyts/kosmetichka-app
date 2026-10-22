@@ -8,6 +8,13 @@ on:
     branches: [main]
     paths: ['native/**', '.github/workflows/expo-go.yml']
   workflow_dispatch:
+    inputs:
+      channel:
+        description: "Канал (main — основной QR-код)"
+        default: main
+      disable:
+        description: "Отладка: выключить (blur,mask)"
+        default: ""
 
 permissions:
   contents: write
@@ -21,6 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      CHANNEL: ${{ inputs.channel || 'main' }}
+      EXPO_PUBLIC_DISABLE: ${{ inputs.disable || '' }}
     steps:
       - name: Check token
         working-directory: .
@@ -70,22 +79,23 @@ jobs:
             a.expo.updates={url:"https://u.expo.dev/"+id};
             fs.writeFileSync("app.json",JSON.stringify(a,null,2));
             fs.appendFileSync(process.env.GITHUB_ENV,"PROJECT_ID="+id+"\n");'
-          npx -y eas-cli@latest channel:create main --non-interactive || true
+          npx -y eas-cli@latest channel:create $CHANNEL --non-interactive || true
       - name: Publish update
         if: env.HAS_TOKEN == '1'
-        run: ../scripts/ci-run.sh npx -y eas-cli@latest update --channel main --message "${{ github.event.head_commit.message || 'manual' }}" --non-interactive
+        run: ../scripts/ci-run.sh npx -y eas-cli@latest update --channel $CHANNEL --message "${{ github.event.head_commit.message || 'manual' }}" --non-interactive
       - name: Link and QR code
         if: env.HAS_TOKEN == '1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           SDK=$(node -p 'require("expo/package.json").version.split(".")[0]')
-          Q="projectId=${PROJECT_ID}&runtimeVersion=exposdk:${SDK}.0.0&channel=main&slug=exp"
+          Q="projectId=${PROJECT_ID}&runtimeVersion=exposdk:${SDK}.0.0&channel=${CHANNEL}&slug=exp"
           URL=$(curl -fsS "https://qr.expo.dev/eas-update?${Q}&format=url" || echo "")
           QR="https://qr.expo.dev/eas-update?${Q}"
           BODY=$(printf '## Открыть в Expo Go\n\n1. Установите **Expo Go** из App Store.\n2. Наведите камеру iPhone на QR-код:\n\n![QR](%s)\n\nСсылка: %s\n\nQR-код постоянный — после каждого изменения приложение в Expo Go обновляется само (перезапустите его).\n' "$QR" "$URL")
           echo "$BODY" >> "$GITHUB_STEP_SUMMARY"
           echo "::notice title=Expo Go::${URL}"
+          if [ "$CHANNEL" != "main" ]; then exit 0; fi
           if gh release view expo-go >/dev/null 2>&1; then
             gh release edit expo-go --notes "$BODY"
           else

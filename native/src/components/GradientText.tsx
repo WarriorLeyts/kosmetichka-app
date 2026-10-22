@@ -1,4 +1,5 @@
 import { Text, TextStyle } from "react-native";
+import { disabled } from "../debugFlags";
 import MaskedView from "@react-native-masked-view/masked-view";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -18,6 +19,7 @@ export function GradientText({
   style?: TextStyle | TextStyle[];
   colors?: readonly [string, string, ...string[]];
 }) {
+  if (disabled("mask")) return <Text style={[style as TextStyle, { color: colors[0] }]}>{children}</Text>;
   return (
     <MaskedView style={{ alignSelf: "flex-start" }} maskElement={<Text style={style}>{children}</Text>}>
       <LinearGradient colors={colors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
