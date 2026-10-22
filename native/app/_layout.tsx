@@ -43,6 +43,8 @@ export default function RootLayout() {
           headerStyle: { backgroundColor: colors.bg },
           contentStyle: { backgroundColor: colors.bg },
           headerBackTitle: "Назад",
+          // smooth slide between screens
+          animation: "slide_from_right",
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

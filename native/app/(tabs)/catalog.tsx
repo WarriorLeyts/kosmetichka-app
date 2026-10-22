@@ -14,6 +14,7 @@ import { CatalogCard } from "@/components/CatalogCard";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
+import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
 import { useAddToCart } from "@/useAddToCart";
@@ -44,6 +45,7 @@ export default function Catalog() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
+  const [catOpen, setCatOpen] = useState(false);
   const reqId = useRef(0);
   const listRef = useRef<FlatList<Product>>(null);
 
@@ -121,6 +123,14 @@ export default function Catalog() {
 
       {/* search */}
       <View style={[styles.search, { backgroundColor: c.blurTint === "dark" ? "#1C1C1E" : "rgba(118,118,128,0.12)" }]}>
+        <Pressable
+          onPress={() => { tap(); setCatOpen(true); }}
+          accessibilityRole="button"
+          accessibilityLabel="Все категории"
+          style={[styles.scan, { backgroundColor: c.cell }]}
+        >
+          <Ionicons name="apps-outline" size={20} color="#8b3dff" />
+        </Pressable>
         <Ionicons name="search-outline" size={21} color={c.secondary} />
         <TextInput
           value={query}
@@ -250,13 +260,20 @@ export default function Catalog() {
           }}
         />
       </Sheet>
+      <CategoryDrawer
+        open={catOpen}
+        onClose={() => setCatOpen(false)}
+        categories={f.categories}
+        selected={f.categoryGuid}
+        onSelect={(guid) => f.set({ categoryGuid: guid })}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   title: { paddingHorizontal: 5, marginTop: 14, marginBottom: 12 },
-  search: { flexDirection: "row", alignItems: "center", gap: 9, height: 52, borderRadius: 26, paddingLeft: 16, paddingRight: 5, marginHorizontal: 5 },
+  search: { flexDirection: "row", alignItems: "center", gap: 9, height: 52, borderRadius: 26, paddingLeft: 5, paddingRight: 5, marginHorizontal: 5 },
   searchInput: { flex: 1, fontSize: 17, height: "100%" },
   scan: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" },
   controls: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 5, marginTop: 14, marginBottom: 8 },

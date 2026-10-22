@@ -28,6 +28,8 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         headerStyle: { backgroundColor: colors.bg },
         sceneStyle: { backgroundColor: colors.bg },
+        // smooth cross-fade between tabs
+        animation: "fade",
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Главная", headerShown: false, tabBarIcon: icon("home", "home-outline") }} />
