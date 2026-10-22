@@ -2,12 +2,17 @@ import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
+import Constants, { ExecutionEnvironment } from "expo-constants";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+// In Expo Go don't hold the splash: Expo Go shows its own developer-menu intro right after
+// the app loads, and a splash kept on screen at that moment pushes that intro under the app
+// (it then blocks all taps). In the real app (APK) the splash waits for the login check as before.
+const inExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+if (!inExpoGo) SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const refresh = useAuth((s) => s.refresh);
@@ -22,11 +27,12 @@ export default function RootLayout() {
   }, [refresh]);
 
   useEffect(() => {
-    if (!loading) SplashScreen.hideAsync().catch(() => {});
+    if (!loading && !inExpoGo) SplashScreen.hideAsync().catch(() => {});
   }, [loading]);
 
   // Never keep the splash forever if the network is slow
   useEffect(() => {
+    if (inExpoGo) return;
     const t = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 4000);
     return () => clearTimeout(t);
   }, []);
