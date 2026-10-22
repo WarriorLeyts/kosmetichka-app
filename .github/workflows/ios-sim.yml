@@ -66,21 +66,23 @@ jobs:
           sleep 3
           shot 3b-menu-closed
           maestro --device "$UDID" hierarchy > shots/hierarchy.json 2>&1 || true
+          maestro --device "$UDID" hierarchy > shots/hierarchy-after-close.json 2>&1 || true
+          # taps by coordinates (tab bar of a 375x667 screen): Каталог, Профиль, chip «Новинки»
           step '- tapOn:
-              text: "Каталог"
-              optional: true'
+              point: "32%,93%"'
           sleep 6
           shot 4-after-tap-catalog
           step '- tapOn:
-              text: "Профиль"
-              optional: true'
+              point: "86%,93%"'
           sleep 6
           shot 5-after-tap-profile
           step '- tapOn:
-              text: "Корзина"
-              optional: true'
+              point: "8%,93%"'
+          sleep 4
+          step '- tapOn:
+              point: "19%,52%"'
           sleep 6
-          shot 6-after-tap-cart
+          shot 6-after-tap-chip
       - name: Logs summary
         if: always()
         run: |
@@ -96,4 +98,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view ios-sim-debug >/dev/null 2>&1 || gh release create ios-sim-debug --title "iOS simulator debug" --notes "debug" --latest=false
-          gh release upload ios-sim-debug shots/*.png shots/errors.txt shots/log.txt shots/hierarchy.json --clobber || true
+          gh release upload ios-sim-debug shots/*.png shots/*.json shots/errors.txt shots/maestro.txt --clobber || true
