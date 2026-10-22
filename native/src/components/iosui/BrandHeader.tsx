@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { orderStatus } from "../../unread";
 import { useAuth } from "../../store/auth";
 import { iosText, useIOS } from "../../ios";
+import { Wordmark } from "../Wordmark";
 import { tap } from "../ui";
 
 /**
@@ -60,13 +61,10 @@ const styles = StyleSheet.create({
   title: { marginTop: 4, marginBottom: 14 },
 });
 
-/** «КОСМЕТИЧКА» — brand word for the top of every page (no logo). */
+/** «КОСМЕТИЧКА» — brand wordmark for the top of every page (no logo). */
 export function BrandWord({ color, style }: { color: string; style?: object }) {
-  return (
-    <Text style={[wordStyle.word, { color }, style]} numberOfLines={1} accessibilityRole="header">
-      КОСМЕТИЧКА
-    </Text>
-  );
+  // white text = on the gradient hero (home)
+  return <Wordmark light={color === "#fff" || color === "#ffffff"} style={style as never} />;
 }
 
 const wordStyle = StyleSheet.create({

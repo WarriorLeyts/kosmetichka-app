@@ -12,20 +12,14 @@ export function priceRows(product: Product, customer: Customer | null, active: P
   const base = resolveCustomerPriceType(customer);
   const n = (v: number | null | undefined) => Number(v ?? 0);
   const rows: Row[] = [];
-  if (base === "guest" || base === "discount") {
-    const hasDiscount = n(product.discountPrice) > 0 && n(product.discountPrice) !== n(product.retailPrice);
-    rows.push({ label: "Розница", value: n(product.retailPrice), active: !hasDiscount });
-    if (hasDiscount) rows.push({ label: "Скидка", value: n(product.discountPrice), active: true });
-  } else if (base === "retail") {
-    rows.push({ label: "Розница", value: n(product.retailPrice), active: true });
-  } else if (base === "wholesale") {
-    rows.push({ label: "Скидка", value: n(product.discountPrice ?? product.retailPrice), active: active === "discount" });
+  if (base === "wholesale" || base === "big_wholesale") {
+    // wholesale customers see only the wholesale prices
     rows.push({ label: "Опт", value: n(product.wholesalePrice), active: active === "wholesale" });
-    if (n(product.bigWholesalePrice) > 0 && n(product.bigWholesalePrice) !== n(product.wholesalePrice))
-      rows.push({ label: "Кр. опт", value: n(product.bigWholesalePrice), active: active === "big_wholesale" });
+    rows.push({ label: "Кр. опт", value: n(product.bigWholesalePrice ?? product.wholesalePrice), active: active === "big_wholesale" });
   } else {
-    rows.push({ label: "Опт", value: n(product.wholesalePrice), active: false });
-    rows.push({ label: "Кр. опт", value: n(product.bigWholesalePrice ?? product.wholesalePrice), active: true });
+    // retail customers (and guests) see the retail and the discount price
+    rows.push({ label: "Розница", value: n(product.retailPrice), active: active === "retail" });
+    rows.push({ label: "Скидка", value: n(product.discountPrice ?? product.retailPrice), active: active !== "retail" });
   }
   return rows;
 }

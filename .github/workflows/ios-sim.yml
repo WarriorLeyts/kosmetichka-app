@@ -56,6 +56,15 @@ jobs:
               optional: true'
           sleep 50
           shot 3-app-loaded
+          # Expo Go shows its developer-menu intro on first open: «Continue», then close the menu
+          step '- tapOn:
+              text: "Continue"
+              optional: true'
+          sleep 3
+          step '- tapOn:
+              point: "89%,50%"'
+          sleep 3
+          shot 3b-menu-closed
           maestro --device "$UDID" hierarchy > shots/hierarchy.json 2>&1 || true
           step '- tapOn:
               text: "Каталог"
@@ -68,9 +77,10 @@ jobs:
           sleep 6
           shot 5-after-tap-profile
           step '- tapOn:
-              point: "50%,90%"'
+              text: "Корзина"
+              optional: true'
           sleep 6
-          shot 6-after-tap-bottom
+          shot 6-after-tap-cart
       - name: Logs summary
         if: always()
         run: |

@@ -18,6 +18,7 @@ import { effectivePriceType } from "@/pricing";
 import { priceRows } from "@/components/Price";
 import { CatalogCard } from "@/components/CatalogCard";
 import { Description } from "@/components/Description";
+import { Wordmark } from "@/components/Wordmark";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { ErrorView, tap } from "@/components/ui";
 import { useIOS } from "@/ios";
@@ -167,9 +168,9 @@ export default function ProductScreen() {
       <Pressable onPress={goBack} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={styles.barBtn}>
         <Ionicons name="chevron-back" size={28} color={c.label} />
       </Pressable>
-      <Animated.Text style={[styles.brandWord, { color: c.label }, !reduceMotion && anim.fadeEarly]} numberOfLines={1}>
-        КОСМЕТИЧКА
-      </Animated.Text>
+      <Animated.View style={[{ flex: 1, alignItems: "center" }, !reduceMotion && anim.fadeEarly]}>
+        <Wordmark />
+      </Animated.View>
       {product ? (
         <Pressable
           onPress={() => {
