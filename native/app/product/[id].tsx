@@ -1,31 +1,59 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert, Dimensions, FlatList, Pressable, ScrollView, Share, StyleSheet, Text, View,
+  AccessibilityInfo, ActivityIndicator, Alert, Animated, FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View,
 } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { api, BASE_URL, imageUrl } from "@/api";
-import { colors, radius, themed } from "@/theme";
-import { stockLabel } from "@/format";
+import { api, imageUrl } from "@/api";
+import { money, stockLabel } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
 import { useWaitlistStore } from "@/store/waitlist";
 import { effectivePriceType } from "@/pricing";
-import { priceRows, PriceRows } from "@/components/Price";
-import { ProductCard } from "@/components/ProductCard";
-import { Button, ErrorView, Loading, Stepper, tap } from "@/components/ui";
+import { priceRows } from "@/components/Price";
+import { CatalogCard } from "@/components/CatalogCard";
+import { Description } from "@/components/Description";
+import { VIOLET_PINK } from "@/components/TabBar";
+import { ErrorView, tap } from "@/components/ui";
+import { useIOS } from "@/ios";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product, Variant } from "@/types";
 
-const W = Dimensions.get("window").width;
+const VIOLET = "#8b3dff";
+const PINK = "#e82c87";
+const PRICE_COLORS = [PINK, VIOLET];
+const STOCK = {
+  high: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1f8a3b" },
+  low: { dot: "#FF9500", bg: "rgba(255,149,0,0.13)", fg: "#b35f00" },
+  out: { dot: "#FF3B30", bg: "rgba(255,59,48,0.1)", fg: "#c4271d" },
+};
+
+// geometry of the collapsing header
+const BAR = 50; // back / favourite row
+const THUMB = 52; // compact photo
+const COMPACT = 68; // compact row under the top bar
+const TITLE_FONT = 28;
+const TITLE_LINE = 34;
+const SMALL_FONT = 17;
+
+/** Volume / weight from the product name («…, 100 мл» → «100 мл»). */
+function volumeOf(name: string) {
+  const all = [...name.matchAll(/(\d+(?:[.,]\d+)?)\s?(мл|ml|гр|г|g|кг|л|шт)(?![a-zа-яё])/gi)];
+  const m = all[all.length - 1];
+  return m ? `${m[1]} ${m[2].toLowerCase()}` : null;
+}
 
 export default function ProductScreen() {
-  const { id, pick } = useLocalSearchParams<{ id: string; pick?: string }>();
+  const { id } = useLocalSearchParams<{ id: string; pick?: string }>();
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
+  const { width: W, height: H } = useWindowDimensions();
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const add = useCartStore((s) => s.add);
@@ -45,12 +73,23 @@ export default function ProductScreen() {
   const [error, setError] = useState("");
   const [slide, setSlide] = useState(0);
   const [waitBusy, setWaitBusy] = useState(false);
+  const [qty, setLocalQty] = useState(1);
+  const [titleBox, setTitleBox] = useState<{ y: number; h: number } | null>(null);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => {});
+    const sub = AccessibilityInfo.addEventListener("reduceMotionChanged", setReduceMotion);
+    return () => sub.remove();
+  }, []);
 
   const load = useCallback(async () => {
     setError("");
     try {
       const p = await api.product(id);
       setProduct(p);
+      setLocalQty(Math.max(1, p.minOrderQty ?? 1));
       api.variants(p.id).then((r) => setVariants(r.variants ?? [])).catch(() => {});
       if (p.brandGuid) {
         api
@@ -67,18 +106,118 @@ export default function ProductScreen() {
     load();
   }, [load]);
 
-  if (error) return <ErrorView message={error} onRetry={load} />;
-  if (!product) return <Loading />;
+  // ---- collapsing header geometry (all driven by scroll position on the native thread) ----
+  const T = insets.top + BAR; // top of the compact row
+  const S = Math.round(Math.min(W - 48, H * 0.46, 460)); // big photo (square)
+  const PHOTO_TOP = T;
+  const thumbCenterY = T + (COMPACT - THUMB) / 2 + THUMB / 2;
+  const D = Math.max(60, PHOTO_TOP + S / 2 - thumbCenterY); // scroll distance of the transition
+  const k = SMALL_FONT / TITLE_FONT;
+  const TW = W - 32; // big title width
+  const textLeft = 16 + THUMB + 12;
+
+  const anim = useMemo(() => {
+    const p = (a: number, b: number, from: number, to: number) =>
+      scrollY.interpolate({ inputRange: [a, b], outputRange: [from, to], extrapolate: "clamp" });
+    const pin = scrollY.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolateLeft: "clamp", extrapolateRight: "extend" });
+    const photo = {
+      transform: [
+        { translateX: p(0, D, 0, 16 + THUMB / 2 - W / 2) },
+        { translateY: scrollY.interpolate({ inputRange: [0, D, D + 1], outputRange: [0, 0, 1], extrapolateLeft: "clamp", extrapolateRight: "extend" }) },
+        { scale: p(0, D, 1, THUMB / S) },
+      ],
+    };
+    let title: object = { opacity: 0 };
+    if (titleBox) {
+      const dy = thumbCenterY - (titleBox.y + titleBox.h / 2);
+      title = {
+        opacity: p(D * 0.85, D, 1, 0),
+        transform: [
+          { translateX: p(0, D, 0, textLeft + (TW * k) / 2 - 16 - TW / 2) },
+          {
+            translateY: scrollY.interpolate({
+              inputRange: [0, D, D + 1],
+              outputRange: [0, D + dy, D + dy + 1],
+              extrapolateLeft: "clamp",
+              extrapolateRight: "extend",
+            }),
+          },
+          { scale: p(0, D, 1, k) },
+        ],
+      };
+    }
+    return {
+      pin,
+      photo,
+      title,
+      compactTitle: { opacity: p(D * 0.85, D, 0, 1), transform: [{ translateY: pin }] },
+      headerBg: { opacity: p(D * 0.45, D, 0, 1), transform: [{ translateY: pin }] },
+      fadeEarly: { opacity: p(0, D * 0.45, 1, 0) },
+      reducedThumb: { opacity: p(D * 0.7, D, 0, 1) },
+    };
+  }, [scrollY, D, W, S, TW, k, textLeft, thumbCenterY, titleBox]);
+
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
+
+  const topBar = (
+    <View pointerEvents="box-none" style={[styles.topBar, { paddingTop: insets.top, height: T }]}>
+      <Pressable onPress={goBack} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={styles.barBtn}>
+        <Ionicons name="chevron-back" size={28} color={c.label} />
+      </Pressable>
+      <Animated.Text style={[styles.brandWord, { color: c.label }, !reduceMotion && anim.fadeEarly]} numberOfLines={1}>
+        КОСМЕТИЧКА
+      </Animated.Text>
+      {product ? (
+        <Pressable
+          onPress={() => {
+            tap();
+            toggleFav(product);
+          }}
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={isFav ? "Убрать из избранного" : "В избранное"}
+          style={[styles.barBtn, { alignItems: "flex-end" }]}
+        >
+          <Ionicons name={isFav ? "heart" : "heart-outline"} size={28} color={PINK} />
+        </Pressable>
+      ) : (
+        <View style={styles.barBtn} />
+      )}
+    </View>
+  );
+
+  const bg = dark ? "#000" : "#FFFFFF";
+
+  if (error || !product) {
+    return (
+      <View style={{ flex: 1, backgroundColor: bg }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        {topBar}
+        {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
+      </View>
+    );
+  }
 
   const active = effectivePriceType(cart, customer);
   const images = (product.images ?? []).map((i) => imageUrl(i.path)).filter(Boolean) as string[];
   const stock = stockLabel(product.stock);
+  const st = STOCK[stock.tone];
   const out = stock.tone === "out";
   const key = String(product.id);
-  const inCart = cart.find((c) => c.cartKey === key)?.quantity ?? 0;
+  const inCart = cart.find((x) => x.cartKey === key)?.quantity ?? 0;
   const min = Math.max(1, product.minOrderQty ?? 1);
+  const maxQty = typeof product.stock === "number" && product.stock > 0 ? product.stock : Infinity;
   const waiting = waitIds.includes(product.id);
   const pickedTotal = Object.values(variantQty).reduce((a, b) => a + b, 0);
+  const rows = priceRows(product, customer, active);
+  const volume = volumeOf(product.name);
+  const shownQty = inCart > 0 ? inCart : qty;
+
+  const changeQty = (n: number) => {
+    tap();
+    if (inCart > 0) setQty(key, n < min ? 0 : Math.min(n, maxQty));
+    else setLocalQty(Math.max(min, Math.min(n, maxQty)));
+  };
 
   const onWait = async () => {
     if (!customer) {
@@ -97,126 +236,171 @@ export default function ProductScreen() {
     }
   };
 
-  return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <Stack.Screen
-        options={{
-          title: "",
-          headerRight: () => (
-            <View style={{ flexDirection: "row", gap: 16 }}>
-              <Pressable
-                hitSlop={10}
-                onPress={() => Share.share({ message: `${product.name}\n${BASE_URL}/product/${product.id}` })}
-              >
-                <Ionicons name="share-outline" size={23} color={colors.text} />
-              </Pressable>
-              <Pressable hitSlop={10} onPress={() => { tap(); toggleFav(product); }}>
-                <Ionicons name={isFav ? "heart" : "heart-outline"} size={24} color={isFav ? colors.pink : colors.text} />
-              </Pressable>
-            </View>
-          ),
-        }}
+  const gallery =
+    images.length > 0 ? (
+      <FlatList
+        data={images}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(u, i) => u + i}
+        onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / S))}
+        renderItem={({ item }) => (
+          <View style={{ width: S, height: S, alignItems: "center", justifyContent: "center" }}>
+            <Image source={{ uri: item }} style={{ width: S, height: S }} contentFit="contain" transition={150} />
+          </View>
+        )}
       />
-      <ScrollView contentContainerStyle={{ paddingBottom: 130 }}>
-        <View style={styles.gallery}>
-          {images.length > 0 ? (
-            <FlatList
-              data={images}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(u, i) => u + i}
-              onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / W))}
-              renderItem={({ item }) => (
-                <View style={{ width: W, height: 320, alignItems: "center", justifyContent: "center" }}>
-                  <Image source={{ uri: item }} style={{ width: W * 0.82, height: 290 }} contentFit="contain" transition={150} />
-                </View>
-              )}
-            />
-          ) : (
-            <View style={{ height: 260, alignItems: "center", justifyContent: "center" }}>
-              <Ionicons name="image-outline" size={56} color={colors.faint} />
-            </View>
-          )}
-          {images.length > 1 && (
-            <View style={styles.dots}>
-              {images.map((_, i) => (
-                <View key={i} style={[styles.dotItem, i === slide && styles.dotActive]} />
-              ))}
-            </View>
-          )}
-        </View>
+    ) : (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <Ionicons name="image-outline" size={56} color={c.secondary} />
+      </View>
+    );
 
-        <View style={{ padding: 16 }}>
-          {product.brand?.name ? <Text style={styles.brand}>{product.brand.name}</Text> : null}
-          <Text style={styles.name}>{product.name}</Text>
-          <View style={styles.metaRow}>
-            <Text style={[styles.stock, { color: out ? colors.danger : stock.tone === "low" ? colors.warning : colors.success }]}>
-              ● {stock.text}
+  // compact header background: pinned, light with a thin shadow
+  const headerBg = (
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#111" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
+        >
+          {reduceMotion ? (
+            <Animated.View style={[styles.reducedRow, { top: T }, anim.reducedThumb]}>
+              {images[slide] ? <Image source={{ uri: images[slide] }} style={{ width: THUMB, height: THUMB }} contentFit="contain" /> : null}
+              <Text style={{ flex: 1, fontSize: SMALL_FONT, fontWeight: "600", color: c.label }} numberOfLines={2}>
+                {product.name}
+              </Text>
+            </Animated.View>
+          ) : null}
+        </Animated.View>
+  );
+
+  const titleStyle = [styles.title, { color: c.label, width: TW }];
+  const bottomH = 76 + Math.max(insets.bottom, 10);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: bg }}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <Animated.ScrollView
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: PHOTO_TOP, paddingBottom: bottomH + 24 }}
+      >
+        {/* place for the big photo (the photo itself is drawn above, see below) */}
+        <View style={{ height: S }} />
+        <Animated.View style={[styles.dots, !reduceMotion && anim.fadeEarly]}>
+          {images.length > 1
+            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? VIOLET : dark ? "#3A3A3C" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
+            : null}
+        </Animated.View>
+
+        <View style={styles.pad}>
+          {product.brand?.name ? (
+            <Text style={[styles.brand, { color: VIOLET }]} numberOfLines={1}>
+              {product.brand.name.toUpperCase()}
             </Text>
-            {product.article ? <Text style={styles.meta}>Арт. {product.article}</Text> : null}
-          </View>
-          {product.barcode ? <Text style={styles.meta}>Штрихкод {product.barcode}</Text> : null}
-          {min > 1 ? <Text style={[styles.meta, { color: colors.violet, fontWeight: "700" }]}>Минимальный заказ — {min} шт.</Text> : null}
+          ) : null}
+        </View>
+        {/* title placeholder: keeps the place in the layout; the visible title is the animated copy */}
+        <Text
+          style={[titleStyle, { marginLeft: 16, opacity: titleBox && !reduceMotion ? 0 : 1 }]}
+          onLayout={(e) => setTitleBox({ y: e.nativeEvent.layout.y, h: e.nativeEvent.layout.height })}
+        >
+          {product.name}
+        </Text>
 
-          <View style={styles.priceCard}>
-            <PriceRows rows={priceRows(product, customer, active)} large />
-            {!customer && (
-              <Pressable onPress={() => router.push("/login")} style={{ marginTop: 10 }}>
-                <Text style={{ color: colors.violet, fontWeight: "700" }}>Войдите, чтобы увидеть оптовые цены →</Text>
-              </Pressable>
-            )}
+        <View style={styles.pad}>
+          <View style={styles.metaRow}>
+            {volume ? (
+              <View style={[styles.volume, { backgroundColor: dark ? "#2C2C2E" : "#EFEAFF" }]}>
+                <Text style={{ color: dark ? c.label : "#4b3a8c", fontSize: 14 }}>{volume}</Text>
+              </View>
+            ) : null}
+            <View style={[styles.stock, { backgroundColor: st.bg }]}>
+              <View style={[styles.stockDot, { backgroundColor: st.dot }]} />
+              <Text style={[styles.stockText, { color: st.fg }]}>{stock.text}</Text>
+            </View>
           </View>
 
-          {variants.length > 0 && !out && (
-            <View style={styles.variantBox}>
-              <Text style={styles.h}>Выберите вариант{pick ? "" : ""}</Text>
-              {variants.map((v) => {
+          {/* prices — existing pricing rules */}
+          <View style={[styles.prices, { backgroundColor: dark ? "#1C1C1E" : "#FDF2F8" }]}>
+            {rows.map((r, i) => (
+              <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: dark ? "rgba(255,255,255,0.15)" : "rgba(139,61,255,0.18)" }]}>
+                <Text numberOfLines={1} style={{ fontSize: 13, color: PRICE_COLORS[i] ?? c.secondary }}>
+                  {r.label}
+                </Text>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontSize: 22, fontWeight: "700", color: PRICE_COLORS[i] ?? c.label }}>
+                  {money(r.value)}
+                </Text>
+              </View>
+            ))}
+          </View>
+          {!customer ? (
+            <Pressable onPress={() => router.push("/login")} hitSlop={6} style={{ marginTop: 10 }}>
+              <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Войдите, чтобы увидеть оптовые цены</Text>
+            </Pressable>
+          ) : null}
+          <View style={{ marginTop: 10, gap: 3 }}>
+            {min > 1 ? <Text style={{ color: VIOLET, fontSize: 14, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}
+            {product.article ? <Text style={{ color: c.secondary, fontSize: 13 }}>Арт. {product.article}</Text> : null}
+            {product.barcode ? <Text style={{ color: c.secondary, fontSize: 13 }}>Штрихкод {product.barcode}</Text> : null}
+          </View>
+
+          {variants.length > 0 && !out ? (
+            <View style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+              <Text style={[styles.h, { color: c.label }]}>Выберите вариант</Text>
+              {variants.map((v, i) => {
                 const q = variantQty[v.id] ?? 0;
                 return (
-                  <View key={v.id} style={styles.variantRow}>
+                  <View key={v.id} style={[styles.variantRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator }]}>
                     <Image source={{ uri: imageUrl(v.imageUrl) ?? undefined }} style={styles.variantImg} contentFit="cover" />
-                    <Text style={styles.variantName} numberOfLines={2}>{v.name}</Text>
+                    <Text style={{ flex: 1, color: c.label, fontSize: 15 }} numberOfLines={2}>
+                      {v.name}
+                    </Text>
                     {q > 0 ? (
-                      <Stepper value={q} onChange={(n) => setVariantQty({ ...variantQty, [v.id]: n })} />
+                      <Qty value={q} onMinus={() => { tap(); setVariantQty({ ...variantQty, [v.id]: Math.max(0, q - 1) }); }} onPlus={() => { tap(); setVariantQty({ ...variantQty, [v.id]: q + 1 }); }} small />
                     ) : (
                       <Pressable
-                        style={styles.variantAdd}
-                        onPress={() => { tap(); setVariantQty({ ...variantQty, [v.id]: min }); }}
+                        accessibilityLabel={`Добавить ${v.name}`}
+                        style={[styles.variantAdd]}
+                        onPress={() => {
+                          tap();
+                          setVariantQty({ ...variantQty, [v.id]: min });
+                        }}
                       >
-                        <Ionicons name="add" size={20} color={colors.violet} />
+                        <Ionicons name="add" size={22} color={VIOLET} />
                       </Pressable>
                     )}
                   </View>
                 );
               })}
             </View>
-          )}
+          ) : null}
 
+          {/* description right on the page */}
           {product.description ? (
-            <>
-              <Text style={styles.h}>Описание</Text>
-              <Text style={styles.desc}>{product.description}</Text>
-            </>
+            <View style={{ marginTop: 18 }}>
+              <Description text={product.description} />
+            </View>
           ) : null}
         </View>
 
-        {related.length > 0 && (
+        {related.length > 0 ? (
           <>
-            <Text style={[styles.h, { marginHorizontal: 16 }]}>Ещё от {product.brand?.name ?? "бренда"}</Text>
+            <Text style={[styles.h, { color: c.label, marginHorizontal: 16, marginTop: 24 }]}>Ещё от {product.brand?.name ?? "бренда"}</Text>
             <FlatList
               horizontal
               data={related}
               keyExtractor={(p) => String(p.id)}
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 11 }}
+              contentContainerStyle={{ paddingHorizontal: 12, gap: 10, paddingVertical: 6 }}
               renderItem={({ item }) => (
                 <View style={{ width: 180 }}>
-                  <ProductCard
+                  <CatalogCard
                     product={item}
                     customer={customer}
                     activePrice={active}
-                    inCart={cart.find((c) => c.cartKey === String(item.id))?.quantity ?? 0}
+                    inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
                     isFavorite={favorites.some((f) => f.id === item.id)}
                     onAdd={addToCart}
                     onFavorite={toggleFav}
@@ -225,82 +409,183 @@ export default function ProductScreen() {
               )}
             />
           </>
-        )}
-      </ScrollView>
+        ) : null}
 
-      <View style={[styles.bottom, { paddingBottom: insets.bottom + 10 }]}>
-        {out ? (
-          <Button
-            title={waiting ? "Вы в листе ожидания" : "Сообщить о поступлении"}
-            icon={waiting ? "notifications" : "notifications-outline"}
-            variant={waiting ? "outline" : "primary"}
-            loading={waitBusy}
-            onPress={onWait}
-            style={{ flex: 1 }}
-          />
-        ) : variants.length > 0 ? (
-          <Button
-            title={pickedTotal > 0 ? `Добавить ${pickedTotal} шт.` : "Выберите варианты выше"}
-            icon="bag-add-outline"
-            disabled={pickedTotal === 0}
-            style={{ flex: 1 }}
-            onPress={() => {
-              addVariants(
-                product,
-                variants.map((v) => ({ variant: v, quantity: variantQty[v.id] ?? 0 }))
-              );
-              setVariantQty({});
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-              Alert.alert("Добавлено в корзину", undefined, [
-                { text: "Продолжить" },
-                { text: "В корзину", onPress: () => router.navigate("/cart") },
-              ]);
-            }}
-          />
-        ) : inCart > 0 ? (
+        {!reduceMotion ? headerBg : null}
+
+        {/* the photo: shrinks into the compact header thumbnail while scrolling (same element, no swap) */}
+        <Animated.View
+          style={[
+            styles.photo,
+            { top: PHOTO_TOP, left: (W - S) / 2, width: S, height: S, backgroundColor: dark ? "#fff" : "transparent" },
+            !reduceMotion && anim.photo,
+          ]}
+        >
+          {gallery}
+        </Animated.View>
+
+        {/* the title: moves next to the thumbnail and gets smaller */}
+        {titleBox && !reduceMotion ? (
           <>
-            <Stepper value={inCart} min={min} step={1} onChange={(n) => setQty(key, n < min ? 0 : n)} />
-            <Button title="Перейти в корзину" icon="bag-outline" style={{ flex: 1 }} onPress={() => router.navigate("/cart")} />
+            <Animated.Text importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[titleStyle, styles.abs, { top: titleBox.y, left: 16 }, anim.title]}>
+              {product.name}
+            </Animated.Text>
+            <Animated.Text
+              importantForAccessibility="no-hide-descendants"
+              accessibilityElementsHidden
+              numberOfLines={2}
+              style={[
+                styles.abs,
+                styles.compactTitle,
+                { color: c.label, width: TW * k, left: textLeft, top: thumbCenterY - (TITLE_LINE * k * Math.min(2, Math.round(titleBox.h / TITLE_LINE))) / 2 },
+                anim.compactTitle,
+              ]}
+            >
+              {product.name}
+            </Animated.Text>
           </>
-        ) : (
-          <Button
-            title="В корзину"
-            icon="bag-add-outline"
-            style={{ flex: 1 }}
-            onPress={() => {
-              add(product);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-            }}
-          />
-        )}
+        ) : null}
+        {reduceMotion ? headerBg : null}
+      </Animated.ScrollView>
+
+      {topBar}
+
+      {/* pinned bottom panel: quantity and «В корзину» (existing cart logic) */}
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: dark ? "rgba(17,17,17,0.97)" : "rgba(255,255,255,0.97)" }, !dark && styles.bottomShadow]}>
+        <View style={styles.bottomInner}>
+          {out ? (
+            <GradientButton
+              title={waiting ? "Вы в листе ожидания" : "Сообщить о поступлении"}
+              icon={waiting ? "notifications" : "notifications-outline"}
+              loading={waitBusy}
+              onPress={onWait}
+            />
+          ) : variants.length > 0 ? (
+            <GradientButton
+              title={pickedTotal > 0 ? `Добавить ${pickedTotal} шт.` : "Выберите варианты выше"}
+              icon="bag-add-outline"
+              disabled={pickedTotal === 0}
+              onPress={() => {
+                addVariants(product, variants.map((v) => ({ variant: v, quantity: variantQty[v.id] ?? 0 })));
+                setVariantQty({});
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                Alert.alert("Добавлено в корзину", undefined, [
+                  { text: "Продолжить" },
+                  { text: "В корзину", onPress: () => router.navigate("/cart") },
+                ]);
+              }}
+            />
+          ) : (
+            <>
+              <Qty
+                value={shownQty}
+                onMinus={() => changeQty(shownQty - 1)}
+                onPlus={() => changeQty(shownQty + 1)}
+                plusDisabled={shownQty >= maxQty}
+                minusDisabled={inCart === 0 && shownQty <= min}
+              />
+              <GradientButton
+                title={inCart > 0 ? "Перейти в корзину" : "В корзину"}
+                icon="bag-handle-outline"
+                onPress={() => {
+                  if (inCart > 0) {
+                    router.navigate("/cart");
+                    return;
+                  }
+                  add(product, qty);
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                }}
+              />
+            </>
+          )}
+        </View>
       </View>
     </View>
   );
 }
 
-const styles = themed(() => ({
-  gallery: { backgroundColor: "#ffffff", paddingBottom: 12, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
-  dots: { flexDirection: "row", justifyContent: "center", gap: 6 },
-  dotItem: { width: 6, height: 6, borderRadius: 3, backgroundColor: colors.border },
-  dotActive: { width: 18, backgroundColor: colors.pink },
-  brand: { color: colors.violet, fontWeight: "800", fontSize: 13, textTransform: "uppercase", marginBottom: 4 },
-  name: { fontSize: 21, fontWeight: "800", color: colors.text, lineHeight: 27 },
-  metaRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 10 },
-  stock: { fontWeight: "800", fontSize: 13 },
-  meta: { color: colors.muted, fontSize: 13, marginTop: 4 },
-  priceCard: { backgroundColor: colors.card, borderRadius: radius.lg, padding: 16, marginTop: 16, borderWidth: 1, borderColor: colors.border },
-  h: { fontSize: 18, fontWeight: "900", color: colors.text, marginTop: 22, marginBottom: 10 },
-  desc: { color: colors.text, fontSize: 15, lineHeight: 22 },
-  variantBox: { marginTop: 4 },
-  variantRow: {
-    flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.card, borderRadius: radius.md,
-    padding: 10, marginBottom: 8, borderWidth: 1, borderColor: colors.border,
-  },
-  variantImg: { width: 48, height: 48, borderRadius: 10, backgroundColor: colors.soft },
-  variantName: { flex: 1, fontWeight: "700", color: colors.text, fontSize: 14 },
-  variantAdd: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.violetSoft, alignItems: "center", justifyContent: "center" },
-  bottom: {
-    position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", alignItems: "center", gap: 12,
-    paddingHorizontal: 16, paddingTop: 12, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border,
-  },
-}));
+function Qty({
+  value, onMinus, onPlus, small, plusDisabled, minusDisabled,
+}: { value: number; onMinus: () => void; onPlus: () => void; small?: boolean; plusDisabled?: boolean; minusDisabled?: boolean }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const size = small ? 38 : 46;
+  return (
+    <View style={[styles.qty, { backgroundColor: dark ? "#2C2C2E" : "#F2F2F7" }]}>
+      <Pressable onPress={onMinus} disabled={minusDisabled} hitSlop={6} accessibilityLabel="Уменьшить количество" style={{ width: size, height: size, alignItems: "center", justifyContent: "center", opacity: minusDisabled ? 0.35 : 1 }}>
+        <Ionicons name="remove" size={22} color={c.label} />
+      </Pressable>
+      <View style={[styles.qtyBox, { backgroundColor: c.cell, height: size - 4 }]}>
+        <Text style={{ fontSize: 17, fontWeight: "600", color: c.label }}>{value}</Text>
+      </View>
+      <Pressable onPress={onPlus} disabled={plusDisabled} hitSlop={6} accessibilityLabel="Увеличить количество" style={{ opacity: plusDisabled ? 0.4 : 1 }}>
+        <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center" }}>
+          <Ionicons name="add" size={24} color="#fff" />
+        </LinearGradient>
+      </Pressable>
+    </View>
+  );
+}
+
+function GradientButton({
+  title, icon, onPress, loading, disabled,
+}: { title: string; icon?: keyof typeof Ionicons.glyphMap; onPress: () => void; loading?: boolean; disabled?: boolean }) {
+  return (
+    <Pressable
+      onPress={() => {
+        if (loading || disabled) return;
+        tap();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!disabled, busy: !!loading }}
+      style={({ pressed }) => [{ flex: 1, opacity: disabled ? 0.5 : pressed ? 0.9 : 1 }]}
+    >
+      <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
+        {loading ? <ActivityIndicator color="#fff" /> : icon ? <Ionicons name={icon} size={22} color="#fff" /> : null}
+        <Text style={styles.ctaText} numberOfLines={1} adjustsFontSizeToFit>
+          {title}
+        </Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  topBar: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 },
+  barBtn: { width: 44, height: 44, justifyContent: "center" },
+  brandWord: { flex: 1, textAlign: "center", fontSize: 19, letterSpacing: 3.2 },
+  pad: { paddingHorizontal: 16 },
+  dots: { flexDirection: "row", justifyContent: "center", gap: 7, height: 26, alignItems: "center" },
+  dot: { width: 8, height: 8, borderRadius: 4 },
+  dotActive: { width: 8 },
+  brand: { fontSize: 14, letterSpacing: 0.4, marginBottom: 4 },
+  title: { fontSize: TITLE_FONT, lineHeight: TITLE_LINE, fontWeight: "700" },
+  compactTitle: { fontSize: SMALL_FONT, lineHeight: TITLE_LINE * (SMALL_FONT / TITLE_FONT), fontWeight: "700" },
+  abs: { position: "absolute" },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, flexWrap: "wrap" },
+  volume: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  stock: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
+  stockDot: { width: 7, height: 7, borderRadius: 4 },
+  stockText: { fontSize: 13, fontWeight: "500" },
+  prices: { flexDirection: "row", borderRadius: 18, paddingVertical: 10, marginTop: 14 },
+  priceCol: { flex: 1, paddingHorizontal: 12, justifyContent: "center" },
+  panel: { borderRadius: 20, padding: 16, marginTop: 18 },
+  shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
+  h: { fontSize: 21, fontWeight: "700", marginBottom: 6 },
+  variantRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 },
+  variantImg: { width: 48, height: 48, borderRadius: 10, backgroundColor: "#fff" },
+  variantAdd: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(139,61,255,0.1)", alignItems: "center", justifyContent: "center" },
+  headerBg: { position: "absolute", left: 0, right: 0, top: 0, borderBottomWidth: StyleSheet.hairlineWidth },
+  headerShadow: { boxShadow: "0 6px 16px rgba(31,41,55,0.06)" },
+  reducedRow: { position: "absolute", left: 16, right: 16, height: COMPACT, flexDirection: "row", alignItems: "center", gap: 12 },
+  photo: { position: "absolute", borderRadius: 24, overflow: "hidden" },
+  bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 12, paddingHorizontal: 16 },
+  bottomShadow: { boxShadow: "0 -4px 20px rgba(31,41,55,0.08)" },
+  bottomInner: { flexDirection: "row", alignItems: "center", gap: 12, width: "100%", maxWidth: 640, alignSelf: "center" },
+  qty: { flexDirection: "row", alignItems: "center", borderRadius: 26, padding: 3, gap: 4 },
+  qtyBox: { minWidth: 42, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
+  cta: { height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.35)" },
+  ctaText: { color: "#fff", fontSize: 18, fontWeight: "600", flexShrink: 1 },
+});
