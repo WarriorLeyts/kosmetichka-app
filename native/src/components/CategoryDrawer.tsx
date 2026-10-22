@@ -5,6 +5,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { useIOS } from "../ios";
 import { tap } from "./ui";
 import type { Category } from "../types";
@@ -21,7 +22,44 @@ type Props = {
   onSelect: (guid: string | null) => void;
 };
 
-/** Emoji by the meaning of the category name (no people). */
+const ICONS = {
+  all: require("../../assets/categories/all.png"),
+  perfume: require("../../assets/categories/perfume.png"),
+  accessories: require("../../assets/categories/accessories.png"),
+  body: require("../../assets/categories/body.png"),
+  mouth: require("../../assets/categories/mouth.png"),
+  nocat: require("../../assets/categories/nocat.png"),
+  household: require("../../assets/categories/household.png"),
+  decor: require("../../assets/categories/decor.png"),
+  gift: require("../../assets/categories/gift.png"),
+  depilation: require("../../assets/categories/depilation.png"),
+  face: require("../../assets/categories/face.png"),
+  hair: require("../../assets/categories/hair.png"),
+  hands: require("../../assets/categories/hands.png"),
+};
+
+/** 3D icon by the meaning of the category name; null → fall back to an emoji. */
+function iconFor(name: string): number | null {
+  const n = name.toLowerCase();
+  const map: [RegExp, keyof typeof ICONS][] = [
+    [/парфю|духи|аромат/, "perfume"],
+    [/аксессуар/, "accessories"],
+    [/полост|зуб|рта/, "mouth"],
+    [/без категор/, "nocat"],
+    [/бытов|хими|уборк/, "household"],
+    [/декоратив|макияж/, "decor"],
+    [/подароч|набор/, "gift"],
+    [/депиляц|бритв/, "depilation"],
+    [/лиц/, "face"],
+    [/волос/, "hair"],
+    [/ног|рук|ногт|маникюр/, "hands"],
+    [/тел/, "body"],
+  ];
+  for (const [re, k] of map) if (re.test(n)) return ICONS[k];
+  return null;
+}
+
+/** Emoji by the meaning of the category name (no people) — for categories without a 3D icon. */
 function emojiFor(name: string): string {
   const n = name.toLowerCase();
   const map: [RegExp, string][] = [
@@ -199,7 +237,7 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
             <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: insets.bottom + 24 }} showsVerticalScrollIndicator={false}>
               <ScalePress onPress={() => select(null)} label="Все товары" reduce={reduce}>
                 <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.all}>
-                  <Text style={styles.allEmoji}>🛍️</Text>
+                  <Image source={ICONS.all} style={styles.allIcon} contentFit="contain" />
                   <Text style={styles.allText}>Все товары</Text>
                   <Ionicons name="chevron-forward" size={22} color="#fff" />
                 </LinearGradient>
@@ -216,7 +254,11 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
                         reduce={reduce}
                         style={[styles.tile, { backgroundColor: active ? (dark ? "rgba(232,44,135,0.16)" : "#FDF0F8") : tileBg, borderColor: active ? VIOLET : "transparent" }, shadow]}
                       >
-                        <Text style={styles.emoji}>{emojiFor(cat.name)}</Text>
+                        {iconFor(cat.name) ? (
+                          <Image source={iconFor(cat.name)} style={styles.icon} contentFit="contain" />
+                        ) : (
+                          <Text style={styles.emoji}>{emojiFor(cat.name)}</Text>
+                        )}
                         <Text style={[styles.tileText, { color: active ? PINK : c.label }]}>{cat.name}</Text>
                         {kids ? <Ionicons name="chevron-forward" size={18} color={c.chevron} style={styles.tileChevron} /> : null}
                       </ScalePress>
@@ -295,7 +337,8 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: 26, fontWeight: "700" },
   shadow: { boxShadow: "0 3px 12px rgba(80,50,140,0.07)" },
   all: { flexDirection: "row", alignItems: "center", gap: 14, height: 68, borderRadius: 22, paddingHorizontal: 18, boxShadow: "0 8px 20px rgba(160,32,240,0.3)" },
-  allEmoji: { fontSize: 34 },
+  allIcon: { width: 50, height: 50 },
+  icon: { width: 60, height: 60, marginBottom: 6 },
   allText: { flex: 1, color: "#fff", fontSize: 20, fontWeight: "600" },
   grid: { flexDirection: "row", flexWrap: "wrap", marginHorizontal: -6, marginTop: 12 },
   cell: { width: "50%", padding: 6 },
