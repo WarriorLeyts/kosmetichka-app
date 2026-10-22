@@ -1,0 +1,162 @@
+import { memo } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { router } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { imageUrl } from "../api";
+import { money, stockLabel } from "../format";
+import { useIOS } from "../ios";
+import { priceRows } from "./Price";
+import { VIOLET_PINK } from "./TabBar";
+import { tap } from "./ui";
+import type { PriceType } from "../pricing";
+import type { Customer, Product } from "../types";
+
+type Props = {
+  product: Product;
+  customer: Customer | null;
+  activePrice: PriceType;
+  inCart: number;
+  isFavorite: boolean;
+  onAdd: (p: Product) => void;
+  onFavorite: (p: Product) => void;
+};
+
+// price columns: 1st pink, 2nd violet, 3rd dark (brand colors from the project)
+const PRICE_COLORS = ["#e82c87", "#8b3dff"];
+
+const STOCK = {
+  high: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1f8a3b" },
+  low: { dot: "#FF9500", bg: "rgba(255,149,0,0.13)", fg: "#b35f00" },
+  out: { dot: "#FF3B30", bg: "rgba(255,59,48,0.1)", fg: "#c4271d" },
+};
+
+/** Product card for the iOS-style catalog grid (fixed-height blocks keep rows aligned). */
+function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite }: Props) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const img = imageUrl(product.images?.[0]?.path);
+  const stock = stockLabel(product.stock);
+  const st = STOCK[stock.tone];
+  const out = stock.tone === "out";
+  const rows = priceRows(product, customer, activePrice).slice(0, 3);
+
+  return (
+    <Pressable
+      onPress={() => router.push(`/product/${product.id}`)}
+      accessibilityRole="button"
+      accessibilityLabel={product.name}
+      style={({ pressed }) => [styles.card, { backgroundColor: c.cell }, dark && { boxShadow: undefined }, pressed && { transform: [{ scale: 0.985 }] }]}
+    >
+      <View style={styles.photo}>
+        {img ? (
+          <Image source={{ uri: img }} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} />
+        ) : (
+          <Ionicons name="image-outline" size={34} color="#C7C7CC" />
+        )}
+        <Pressable
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={isFavorite ? "Убрать из избранного" : "В избранное"}
+          onPress={() => {
+            tap();
+            onFavorite(product);
+          }}
+          style={styles.fav}
+        >
+          <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={23} color={isFavorite ? "#e82c87" : "#8E8E93"} />
+        </Pressable>
+      </View>
+
+      <Text numberOfLines={1} style={[styles.brand, { color: c.secondary }]}>
+        {product.brand?.name?.toUpperCase() ?? " "}
+      </Text>
+      <Text numberOfLines={2} style={[styles.name, { color: c.label }]}>
+        {product.name}
+      </Text>
+
+      <View style={[styles.stock, { backgroundColor: st.bg }]}>
+        <View style={[styles.stockDot, { backgroundColor: st.dot }]} />
+        <Text style={[styles.stockText, { color: st.fg }]}>{stock.text}</Text>
+      </View>
+
+      <View style={[styles.prices, { backgroundColor: dark ? "rgba(232,44,135,0.1)" : "#fdf2f8" }]}>
+        {rows.map((r, i) => (
+          <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: dark ? "rgba(255,255,255,0.15)" : "rgba(139,61,255,0.18)" }]}>
+            <Text numberOfLines={1} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? c.secondary }]}>
+              {r.label}
+            </Text>
+            <Text
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.6}
+              style={[styles.priceValue, { color: PRICE_COLORS[i] ?? c.label, fontSize: rows.length >= 3 ? 16 : 19 }]}
+            >
+              {money(r.value)}
+            </Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={{ flex: 1 }} />
+      <Pressable
+        disabled={out}
+        accessibilityRole="button"
+        accessibilityLabel={out ? "Нет в наличии" : "Добавить в корзину"}
+        onPress={() => {
+          tap();
+          onAdd(product);
+        }}
+        style={({ pressed }) => [{ opacity: out ? 0.45 : pressed ? 0.88 : 1 }]}
+      >
+        <LinearGradient
+          colors={out ? ["#AEAEB2", "#AEAEB2"] : VIOLET_PINK}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={[styles.button, !out && { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
+        >
+          <Ionicons name={inCart > 0 ? "checkmark" : "cart-outline"} size={18} color="#fff" />
+          <Text numberOfLines={1} style={styles.buttonText}>
+            {out ? "Нет в наличии" : inCart > 0 ? `В корзине: ${inCart}` : "В корзину"}
+          </Text>
+        </LinearGradient>
+      </Pressable>
+    </Pressable>
+  );
+}
+
+export const CatalogCard = memo(CatalogCardBase);
+
+const styles = StyleSheet.create({
+  card: {
+    flex: 1,
+    margin: 5,
+    padding: 10,
+    borderRadius: 22,
+    boxShadow: "0 4px 16px rgba(31,41,55,0.07)",
+  },
+  photo: { height: 168, borderRadius: 16, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center", marginBottom: 8 },
+  image: { width: "92%", height: "92%" },
+  fav: { position: "absolute", top: 2, right: 2, width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  brand: { fontSize: 12, letterSpacing: 0.2, marginBottom: 2 },
+  name: { fontSize: 15, lineHeight: 19, height: 38 },
+  stock: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "flex-start",
+    marginTop: 7,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  stockDot: { width: 7, height: 7, borderRadius: 4 },
+  stockText: { fontSize: 12, fontWeight: "500" },
+  prices: { flexDirection: "row", borderRadius: 14, paddingVertical: 7, marginTop: 9, height: 54 },
+  priceCol: { flex: 1, paddingHorizontal: 6, justifyContent: "center" },
+  priceLabel: { fontSize: 11 },
+  priceValue: { fontWeight: "700", marginTop: 1 },
+  button: { height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 10 },
+  buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+});

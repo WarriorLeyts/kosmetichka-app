@@ -14,9 +14,11 @@ import {
 } from "@/pricing";
 import { Button, Empty, Notice, Stepper } from "@/components/ui";
 import type { CartItem } from "@/types";
+import { useTabBarSpace } from "@/components/TabBar";
 import { BRAND_GRADIENT, GradientText } from "@/components/GradientText";
 
 export default function Cart() {
+  const bottomSpace = useTabBarSpace();
   const customer = useAuth((s) => s.customer);
   const items = useCartStore((s) => s.items);
   const setQty = useCartStore((s) => s.setQuantity);
@@ -107,7 +109,7 @@ export default function Cart() {
         data={items}
         keyExtractor={(i) => i.cartKey}
         renderItem={renderItem}
-        contentContainerStyle={{ padding: 12, paddingBottom: 24 }}
+        contentContainerStyle={{ padding: 12, paddingBottom: bottomSpace }}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={
           <View style={{ marginBottom: 4 }}>

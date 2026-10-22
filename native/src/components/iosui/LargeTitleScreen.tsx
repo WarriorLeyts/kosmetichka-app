@@ -3,6 +3,7 @@ import { Animated, StyleSheet, Text, View } from "react-native";
 import { BlurView } from "expo-blur";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { iosText, useIOS } from "../../ios";
+import { useTabBarSpace } from "../TabBar";
 
 /**
  * iOS large-title screen: big bold title scrolls with the content; once it's
@@ -13,6 +14,7 @@ export function LargeTitleScreen({ title, left, children }: { title: string; lef
   const insets = useSafeAreaInsets();
   const y = useRef(new Animated.Value(0)).current;
   const barH = insets.top + 44;
+  const bottomSpace = useTabBarSpace();
 
   const barOpacity = y.interpolate({ inputRange: [30, 52], outputRange: [0, 1], extrapolate: "clamp" });
   const bigScale = y.interpolate({ inputRange: [-120, 0], outputRange: [1.12, 1], extrapolate: "clamp" });
@@ -20,7 +22,7 @@ export function LargeTitleScreen({ title, left, children }: { title: string; lef
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <Animated.ScrollView
-        contentContainerStyle={{ paddingTop: barH, paddingBottom: 32 }}
+        contentContainerStyle={{ paddingTop: barH, paddingBottom: bottomSpace }}
         scrollEventThrottle={16}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y } } }], { useNativeDriver: true })}
       >

@@ -1,48 +1,34 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { Image } from "expo-image";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
-import { colors, radius, themed } from "@/theme";
-import { LinearGradient } from "expo-linear-gradient";
-import { CategoryDrawer } from "@/components/CategoryDrawer";
-import { BRAND_GRADIENT } from "@/components/GradientText";
-import { SORT_LABELS, useCatalog } from "@/store/catalog";
+import { SORT_LABELS, useCatalog, type Sort } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
 import { effectivePriceType } from "@/pricing";
-import { ProductCard } from "@/components/ProductCard";
+import { iosText, useIOS } from "@/ios";
+import { CatalogCard } from "@/components/CatalogCard";
+import { LOGO } from "@/components/PageTitle";
+import { useTabBarSpace } from "@/components/TabBar";
+import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product } from "@/types";
 
-/** Square gradient button like the site's mobile .catalog-button (☰). */
-function GradientButton({ icon, onPress, badge = 0 }: { icon: keyof typeof Ionicons.glyphMap; onPress: () => void; badge?: number }) {
-  return (
-    <Pressable
-      onPress={() => {
-        tap();
-        onPress();
-      }}
-      style={({ pressed }) => [styles.gradBtnWrap, { opacity: pressed ? 0.9 : 1, transform: [{ translateY: pressed ? 1 : 0 }] }]}
-    >
-      <LinearGradient colors={BRAND_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradBtn}>
-        <Ionicons name={icon} size={20} color="#fff" />
-      </LinearGradient>
-      {badge > 0 && (
-        <View style={styles.dot}>
-          <Text style={styles.dotText}>{badge}</Text>
-        </View>
-      )}
-    </Pressable>
-  );
-}
+const SORT_OPTIONS = (Object.keys(SORT_LABELS) as Sort[]).map((v) => ({ value: v, label: SORT_LABELS[v] }));
 
+/** Catalog — iOS style (large title, rounded search, two-column grid, floating tab bar). */
 export default function Catalog() {
   const insets = useSafeAreaInsets();
+  const c = useIOS();
+  const { width } = useWindowDimensions();
+  const columns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
+  const bottomSpace = useTabBarSpace();
   const f = useCatalog();
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
@@ -58,7 +44,8 @@ export default function Catalog() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
-  const [catOpen, setCatOpen] = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
+  const [unread, setUnread] = useState(false);
   const reqId = useRef(0);
   const listRef = useRef<FlatList<Product>>(null);
 
@@ -118,72 +105,138 @@ export default function Catalog() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
+  // notifications: unread manager messages in orders (existing /api/orders/status)
+  useFocusEffect(
+    useCallback(() => {
+      if (!customer) {
+        setUnread(false);
+        return;
+      }
+      api.orderStatus().then((r) => setUnread(r.managerMessages.length > 0)).catch(() => {});
+    }, [customer])
+  );
+
   const active = effectivePriceType(cart, customer);
-  const filterCount = f.activeFilterCount();
-  const selectedCat = f.categories.find((c) => c.guid === f.categoryGuid);
+  const filterCount = f.activeFilterCount() - (f.sort !== "popularity" ? 1 : 0);
+  const selectedCat = f.categories.find((x) => x.guid === f.categoryGuid);
 
   const header = (
     <View>
-      <View style={styles.countRow}>
-        <Text style={styles.count} numberOfLines={1}>
-          {selectedCat ? `${selectedCat.name} · ` : ""}
-          {loading && products.length === 0 ? "Загрузка…" : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
-        </Text>
-        <Pressable onPress={() => router.push("/filters")} hitSlop={8}>
-          <Text style={styles.sort}>{SORT_LABELS[f.sort]}</Text>
+      {/* compact top: logo + notifications */}
+      <View style={styles.topRow}>
+        <View style={styles.brandRow}>
+          <Image source={LOGO} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors />
+          <Text style={[styles.brandText, { color: c.label }]}>КОСМЕТИЧКА</Text>
+        </View>
+        <Pressable
+          hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel={unread ? "Уведомления: есть новые сообщения" : "Уведомления"}
+          onPress={() => { tap(); router.navigate(customer ? "/orders" : "/login"); }}
+        >
+          <Ionicons name="notifications-outline" size={27} color={c.label} />
+          {unread ? <View style={styles.bellDot} /> : null}
         </Pressable>
       </View>
+
+      {/* large title */}
+      <Text style={[iosText.largeTitle, styles.title, { color: c.label }]} accessibilityRole="header">
+        Каталог
+      </Text>
+
+      {/* search */}
+      <View style={[styles.search, { backgroundColor: c.blurTint === "dark" ? "#1C1C1E" : "rgba(118,118,128,0.12)" }]}>
+        <Ionicons name="search-outline" size={21} color={c.secondary} />
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Название, бренд, артикул"
+          placeholderTextColor={c.secondary}
+          style={[styles.searchInput, { color: c.label }]}
+          returnKeyType="search"
+          onSubmitEditing={() => f.set({ search: query.trim() })}
+          clearButtonMode="while-editing"
+          autoCorrect={false}
+          accessibilityLabel="Поиск по каталогу"
+          keyboardAppearance={c.blurTint}
+        />
+        <Pressable
+          onPress={() => { tap(); router.push("/scanner"); }}
+          accessibilityRole="button"
+          accessibilityLabel="Сканировать штрихкод"
+          style={[styles.scan, { backgroundColor: c.cell }]}
+        >
+          <Ionicons name="scan-outline" size={21} color="#8b3dff" />
+        </Pressable>
+      </View>
+
+      {/* count + filters + sort */}
+      <View style={styles.controls}>
+        <Text style={[styles.count, { color: c.secondary }]} numberOfLines={1}>
+          {loading && products.length === 0 ? "Загрузка…" : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
+        </Text>
+        <Pressable
+          onPress={() => { tap(); router.push("/filters"); }}
+          accessibilityRole="button"
+          accessibilityLabel={filterCount > 0 ? `Фильтры, выбрано ${filterCount}` : "Фильтры"}
+          style={[styles.filterBtn, { backgroundColor: c.blurTint === "dark" ? "#1C1C1E" : "rgba(118,118,128,0.12)" }]}
+        >
+          <Ionicons name="options-outline" size={19} color={c.label} />
+          {filterCount > 0 ? (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{filterCount}</Text>
+            </View>
+          ) : null}
+        </Pressable>
+        <Pressable
+          onPress={() => { tap(); setSortOpen(true); }}
+          accessibilityRole="button"
+          accessibilityLabel={`Сортировка: ${SORT_LABELS[f.sort]}`}
+          style={[styles.sortBtn, { backgroundColor: c.cell }]}
+        >
+          <Text style={[styles.sortText, { color: c.label }]} numberOfLines={1}>{SORT_LABELS[f.sort]}</Text>
+          <Ionicons name="chevron-down" size={16} color={c.label} />
+        </Pressable>
+      </View>
+
+      {selectedCat ? (
+        <Pressable
+          onPress={() => { tap(); f.set({ categoryGuid: null }); }}
+          accessibilityRole="button"
+          accessibilityLabel={`Категория ${selectedCat.name}, убрать`}
+          style={styles.catChip}
+        >
+          <Text style={styles.catChipText} numberOfLines={1}>{selectedCat.name}</Text>
+          <Ionicons name="close" size={15} color="#8b3dff" />
+        </Pressable>
+      ) : null}
     </View>
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg, paddingTop: insets.top }}>
-      <View style={styles.top}>
-        <GradientButton icon="menu" onPress={() => setCatOpen(true)} />
-        <View style={styles.searchBox}>
-          <Ionicons name="search" size={18} color={colors.muted} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="Название, бренд, артикул"
-            placeholderTextColor={colors.faint}
-            style={styles.searchInput}
-            returnKeyType="search"
-            onSubmitEditing={() => f.set({ search: query.trim() })}
-            clearButtonMode="while-editing"
-            autoCorrect={false}
-          />
-        </View>
-        <GradientButton icon="barcode-outline" onPress={() => router.push("/scanner")} />
-        <GradientButton icon="options-outline" onPress={() => router.push("/filters")} badge={filterCount} />
-      </View>
-
-      <CategoryDrawer
-        open={catOpen}
-        onClose={() => setCatOpen(false)}
-        categories={f.categories}
-        selected={f.categoryGuid}
-        onSelect={(guid) => f.set({ categoryGuid: guid })}
-      />
-
+    <View style={{ flex: 1, backgroundColor: c.blurTint === "dark" ? "#000" : "#F7F7FA", paddingTop: insets.top }}>
       {error && products.length === 0 ? (
-        <ErrorView message={error} onRetry={() => load(1, "replace")} />
+        <>
+          <View style={{ paddingHorizontal: 11 }}>{header}</View>
+          <ErrorView message={error} onRetry={() => load(1, "replace")} />
+        </>
       ) : (
         <FlatList
+          key={`cols-${columns}`}
           ref={listRef}
           data={products}
-          numColumns={2}
+          numColumns={columns}
           keyExtractor={(p) => String(p.id)}
-          contentContainerStyle={{ paddingHorizontal: 7, paddingBottom: 24 }}
+          contentContainerStyle={{ paddingHorizontal: 11, paddingBottom: bottomSpace }}
           ListHeaderComponent={header}
           keyboardDismissMode="on-drag"
           renderItem={({ item }) => (
-            <View style={{ flex: 1 / 2 }}>
-              <ProductCard
+            <View style={{ flex: 1 / columns }}>
+              <CatalogCard
                 product={item}
                 customer={customer}
                 activePrice={active}
-                inCart={cart.find((c) => c.cartKey === String(item.id))?.quantity ?? 0}
+                inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
                 isFavorite={favorites.some((x) => x.id === item.id)}
                 onAdd={addToCart}
                 onFavorite={toggleFav}
@@ -194,58 +247,87 @@ export default function Catalog() {
           onEndReached={() => {
             if (!loading && hasMore && products.length > 0) load(page + 1, "append");
           }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.violet} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor="#8b3dff" />}
           ListEmptyComponent={
-            loading ? null : (
+            loading ? (
+              <ActivityIndicator style={{ marginTop: 60 }} color="#8b3dff" size="large" />
+            ) : (
               <Empty
                 icon="search-outline"
                 title="Ничего не нашлось"
                 text="Попробуйте изменить запрос или сбросить фильтры"
-                action={filterCount > 0 || f.search ? "Сбросить фильтры" : undefined}
+                action={filterCount > 0 || f.search || f.categoryGuid ? "Сбросить фильтры" : undefined}
                 onAction={() => { setQuery(""); f.reset(); }}
               />
             )
           }
-          ListFooterComponent={loading ? <ActivityIndicator style={{ margin: 24 }} color={colors.violet} /> : null}
+          ListFooterComponent={loading && products.length > 0 ? <ActivityIndicator style={{ margin: 24 }} color="#8b3dff" /> : null}
         />
       )}
+
+      <Sheet open={sortOpen} onClose={() => setSortOpen(false)} title="Сортировка">
+        <SheetOptions
+          options={SORT_OPTIONS}
+          value={f.sort}
+          onSelect={(v) => {
+            setSortOpen(false);
+            if (v !== f.sort) f.set({ sort: v });
+          }}
+        />
+      </Sheet>
     </View>
   );
 }
 
-const styles = themed(() => ({
-  top: { flexDirection: "row", gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 },
-  searchBox: {
-    flex: 1, height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
-    flexDirection: "row", alignItems: "center", paddingHorizontal: 12, gap: 8,
+const styles = StyleSheet.create({
+  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 5, paddingTop: 8 },
+  brandRow: { flexDirection: "row", alignItems: "center", gap: 9 },
+  logo: { width: 32, height: 32 },
+  brandText: { fontSize: 19, letterSpacing: 3.2, fontWeight: "400" },
+  bellDot: { position: "absolute", top: 0, right: 1, width: 10, height: 10, borderRadius: 5, backgroundColor: "#e82c87", borderWidth: 1.5, borderColor: "#fff" },
+  title: { paddingHorizontal: 5, marginTop: 14, marginBottom: 12 },
+  search: { flexDirection: "row", alignItems: "center", gap: 9, height: 52, borderRadius: 26, paddingLeft: 16, paddingRight: 5, marginHorizontal: 5 },
+  searchInput: { flex: 1, fontSize: 17, height: "100%" },
+  scan: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" },
+  controls: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 5, marginTop: 14, marginBottom: 8 },
+  count: { flex: 1, fontSize: 15 },
+  filterBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  filterBadge: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    minWidth: 17,
+    height: 17,
+    borderRadius: 9,
+    backgroundColor: "#8b3dff",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
   },
-  searchInput: { flex: 1, fontSize: 16, color: colors.text, height: "100%" },
-  gradBtnWrap: {
+  filterBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+  sortBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 38,
+    borderRadius: 19,
+    paddingHorizontal: 14,
+    maxWidth: "52%",
+    boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
+  },
+  sortText: { fontSize: 15, flexShrink: 1 },
+  catChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    alignSelf: "flex-start",
+    marginHorizontal: 5,
+    marginBottom: 6,
+    paddingHorizontal: 12,
+    height: 30,
     borderRadius: 15,
-    shadowColor: "#e82c87",
-    shadowOpacity: 0.18,
-    shadowRadius: 11,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 4,
+    backgroundColor: "rgba(139,61,255,0.1)",
+    maxWidth: "90%",
   },
-  gradBtn: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  iconBtn: {
-    width: 46, height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
-    alignItems: "center", justifyContent: "center",
-  },
-  dot: {
-    position: "absolute", top: -5, right: -5, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: colors.card,
-    alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderWidth: 1, borderColor: colors.pink,
-  },
-  dotText: { color: colors.pink, fontSize: 10, fontWeight: "900" },
-  chips: { paddingHorizontal: 5, paddingVertical: 6, gap: 8 },
-  chip: {
-    flexDirection: "row", alignItems: "center", gap: 6, height: 36, paddingHorizontal: 14, borderRadius: 999,
-    backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, maxWidth: 240,
-  },
-  chipActive: { backgroundColor: colors.violet, borderColor: colors.violet },
-  chipText: { fontWeight: "700", color: colors.text, fontSize: 13 },
-  countRow: { flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 6, paddingVertical: 6 },
-  count: { color: colors.muted, fontWeight: "700", fontSize: 13 },
-  sort: { color: colors.violet, fontWeight: "700", fontSize: 13 },
-}));
+  catChipText: { color: "#8b3dff", fontSize: 14, fontWeight: "500", flexShrink: 1 },
+});

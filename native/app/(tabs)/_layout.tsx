@@ -3,7 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useCartStore } from "@/store/cart";
 import { colors } from "@/theme";
 import { PageTitle } from "@/components/PageTitle";
-import { tap } from "@/components/ui";
+import { TabBar } from "@/components/TabBar";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -18,7 +18,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenListeners={{ tabPress: () => tap() }}
+      tabBar={(props) => <TabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: colors.pink,
         tabBarInactiveTintColor: colors.faint,

@@ -13,6 +13,7 @@ import { Badge, Empty, ErrorView, Loading, tap } from "@/components/ui";
 import { GradientText } from "@/components/GradientText";
 import { LoginRequired } from "@/components/LoginRequired";
 import { PageTitle } from "@/components/PageTitle";
+import { useTabBarSpace } from "@/components/TabBar";
 import { STATUS_COLORS, STATUS_ICONS, STATUS_LABELS, type Order, type OrdersPage } from "@/types";
 
 // Tailwind colors used by the site's orders page
@@ -90,6 +91,7 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
 
 export default function Orders() {
   const insets = useSafeAreaInsets();
+  const bottomSpace = useTabBarSpace();
   const customer = useAuth((s) => s.customer);
   const [status, setStatus] = useState("");
   const [data, setData] = useState<OrdersPage | null>(null);
@@ -150,7 +152,7 @@ export default function Orders() {
     <FlatList
       data={orders}
       keyExtractor={(o) => String(o.id)}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top + 16, paddingBottom: 32, gap: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top + 16, paddingBottom: bottomSpace, gap: 12 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={T.purple500} />}
       onEndReachedThreshold={0.5}
       onEndReached={() => {

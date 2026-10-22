@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, themed } from "@/theme";
 import { SORT_LABELS, useCatalog, type Quick, type Sort } from "@/store/catalog";
 import { Button, tap } from "@/components/ui";
+import { CategoryDrawer } from "@/components/CategoryDrawer";
 
 const QUICK: { key: Quick; label: string }[] = [
   { key: "new", label: "Новинки" },
@@ -21,6 +22,7 @@ export default function Filters() {
   const [quick, setQuick] = useState<Quick[]>(s.quick);
   const [brands, setBrands] = useState<string[]>(s.brandGuids);
   const [brandQuery, setBrandQuery] = useState("");
+  const [catOpen, setCatOpen] = useState(false);
 
   const brandList = useMemo(() => {
     const q = brandQuery.trim().toLowerCase();
@@ -37,6 +39,16 @@ export default function Filters() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
+        <Text style={styles.h}>Категория</Text>
+        <View style={styles.box}>
+          <Pressable onPress={() => { tap(); setCatOpen(true); }} style={styles.row}>
+            <Text style={styles.rowText} numberOfLines={1}>
+              {s.categories.find((c) => c.guid === s.categoryGuid)?.name ?? "Все товары"}
+            </Text>
+            <Ionicons name="chevron-forward" size={18} color={colors.faint} />
+          </Pressable>
+        </View>
+
         <Text style={styles.h}>Сортировка</Text>
         <View style={styles.box}>
           {(Object.keys(SORT_LABELS) as Sort[]).map((k, i) => (
@@ -98,6 +110,14 @@ export default function Filters() {
           </>
         )}
       </ScrollView>
+
+      <CategoryDrawer
+        open={catOpen}
+        onClose={() => setCatOpen(false)}
+        categories={s.categories}
+        selected={s.categoryGuid}
+        onSelect={(guid) => s.set({ categoryGuid: guid })}
+      />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
         <Button

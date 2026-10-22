@@ -16,6 +16,7 @@ import { effectivePriceType } from "@/pricing";
 import { ProductCard } from "@/components/ProductCard";
 import { tap } from "@/components/ui";
 import { useAddToCart } from "@/useAddToCart";
+import { useTabBarSpace } from "@/components/TabBar";
 import type { Product } from "@/types";
 
 const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -26,6 +27,7 @@ const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }
 
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const bottomSpace = useTabBarSpace();
   const mode = useTheme((s) => s.mode);
   const toggleTheme = useTheme((s) => s.toggle);
   const customer = useAuth((s) => s.customer);
@@ -55,7 +57,7 @@ export default function Home() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: 32 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: bottomSpace }}>
       <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 18 }]}>
         <View style={styles.heroTop}>
           <View>
