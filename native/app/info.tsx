@@ -1,10 +1,15 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
 import { BASE_URL } from "@/api";
-import { colors, radius, themed } from "@/theme";
+import { TitleBar } from "@/components/iosui/TitleBar";
+import { tap } from "@/components/ui";
+import { useIOS } from "@/ios";
+import { useReduceMotion } from "@/useReduceMotion";
 
 const REQUISITES: [string, string][] = [
   ["Организация", "ООО «ВЕДУЧИ-1»"],
@@ -20,43 +25,79 @@ const LINKS: { label: string; path: string; icon: keyof typeof Ionicons.glyphMap
   { label: "Пользовательское соглашение", path: "/agreement", icon: "document-text-outline" },
 ];
 
+/** «О компании» — iOS grouped panels: requisites and links. */
 export default function Info() {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const insets = useSafeAreaInsets();
+  const reduce = useReduceMotion();
+  const appear = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(appear, { toValue: 1, duration: reduce ? 0 : 240, useNativeDriver: true }).start();
+  }, [appear, reduce]);
+
+  const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
+  const sep = { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator };
+
   return (
-    <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-      <Stack.Screen options={{ title: "О компании" }} />
-      <Text style={styles.lead}>
-        По вопросам заказов и сотрудничества обращайтесь к вашему менеджеру — в чате любого заказа или в личном кабинете.
-      </Text>
-      <View style={styles.box}>
-        {REQUISITES.map(([k, v], i) => (
-          <View key={k} style={[styles.row, i > 0 && styles.sep]}>
-            <Text style={styles.k}>{k}</Text>
-            <Text style={styles.v} selectable>{v}</Text>
-          </View>
-        ))}
-      </View>
-      <View style={styles.box}>
-        {LINKS.map((l, i) => (
-          <Pressable key={l.path} onPress={() => WebBrowser.openBrowserAsync(BASE_URL + l.path)} style={[styles.link, i > 0 && styles.sep]}>
-            <Ionicons name={l.icon} size={20} color={colors.violet} />
-            <Text style={styles.linkText}>{l.label}</Text>
-            <Ionicons name="open-outline" size={16} color={colors.faint} />
-          </Pressable>
-        ))}
-      </View>
-      <Text style={styles.version}>Версия приложения {Constants.expoConfig?.version ?? ""}</Text>
-    </ScrollView>
+    <View style={{ flex: 1, backgroundColor: dark ? "#000" : "#F7F5FB" }}>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 28 }} showsVerticalScrollIndicator={false}>
+        <View style={styles.wrap}>
+          <TitleBar title="О компании" />
+          <Animated.View style={{ opacity: appear, transform: [{ translateY: appear.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
+            <Text style={[styles.lead, { color: c.secondary }]}>
+              По вопросам заказов и сотрудничества обращайтесь к вашему менеджеру — в чате любого заказа или в личном кабинете.
+            </Text>
+
+            <View style={panel}>
+              {REQUISITES.map(([k, v], i) => (
+                <View key={k} style={[styles.row, i > 0 && sep]}>
+                  <Text style={[styles.k, { color: c.secondary }]}>{k}</Text>
+                  <Text style={[styles.v, { color: c.label }]} selectable>
+                    {v}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            <View style={panel}>
+              {LINKS.map((l, i) => (
+                <Pressable
+                  key={l.path}
+                  onPress={() => {
+                    tap();
+                    WebBrowser.openBrowserAsync(BASE_URL + l.path);
+                  }}
+                  accessibilityRole="link"
+                  accessibilityLabel={l.label}
+                  style={({ pressed }) => [styles.link, i > 0 && sep, pressed && { backgroundColor: c.cellPressed }]}
+                >
+                  <Ionicons name={l.icon} size={26} color="#8b3dff" />
+                  <Text style={[styles.linkText, { color: c.label }]}>{l.label}</Text>
+                  <Ionicons name="open-outline" size={20} color={c.secondary} />
+                </Pressable>
+              ))}
+            </View>
+
+            <Text style={[styles.version, { color: c.secondary }]}>Версия приложения {Constants.expoConfig?.version ?? ""}</Text>
+          </Animated.View>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = themed(() => ({
-  lead: { color: colors.muted, lineHeight: 21, marginBottom: 4 },
-  box: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 14, overflow: "hidden" },
-  row: { padding: 14 },
-  sep: { borderTopWidth: 1, borderTopColor: colors.soft },
-  k: { color: colors.muted, fontSize: 12, fontWeight: "700" },
-  v: { color: colors.text, fontSize: 14, marginTop: 3, lineHeight: 19 },
-  link: { flexDirection: "row", alignItems: "center", gap: 12, padding: 14, minHeight: 54 },
-  linkText: { flex: 1, color: colors.text, fontWeight: "700", fontSize: 15 },
-  version: { color: colors.faint, textAlign: "center", marginTop: 24, fontSize: 12 },
-}));
+const styles = StyleSheet.create({
+  wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
+  lead: { fontSize: 16, lineHeight: 23, marginBottom: 6 },
+  panel: { borderRadius: 22, marginTop: 14, overflow: "hidden" },
+  shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
+  row: { paddingHorizontal: 18, paddingVertical: 14 },
+  k: { fontSize: 14, fontWeight: "500" },
+  v: { fontSize: 17, marginTop: 4, lineHeight: 23 },
+  link: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 18, minHeight: 60 },
+  linkText: { flex: 1, fontSize: 17, fontWeight: "600" },
+  version: { textAlign: "center", marginTop: 22, fontSize: 13 },
+});

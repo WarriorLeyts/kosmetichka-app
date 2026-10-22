@@ -1,5 +1,5 @@
-import { memo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { memo, useRef } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -10,6 +10,7 @@ import { useIOS } from "../ios";
 import { priceRows } from "./Price";
 import { VIOLET_PINK } from "./TabBar";
 import { tap } from "./ui";
+import { useReduceMotion } from "../useReduceMotion";
 import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
 
@@ -37,6 +38,8 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const img = imageUrl(product.images?.[0]?.path);
+  const reduce = useReduceMotion();
+  const heart = useRef(new Animated.Value(1)).current;
   const stock = stockLabel(product.stock);
   const st = STOCK[stock.tone];
   const out = stock.tone === "out";
@@ -61,11 +64,17 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           accessibilityLabel={isFavorite ? "Убрать из избранного" : "В избранное"}
           onPress={() => {
             tap();
+            if (!reduce) {
+              heart.setValue(0.7);
+              Animated.spring(heart, { toValue: 1, friction: 4, tension: 160, useNativeDriver: true }).start();
+            }
             onFavorite(product);
           }}
           style={styles.fav}
         >
-          <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={23} color={isFavorite ? "#e82c87" : "#8E8E93"} />
+          <Animated.View style={{ transform: [{ scale: heart }] }}>
+            <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={23} color={isFavorite ? "#e82c87" : "#8E8E93"} />
+          </Animated.View>
         </Pressable>
       </View>
 

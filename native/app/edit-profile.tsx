@@ -1,10 +1,18 @@
-import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Text } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Stack } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { api } from "@/api";
-import { colors } from "@/theme";
 import { useAuth } from "@/store/auth";
-import { Button, ErrorView, Field, Loading, Notice } from "@/components/ui";
+import { ErrorView } from "@/components/ui";
+import { TitleBar } from "@/components/iosui/TitleBar";
+import { IOSField } from "@/components/iosui/Field";
+import { VIOLET_PINK } from "@/components/TabBar";
+import { useIOS } from "@/ios";
+import { useReduceMotion } from "@/useReduceMotion";
 import type { Customer } from "@/types";
 
 const FIELDS: { key: keyof Customer & string; label: string; placeholder: string; keyboard?: "email-address" | "phone-pad" }[] = [
@@ -16,13 +24,32 @@ const FIELDS: { key: keyof Customer & string; label: string; placeholder: string
   { key: "address", label: "Адрес доставки", placeholder: "ул. Пушкина, д. 1" },
 ];
 
+type Errors = Partial<Record<string, string>>;
+
+/** Server messages (same rules as the site) → the field they belong to. */
+function fieldOf(message: string): string | null {
+  const m = message.toLowerCase();
+  if (m.includes("email")) return "email";
+  if (m.includes("текущий пароль")) return "currentPassword";
+  if (m.includes("не совпадают")) return "passwordConfirm";
+  if (m.includes("короче")) return "password";
+  return null;
+}
+
 export default function EditProfile() {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const insets = useSafeAreaInsets();
+  const reduce = useReduceMotion();
   const setCustomer = useAuth((s) => s.setCustomer);
   const [form, setForm] = useState<Record<string, string> | null>(null);
   const [inn, setInn] = useState<string | null>(null);
   const [loadError, setLoadError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<Errors>({});
   const [msg, setMsg] = useState<{ tone: "error" | "success"; text: string } | null>(null);
+  const msgAnim = useRef(new Animated.Value(0)).current;
+  const savingRef = useRef(false);
 
   const load = async () => {
     setLoadError("");
@@ -41,51 +68,184 @@ export default function EditProfile() {
     load();
   }, []);
 
-  if (loadError) return <ErrorView message={loadError} onRetry={load} />;
-  if (!form) return <Loading />;
+  // banner fades in, success fades out by itself
+  useEffect(() => {
+    if (!msg) return;
+    msgAnim.setValue(0);
+    Animated.timing(msgAnim, { toValue: 1, duration: reduce ? 0 : 200, useNativeDriver: true }).start();
+    if (msg.tone === "success") {
+      const t = setTimeout(() => Animated.timing(msgAnim, { toValue: 0, duration: reduce ? 0 : 250, useNativeDriver: true }).start(() => setMsg(null)), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [msg, msgAnim, reduce]);
 
-  const upd = (k: string) => (v: string) => setForm({ ...form, [k]: v });
+  const bg = dark ? "#000" : "#F7F5FB";
+  const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
+
+  if (loadError || !form) {
+    return (
+      <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <TitleBar title="Мои данные" />
+        {loadError ? <ErrorView message={loadError} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color="#8b3dff" />}
+      </View>
+    );
+  }
+
+  const upd = (k: string) => (v: string) => {
+    setForm({ ...form, [k]: v });
+    if (errors[k]) setErrors({ ...errors, [k]: undefined });
+  };
 
   const save = async () => {
+    if (savingRef.current) return; // no double submit
+    // same checks as the server, shown next to the fields before sending
+    const e: Errors = {};
+    if (form.password.trim()) {
+      if (!form.currentPassword.trim()) e.currentPassword = "Введите текущий пароль для смены пароля";
+      if (form.password.length < 6) e.password = "Пароль должен быть не короче 6 символов";
+      else if (form.password !== form.passwordConfirm) e.passwordConfirm = "Пароли не совпадают";
+    }
+    setErrors(e);
+    if (Object.keys(e).length) {
+      setMsg({ tone: "error", text: "Проверьте выделенные поля" });
+      return;
+    }
+    savingRef.current = true;
     setSaving(true);
     setMsg(null);
     try {
-      const { customer } = await api.saveProfile(form);
+      // empty password block → nothing about the password is sent as a change
+      const body = form.password.trim() ? form : { ...form, currentPassword: "", password: "", passwordConfirm: "" };
+      const { customer } = await api.saveProfile(body);
       setCustomer(customer);
       setForm({ ...form, currentPassword: "", password: "", passwordConfirm: "" });
       setMsg({ tone: "success", text: "Данные сохранены" });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    } catch (e) {
-      setMsg({ tone: "error", text: e instanceof Error ? e.message : "Не удалось сохранить" });
+    } catch (err) {
+      const text = err instanceof Error ? err.message : "Не удалось сохранить";
+      const f = fieldOf(text);
+      if (f) setErrors({ [f]: text });
+      setMsg({ tone: "error", text });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
+  const buttonArea = 56 + 20 + Math.max(insets.bottom, 12);
+
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={90}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-        {msg && <Notice tone={msg.tone} text={msg.text} />}
-        {inn ? <Text style={{ color: colors.muted, marginBottom: 14 }}>ИНН: {inn} (изменение через менеджера)</Text> : null}
-        {FIELDS.map((f) => (
-          <Field
-            key={f.key}
-            label={f.label}
-            placeholder={f.placeholder}
-            value={form[f.key]}
-            onChangeText={upd(f.key)}
-            keyboardType={f.keyboard}
-            autoCapitalize={f.keyboard ? "none" : "sentences"}
-            multiline={f.key === "address"}
-          />
-        ))}
-        <Text style={{ fontSize: 17, fontWeight: "900", color: colors.text, marginTop: 10 }}>Смена пароля</Text>
-        <Text style={{ color: colors.muted, marginBottom: 12 }}>Оставьте пустым, чтобы не менять</Text>
-        <Field label="Текущий пароль" secureTextEntry value={form.currentPassword} onChangeText={upd("currentPassword")} autoComplete="current-password" />
-        <Field label="Новый пароль" secureTextEntry value={form.password} onChangeText={upd("password")} placeholder="Минимум 6 символов" autoComplete="new-password" />
-        <Field label="Повтор нового пароля" secureTextEntry value={form.passwordConfirm} onChangeText={upd("passwordConfirm")} autoComplete="new-password" />
-        <Button title="Сохранить" loading={saving} onPress={save} style={{ marginTop: 6 }} />
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior="padding">
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={{ paddingTop: insets.top, paddingHorizontal: 16 }}>
+        <View style={styles.wrap}>
+          <TitleBar title="Мои данные" />
+        </View>
+      </View>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: buttonArea + 16 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.wrap}>
+          {msg ? (
+            <Animated.View
+              style={[
+                styles.banner,
+                { backgroundColor: msg.tone === "success" ? "rgba(52,199,89,0.12)" : "rgba(255,59,48,0.1)", opacity: msgAnim },
+              ]}
+            >
+              <Ionicons name={msg.tone === "success" ? "checkmark-circle" : "alert-circle"} size={20} color={msg.tone === "success" ? "#1f8a3b" : "#FF3B30"} />
+              <Text style={{ flex: 1, color: msg.tone === "success" ? "#1f8a3b" : "#FF3B30", fontSize: 15 }}>{msg.text}</Text>
+            </Animated.View>
+          ) : null}
+
+          <View style={panel}>
+            {FIELDS.map((f) => (
+              <IOSField
+                key={f.key}
+                label={f.label}
+                placeholder={f.placeholder}
+                value={form[f.key]}
+                onChangeText={upd(f.key)}
+                keyboardType={f.keyboard}
+                autoCapitalize={f.keyboard ? "none" : "sentences"}
+                multiline={f.key === "address"}
+                error={errors[f.key]}
+              />
+            ))}
+            {inn ? <Text style={{ color: c.secondary, fontSize: 13, marginTop: -4 }}>ИНН: {inn} (изменение через менеджера)</Text> : null}
+          </View>
+
+          <View style={panel}>
+            <Text style={[styles.h, { color: c.label }]}>Смена пароля</Text>
+            <Text style={{ color: c.secondary, fontSize: 15, marginBottom: 14 }}>Оставьте пустым, чтобы не менять</Text>
+            <IOSField
+              label="Текущий пароль"
+              password
+              value={form.currentPassword}
+              onChangeText={upd("currentPassword")}
+              autoComplete="current-password"
+              autoCapitalize="none"
+              error={errors.currentPassword}
+            />
+            <IOSField
+              label="Новый пароль"
+              password
+              value={form.password}
+              onChangeText={upd("password")}
+              placeholder="Минимум 6 символов"
+              autoComplete="new-password"
+              autoCapitalize="none"
+              error={errors.password}
+            />
+            {/* the site requires a repeat of the new password — shown only once a new one is typed */}
+            {form.password ? (
+              <IOSField
+                label="Повтор нового пароля"
+                password
+                value={form.passwordConfirm}
+                onChangeText={upd("passwordConfirm")}
+                autoComplete="new-password"
+                autoCapitalize="none"
+                error={errors.passwordConfirm}
+              />
+            ) : null}
+          </View>
+        </View>
       </ScrollView>
+
+      {/* pinned save button */}
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 12), backgroundColor: dark ? "rgba(0,0,0,0.92)" : "rgba(247,245,251,0.94)" }]}>
+        <Pressable
+          onPress={save}
+          disabled={saving}
+          accessibilityRole="button"
+          accessibilityLabel="Сохранить изменения"
+          accessibilityState={{ busy: saving }}
+          style={({ pressed }) => [styles.wrap, { opacity: saving ? 0.85 : pressed ? 0.9 : 1 }]}
+        >
+          <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
+            {saving ? <ActivityIndicator color="#fff" /> : null}
+            <Text style={styles.ctaText}>{saving ? "Сохранение…" : "Сохранить изменения"}</Text>
+          </LinearGradient>
+        </Pressable>
+      </View>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
+  panel: { borderRadius: 22, padding: 16, paddingBottom: 4, marginTop: 10 },
+  shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
+  h: { fontSize: 22, fontWeight: "700" },
+  banner: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 14, padding: 12, marginTop: 4 },
+  bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 10, paddingHorizontal: 16 },
+  cta: { height: 56, borderRadius: 28, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
+  ctaText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+});
