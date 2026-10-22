@@ -1,0 +1,79 @@
+name: Expo Go (iPhone)
+
+# Publishes the app's JS to Expo (EAS Update) so it opens in Expo Go on iPhone/Android
+# from a permanent QR code — no computer needed. Requires the EXPO_TOKEN secret.
+
+on:
+  push:
+    branches: [main]
+    paths: ['native/**', '.github/workflows/expo-go.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: native
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - name: Check token
+        working-directory: .
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::warning title=Expo Go::Добавьте секрет EXPO_TOKEN (токен с expo.dev) — тогда приложение опубликуется для Expo Go."
+            exit 0
+          fi
+          echo "HAS_TOKEN=1" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+        if: env.HAS_TOKEN == '1'
+      - uses: actions/setup-node@v4
+        if: env.HAS_TOKEN == '1'
+        with:
+          node-version: 22
+      - name: Install
+        if: env.HAS_TOKEN == '1'
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Add expo-updates (only for this publish, not for the APK)
+        if: env.HAS_TOKEN == '1'
+        run: ../scripts/ci-run.sh npx expo install expo-updates -- --legacy-peer-deps
+      - name: Link Expo project
+        if: env.HAS_TOKEN == '1'
+        run: ../scripts/ci-run.sh npx -y eas-cli@latest init --non-interactive --force
+      - name: Configure updates for Expo Go (runtime = SDK version)
+        if: env.HAS_TOKEN == '1'
+        run: |
+          node -e '
+            const fs=require("fs");const a=JSON.parse(fs.readFileSync("app.json","utf8"));
+            const id=a.expo.extra&&a.expo.extra.eas&&a.expo.extra.eas.projectId;
+            if(!id) throw new Error("no projectId after eas init");
+            a.expo.runtimeVersion={policy:"sdkVersion"};
+            a.expo.updates={url:"https://u.expo.dev/"+id};
+            fs.writeFileSync("app.json",JSON.stringify(a,null,2));
+            fs.appendFileSync(process.env.GITHUB_ENV,"PROJECT_ID="+id+"\n");'
+          npx -y eas-cli@latest channel:create main --non-interactive || true
+      - name: Publish update
+        if: env.HAS_TOKEN == '1'
+        run: ../scripts/ci-run.sh npx -y eas-cli@latest update --channel main --message "${{ github.event.head_commit.message || 'manual' }}" --non-interactive
+      - name: Link and QR code
+        if: env.HAS_TOKEN == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SDK=$(node -p 'require("expo/package.json").version.split(".")[0]')
+          Q="projectId=${PROJECT_ID}&runtimeVersion=exposdk:${SDK}.0.0&channel=main&slug=exp"
+          URL=$(curl -fsS "https://qr.expo.dev/eas-update?${Q}&format=url" || echo "")
+          QR="https://qr.expo.dev/eas-update?${Q}"
+          BODY=$(printf '## Открыть в Expo Go\n\n1. Установите **Expo Go** из App Store.\n2. Наведите камеру iPhone на QR-код:\n\n![QR](%s)\n\nСсылка: %s\n\nQR-код постоянный — после каждого изменения приложение в Expo Go обновляется само (перезапустите его).\n' "$QR" "$URL")
+          echo "$BODY" >> "$GITHUB_STEP_SUMMARY"
+          echo "::notice title=Expo Go::${URL}"
+          if gh release view expo-go >/dev/null 2>&1; then
+            gh release edit expo-go --notes "$BODY"
+          else
+            gh release create expo-go --title "Expo Go (iPhone)" --notes "$BODY" --latest=false
+          fi
