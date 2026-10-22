@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Image } from "expo-image";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
 import { SORT_LABELS, useCatalog, type Sort } from "@/store/catalog";
@@ -12,7 +11,7 @@ import { useFavorites } from "@/store/favorites";
 import { effectivePriceType } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { CatalogCard } from "@/components/CatalogCard";
-import { LOGO } from "@/components/PageTitle";
+import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { Empty, ErrorView, tap } from "@/components/ui";
@@ -45,7 +44,6 @@ export default function Catalog() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
-  const [unread, setUnread] = useState(false);
   const reqId = useRef(0);
   const listRef = useRef<FlatList<Product>>(null);
 
@@ -105,38 +103,15 @@ export default function Catalog() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  // notifications: unread manager messages in orders (existing /api/orders/status)
-  useFocusEffect(
-    useCallback(() => {
-      if (!customer) {
-        setUnread(false);
-        return;
-      }
-      api.orderStatus().then((r) => setUnread(r.managerMessages.length > 0)).catch(() => {});
-    }, [customer])
-  );
-
   const active = effectivePriceType(cart, customer);
   const filterCount = f.activeFilterCount() - (f.sort !== "popularity" ? 1 : 0);
   const selectedCat = f.categories.find((x) => x.guid === f.categoryGuid);
 
   const header = (
     <View>
-      {/* compact top: logo + notifications */}
-      <View style={styles.topRow}>
-        <View style={styles.brandRow}>
-          <Image source={LOGO} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors />
-          <Text style={[styles.brandText, { color: c.label }]}>КОСМЕТИЧКА</Text>
-        </View>
-        <Pressable
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel={unread ? "Уведомления: есть новые сообщения" : "Уведомления"}
-          onPress={() => { tap(); router.navigate(customer ? "/orders" : "/login"); }}
-        >
-          <Ionicons name="notifications-outline" size={27} color={c.label} />
-          {unread ? <View style={styles.bellDot} /> : null}
-        </Pressable>
+      {/* top: «КОСМЕТИЧКА» + notifications */}
+      <View style={{ paddingHorizontal: 5 }}>
+        <BrandHeader />
       </View>
 
       {/* large title */}
@@ -280,11 +255,6 @@ export default function Catalog() {
 }
 
 const styles = StyleSheet.create({
-  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 5, paddingTop: 8 },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  logo: { width: 32, height: 32 },
-  brandText: { fontSize: 19, letterSpacing: 3.2, fontWeight: "400" },
-  bellDot: { position: "absolute", top: 0, right: 1, width: 10, height: 10, borderRadius: 5, backgroundColor: "#e82c87", borderWidth: 1.5, borderColor: "#fff" },
   title: { paddingHorizontal: 5, marginTop: 14, marginBottom: 12 },
   search: { flexDirection: "row", alignItems: "center", gap: 9, height: 52, borderRadius: 26, paddingLeft: 16, paddingRight: 5, marginHorizontal: 5 },
   searchInput: { flex: 1, fontSize: 17, height: "100%" },

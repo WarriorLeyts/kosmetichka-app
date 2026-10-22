@@ -1,16 +1,14 @@
 import { useCallback, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "../../api";
 import { useAuth } from "../../store/auth";
 import { iosText, useIOS } from "../../ios";
-import { LOGO } from "../PageTitle";
 import { tap } from "../ui";
 
 /**
- * Compact iOS top bar used on tab screens: brand logo + «КОСМЕТИЧКА» and a bell.
+ * Top bar used on all tab screens: «КОСМЕТИЧКА» centred (same font and place as on the product page), bell on the right.
  * The bell shows a dot when there are unread manager messages (existing /api/orders/status).
  */
 export function BrandHeader({ title }: { title?: string }) {
@@ -31,10 +29,7 @@ export function BrandHeader({ title }: { title?: string }) {
   return (
     <View>
       <View style={styles.topRow}>
-        <View style={styles.brandRow}>
-          <Image source={LOGO} style={styles.logo} contentFit="contain" />
-          <Text style={[styles.brandText, { color: c.label }]}>КОСМЕТИЧКА</Text>
-        </View>
+        <BrandWord color={c.label} />
         <Pressable
           hitSlop={12}
           accessibilityRole="button"
@@ -59,11 +54,21 @@ export function BrandHeader({ title }: { title?: string }) {
 }
 
 const styles = StyleSheet.create({
-  topRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 8 },
-  brandRow: { flexDirection: "row", alignItems: "center", gap: 9 },
-  logo: { width: 32, height: 32 },
-  brandText: { fontSize: 19, letterSpacing: 3.2, fontWeight: "400" },
-  bell: { width: 44, height: 44, alignItems: "flex-end", justifyContent: "center" },
+  topRow: { height: 50, alignItems: "center", justifyContent: "center" },
+  bell: { position: "absolute", right: 0, top: 3, width: 44, height: 44, alignItems: "flex-end", justifyContent: "center" },
   bellDot: { position: "absolute", top: 8, right: 1, width: 10, height: 10, borderRadius: 5, backgroundColor: "#e82c87", borderWidth: 1.5, borderColor: "#fff" },
-  title: { marginTop: 12, marginBottom: 14 },
+  title: { marginTop: 4, marginBottom: 14 },
+});
+
+/** «КОСМЕТИЧКА» — brand word for the top of every page (no logo). */
+export function BrandWord({ color, style }: { color: string; style?: object }) {
+  return (
+    <Text style={[wordStyle.word, { color }, style]} numberOfLines={1} accessibilityRole="header">
+      КОСМЕТИЧКА
+    </Text>
+  );
+}
+
+const wordStyle = StyleSheet.create({
+  word: { fontSize: 19, letterSpacing: 3.2, fontWeight: "400", textAlign: "center" },
 });

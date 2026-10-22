@@ -3,8 +3,7 @@ import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-n
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { Image } from "expo-image";
-import { LOGO } from "@/components/PageTitle";
+import { BrandWord } from "@/components/iosui/BrandHeader";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
 import { colors, gradient, radius, themed, useTheme } from "@/theme";
@@ -58,32 +57,25 @@ export default function Home() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: bottomSpace }}>
-      <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top + 18 }]}>
+      <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top }]}>
         <View style={styles.heroTop}>
-          <View>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-              <Image source={LOGO} style={styles.logoImg} contentFit="contain" />
-              <Text style={styles.logo}>Косметичка</Text>
-            </View>
-            <Text style={styles.subtitle}>Косметика и парфюмерия оптом</Text>
-          </View>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <Pressable
-              onPress={() => {
-                tap();
-                toggleTheme();
-              }}
-              hitSlop={10}
-              style={styles.heroIcon}
-              accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"}
-            >
-              <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={21} color="#fff" />
-            </Pressable>
-            <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={styles.heroIcon}>
-              <Ionicons name="heart-outline" size={22} color="#fff" />
-            </Pressable>
-          </View>
+          <BrandWord color="#fff" />
+          <Pressable
+            onPress={() => {
+              tap();
+              toggleTheme();
+            }}
+            hitSlop={10}
+            style={[styles.heroIcon, styles.heroLeft]}
+            accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"}
+          >
+            <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={21} color="#fff" />
+          </Pressable>
+          <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={[styles.heroIcon, styles.heroRight]} accessibilityLabel="Избранное">
+            <Ionicons name="heart-outline" size={22} color="#fff" />
+          </Pressable>
         </View>
+        <Text style={styles.subtitle}>Косметика и парфюмерия оптом</Text>
 
         <View style={styles.searchRow}>
           <Pressable style={styles.search} onPress={() => openCatalog({})}>
@@ -181,10 +173,12 @@ export default function Home() {
 
 const styles = themed(() => ({
   hero: { paddingHorizontal: 18, paddingBottom: 22, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
-  heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 18 },
+  heroTop: { height: 50, alignItems: "center", justifyContent: "center" },
+  heroLeft: { position: "absolute", left: 0, top: 7 },
+  heroRight: { position: "absolute", right: 0, top: 7 },
   logo: { color: "#fff", fontSize: 26, fontWeight: "900" },
   logoImg: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: "rgba(255,255,255,0.85)" },
-  subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, marginTop: 2, fontWeight: "600" },
+  subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: "600", textAlign: "center", marginBottom: 16 },
   heroIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
   searchRow: { flexDirection: "row", gap: 10 },
   search: { flex: 1, height: 48, borderRadius: radius.md, backgroundColor: colors.card, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },

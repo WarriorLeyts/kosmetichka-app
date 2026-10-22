@@ -13,6 +13,7 @@ import { Badge, Empty, ErrorView, Loading, tap } from "@/components/ui";
 import { GradientText } from "@/components/GradientText";
 import { LoginRequired } from "@/components/LoginRequired";
 import { PageTitle } from "@/components/PageTitle";
+import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace } from "@/components/TabBar";
 import { STATUS_COLORS, STATUS_ICONS, STATUS_LABELS, type Order, type OrdersPage } from "@/types";
 
@@ -152,7 +153,7 @@ export default function Orders() {
     <FlatList
       data={orders}
       keyExtractor={(o) => String(o.id)}
-      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top + 16, paddingBottom: bottomSpace, gap: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top, paddingBottom: bottomSpace, gap: 12 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={T.purple500} />}
       onEndReachedThreshold={0.5}
       onEndReached={() => {
@@ -160,6 +161,7 @@ export default function Orders() {
       }}
       ListHeaderComponent={
         <View style={{ gap: 12 }}>
+          <BrandHeader />
           <PageTitle title="Мои заказы" colors={[T.pink500, T.purple500, T.blue700]} />
 
           {stats && stats.totalOrders > 0 && (
