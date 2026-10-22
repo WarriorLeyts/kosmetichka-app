@@ -124,7 +124,7 @@ export default function EditProfile() {
       // phone and email in the same form as registration stores them (so login by phone/email keeps working)
       const d = form.phone.replace(/\D/g, "");
       const phone = d.length === 11 && d.startsWith("7") ? "8" + d.slice(1) : d.length === 10 ? "8" + d : d;
-      const clean = { ...form, phone, email: form.email.trim().toLowerCase(), name: form.name.trim() };
+      const clean: Record<string, string> = { ...form, phone, email: form.email.trim().toLowerCase(), name: form.name.trim() };
       const body = clean.password.trim() ? clean : { ...clean, currentPassword: "", password: "", passwordConfirm: "" };
       const { customer } = await api.saveProfile(body);
       setCustomer(customer);
