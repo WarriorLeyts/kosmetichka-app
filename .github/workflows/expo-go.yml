@@ -44,6 +44,11 @@ jobs:
       - name: Install
         if: env.HAS_TOKEN == '1'
         run: ../scripts/ci-run.sh npm run deps
+      - name: Resolved versions
+        if: env.HAS_TOKEN == '1'
+        run: |
+          v=$(node -e 'const n=["expo","react","react-native","expo-router","react-native-screens","react-native-safe-area-context","expo-blur","@react-navigation/bottom-tabs","@react-navigation/native","react-native-gesture-handler"];console.log(n.map(x=>{try{return x+"@"+require(x+"/package.json").version}catch{return x+"@-"}}).join("%0A"))')
+          echo "::notice title=Versions::${v}"
       - name: Check types on the new SDK
         if: env.HAS_TOKEN == '1'
         continue-on-error: true
