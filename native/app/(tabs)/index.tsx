@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Alert, Animated, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -15,6 +15,8 @@ import { effectivePriceType } from "@/pricing";
 import { ProductCard } from "@/components/ProductCard";
 import { tap } from "@/components/ui";
 import { useAddToCart } from "@/useAddToCart";
+import { HomeScene } from "@/components/home/HomeScene";
+import { HomeCategories } from "@/components/home/HomeCategories";
 import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { UI_SIZES, uiScale } from "@/uiScale";
@@ -39,6 +41,8 @@ export default function Home() {
   const addToCart = useAddToCart();
 
   const [sizeOpen, setSizeOpen] = useState(false);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [sceneTop, setSceneTop] = useState<number | null>(null);
   const [stats, setStats] = useState<{ totalProducts: number; totalBrands: number } | null>(null);
   const [fresh, setFresh] = useState<Product[]>([]);
 
@@ -60,7 +64,12 @@ export default function Home() {
 
   return (
     <>
-    <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: bottomSpace }}>
+    <Animated.ScrollView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      contentContainerStyle={{ paddingBottom: bottomSpace }}
+      onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+      scrollEventThrottle={16}
+    >
       <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top }]}>
         <View style={styles.heroTop}>
           <BrandWord color="#fff" />
@@ -119,6 +128,12 @@ export default function Home() {
         )}
       </LinearGradient>
 
+      {/* new home content: scroll-driven box scene + categories with images */}
+      <View onLayout={(e) => setSceneTop(e.nativeEvent.layout.y)}>
+        <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={insets.top} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
+      </View>
+      {tops.length > 0 && <HomeCategories categories={tops} onOpen={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />}
+
       {!customer && (
         <Pressable style={styles.loginBanner} onPress={() => router.push("/login")}>
           <Ionicons name="pricetags-outline" size={22} color={colors.violet} />
@@ -138,23 +153,6 @@ export default function Home() {
           </Pressable>
         ))}
       </ScrollView>
-
-      {tops.length > 0 && (
-        <>
-          <Text style={styles.section}>Категории</Text>
-          <View style={styles.grid}>
-            {tops.map((c) => (
-              <Pressable key={c.guid} style={styles.cat} onPress={() => openCatalog({ categoryGuid: c.guid })}>
-                <Text style={styles.catText} numberOfLines={2}>{c.name}</Text>
-                <Ionicons name="chevron-forward" size={16} color={colors.faint} />
-              </Pressable>
-            ))}
-          </View>
-          <Pressable onPress={() => openCatalog({})} style={{ alignSelf: "center", padding: 10 }}>
-            <Text style={{ color: colors.violet, fontWeight: "800" }}>Весь каталог →</Text>
-          </Pressable>
-        </>
-      )}
 
       {fresh.length > 0 && (
         <>
@@ -186,7 +184,7 @@ export default function Home() {
         <Ionicons name="call-outline" size={18} color={colors.muted} />
         <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
       </Pressable>
-    </ScrollView>
+    </Animated.ScrollView>
     <Sheet open={sizeOpen} onClose={() => setSizeOpen(false)} title="Размер интерфейса">
       <SheetOptions
         options={[...UI_SIZES]}

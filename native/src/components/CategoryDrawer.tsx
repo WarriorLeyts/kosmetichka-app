@@ -39,7 +39,7 @@ const ICONS = {
 };
 
 /** 3D icon by the meaning of the category name; null → fall back to an emoji. */
-function iconFor(name: string): number | null {
+export function iconFor(name: string): number | null {
   const n = name.toLowerCase();
   const map: [RegExp, keyof typeof ICONS][] = [
     [/парфю|духи|аромат/, "perfume"],
