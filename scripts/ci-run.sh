@@ -6,7 +6,8 @@ LOG="$(mktemp)"
 "$@" 2>&1 | tee "$LOG"
 code=${PIPESTATUS[0]}
 if [ "$code" -ne 0 ]; then
-  msg=$(grep -v '^\s*$' "$LOG" | tail -n 80 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')
+  { grep -E '^e: |What went wrong|^> |error:|Error:|FAILED|Could not|not found|Unresolved' "$LOG" | grep -v '^> Task' | head -n 30; echo '-----'; grep -v '^\s*$' "$LOG" | grep -v '^w: ' | tail -n 40; } > "$LOG.sum"
+  msg=$(sed 's/%/%25/g' "$LOG.sum" | cut -c1-300 | awk '{printf "%s%%0A", $0}')
   echo "::error title=Failed: $1::${msg}"
 fi
 exit "$code"
