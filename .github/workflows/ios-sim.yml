@@ -1,0 +1,85 @@
+name: iOS simulator check (Expo Go)
+
+# Opens the published Expo Go update in Expo Go on an iPhone simulator,
+# takes screenshots, taps the tabs and collects JS logs (for debugging).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sim:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Boot simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys;d=json.load(sys.stdin)["devices"];c=[x for k,v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone")];print(c[-1]["udid"])')
+          echo "UDID=$UDID" >> $GITHUB_ENV
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+      - name: Install Expo Go for SDK 58
+        run: |
+          URL=$(curl -fsS https://api.expo.dev/v2/versions/latest | python3 -c 'import json,sys;d=json.load(sys.stdin)["data"]["sdkVersions"];print(d["58.0.0"]["iosClientUrl"])')
+          echo "Expo Go: $URL"
+          curl -fsSL "$URL" -o expogo.tar.gz
+          mkdir ExpoGo.app && tar -xzf expogo.tar.gz -C ExpoGo.app
+          xcrun simctl install "$UDID" ExpoGo.app
+          xcrun simctl privacy "$UDID" grant all host.exp.Exponent || true
+      - name: Open the app
+        run: |
+          mkdir -p shots
+          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'process CONTAINS "Expo" OR category == "javascript" OR subsystem CONTAINS "com.facebook.react"' > shots/log.txt 2>&1 &
+          echo $! > logpid
+          xcrun simctl launch "$UDID" host.exp.Exponent || true
+          sleep 8
+          xcrun simctl io "$UDID" screenshot shots/0-expogo.png
+          xcrun simctl openurl "$UDID" "exp://u.expo.dev/79cf0a1d-4e68-4bdf-9389-10a7fc8bdc48?runtime-version=exposdk%3A58.0.0&channel-name=main"
+          sleep 45
+          xcrun simctl io "$UDID" screenshot shots/1-opened.png
+          sleep 15
+          xcrun simctl io "$UDID" screenshot shots/2-after60s.png
+      - name: Tap around (Maestro)
+        continue-on-error: true
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          export PATH="$PATH:$HOME/.maestro/bin"
+          cat > flow.yaml <<'YAML'
+          appId: host.exp.Exponent
+          ---
+          - takeScreenshot: shots/3-before-tap
+          - tapOn:
+              text: "Каталог"
+              optional: true
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/4-after-tap-catalog
+          - tapOn:
+              text: "Профиль"
+              optional: true
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/5-after-tap-profile
+          - tapOn:
+              point: "50%,50%"
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/6-after-tap-center
+          YAML
+          maestro --device "$UDID" test flow.yaml 2>&1 | tail -40 | tee shots/maestro.txt
+          maestro --device "$UDID" hierarchy > shots/hierarchy.json 2>&1 || true
+      - name: Logs summary
+        if: always()
+        run: |
+          kill $(cat logpid) 2>/dev/null || true
+          grep -iE "error|exception|warn|unhandled|ReactNativeJS|javascript" shots/log.txt | grep -viE "nw_|networkd|CFNetwork|tcp_|boringssl" | tail -60 > shots/errors.txt || true
+          msg=$(sed 's/%/%25/g' shots/errors.txt | cut -c1-250 | tail -40 | awk '{printf "%s%%0A", $0}')
+          echo "::notice title=Simulator log::${msg}"
+          m2=$(sed 's/%/%25/g' shots/maestro.txt 2>/dev/null | cut -c1-200 | awk '{printf "%s%%0A", $0}')
+          echo "::notice title=Maestro::${m2}"
+      - name: Upload screenshots
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view ios-sim-debug >/dev/null 2>&1 || gh release create ios-sim-debug --title "iOS simulator debug" --notes "debug" --latest=false
+          gh release upload ios-sim-debug shots/*.png shots/errors.txt shots/log.txt shots/hierarchy.json --clobber || true
