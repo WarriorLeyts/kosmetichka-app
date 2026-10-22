@@ -1,22 +1,33 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  type NativeScrollEvent, type NativeSyntheticEvent,
 } from "react-native";
 import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import { api, BASE_URL, imageUrl } from "@/api";
-import { colors, radius, themed } from "@/theme";
-import { date, money, time } from "@/format";
+import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
 import { useCartStore } from "@/store/cart";
-import { Badge, Button, ErrorView, Loading, Notice } from "@/components/ui";
-import { STATUS_COLORS, STATUS_LABELS, type ChatMessage, type Order } from "@/types";
+import { ErrorView, tap } from "@/components/ui";
+import { BackBar } from "@/components/iosui/BrandHeader";
+import { VIOLET_PINK } from "@/components/TabBar";
+import { iosText, useIOS } from "@/ios";
+import { statusLook } from "@/orderStatus";
+import type { ChatMessage, Order } from "@/types";
+
+const VIOLET = "#8b3dff";
+const PINK = "#e82c87";
+
+type Pending = { key: string; text: string; createdAt: string; failed: boolean };
 
 /** Messages can be plain text or JSON cards (photo / product) sent by the manager. */
-function MessageBody({ text, mine }: { text: string; mine: boolean }) {
+function MessageBody({ text, color }: { text: string; color: string }) {
   try {
     const obj = JSON.parse(text);
     if (obj?._t === "img" && typeof obj.url === "string") {
@@ -26,30 +37,47 @@ function MessageBody({ text, mine }: { text: string; mine: boolean }) {
       return (
         <View style={{ width: 210 }}>
           {obj.imagePath ? (
-            <Image source={{ uri: imageUrl(obj.imagePath) ?? undefined }} style={{ width: 210, height: 120, borderRadius: 10, backgroundColor: colors.card }} contentFit="contain" />
+            <Image source={{ uri: imageUrl(obj.imagePath) ?? undefined }} style={{ width: 210, height: 120, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" />
           ) : null}
-          <Text style={{ fontWeight: "700", marginTop: 6, color: mine ? "#fff" : colors.text }}>{obj.name}</Text>
-          {typeof obj.price === "number" ? <Text style={{ color: mine ? "#fff" : colors.pink, fontWeight: "800" }}>{money(obj.price)}</Text> : null}
+          <Text style={{ fontWeight: "600", marginTop: 6, color }}>{obj.name}</Text>
+          {typeof obj.price === "number" ? <Text style={{ color: PINK, fontWeight: "700" }}>{money(obj.price)}</Text> : null}
         </View>
       );
     }
   } catch {
     /* plain text */
   }
-  return <Text style={{ color: mine ? "#fff" : colors.text, fontSize: 15, lineHeight: 20 }}>{text}</Text>;
+  return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
 }
 
 export default function OrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const orderId = Number(id);
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const insets = useSafeAreaInsets();
   const repeat = useCartStore((s) => s.repeat);
   const [order, setOrder] = useState<Order | null>(orderCache.get(orderId) ?? null);
   const [error, setError] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState(true);
+  const [chatError, setChatError] = useState(false);
+  const [pending, setPending] = useState<Pending[]>([]);
   const [text, setText] = useState("");
-  const [sending, setSending] = useState(false);
   const [busy, setBusy] = useState<"" | "cancel" | "confirm">("");
+  const [kb, setKb] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const nearBottom = useRef(true);
+  const lastCount = useRef(0);
+
+  useEffect(() => {
+    const a = Keyboard.addListener("keyboardDidShow", () => setKb(true));
+    const b = Keyboard.addListener("keyboardDidHide", () => setKb(false));
+    return () => {
+      a.remove();
+      b.remove();
+    };
+  }, []);
 
   const loadOrder = useCallback(async () => {
     setError("");
@@ -68,8 +96,11 @@ export default function OrderScreen() {
     try {
       const r = await api.messages(orderId);
       setMessages(r.messages);
+      setChatError(false);
     } catch {
-      /* chat unavailable */
+      setChatError(true);
+    } finally {
+      setChatLoading(false);
     }
   }, [orderId]);
 
@@ -80,25 +111,51 @@ export default function OrderScreen() {
     return () => clearInterval(t);
   }, [loadOrder, loadMessages]);
 
-  if (error) return <ErrorView message={error} onRetry={loadOrder} />;
-  if (!order) return <Loading />;
+  // new replies: scroll down only if the user is already at the bottom (don't disturb reading)
+  useEffect(() => {
+    if (messages.length > lastCount.current && lastCount.current > 0 && nearBottom.current) {
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    }
+    lastCount.current = messages.length;
+  }, [messages.length]);
 
-  const c = STATUS_COLORS[order.status] ?? { fg: colors.muted, bg: colors.soft, border: colors.border };
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    nearBottom.current = contentSize.height - (contentOffset.y + layoutMeasurement.height) < 120;
+  };
+
+  const goBack = () => (router.canGoBack() ? router.back() : router.replace("/orders"));
+  const bg = dark ? "#000" : "#F7F7FA";
+
+  if (error || !order) {
+    return (
+      <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <BackBar onBack={goBack} color={c.label} />
+        {error ? <ErrorView message={error} onRetry={loadOrder} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
+      </View>
+    );
+  }
+
+  const s = statusLook(order.status, dark);
   const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
 
-  const send = async () => {
-    const t = text.trim();
+  const send = async (msg: string, key?: string) => {
+    const t = msg.trim();
     if (!t) return;
-    setSending(true);
+    const k = key ?? `p${Date.now()}`;
+    // show the message right away; it is replaced by the server copy after loading
+    setPending((p) => (key ? p.map((x) => (x.key === k ? { ...x, failed: false } : x)) : [...p, { key: k, text: t, createdAt: new Date().toISOString(), failed: false }]));
+    if (!key) setText("");
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     try {
       await api.sendMessage(orderId, t);
-      setText("");
       await loadMessages();
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
-    } catch (e) {
-      Alert.alert("Не отправлено", e instanceof Error ? e.message : "Ошибка");
-    } finally {
-      setSending(false);
+      setPending((p) => p.filter((x) => x.key !== k));
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    } catch {
+      setPending((p) => p.map((x) => (x.key === k ? { ...x, failed: true } : x)));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
     }
   };
 
@@ -136,139 +193,245 @@ export default function OrderScreen() {
     }
   };
 
+  const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
+  const outBubble = dark ? "rgba(139,61,255,0.28)" : "#F6E9FB";
+
+  const bubble = (key: string | number, mine: boolean, body: string, at: string, extra?: ReactNode) => (
+    <View key={key} style={[styles.bubble, mine ? [styles.mine, { backgroundColor: outBubble }] : [styles.theirs, { backgroundColor: dark ? "#2C2C2E" : "#F2F2F7" }]]}>
+      {!mine ? <Text style={styles.from}>Менеджер</Text> : null}
+      <MessageBody text={body} color={c.label} />
+      <View style={styles.metaRow}>
+        {extra}
+        <Text style={[styles.time, { color: c.secondary }]}>{time(at)}</Text>
+      </View>
+    </View>
+  );
+
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={100}>
-      <Stack.Screen options={{ title: `Заказ №${order.id}` }} />
-      <ScrollView ref={scrollRef} contentContainerStyle={{ padding: 14, paddingBottom: 20 }} keyboardShouldPersistTaps="handled">
-        <View style={styles.head}>
-          <Badge text={STATUS_LABELS[order.status] ?? order.status} fg={c.fg} bg={c.bg} border={c.border} />
-          <Text style={styles.meta}>от {date(order.createdAt)}</Text>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior="padding">
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={{ paddingTop: insets.top, paddingHorizontal: 16, backgroundColor: bg }}>
+        <View style={styles.wrap}>
+          <BackBar onBack={goBack} color={c.label} />
         </View>
-
-        {needsConfirm && (
-          <View style={{ marginTop: 12 }}>
-            <Notice tone="info" text="Менеджер изменил заказ после консультации. Проверьте состав и подтвердите." />
-            <Button title="Подтвердить заказ" icon="checkmark-done" loading={busy === "confirm"} onPress={confirm} />
+      </View>
+      <ScrollView
+        ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={64}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.wrap}>
+          <Text style={[iosText.largeTitle, { color: c.label, marginTop: 4 }]} accessibilityRole="header">
+            Заказ №{order.id}
+          </Text>
+          <View style={styles.headRow}>
+            <View style={[styles.status, { backgroundColor: s.bg }]}>
+              <Ionicons name={s.icon} size={22} color={s.fg} />
+              <Text style={[styles.statusText, { color: s.fg }]}>{s.label}</Text>
+            </View>
+            <Text style={[iosText.subhead, { color: c.secondary }]}>от {dateLong(order.createdAt)}</Text>
           </View>
-        )}
 
-        <View style={styles.box}>
-          {order.items.map((it, i) => {
-            const img = it.variantImageUrl ? imageUrl(it.variantImageUrl) : imageUrl(it.imagePath);
-            return (
-              <Pressable key={it.id} onPress={() => router.push(`/product/${it.productId}`)} style={[styles.item, i > 0 && styles.sep]}>
-                {img ? <Image source={{ uri: img }} style={styles.img} contentFit="contain" /> : <View style={styles.img} />}
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.itemName} numberOfLines={2}>{it.productName}</Text>
-                  {it.variantName ? <Text style={styles.variant}>{it.variantName}</Text> : null}
-                  <Text style={styles.meta}>{money(it.price)} × {it.quantity}</Text>
-                </View>
-                <Text style={styles.itemSum}>{money(it.total)}</Text>
-              </Pressable>
-            );
-          })}
-          <View style={[styles.sep, styles.totalRow]}>
-            <Text style={styles.totalLabel}>Итого</Text>
-            <Text style={styles.total}>{money(order.total)}</Text>
-          </View>
-        </View>
-
-        {order.comment ? (
-          <View style={[styles.box, { padding: 14 }]}>
-            <Text style={styles.small}>Комментарий</Text>
-            <Text style={{ color: colors.text, marginTop: 4 }}>{order.comment}</Text>
-          </View>
-        ) : null}
-
-        <View style={styles.actions}>
-          <Button
-            title="Повторить"
-            icon="refresh"
-            variant="outline"
-            small
-            style={{ flex: 1 }}
-            onPress={() => {
-              repeat(order.items);
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-              router.navigate("/cart");
-            }}
-          />
-          <Button
-            title="Накладная"
-            icon="document-text-outline"
-            variant="outline"
-            small
-            style={{ flex: 1 }}
-            onPress={() => WebBrowser.openBrowserAsync(`${BASE_URL}/orders/${order.id}/invoice`)}
-          />
-        </View>
-        {order.status === "pending" && (
-          <Button title="Отменить заказ" variant="danger" small loading={busy === "cancel"} onPress={cancel} style={{ marginTop: 10 }} />
-        )}
-
-        <Text style={styles.h}>Чат с менеджером</Text>
-        {messages.length === 0 ? (
-          <Text style={[styles.meta, { textAlign: "center", marginVertical: 12 }]}>Напишите, если есть вопросы по заказу</Text>
-        ) : (
-          messages.map((m) => {
-            const mine = !m.isFromManager;
-            return (
-              <View key={m.id} style={[styles.bubble, mine ? styles.mine : styles.theirs]}>
-                {!mine && <Text style={styles.from}>Менеджер</Text>}
-                <MessageBody text={m.text} mine={mine} />
-                <Text style={[styles.time, mine && { color: "rgba(255,255,255,0.75)" }]}>{time(m.createdAt)}</Text>
+          {needsConfirm ? (
+            <View style={[panel, { gap: 10 }]}>
+              <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                <Ionicons name="information-circle-outline" size={20} color={VIOLET} />
+                <Text style={[iosText.subhead, { color: c.label, flex: 1 }]}>Менеджер изменил заказ после консультации. Проверьте состав и подтвердите.</Text>
               </View>
-            );
-          })
-        )}
+              <GradientButton title="Подтвердить заказ" icon="checkmark-done" loading={busy === "confirm"} onPress={confirm} />
+            </View>
+          ) : null}
+
+          {/* items */}
+          <View style={panel}>
+            <Text style={[styles.h, { color: c.label }]}>Товары в заказе</Text>
+            {order.items.map((it, i) => {
+              const img = it.variantImageUrl ? imageUrl(it.variantImageUrl) : imageUrl(it.imagePath);
+              return (
+                <Pressable
+                  key={it.id}
+                  onPress={() => {
+                    tap();
+                    router.push(`/product/${it.productId}`);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={it.productName}
+                  style={({ pressed }) => [styles.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator }, pressed && { opacity: 0.7 }]}
+                >
+                  <View style={[styles.photo, { backgroundColor: dark ? "#fff" : "#F4F4F7" }]}>
+                    {img ? <Image source={{ uri: img }} style={{ width: "88%", height: "88%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={26} color="#AEAEB2" />}
+                  </View>
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <Text style={{ fontSize: 16, lineHeight: 21, color: c.label }}>{it.productName}</Text>
+                    {it.variantName ? <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>{it.variantName}</Text> : null}
+                    <View style={[styles.pricePill, { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "rgba(139,61,255,0.09)" }]}>
+                      <Text style={styles.priceText}>
+                        {money(it.price)}
+                        {it.quantity > 1 ? ` × ${it.quantity}` : ""}
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={19} color={c.chevron} />
+                </Pressable>
+              );
+            })}
+            <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
+              <Text style={[iosText.headline, { color: c.label }]}>Итого</Text>
+              <Text style={styles.total}>{money(order.total)}</Text>
+            </View>
+          </View>
+
+          {order.comment ? (
+            <View style={panel}>
+              <Text style={[iosText.footnote, { color: c.secondary }]}>Комментарий</Text>
+              <Text style={{ color: c.label, fontSize: 16, marginTop: 4 }}>{order.comment}</Text>
+            </View>
+          ) : null}
+
+          {/* actions — existing logic */}
+          <View style={styles.actions}>
+            <GradientButton
+              title="Повторить"
+              icon="refresh"
+              onPress={() => {
+                repeat(order.items);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                router.navigate("/cart");
+              }}
+            />
+            <Pressable
+              onPress={() => {
+                tap();
+                WebBrowser.openBrowserAsync(`${BASE_URL}/orders/${order.id}/invoice`);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Накладная"
+              style={({ pressed }) => [styles.outline, { backgroundColor: c.cell, opacity: pressed ? 0.8 : 1 }]}
+            >
+              <Ionicons name="document-text-outline" size={22} color={VIOLET} />
+              <Text style={styles.outlineText}>Накладная</Text>
+            </Pressable>
+          </View>
+          {order.status === "pending" ? (
+            <Pressable onPress={cancel} disabled={busy === "cancel"} style={styles.cancel} accessibilityRole="button">
+              {busy === "cancel" ? <ActivityIndicator color="#FF3B30" /> : <Text style={[iosText.body, { color: "#FF3B30" }]}>Отменить заказ</Text>}
+            </Pressable>
+          ) : null}
+
+          {/* chat */}
+          <View style={[panel, { marginTop: 16 }]}>
+            <View style={styles.chatHead}>
+              <Ionicons name="chatbubble-ellipses-outline" size={26} color={VIOLET} />
+              <Text style={[styles.h, { color: c.label, marginBottom: 0 }]}>Чат с менеджером</Text>
+            </View>
+            {chatLoading ? (
+              <ActivityIndicator style={{ marginVertical: 18 }} color={VIOLET} />
+            ) : chatError && messages.length === 0 ? (
+              <Pressable onPress={loadMessages} style={{ alignItems: "center", marginVertical: 14 }}>
+                <Text style={[iosText.subhead, { color: c.secondary }]}>Не удалось загрузить сообщения</Text>
+                <Text style={[iosText.subhead, { color: VIOLET, marginTop: 4 }]}>Повторить</Text>
+              </Pressable>
+            ) : messages.length === 0 && pending.length === 0 ? (
+              <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginVertical: 14 }]}>Напишите, если есть вопросы по заказу</Text>
+            ) : null}
+            {messages.map((m) => bubble(m.id, !m.isFromManager, m.text, m.createdAt))}
+            {pending.map((p) =>
+              p.failed ? (
+                <Pressable key={p.key} onPress={() => send(p.text, p.key)} accessibilityRole="button" accessibilityLabel="Не отправлено. Нажмите, чтобы повторить">
+                  {bubble(
+                    p.key + "b",
+                    true,
+                    p.text,
+                    p.createdAt,
+                    <Text style={{ color: "#FF3B30", fontSize: 12 }}>Не отправлено · повторить</Text>
+                  )}
+                </Pressable>
+              ) : (
+                bubble(p.key, true, p.text, p.createdAt, <ActivityIndicator size="small" color={c.secondary} style={{ transform: [{ scale: 0.7 }] }} />)
+              )
+            )}
+          </View>
+        </View>
       </ScrollView>
 
-      <View style={styles.composer}>
-        <TextInput
-          value={text}
-          onChangeText={setText}
-          placeholder="Сообщение менеджеру"
-          placeholderTextColor={colors.faint}
-          style={styles.input}
-          multiline
-          maxLength={2000}
-        />
-        <Pressable onPress={send} disabled={sending || !text.trim()} style={[styles.send, (!text.trim() || sending) && { opacity: 0.4 }]}>
-          <Ionicons name="arrow-up" size={20} color="#fff" />
-        </Pressable>
+      {/* message input, pinned to the bottom (stays above the keyboard) */}
+      <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: dark ? "#111" : "#fff" }, !dark && styles.composerShadow]}>
+        <View style={[styles.wrap, { flexDirection: "row", alignItems: "flex-end", gap: 10 }]}>
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Написать сообщение…"
+            placeholderTextColor={c.secondary}
+            style={[styles.input, { backgroundColor: dark ? "#1C1C1E" : "#F2F2F7", color: c.label }]}
+            multiline
+            maxLength={2000}
+          />
+          <Pressable onPress={() => send(text)} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel="Отправить" style={{ opacity: text.trim() ? 1 : 0.45 }}>
+            <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.send}>
+              <Ionicons name="paper-plane-outline" size={22} color="#fff" />
+            </LinearGradient>
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = themed(() => ({
-  head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  meta: { color: colors.muted, fontSize: 12, marginTop: 2 },
-  box: { backgroundColor: colors.card, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.border, marginTop: 12, overflow: "hidden" },
-  item: { flexDirection: "row", alignItems: "center", gap: 10, padding: 12 },
-  sep: { borderTopWidth: 1, borderTopColor: colors.soft },
-  img: { width: 46, height: 46, borderRadius: 8, backgroundColor: "#ffffff" },
-  itemName: { fontWeight: "700", color: colors.text, fontSize: 13 },
-  variant: { color: colors.violet, fontSize: 12, fontWeight: "700" },
-  itemSum: { fontWeight: "800", color: colors.text },
-  totalRow: { flexDirection: "row", justifyContent: "space-between", padding: 14 },
-  totalLabel: { fontSize: 16, fontWeight: "800", color: colors.text },
-  total: { fontSize: 18, fontWeight: "900", color: colors.pink },
-  small: { color: colors.muted, fontSize: 12, fontWeight: "700" },
-  actions: { flexDirection: "row", gap: 10, marginTop: 14 },
-  h: { fontSize: 18, fontWeight: "900", color: colors.text, marginTop: 24, marginBottom: 10 },
-  bubble: { maxWidth: "82%", borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8 },
-  mine: { alignSelf: "flex-end", backgroundColor: colors.violet, borderBottomRightRadius: 6 },
-  theirs: { alignSelf: "flex-start", backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, borderBottomLeftRadius: 6 },
-  from: { color: colors.pink, fontWeight: "800", fontSize: 12, marginBottom: 2 },
-  time: { color: colors.faint, fontSize: 11, marginTop: 4, alignSelf: "flex-end" },
-  composer: {
-    flexDirection: "row", alignItems: "flex-end", gap: 8, padding: 10, paddingBottom: Platform.OS === "ios" ? 28 : 10,
-    backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border,
-  },
-  input: {
-    flex: 1, minHeight: 42, maxHeight: 120, borderRadius: 21, backgroundColor: colors.soft, paddingHorizontal: 16,
-    paddingTop: 11, paddingBottom: 11, fontSize: 15, color: colors.text,
-  },
-  send: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.pink, alignItems: "center", justifyContent: "center" },
-}));
+function GradientButton({ title, icon, onPress, loading }: { title: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void; loading?: boolean }) {
+  return (
+    <Pressable
+      onPress={() => {
+        if (loading) return;
+        tap();
+        onPress();
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.9 : 1 }]}
+    >
+      <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
+        {loading ? <ActivityIndicator color="#fff" /> : <Ionicons name={icon} size={22} color="#fff" />}
+        <Text style={styles.ctaText} numberOfLines={1}>
+          {title}
+        </Text>
+      </LinearGradient>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
+  shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
+  headRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 8 },
+  status: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, maxWidth: "100%" },
+  statusText: { fontSize: 17, fontWeight: "600", flexShrink: 1 },
+  panel: { borderRadius: 22, padding: 16, marginTop: 14 },
+  h: { fontSize: 21, fontWeight: "700", marginBottom: 4 },
+  item: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 12 },
+  photo: { width: 92, height: 92, borderRadius: 16, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  pricePill: { alignSelf: "flex-start", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
+  priceText: { color: VIOLET, fontSize: 16, fontWeight: "600" },
+  totalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 2 },
+  total: { color: PINK, fontSize: 22, fontWeight: "700" },
+  actions: { flexDirection: "row", gap: 12, marginTop: 16 },
+  cta: { height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
+  ctaText: { color: "#fff", fontSize: 17, fontWeight: "600", flexShrink: 1 },
+  outline: { flex: 1, height: 54, borderRadius: 27, borderWidth: 1.5, borderColor: VIOLET, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
+  outlineText: { color: VIOLET, fontSize: 17, fontWeight: "600" },
+  cancel: { alignSelf: "center", paddingVertical: 12, paddingHorizontal: 16, marginTop: 4 },
+  chatHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
+  bubble: { maxWidth: "84%", borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9, marginTop: 8 },
+  mine: { alignSelf: "flex-end", borderBottomRightRadius: 6 },
+  theirs: { alignSelf: "flex-start", borderBottomLeftRadius: 6 },
+  from: { color: PINK, fontWeight: "600", fontSize: 12, marginBottom: 2 },
+  metaRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 3 },
+  time: { fontSize: 12 },
+  composer: { paddingTop: 10, paddingHorizontal: 16 },
+  composerShadow: { boxShadow: "0 -4px 18px rgba(31,41,55,0.07)" },
+  input: { flex: 1, minHeight: 48, maxHeight: 130, borderRadius: 24, paddingHorizontal: 18, paddingTop: 13, paddingBottom: 13, fontSize: 16 },
+  send: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", boxShadow: "0 6px 14px rgba(139,61,255,0.35)" },
+});

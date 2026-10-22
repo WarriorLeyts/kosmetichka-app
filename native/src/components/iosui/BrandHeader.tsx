@@ -70,5 +70,19 @@ export function BrandWord({ color, style }: { color: string; style?: object }) {
 }
 
 const wordStyle = StyleSheet.create({
+  bar: { height: 50, alignItems: "center", justifyContent: "center" },
+  back: { position: "absolute", left: -6, top: 3, width: 44, height: 44, justifyContent: "center" },
   word: { fontSize: 19, letterSpacing: 3.2, fontWeight: "400", textAlign: "center" },
 });
+
+/** Top bar for inner screens: back chevron on the left, «КОСМЕТИЧКА» centred. */
+export function BackBar({ onBack, color, tint = "#8b3dff" }: { onBack: () => void; color: string; tint?: string }) {
+  return (
+    <View style={wordStyle.bar}>
+      <BrandWord color={color} />
+      <Pressable onPress={onBack} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={wordStyle.back}>
+        <Ionicons name="chevron-back" size={28} color={tint} />
+      </Pressable>
+    </View>
+  );
+}

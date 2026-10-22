@@ -29,3 +29,11 @@ export function stockLabel(stock: number | null | undefined) {
   if (v > 10) return { text: "Больше 10 шт.", tone: "high" as const };
   return { text: "Осталось мало", tone: "low" as const };
 }
+
+const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+
+/** «12 марта 2024» */
+export function dateLong(iso: string): string {
+  const d = new Date(iso);
+  return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
