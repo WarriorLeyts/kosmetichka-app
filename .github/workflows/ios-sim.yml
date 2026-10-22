@@ -46,27 +46,31 @@ jobs:
         run: |
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           export PATH="$PATH:$HOME/.maestro/bin"
-          cat > flow.yaml <<'YAML'
-          appId: host.exp.Exponent
-          ---
-          - takeScreenshot: shots/3-before-tap
-          - tapOn:
-              text: "Каталог"
-              optional: true
-          - waitForAnimationToEnd
-          - takeScreenshot: shots/4-after-tap-catalog
-          - tapOn:
-              text: "Профиль"
-              optional: true
-          - waitForAnimationToEnd
-          - takeScreenshot: shots/5-after-tap-profile
-          - tapOn:
-              point: "50%,50%"
-          - waitForAnimationToEnd
-          - takeScreenshot: shots/6-after-tap-center
-          YAML
-          maestro --device "$UDID" test flow.yaml 2>&1 | tail -40 | tee shots/maestro.txt
+          shot() { xcrun simctl io "$UDID" screenshot "shots/$1.png"; }
+          step() {
+            printf 'appId: host.exp.Exponent\n---\n%s\n' "$1" > f.yaml
+            maestro --device "$UDID" test f.yaml 2>&1 | tail -6 >> shots/maestro.txt
+          }
+          step '- tapOn:
+              text: "Open"
+              optional: true'
+          sleep 50
+          shot 3-app-loaded
           maestro --device "$UDID" hierarchy > shots/hierarchy.json 2>&1 || true
+          step '- tapOn:
+              text: "Каталог"
+              optional: true'
+          sleep 6
+          shot 4-after-tap-catalog
+          step '- tapOn:
+              text: "Профиль"
+              optional: true'
+          sleep 6
+          shot 5-after-tap-profile
+          step '- tapOn:
+              point: "50%,90%"'
+          sleep 6
+          shot 6-after-tap-bottom
       - name: Logs summary
         if: always()
         run: |
