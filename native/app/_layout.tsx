@@ -14,6 +14,18 @@ import { colors, useTheme } from "@/theme";
 const inExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 if (!inExpoGo) SplashScreen.preventAutoHideAsync().catch(() => {});
 
+// diagnostics for the Expo Go build only: is JS alive, do touches reach it, any hidden errors
+if (inExpoGo) {
+  let n = 0;
+  setInterval(() => console.log(`[kos] alive ${++n}`), 3000);
+  const g = globalThis as unknown as { ErrorUtils?: { getGlobalHandler: () => (e: unknown, f?: boolean) => void; setGlobalHandler: (h: (e: unknown, f?: boolean) => void) => void } };
+  const prev = g.ErrorUtils?.getGlobalHandler();
+  g.ErrorUtils?.setGlobalHandler((e, fatal) => {
+    console.log(`[kos] ERROR ${fatal ? "fatal " : ""}${e instanceof Error ? e.message + " " + e.stack : String(e)}`);
+    prev?.(e, fatal);
+  });
+}
+
 export default function RootLayout() {
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
@@ -38,7 +50,9 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider
+      onTouchStart={inExpoGo ? () => console.log("[kos] touch") : undefined}
+    >
       <StatusBar style={colors.statusBar} />
       <Stack
         key={mode}

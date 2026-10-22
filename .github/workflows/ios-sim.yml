@@ -35,7 +35,7 @@ jobs:
       - name: Open the app
         run: |
           mkdir -p shots
-          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'process CONTAINS "Expo" OR category == "javascript" OR subsystem CONTAINS "com.facebook.react"' > shots/log.txt 2>&1 &
+          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'process CONTAINS "Expo"' > shots/log.txt 2>&1 &
           echo $! > logpid
           xcrun simctl launch "$UDID" host.exp.Exponent || true
           sleep 8
@@ -87,10 +87,18 @@ jobs:
               point: "19%,52%"'
           sleep 6
           shot 6-after-tap-chip
+          # native scroll check: swipe up on the content
+          step '- swipe:
+              start: "50%,75%"
+              end: "50%,30%"'
+          sleep 3
+          shot 7-after-swipe
       - name: Logs summary
         if: always()
         run: |
           kill $(cat logpid) 2>/dev/null || true
+          grep -F "[kos]" shots/log.txt | cut -c1-400 > shots/kos.txt || true
+          echo "::notice title=kos::$(tail -40 shots/kos.txt | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
           grep -iE "error|exception|warn|unhandled|ReactNativeJS|javascript" shots/log.txt | grep -viE "nw_|networkd|CFNetwork|tcp_|boringssl" | tail -60 > shots/errors.txt || true
           msg=$(sed 's/%/%25/g' shots/errors.txt | cut -c1-250 | tail -40 | awk '{printf "%s%%0A", $0}')
           echo "::notice title=Simulator log::${msg}"
@@ -102,4 +110,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view ios-sim-debug >/dev/null 2>&1 || gh release create ios-sim-debug --title "iOS simulator debug" --notes "debug" --latest=false
-          gh release upload ios-sim-debug shots/*.png shots/*.json shots/errors.txt shots/maestro.txt --clobber || true
+          gh release upload ios-sim-debug shots/*.png shots/*.json shots/errors.txt shots/maestro.txt shots/kos.txt --clobber || true
