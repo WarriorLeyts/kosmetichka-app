@@ -25,8 +25,9 @@ object UiScale {
   fun wrap(base: Context): Context {
     val scale = try { get(base) } catch (e: Exception) { 1f }
     if (scale == 1f) return base
-    val conf = Configuration(base.resources.configuration)
-    conf.densityDpi = (conf.densityDpi * scale).roundToInt()
+    // override only the density; everything else (screen size, dark mode, orientation) keeps following the system
+    val conf = Configuration()
+    conf.densityDpi = (base.resources.configuration.densityDpi * scale).roundToInt()
     return base.createConfigurationContext(conf)
   }
 }

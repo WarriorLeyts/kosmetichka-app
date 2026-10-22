@@ -24,7 +24,7 @@ function WaitCard({ item, index, onRemoved }: { item: Row; index: number; onRemo
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const reduce = useReduceMotion();
-  const toggle = useWaitlistStore((s) => s.toggle);
+  const removeFromList = useWaitlistStore((s) => s.remove);
   const v = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   const [busy, setBusy] = useState(false);
 
@@ -38,7 +38,7 @@ function WaitCard({ item, index, onRemoved }: { item: Row; index: number; onRemo
     tap();
     setBusy(true);
     try {
-      await toggle(item.id);
+      await removeFromList(item.id);
       Animated.timing(v, { toValue: 0, duration: reduce ? 0 : 200, useNativeDriver: true }).start(() => onRemoved(item.id));
     } catch (e) {
       setBusy(false);

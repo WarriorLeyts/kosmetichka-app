@@ -13,7 +13,8 @@ type CartState = {
   setQuantity: (cartKey: string, quantity: number) => void;
   remove: (cartKey: string) => void;
   clear: () => void;
-  repeat: (items: OrderItem[]) => void;
+  /** Repeat an order with the products' current data (prices, stock); returns names that were skipped. */
+  repeat: (items: OrderItem[], fresh: Map<number, Product>, variantIds?: Map<string, Variant>) => string[];
   count: () => number;
   quantityOf: (cartKey: string) => number;
 };
@@ -47,12 +48,14 @@ export const useCartStore = create<CartState>()(
         const key = String(product.id);
         const min = Math.max(1, product.minOrderQty ?? 1);
         const step = quantity ?? min;
+        const cap = typeof product.stock === "number" && product.stock > 0 ? product.stock : Infinity;
         const items = get().items;
         const existing = items.find((i) => i.cartKey === key);
         if (existing) {
-          set({ items: items.map((i) => (i.cartKey === key ? { ...i, quantity: i.quantity + step } : i)) });
+          // refresh prices/stock from the latest product data, never above the stock
+          set({ items: items.map((i) => (i.cartKey === key ? { ...i, ...slim(product), quantity: Math.min(cap, i.quantity + step) } : i)) });
         } else {
-          set({ items: [...items, { ...slim(product), cartKey: key, quantity: Math.max(min, step) }] });
+          set({ items: [...items, { ...slim(product), cartKey: key, quantity: Math.min(cap, Math.max(min, step)) }] });
         }
       },
 
@@ -87,30 +90,37 @@ export const useCartStore = create<CartState>()(
       remove: (cartKey) => set({ items: get().items.filter((i) => i.cartKey !== cartKey) }),
       clear: () => set({ items: [] }),
 
-      repeat: (orderItems) => {
+      repeat: (orderItems, fresh, variantIds) => {
         const items = [...get().items];
+        const skipped: string[] = [];
         for (const it of orderItems) {
-          const key = String(it.productId) + (it.variantName ? `_r${it.variantName}` : "");
+          const p = fresh.get(it.productId);
+          // product removed or out of stock — can't be ordered again
+          if (!p || (typeof p.stock === "number" && p.stock <= 0)) {
+            skipped.push(it.productName + (it.variantName ? ` (${it.variantName})` : ""));
+            continue;
+          }
+          const v = it.variantName ? variantIds?.get(`${it.productId}|${it.variantName}`) : undefined;
+          // same keys as when adding from the product screen, so lines merge instead of duplicating
+          const key = it.variantName ? (v ? `${it.productId}_v${v.id}` : `${it.productId}_r${it.variantName}`) : String(it.productId);
+          const cap = typeof p.stock === "number" && p.stock > 0 ? p.stock : Infinity;
+          const min = Math.max(1, p.minOrderQty ?? 1);
           const idx = items.findIndex((i) => i.cartKey === key);
           if (idx >= 0) {
-            items[idx] = { ...items[idx], quantity: items[idx].quantity + it.quantity };
+            items[idx] = { ...items[idx], ...slim(p), quantity: Math.min(cap, items[idx].quantity + it.quantity) };
           } else {
             items.push({
-              id: it.productId,
-              name: it.productName,
+              ...slim(p),
               cartKey: key,
-              quantity: it.quantity,
-              wholesalePrice: it.price,
-              retailPrice: it.price,
-              discountPrice: it.price,
-              barcode: it.barcode ?? null,
+              quantity: Math.min(cap, Math.max(min, it.quantity)),
+              variantId: v?.id,
               variantName: it.variantName ?? null,
-              variantImageUrl: it.variantImageUrl ?? null,
-              images: it.imagePath ? [{ path: it.imagePath }] : [],
+              variantImageUrl: v?.imageUrl ?? it.variantImageUrl ?? null,
             });
           }
         }
         set({ items });
+        return skipped;
       },
 
       count: () => get().items.reduce((s, i) => s + i.quantity, 0),

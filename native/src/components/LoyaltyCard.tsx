@@ -110,7 +110,7 @@ export function LoyaltyCardPanel({ card, width }: { card: Card; width: number })
               },
             ]}
           >
-            <Barcode code={card.barcode} width={138 * k} height={34 * k} />
+            <Barcode code={card.barcode} width={128 * k} height={34 * k} />
             <Text style={{ color: "#111", fontSize: 8.5 * k, marginTop: 3 * k, letterSpacing: 0.3 * k }}>{card.barcode}</Text>
           </Animated.View>
 

@@ -21,6 +21,7 @@ export default function Register() {
   const [f, setF] = useState({ name: "", companyName: "", phone: "", email: "", password: "" });
   const [priceType, setPriceType] = useState("wholesale");
   const [captcha, setCaptcha] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
   const [smsSent, setSmsSent] = useState(false);
   const [smsCode, setSmsCode] = useState("");
   const [cooldown, setCooldown] = useState(0);
@@ -81,6 +82,9 @@ export default function Register() {
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка регистрации");
+      // the captcha token is single-use (the site resets it too) — ask for a new one
+      setCaptcha(null);
+      setCaptchaKey((k) => k + 1);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
     } finally {
       setBusy("");
@@ -111,7 +115,7 @@ export default function Register() {
         <Field label="Пароль" value={f.password} onChangeText={upd("password")} secureTextEntry placeholder="Минимум 6 символов" autoComplete="new-password" />
         <Field label="Телефон" value={f.phone} onChangeText={upd("phone")} keyboardType="phone-pad" placeholder="+7 900 000 00 00" autoComplete="tel" />
 
-        <Captcha onToken={setCaptcha} />
+        <Captcha key={captchaKey} onToken={setCaptcha} onExpired={() => setCaptcha(null)} />
 
         <Button
           title={cooldown > 0 ? `Отправить ещё раз через ${cooldown} с` : smsSent ? "Отправить код ещё раз" : "Получить код по SMS"}

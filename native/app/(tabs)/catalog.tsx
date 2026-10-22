@@ -55,7 +55,10 @@ export default function Catalog() {
   }, []);
 
   // keep the input in sync when search is set from elsewhere (home, scanner)
-  useEffect(() => setQuery(f.search), [f.search]);
+  // (not while typing: "крем " must keep its trailing space)
+  useEffect(() => {
+    setQuery((q) => (q.trim() === f.search ? q : f.search));
+  }, [f.search]);
 
   const load = useCallback(
     async (nextPage: number, mode: "replace" | "append" | "refresh") => {
@@ -99,7 +102,7 @@ export default function Catalog() {
 
   // debounce typing
   useEffect(() => {
-    if (query === f.search) return;
+    if (query.trim() === f.search) return;
     const t = setTimeout(() => f.set({ search: query.trim() }), 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps

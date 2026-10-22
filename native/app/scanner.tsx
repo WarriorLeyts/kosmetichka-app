@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { themed } from "@/theme";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
+import { Linking } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -22,9 +23,9 @@ export default function Scanner() {
     if (handled.current) return;
     handled.current = true;
     setBusy(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     try {
       const r = await api.catalog({ page: 1, search: code });
+      if (r.products.length > 0) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       if (r.products.length === 1) {
         router.replace(`/product/${r.products[0].id}`);
         return;
@@ -45,7 +46,11 @@ export default function Scanner() {
     } catch {
       setMessage("Нет связи с сервером");
       setBusy(false);
-      handled.current = false;
+      // wait before scanning again, otherwise the same code fires every frame
+      setTimeout(() => {
+        handled.current = false;
+        setMessage("");
+      }, 2500);
     }
   };
 
@@ -57,7 +62,11 @@ export default function Scanner() {
         <Ionicons name="camera-outline" size={56} color="#fff" />
         <Text style={styles.title}>Нужен доступ к камере</Text>
         <Text style={styles.text}>Чтобы найти товар по штрихкоду на упаковке</Text>
-        <Button title="Разрешить" onPress={requestPermission} style={{ minWidth: 220, marginTop: 20 }} />
+        <Button
+          title={permission.canAskAgain ? "Разрешить" : "Открыть настройки"}
+          onPress={() => (permission.canAskAgain ? requestPermission() : Linking.openSettings())}
+          style={{ minWidth: 220, marginTop: 20 }}
+        />
         <Pressable onPress={() => router.back()} style={{ padding: 16 }}>
           <Text style={{ color: "#fff", fontWeight: "700" }}>Закрыть</Text>
         </Pressable>

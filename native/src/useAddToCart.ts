@@ -7,6 +7,27 @@ import type { Product } from "./types";
 
 /** Variant cache so a second tap doesn't hit the network again. */
 const variantCount = new Map<number, number>();
+const inFlight = new Map<number, Promise<number | null>>();
+
+/** Number of variants; null when the request failed (not cached, so it is retried next time). */
+function variantsOf(id: number): Promise<number | null> {
+  const known = variantCount.get(id);
+  if (known !== undefined) return Promise.resolve(known);
+  let p = inFlight.get(id);
+  if (!p) {
+    p = api
+      .variants(id)
+      .then((r) => {
+        const n = r.variants?.length ?? 0;
+        variantCount.set(id, n);
+        return n;
+      })
+      .catch(() => null)
+      .finally(() => inFlight.delete(id));
+    inFlight.set(id, p);
+  }
+  return p;
+}
 
 /**
  * Add from a list card: products with variants (shades, sizes) open the product
@@ -16,17 +37,11 @@ export function useAddToCart() {
   const add = useCartStore((s) => s.add);
   return useCallback(
     async (product: Product) => {
-      let n = variantCount.get(product.id);
-      if (n === undefined) {
-        try {
-          const r = await api.variants(product.id);
-          n = r.variants?.length ?? 0;
-        } catch {
-          n = 0;
-        }
-        variantCount.set(product.id, n);
-      }
-      if (n > 0) {
+      // a second fast tap while the first one is still checking does nothing
+      if (inFlight.has(product.id)) return;
+      const n = await variantsOf(product.id);
+      if (n === null || n > 0) {
+        // has variants (or we couldn't check) — choose on the product screen
         router.push(`/product/${product.id}?pick=1`);
         return;
       }

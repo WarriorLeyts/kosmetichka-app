@@ -101,6 +101,11 @@ export default function EditProfile() {
     if (savingRef.current) return; // no double submit
     // same checks as the server, shown next to the fields before sending
     const e: Errors = {};
+    if (!form.name.trim()) e.name = "Укажите имя";
+    if (!form.email.trim()) e.email = "Укажите email — он нужен для входа";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "Проверьте email";
+    const digits = form.phone.replace(/\D/g, "");
+    if (form.phone.trim() && digits.length < 10) e.phone = "Проверьте номер телефона";
     if (form.password.trim()) {
       if (!form.currentPassword.trim()) e.currentPassword = "Введите текущий пароль для смены пароля";
       if (form.password.length < 6) e.password = "Пароль должен быть не короче 6 символов";
@@ -116,10 +121,14 @@ export default function EditProfile() {
     setMsg(null);
     try {
       // empty password block → nothing about the password is sent as a change
-      const body = form.password.trim() ? form : { ...form, currentPassword: "", password: "", passwordConfirm: "" };
+      // phone and email in the same form as registration stores them (so login by phone/email keeps working)
+      const d = form.phone.replace(/\D/g, "");
+      const phone = d.length === 11 && d.startsWith("7") ? "8" + d.slice(1) : d.length === 10 ? "8" + d : d;
+      const clean = { ...form, phone, email: form.email.trim().toLowerCase(), name: form.name.trim() };
+      const body = clean.password.trim() ? clean : { ...clean, currentPassword: "", password: "", passwordConfirm: "" };
       const { customer } = await api.saveProfile(body);
       setCustomer(customer);
-      setForm({ ...form, currentPassword: "", password: "", passwordConfirm: "" });
+      setForm({ ...clean, currentPassword: "", password: "", passwordConfirm: "" });
       setMsg({ tone: "success", text: "Данные сохранены" });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {

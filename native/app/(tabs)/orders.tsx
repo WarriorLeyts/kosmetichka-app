@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -93,39 +93,65 @@ export default function Orders() {
   const [error, setError] = useState("");
   const [unread, setUnread] = useState<Set<number>>(new Set());
 
+  const reqId = useRef(0);
   const load = useCallback(
     async (page: number, mode: "replace" | "append" | "refresh") => {
+      const id = ++reqId.current;
       if (mode === "refresh") setRefreshing(true);
       else setLoading(true);
       setError("");
       try {
         const r = await api.orders(page, status);
+        if (id !== reqId.current) return; // a newer request (another filter) wins
         r.orders.forEach((o) => orderCache.set(o.id, o));
         setData(r);
-        setOrders((prev) => (mode === "append" ? [...prev, ...r.orders] : r.orders));
+        setOrders((prev) => {
+          if (mode !== "append") return r.orders;
+          const seen = new Set(prev.map((o) => o.id));
+          return [...prev, ...r.orders.filter((o) => !seen.has(o.id))];
+        });
         api
           .orderStatus()
           .then((s) => setUnread(new Set(s.managerMessages.map((m) => m.orderId))))
           .catch(() => {});
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Ошибка");
+        if (id === reqId.current) setError(e instanceof Error ? e.message : "Ошибка");
       } finally {
-        setLoading(false);
-        setRefreshing(false);
+        if (id === reqId.current) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     },
     [status]
   );
 
+  // another account (or logout): forget the previous list
+  const customerId = customer?.id ?? null;
   useEffect(() => {
-    if (customer) load(1, "replace");
-  }, [customer, load]);
+    setOrders([]);
+    setData(null);
+    setUnread(new Set());
+  }, [customerId]);
 
+  useEffect(() => {
+    if (customerId) load(1, "replace");
+  }, [customerId, load]);
+
+  // coming back to the tab: refresh (new orders, unread messages)
+  const loadRef = useRef(load);
+  loadRef.current = load;
+  const hasData = useRef(false);
+  hasData.current = !!data;
+  const firstFocus = useRef(true);
   useFocusEffect(
     useCallback(() => {
-      if (customer && data) load(1, "refresh");
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [customer])
+      if (firstFocus.current) {
+        firstFocus.current = false;
+        return;
+      }
+      if (customerId && hasData.current) loadRef.current(1, "refresh");
+    }, [customerId])
   );
 
   const bg = dark ? "#000" : "#F7F7FA";

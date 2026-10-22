@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Alert, AppState, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   type NativeScrollEvent, type NativeSyntheticEvent,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, Stack, useLocalSearchParams } from "expo-router";
+import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
-import { api, BASE_URL, imageUrl } from "@/api";
+import { api, ApiError, BASE_URL, imageUrl } from "@/api";
 import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
 import { useCartStore } from "@/store/cart";
@@ -19,12 +19,12 @@ import { BackBar } from "@/components/iosui/BrandHeader";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
-import type { ChatMessage, Order } from "@/types";
+import type { ChatMessage, Order, Product, Variant } from "@/types";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
-type Pending = { key: string; text: string; createdAt: string; failed: boolean };
+type Pending = { key: string; text: string; createdAt: string; failed: boolean; sent?: boolean };
 
 /** Messages can be plain text or JSON cards (photo / product) sent by the manager. */
 function MessageBody({ text, color }: { text: string; color: string }) {
@@ -65,6 +65,7 @@ export default function OrderScreen() {
   const [pending, setPending] = useState<Pending[]>([]);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState<"" | "cancel" | "confirm">("");
+  const [repeating, setRepeating] = useState(false);
   const [kb, setKb] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const nearBottom = useRef(true);
@@ -96,9 +97,13 @@ export default function OrderScreen() {
     try {
       const r = await api.messages(orderId);
       setMessages(r.messages);
+      // messages already sent are now in the server list
+      setPending((p) => p.filter((x) => !x.sent));
       setChatError(false);
+      return true;
     } catch {
       setChatError(true);
+      return false;
     } finally {
       setChatLoading(false);
     }
@@ -106,10 +111,18 @@ export default function OrderScreen() {
 
   useEffect(() => {
     loadOrder();
-    loadMessages();
-    const t = setInterval(loadMessages, 15000);
-    return () => clearInterval(t);
-  }, [loadOrder, loadMessages]);
+  }, [loadOrder]);
+
+  // chat refresh every 15 s only while this screen is open and in front
+  useFocusEffect(
+    useCallback(() => {
+      loadMessages();
+      const t = setInterval(() => {
+        if (AppState.currentState === "active") loadMessages();
+      }, 15000);
+      return () => clearInterval(t);
+    }, [loadMessages])
+  );
 
   // new replies: scroll down only if the user is already at the bottom (don't disturb reading)
   useEffect(() => {
@@ -150,12 +163,64 @@ export default function OrderScreen() {
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
     try {
       await api.sendMessage(orderId, t);
-      await loadMessages();
-      setPending((p) => p.filter((x) => x.key !== k));
+      const ok = await loadMessages();
+      // if the list couldn't be refreshed, keep the bubble (as sent) until the next refresh
+      setPending((p) => (ok ? p.filter((x) => x.key !== k) : p.map((x) => (x.key === k ? { ...x, sent: true, failed: false } : x))));
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
     } catch {
       setPending((p) => p.map((x) => (x.key === k ? { ...x, failed: true } : x)));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+    }
+  };
+
+  // repeat with current prices and stock; unavailable items are skipped and listed
+  const repeatOrder = async () => {
+    if (repeating) return;
+    setRepeating(true);
+    try {
+      const ids = [...new Set(order.items.map((i) => i.productId))];
+      const fresh = new Map<number, Product>();
+      let failed = 0;
+      await Promise.all(
+        ids.map((pid) =>
+          api
+            .product(pid)
+            .then((p) => {
+              fresh.set(pid, p);
+            })
+            .catch((e) => {
+              // 404 = product removed; other errors = network problem
+              if (!(e instanceof ApiError && e.status === 404)) failed++;
+            })
+        )
+      );
+      if (failed > 0 && fresh.size === 0) {
+        Alert.alert("Нет связи", "Не удалось получить актуальные цены. Попробуйте ещё раз.");
+        return;
+      }
+      const variantIds = new Map<string, Variant>();
+      const withVariants = [...new Set(order.items.filter((i) => i.variantName).map((i) => i.productId))];
+      await Promise.all(
+        withVariants.map((pid) =>
+          api
+            .variants(pid)
+            .then((r) => (r.variants ?? []).forEach((v) => variantIds.set(`${pid}|${v.name}`, v)))
+            .catch(() => {})
+        )
+      );
+      const skipped = repeat(order.items, fresh, variantIds);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      if (skipped.length) {
+        Alert.alert(
+          skipped.length === order.items.length ? "Товаров нет в наличии" : "Добавлено не всё",
+          `Сейчас нет в наличии:\n${skipped.join("\n")}\n\nОстальные товары добавлены по текущим ценам.`,
+          [{ text: "В корзину", onPress: () => router.navigate("/cart") }, { text: "OK" }]
+        );
+      } else {
+        router.navigate("/cart");
+      }
+    } finally {
+      setRepeating(false);
     }
   };
 
@@ -294,15 +359,7 @@ export default function OrderScreen() {
 
           {/* actions — existing logic */}
           <View style={styles.actions}>
-            <GradientButton
-              title="Повторить"
-              icon="refresh"
-              onPress={() => {
-                repeat(order.items);
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-                router.navigate("/cart");
-              }}
-            />
+            <GradientButton title="Повторить" icon="refresh" loading={repeating} onPress={repeatOrder} />
             <Pressable
               onPress={() => {
                 tap();
@@ -351,7 +408,7 @@ export default function OrderScreen() {
                   )}
                 </Pressable>
               ) : (
-                bubble(p.key, true, p.text, p.createdAt, <ActivityIndicator size="small" color={c.secondary} style={{ transform: [{ scale: 0.7 }] }} />)
+                bubble(p.key, true, p.text, p.createdAt, p.sent ? undefined : <ActivityIndicator size="small" color={c.secondary} style={{ transform: [{ scale: 0.7 }] }} />)
               )
             )}
           </View>

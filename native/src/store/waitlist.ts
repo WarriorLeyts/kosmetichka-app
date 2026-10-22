@@ -6,6 +6,7 @@ type WaitState = {
   ids: number[];
   load: () => Promise<void>;
   toggle: (productId: number) => Promise<boolean>;
+  remove: (productId: number) => Promise<void>;
   reset: () => void;
 };
 
@@ -24,6 +25,10 @@ export const useWaitlistStore = create<WaitState>((set, get) => ({
     const ids = get().ids.filter((x) => x !== productId);
     set({ ids: added ? [...ids, productId] : ids });
     return added;
+  },
+  remove: async (productId) => {
+    await api.wishlistRemove(productId);
+    set({ ids: get().ids.filter((x) => x !== productId) });
   },
   reset: () => set({ ids: [] }),
 }));

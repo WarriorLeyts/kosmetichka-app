@@ -23,6 +23,7 @@ export default function Filters() {
   const [brands, setBrands] = useState<string[]>(s.brandGuids);
   const [brandQuery, setBrandQuery] = useState("");
   const [catOpen, setCatOpen] = useState(false);
+  const [category, setCategory] = useState<string | null>(s.categoryGuid);
 
   const brandList = useMemo(() => {
     const q = brandQuery.trim().toLowerCase();
@@ -32,7 +33,7 @@ export default function Filters() {
   }, [s.brands, brandQuery, brands]);
 
   const apply = () => {
-    s.set({ sort, onlyStock, quick, brandGuids: brands });
+    s.set({ sort, onlyStock, quick, brandGuids: brands, categoryGuid: category });
     router.back();
   };
 
@@ -43,7 +44,7 @@ export default function Filters() {
         <View style={styles.box}>
           <Pressable onPress={() => { tap(); setCatOpen(true); }} style={styles.row}>
             <Text style={styles.rowText} numberOfLines={1}>
-              {s.categories.find((c) => c.guid === s.categoryGuid)?.name ?? "Все товары"}
+              {s.categories.find((c) => c.guid === category)?.name ?? "Все товары"}
             </Text>
             <Ionicons name="chevron-forward" size={18} color={colors.faint} />
           </Pressable>
@@ -115,8 +116,8 @@ export default function Filters() {
         open={catOpen}
         onClose={() => setCatOpen(false)}
         categories={s.categories}
-        selected={s.categoryGuid}
-        onSelect={(guid) => s.set({ categoryGuid: guid })}
+        selected={category}
+        onSelect={setCategory}
       />
 
       <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
@@ -129,6 +130,7 @@ export default function Filters() {
             setOnlyStock(false);
             setQuick([]);
             setBrands([]);
+            setCategory(null);
           }}
         />
         <Button title="Показать" style={{ flex: 2 }} onPress={apply} />

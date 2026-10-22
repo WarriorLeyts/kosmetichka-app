@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AccessibilityInfo, ActivityIndicator, Alert, Animated, FlatList, Pressable, StyleSheet, Text, useWindowDimensions, View,
+  AccessibilityInfo, ActivityIndicator, Alert, Animated, FlatList, ScrollView, Pressable, StyleSheet, Text, useWindowDimensions, View,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -49,7 +49,7 @@ function volumeOf(name: string) {
 }
 
 export default function ProductScreen() {
-  const { id } = useLocalSearchParams<{ id: string; pick?: string }>();
+  const { id, pick } = useLocalSearchParams<{ id: string; pick?: string }>();
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
@@ -77,6 +77,9 @@ export default function ProductScreen() {
   const [titleBox, setTitleBox] = useState<{ y: number; h: number } | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+  const padY = useRef(0);
+  const picked = useRef(false);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => {});
@@ -281,6 +284,7 @@ export default function ProductScreen() {
     <View style={{ flex: 1, backgroundColor: bg }}>
       <Stack.Screen options={{ headerShown: false }} />
       <Animated.ScrollView
+        ref={scrollRef as never}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
@@ -309,7 +313,7 @@ export default function ProductScreen() {
           {product.name}
         </Text>
 
-        <View style={styles.pad}>
+        <View style={styles.pad} onLayout={(e) => (padY.current = e.nativeEvent.layout.y)}>
           <View style={styles.metaRow}>
             {volume ? (
               <View style={[styles.volume, { backgroundColor: dark ? "#2C2C2E" : "#EFEAFF" }]}>
@@ -347,7 +351,17 @@ export default function ProductScreen() {
           </View>
 
           {variants.length > 0 && !out ? (
-            <View style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+            <View
+              style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}
+              onLayout={(e) => {
+                // opened from «В корзину» in a list: bring the variant choice into view once
+                if (pick && !picked.current) {
+                  picked.current = true;
+                  const y = padY.current + e.nativeEvent.layout.y - (T + COMPACT + 12);
+                  setTimeout(() => scrollRef.current?.scrollTo({ y: Math.max(0, y), animated: !reduceMotion }), 250);
+                }
+              }}
+            >
               <Text style={[styles.h, { color: c.label }]}>Выберите вариант</Text>
               {variants.map((v, i) => {
                 const q = variantQty[v.id] ?? 0;
@@ -358,11 +372,19 @@ export default function ProductScreen() {
                       {v.name}
                     </Text>
                     {q > 0 ? (
-                      <Qty value={q} onMinus={() => { tap(); setVariantQty({ ...variantQty, [v.id]: Math.max(0, q - 1) }); }} onPlus={() => { tap(); setVariantQty({ ...variantQty, [v.id]: q + 1 }); }} small />
+                      <Qty
+                        value={q}
+                        // below the minimum order the variant is removed from the selection
+                        onMinus={() => { tap(); setVariantQty({ ...variantQty, [v.id]: q - 1 < min ? 0 : q - 1 }); }}
+                        onPlus={() => { tap(); setVariantQty({ ...variantQty, [v.id]: q + 1 }); }}
+                        plusDisabled={pickedTotal + 1 > maxQty}
+                        small
+                      />
                     ) : (
                       <Pressable
                         accessibilityLabel={`Добавить ${v.name}`}
-                        style={[styles.variantAdd]}
+                        disabled={pickedTotal + min > maxQty}
+                        style={[styles.variantAdd, pickedTotal + min > maxQty && { opacity: 0.4 }]}
                         onPress={() => {
                           tap();
                           setVariantQty({ ...variantQty, [v.id]: min });

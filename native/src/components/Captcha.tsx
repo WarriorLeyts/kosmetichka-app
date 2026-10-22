@@ -15,7 +15,8 @@ function send(m){window.ReactNativeWebView&&window.ReactNativeWebView.postMessag
 function init(){
   if(!window.smartCaptcha){send({t:"error"});return}
   window.smartCaptcha.render("c",{sitekey:"${SMARTCAPTCHA_KEY}",hl:"ru",
-    callback:function(token){send({t:"token",token:token})}});
+    callback:function(token){send({t:"token",token:token})},
+    "expired-callback":function(){send({t:"expired"})}});
   send({t:"ready"});
 }
 </script></body></html>`;
@@ -24,7 +25,7 @@ function init(){
  * Renders the website's «Я не робот» check inside a native WebView. The page is
  * loaded with the site's own origin so the captcha key's domain check passes.
  */
-export function Captcha({ onToken }: { onToken: (token: string) => void }) {
+export function Captcha({ onToken, onExpired }: { onToken: (token: string) => void; onExpired?: () => void }) {
   const [ready, setReady] = useState(false);
   return (
     <View style={{ height: 110, borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
@@ -46,6 +47,7 @@ export function Captcha({ onToken }: { onToken: (token: string) => void }) {
             const m = JSON.parse(e.nativeEvent.data);
             if (m.t === "ready") setReady(true);
             if (m.t === "token" && m.token) onToken(m.token);
+            if (m.t === "expired") onExpired?.();
           } catch {
             /* ignore */
           }
