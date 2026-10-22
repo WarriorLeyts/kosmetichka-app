@@ -36,9 +36,18 @@ jobs:
         if: env.HAS_TOKEN == '1'
         with:
           node-version: 22
+      # Expo Go from the App Store only runs the newest SDK — move this publish to it
+      # (the Android APK keeps its own SDK from package.json)
+      - name: Use the SDK of the current Expo Go
+        if: env.HAS_TOKEN == '1'
+        run: npm pkg set dependencies.expo=~58.0.0
       - name: Install
         if: env.HAS_TOKEN == '1'
         run: ../scripts/ci-run.sh npm run deps
+      - name: Check types on the new SDK
+        if: env.HAS_TOKEN == '1'
+        continue-on-error: true
+        run: ../scripts/ci-run.sh npx tsc --noEmit --pretty false
       - name: Add expo-updates (only for this publish, not for the APK)
         if: env.HAS_TOKEN == '1'
         run: ../scripts/ci-run.sh npx expo install expo-updates -- --legacy-peer-deps
