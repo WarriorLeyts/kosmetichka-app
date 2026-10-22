@@ -163,9 +163,9 @@ const styles = StyleSheet.create({
   stockDot: { width: 7, height: 7, borderRadius: 4 },
   stockText: { fontSize: 12, fontWeight: "500" },
   prices: { flexDirection: "row", borderRadius: 14, paddingVertical: 7, marginTop: 9, height: 54 },
-  priceCol: { flex: 1, paddingHorizontal: 6, justifyContent: "center" },
-  priceLabel: { fontSize: 11 },
-  priceValue: { fontWeight: "700", marginTop: 1 },
+  priceCol: { flex: 1, paddingHorizontal: 6, justifyContent: "center", alignItems: "center" },
+  priceLabel: { fontSize: 11, textAlign: "center" },
+  priceValue: { fontWeight: "700", marginTop: 1, textAlign: "center" },
   button: { height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 10 },
   buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
 });

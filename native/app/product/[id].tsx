@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   stockDot: { width: 7, height: 7, borderRadius: 4 },
   stockText: { fontSize: 13, fontWeight: "500" },
   prices: { flexDirection: "row", borderRadius: 18, paddingVertical: 10, marginTop: 14 },
-  priceCol: { flex: 1, paddingHorizontal: 12, justifyContent: "center" },
+  priceCol: { flex: 1, paddingHorizontal: 12, justifyContent: "center", alignItems: "center" },
   panel: { borderRadius: 20, padding: 16, marginTop: 18 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   h: { fontSize: 21, fontWeight: "700", marginBottom: 6 },
