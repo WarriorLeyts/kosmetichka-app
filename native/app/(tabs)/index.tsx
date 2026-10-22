@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -16,6 +16,8 @@ import { ProductCard } from "@/components/ProductCard";
 import { tap } from "@/components/ui";
 import { useAddToCart } from "@/useAddToCart";
 import { useTabBarSpace } from "@/components/TabBar";
+import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
+import { UI_SIZES, uiScale } from "@/uiScale";
 import type { Product } from "@/types";
 
 const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
@@ -36,6 +38,7 @@ export default function Home() {
   const { categories, loadMeta, set: setFilters } = useCatalog();
   const addToCart = useAddToCart();
 
+  const [sizeOpen, setSizeOpen] = useState(false);
   const [stats, setStats] = useState<{ totalProducts: number; totalBrands: number } | null>(null);
   const [fresh, setFresh] = useState<Product[]>([]);
 
@@ -56,21 +59,37 @@ export default function Home() {
   };
 
   return (
+    <>
     <ScrollView style={{ flex: 1, backgroundColor: colors.bg }} contentContainerStyle={{ paddingBottom: bottomSpace }}>
       <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top }]}>
         <View style={styles.heroTop}>
           <BrandWord color="#fff" />
-          <Pressable
-            onPress={() => {
-              tap();
-              toggleTheme();
-            }}
-            hitSlop={10}
-            style={[styles.heroIcon, styles.heroLeft]}
-            accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"}
-          >
-            <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={21} color="#fff" />
-          </Pressable>
+          <View style={[styles.heroLeft, { flexDirection: "row", gap: 6 }]}>
+            <Pressable
+              onPress={() => {
+                tap();
+                toggleTheme();
+              }}
+              hitSlop={6}
+              style={styles.heroIcon}
+              accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"}
+            >
+              <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={20} color="#fff" />
+            </Pressable>
+            {uiScale.available ? (
+              <Pressable
+                onPress={() => {
+                  tap();
+                  setSizeOpen(true);
+                }}
+                hitSlop={6}
+                style={styles.heroIcon}
+                accessibilityLabel="Размер интерфейса"
+              >
+                <Text style={styles.sizeIcon}>Aa</Text>
+              </Pressable>
+            ) : null}
+          </View>
           <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={[styles.heroIcon, styles.heroRight]} accessibilityLabel="Избранное">
             <Ionicons name="heart-outline" size={22} color="#fff" />
           </Pressable>
@@ -168,18 +187,34 @@ export default function Home() {
         <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
       </Pressable>
     </ScrollView>
+    <Sheet open={sizeOpen} onClose={() => setSizeOpen(false)} title="Размер интерфейса">
+      <SheetOptions
+        options={[...UI_SIZES]}
+        value={uiScale.available ? uiScale.get() : "1"}
+        onSelect={(v) => {
+          setSizeOpen(false);
+          if (v === uiScale.get()) return;
+          Alert.alert("Изменить размер?", "Приложение перезапустится, чтобы применить новый размер.", [
+            { text: "Отмена", style: "cancel" },
+            { text: "Применить", onPress: () => uiScale.apply(v) },
+          ]);
+        }}
+      />
+    </Sheet>
+    </>
   );
 }
 
 const styles = themed(() => ({
   hero: { paddingHorizontal: 18, paddingBottom: 22, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
   heroTop: { height: 50, alignItems: "center", justifyContent: "center" },
-  heroLeft: { position: "absolute", left: 0, top: 7 },
-  heroRight: { position: "absolute", right: 0, top: 7 },
+  heroLeft: { position: "absolute", left: 0, top: 6 },
+  heroRight: { position: "absolute", right: 0, top: 6 },
+  sizeIcon: { color: "#fff", fontSize: 16, fontWeight: "700" },
   logo: { color: "#fff", fontSize: 26, fontWeight: "900" },
   logoImg: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: "rgba(255,255,255,0.85)" },
   subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: "600", textAlign: "center", marginBottom: 16 },
-  heroIcon: { width: 42, height: 42, borderRadius: 21, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
+  heroIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
   searchRow: { flexDirection: "row", gap: 10 },
   search: { flex: 1, height: 48, borderRadius: radius.md, backgroundColor: colors.card, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },
   searchText: { color: colors.faint, fontSize: 15 },
