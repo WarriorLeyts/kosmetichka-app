@@ -246,6 +246,7 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
                 {topLevel.map((cat) => {
                   const kids = childrenOf(cat.guid).length > 0;
                   const active = inBranch(cat.guid);
+                  const icon = iconFor(cat.name);
                   return (
                     <View key={cat.guid} style={styles.cell}>
                       <ScalePress
@@ -254,8 +255,8 @@ export function CategoryDrawer({ open, onClose, categories, selected, onSelect }
                         reduce={reduce}
                         style={[styles.tile, { backgroundColor: active ? (dark ? "rgba(232,44,135,0.16)" : "#FDF0F8") : tileBg, borderColor: active ? VIOLET : "transparent" }, shadow]}
                       >
-                        {iconFor(cat.name) ? (
-                          <Image source={iconFor(cat.name)} style={styles.icon} contentFit="contain" />
+                        {icon ? (
+                          <Image source={icon} style={styles.icon} contentFit="contain" />
                         ) : (
                           <Text style={styles.emoji}>{emojiFor(cat.name)}</Text>
                         )}
