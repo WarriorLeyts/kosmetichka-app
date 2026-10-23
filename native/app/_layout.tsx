@@ -1,4 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { Pressable, Text, View } from "react-native";
+import { disabled } from "@/debugFlags";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -26,7 +28,24 @@ if (inExpoGo) {
   });
 }
 
+/** Debug build «app» off: a single button counter — checks that taps work in Expo Go at all. */
+function TouchTest() {
+  const [n, setN] = useState(0);
+  return (
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#fff" }}>
+      <Pressable onPress={() => setN((x) => x + 1)} style={{ backgroundColor: "#8b3dff", padding: 30, borderRadius: 20 }}>
+        <Text style={{ color: "#fff", fontSize: 28 }}>TAP TEST {n}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export default function RootLayout() {
+  if (disabled("app")) return <TouchTest />;
+  return <AppRoot />;
+}
+
+function AppRoot() {
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
   // re-mount the whole UI when the theme changes so every screen re-reads the palette

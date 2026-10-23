@@ -4,6 +4,7 @@ import { useCartStore } from "@/store/cart";
 import { colors } from "@/theme";
 import { PageTitle } from "@/components/PageTitle";
 import { TabBar } from "@/components/TabBar";
+import { disabled } from "@/debugFlags";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -18,7 +19,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      tabBar={(props) => <TabBar {...props} />}
+      tabBar={disabled("tabbar") ? undefined : (props) => <TabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: colors.pink,
         tabBarInactiveTintColor: colors.faint,

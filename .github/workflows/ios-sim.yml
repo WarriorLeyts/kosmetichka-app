@@ -8,6 +8,10 @@ on:
       channel:
         description: "Канал Expo Go"
         default: main
+    inputs:
+      channel:
+        description: "Канал Expo Go"
+        default: main
 
 permissions:
   contents: write
@@ -15,7 +19,9 @@ permissions:
 jobs:
   sim:
     runs-on: macos-15
-    timeout-minutes: 40
+    env:
+      CHANNEL: ${{ inputs.channel || 'main' }}
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Boot simulator
@@ -53,7 +59,8 @@ jobs:
           shot() { xcrun simctl io "$UDID" screenshot "shots/$1.png"; }
           step() {
             printf 'appId: host.exp.Exponent\n---\n%s\n' "$1" > f.yaml
-            maestro --device "$UDID" test f.yaml 2>&1 | tail -6 >> shots/maestro.txt
+            # a frozen app must not hang the job: 90 s per step
+            perl -e 'alarm shift; exec @ARGV' 90 maestro --device "$UDID" test f.yaml 2>&1 | tail -6 >> shots/maestro.txt || echo "step timed out (app not responding)" >> shots/maestro.txt
           }
           step '- tapOn:
               text: "Open"
@@ -69,8 +76,15 @@ jobs:
               point: "89%,50%"'
           sleep 3
           shot 3b-menu-closed
-          maestro --device "$UDID" hierarchy > shots/hierarchy.json 2>&1 || true
-          maestro --device "$UDID" hierarchy > shots/hierarchy-after-close.json 2>&1 || true
+          step '- tapOn:
+              point: "50%,50%"'
+          sleep 2
+          step '- tapOn:
+              point: "50%,50%"'
+          sleep 3
+          shot 3c-after-center-taps
+
+
           # taps by coordinates (tab bar of a 375x667 screen): Каталог, Профиль, chip «Новинки»
           step '- tapOn:
               point: "32%,93%"'
@@ -110,4 +124,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view ios-sim-debug >/dev/null 2>&1 || gh release create ios-sim-debug --title "iOS simulator debug" --notes "debug" --latest=false
-          gh release upload ios-sim-debug shots/*.png shots/*.json shots/errors.txt shots/maestro.txt shots/kos.txt --clobber || true
+          for f in shots/*; do mv "$f" "shots/${CHANNEL}-$(basename "$f")"; done
+          gh release upload ios-sim-debug shots/*.png shots/*maestro.txt shots/*errors.txt --clobber || true
