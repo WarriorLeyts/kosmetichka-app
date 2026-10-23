@@ -1,0 +1,53 @@
+name: iOS IPA (unsigned)
+
+# Unsigned .ipa for installing with SideStore / AltStore (they sign it with your free Apple ID
+# and refresh the signature every 7 days). Run manually: Actions → «iOS IPA (unsigned)» → Run.
+# The file is published to the release "ios-ipa-latest".
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: native
+
+jobs:
+  ipa:
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Generate iOS project
+        run: ../scripts/ci-run.sh npx expo prebuild --platform ios
+      - name: Version
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.${GITHUB_RUN_NUMBER}" ios/*/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER}" ios/*/Info.plist
+      - name: Build for iPhone without signing
+        run: |
+          WS=$(ls -d ios/*.xcworkspace | head -1); SCHEME=$(basename "$WS" .xcworkspace)
+          ../scripts/ci-run.sh xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build -quiet
+      - name: Package .ipa
+        run: |
+          APP=$(ls -d "$RUNNER_TEMP"/dd/Build/Products/Release-iphoneos/*.app | head -1)
+          rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/
+          rm -f kosmetichka.ipa && zip -qry kosmetichka.ipa Payload
+          ls -lh kosmetichka.ipa
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view ios-ipa-latest >/dev/null 2>&1 || \
+            gh release create ios-ipa-latest --prerelease --title "Приложение — iPhone (.ipa без подписи)" --notes "Сборка для SideStore / AltStore."
+          gh release upload ios-ipa-latest kosmetichka.ipa --clobber
+          gh release edit ios-ipa-latest --notes "Сборка 1.0.${GITHUB_RUN_NUMBER} от $(date -u +'%d.%m.%Y %H:%M') UTC. Файл kosmetichka.ipa без подписи: установите через SideStore или AltStore — они подпишут его вашим Apple ID."
