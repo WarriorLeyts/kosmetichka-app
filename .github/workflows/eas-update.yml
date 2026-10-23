@@ -29,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN || secrets.APP }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -38,7 +38,7 @@ jobs:
       - name: Check token
         run: |
           if [ -z "$EXPO_TOKEN" ]; then
-            echo "::error title=Нет EXPO_TOKEN::Добавьте секрет EXPO_TOKEN: Settings → Secrets and variables → Actions."
+            echo "::error title=Нет EXPO_TOKEN::Добавьте секрет EXPO_TOKEN (или APP): Settings → Secrets and variables → Actions."
             exit 1
           fi
       - name: Install
