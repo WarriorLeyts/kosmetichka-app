@@ -129,7 +129,7 @@ function ThemeFade({ mode }: { mode: string }) {
 }
 
 /**
- * Opening screen, as on the reference: black screen, white heart in the centre (where the native splash had it),
+ * Opening screen, as on the reference: the native splash is plain black, then the white heart,
  * «КОСМЕТИЧКА» in wide light capitals and a small line under it fade in; when the login check is done the black
  * curtain lifts away with its curved edge (the words ride up with it), revealing the home screen.
  */
@@ -144,7 +144,7 @@ function AppIntro({ ready }: { ready: boolean }) {
   const lifting = useRef(false);
 
   useEffect(() => {
-    // the intro is painted over the native splash (same black, same heart), which can go now
+    // the intro is painted over the native splash (same plain black), which can go now
     if (!inExpoGo) SplashScreen.hideAsync().catch(() => {});
     const d = reduce ? 0 : 1;
     Animated.sequence([
@@ -186,7 +186,9 @@ function AppIntro({ ready }: { ready: boolean }) {
         colors={["#000000", "#000000"]}
         riding={
           <Animated.View style={[StyleSheet.absoluteFill, introStyles.center, { opacity: progress.interpolate({ inputRange: [0, 0.8, 2], outputRange: [1, 0, 0] }) }]}>
-            <Image source={require("../assets/home2/logo-white.png")} style={introStyles.heart} contentFit="contain" />
+            <Animated.View style={{ opacity: title }}>
+              <Image source={require("../assets/home2/logo-white.png")} style={introStyles.heart} contentFit="contain" />
+            </Animated.View>
             <View style={introStyles.words}>
               <Animated.Text
                 style={[
@@ -214,9 +216,9 @@ function AppIntro({ ready }: { ready: boolean }) {
 const HEART = 72;
 const introStyles = StyleSheet.create({
   center: { alignItems: "center", justifyContent: "center" },
-  // the heart sits exactly in the screen centre (as on the native splash), the words hang under it
+  // heart and words together are centred on the screen
   heart: { width: HEART, height: HEART },
-  words: { position: "absolute", top: "50%", left: 0, right: 0, marginTop: HEART / 2 + 26, alignItems: "center" },
+  words: { marginTop: 24, alignItems: "center" },
   title: { color: "#fff", fontSize: 28, fontWeight: "300", letterSpacing: 7, textAlign: "center", fontFamily: iosFont.regular },
   sub: { color: "rgba(255,255,255,0.65)", fontSize: 14, letterSpacing: 0.4, marginTop: 10, textAlign: "center", fontFamily: iosFont.regular },
 });
