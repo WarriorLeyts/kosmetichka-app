@@ -34,7 +34,7 @@ export function LargeTitleScreen({ title, left, children }: { title: string; lef
       </Animated.ScrollView>
 
       {/* compact bar */}
-      <Animated.View pointerEvents="none" style={[styles.bar, { height: barH, opacity: barOpacity }]}>
+      <Animated.View style={[{ pointerEvents: "none" }, styles.bar, { height: barH, opacity: barOpacity }]}>
         <BlurView intensity={60} tint={c.blurTint} experimentalBlurMethod="dimezisBlurView" style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: c.bar, opacity: 0.55 }]} />
         <View style={[styles.barContent, { paddingTop: insets.top }]}>

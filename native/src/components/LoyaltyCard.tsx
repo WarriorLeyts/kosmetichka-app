@@ -116,7 +116,7 @@ export function LoyaltyCardPanel({ card, width }: { card: Card; width: number })
 
           {/* light sweep across the card while it opens */}
           {!reduce ? (
-            <Animated.View pointerEvents="none" style={[styles.shine, { width: width * 0.45, transform: [{ translateX: shine }, { rotate: "18deg" }] }]}>
+            <Animated.View style={[{ pointerEvents: "none" }, styles.shine, { width: width * 0.45, transform: [{ translateX: shine }, { rotate: "18deg" }] }]}>
               <LinearGradient
                 colors={["rgba(255,255,255,0)", "rgba(255,255,255,0.18)", "rgba(255,255,255,0)"]}
                 start={{ x: 0, y: 0.5 }}

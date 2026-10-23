@@ -6,7 +6,7 @@ export function AuthBackdrop() {
   const c = useIOS();
   if (c.blurTint === "dark") return null;
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+    <View style={[{ pointerEvents: "none" }, StyleSheet.absoluteFill]}>
       <View style={styles.blob} />
     </View>
   );

@@ -209,7 +209,7 @@ export function HomeScene({
     <View style={{ height: pinned ? viewH + RANGE : viewH }}>
       <Animated.View style={{ height: viewH, overflow: "hidden", transform: [{ translateY: pin as never }] }}>
         {/* soft translucent violet-pink shapes */}
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        <View style={[{ pointerEvents: "none" }, StyleSheet.absoluteFill]}>
           <View style={[styles.bg, { width: W * 1.2, height: W * 1.2, borderRadius: W * 0.6, right: -W * 0.55, top: viewH * 0.18, backgroundColor: "rgba(232,44,135,0.07)" }]} />
           <View style={[styles.bg, { width: W, height: W, borderRadius: W * 0.5, left: -W * 0.5, top: viewH * 0.42, backgroundColor: "rgba(139,61,255,0.07)" }]} />
         </View>
@@ -228,7 +228,7 @@ export function HomeScene({
         </View>
 
         {/* the box + products */}
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { transform: [{ translateY: boxUp }, { scale: boxScale }] }]}>
+        <Animated.View style={[{ pointerEvents: "none" }, StyleSheet.absoluteFill, { transform: [{ translateY: boxUp }, { scale: boxScale }] }]}>
           <View style={{ position: "absolute", left: cx, top: cy }}>
             <Animated.View style={{ position: "absolute", left: -BW / 2, top: -BD / 2, width: BW, height: BD, transform: base as never }}>
               <Face w={BW} h={BD} logo />

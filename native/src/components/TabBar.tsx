@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { disabled } from "../debugFlags";
-import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { AccessibilityInfo, Animated, Easing, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
@@ -43,7 +43,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const routes = state.routes.filter((r) => TABS[r.name]);
   const activeIdx = Math.max(0, routes.findIndex((r) => r.key === state.routes[state.index]?.key));
   const pos = useRef(new Animated.Value(activeIdx)).current;
-  const [barW, setBarW] = useState(0);
+  // bar width from the screen size (measuring it with onLayout + state looped the layout on RN 0.88 and froze taps)
+  const { width: screenW } = useWindowDimensions();
+  const barW = screenW - 20; // wrap: left 10, right 10
   const [reduce, setReduce] = useState(false);
 
   useEffect(() => {
@@ -60,8 +62,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const n = routes.length;
 
   return (
-    <View pointerEvents="box-none" style={[styles.wrap, { bottom: Math.max(insets.bottom, 10) }]}>
-      <View style={[styles.bar, { borderColor: dark ? "rgba(255,255,255,0.08)" : "rgba(81,91,137,0.08)" }]} onLayout={(e) => setBarW(e.nativeEvent.layout.width)}>
+    <View style={[styles.wrap, { pointerEvents: "box-none" }, { bottom: Math.max(insets.bottom, 10) }]}>
+      <View style={[styles.bar, { borderColor: dark ? "rgba(255,255,255,0.08)" : "rgba(81,91,137,0.08)" }]}>
         {disabled("blur") ? null : <BlurView
           intensity={70}
           tint={c.blurTint}
@@ -73,9 +75,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         {/* sliding capsule */}
         {itemW > 0 ? (
           <Animated.View
-            pointerEvents="none"
             style={[
               styles.capsule,
+              { pointerEvents: "none" },
               {
                 left: PAD,
                 width: itemW,

@@ -254,7 +254,7 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
         {header}
         <View style={{ flex: 1 }}>
           {/* level 1: emoji grid (kept mounted so its scroll position is restored on back) */}
-          <Animated.View style={[StyleSheet.absoluteFill, gridStyle]} pointerEvents={stack.length ? "none" : "auto"}>
+          <Animated.View style={[StyleSheet.absoluteFill, gridStyle, { pointerEvents: stack.length ? "none" : "auto" }]}>
             <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 4, paddingBottom: insets.bottom + 24 }} showsVerticalScrollIndicator={false}>
               <ScalePress onPress={() => select(null)} label="Все товары" reduce={reduce}>
                 <LinearGradient colors={GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.all}>

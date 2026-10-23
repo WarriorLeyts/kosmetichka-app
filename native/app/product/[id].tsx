@@ -164,7 +164,7 @@ export default function ProductScreen() {
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/"));
 
   const topBar = (
-    <View pointerEvents="box-none" style={[styles.topBar, { paddingTop: insets.top, height: T }]}>
+    <View style={[{ pointerEvents: "box-none" }, styles.topBar, { paddingTop: insets.top, height: T }]}>
       <Pressable onPress={goBack} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={styles.barBtn}>
         <Ionicons name="chevron-back" size={28} color={c.label} />
       </Pressable>
@@ -264,8 +264,7 @@ export default function ProductScreen() {
   // compact header background: pinned, light with a thin shadow
   const headerBg = (
         <Animated.View
-          pointerEvents="none"
-          style={[styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#111" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
+          style={[{ pointerEvents: "none" }, styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#111" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
         >
           {reduceMotion ? (
             <Animated.View style={[styles.reducedRow, { top: T }, anim.reducedThumb]}>

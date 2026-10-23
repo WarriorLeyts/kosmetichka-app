@@ -91,7 +91,7 @@ export default function Scanner() {
           <Ionicons name={torch ? "flash" : "flash-outline"} size={22} color="#fff" />
         </Pressable>
       </View>
-      <View style={styles.frameWrap} pointerEvents="none">
+      <View style={[styles.frameWrap, { pointerEvents: "none" }]}>
         <View style={styles.frame} />
         <Text style={styles.hint}>{message || "Наведите камеру на штрихкод товара"}</Text>
         {busy && <ActivityIndicator color="#fff" style={{ marginTop: 16 }} />}
