@@ -6,15 +6,6 @@ import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import type { Category } from "../../types";
 
-// photos from the home mockup for the four categories shown there; the rest use the prepared 3D images
-const PHOTOS: [RegExp, number][] = [
-  [/парфю/i, require("../../../assets/home2/cat-perfume.jpg")],
-  [/декоратив/i, require("../../../assets/home2/cat-decor.jpg")],
-  [/лиц/i, require("../../../assets/home2/cat-face.jpg")],
-  [/волос/i, require("../../../assets/home2/cat-hair.jpg")],
-];
-const photoFor = (name: string) => PHOTOS.find(([re]) => re.test(name))?.[1] ?? null;
-
 /** «Категории товаров» — two-column grid as on the mockup: picture on top, white label with a chevron over its bottom. */
 export function HomeCategories({ categories, onOpen }: { categories: Category[]; onOpen: (guid: string | null) => void }) {
   const c = useIOS();
@@ -39,7 +30,6 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
       <View style={styles.grid}>
         {categories.map((cat) => {
           const icon = iconFor(cat.name);
-          const photo = photoFor(cat.name);
           return (
             <View key={cat.guid} style={styles.cell}>
               <Pressable
@@ -52,9 +42,7 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
                 style={({ pressed }) => [styles.card, { backgroundColor: c.cell, transform: [{ scale: pressed ? 0.98 : 1 }] }, !dark && styles.shadow]}
               >
                 <View style={[styles.pic, { backgroundColor: dark ? "#2C2C2E" : "#F3ECFA" }]}>
-                  {photo ? (
-                    <Image source={photo} style={StyleSheet.absoluteFill} contentFit="cover" />
-                  ) : icon ? (
+                  {icon ? (
                     <Image source={icon} style={styles.img} contentFit="contain" />
                   ) : (
                     <Ionicons name="sparkles-outline" size={40} color="#c28be8" />

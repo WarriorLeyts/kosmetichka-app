@@ -60,8 +60,7 @@ export function HomeScene({
       step(0.24, 1600, Easing.linear), // look at the flat box with products
       step(0.36, 900), // → open box
       step(0.62, 1700, Easing.linear), // products dropping in
-      step(0.74, 900), // → closed box
-      step(1, 900), // box settles a bit smaller
+      step(0.74, 900), // → closed box (stays as it is)
     ]);
     anim.current.start();
   }, [p, reduce]);
@@ -89,10 +88,11 @@ export function HomeScene({
   const vis = [num(p, [0, 0.24, 0.36], [1, 1, 0]), num(p, [0.24, 0.36, 0.62, 0.74], [0, 1, 1, 0]), num(p, [0.62, 0.74], [0, 1])];
   const textShift = [num(p, [0.24, 0.36], [0, -12]), num(p, [0.24, 0.36, 0.62, 0.74], [12, 0, 0, -12]), num(p, [0.62, 0.74], [12, 0])];
   // the art: stage 1 sinks slightly, stage 2 settles, stage 3 (closed box) shrinks a little at the end
+  // no scaling: the art only fades between the stages with a soft vertical drift
   const artMove = [
-    { transform: [{ translateY: num(p, [0, 0.36], [0, 18]) }, { scale: num(p, [0, 0.36], [1, 0.96]) }] },
-    { transform: [{ translateY: num(p, [0.24, 0.36, 0.62, 0.74], [-18, 0, 0, 10]) }, { scale: num(p, [0.24, 0.36, 0.62, 0.74], [1.04, 1, 1, 0.95]) }] },
-    { transform: [{ translateY: num(p, [0.62, 0.74, 0.9, 1], [-10, 0, 0, -viewH * 0.03]) }, { scale: num(p, [0.62, 0.74, 0.9, 1], [1.05, 1, 1, 0.9]) }] },
+    { transform: [{ translateY: num(p, [0, 0.36], [0, 14]) }] },
+    { transform: [{ translateY: num(p, [0.24, 0.36, 0.62, 0.74], [-14, 0, 0, 0]) }] },
+    { transform: [{ translateY: num(p, [0.62, 0.74], [-10, 0]) }] },
   ];
   const dot = (i: number) =>
     num(p, i === 0 ? [0, 0.3, 0.36] : i === 1 ? [0.3, 0.36, 0.68, 0.74] : [0.68, 0.74, 1], i === 0 ? [1, 1, 0.3] : i === 1 ? [0.3, 1, 1, 0.3] : [0.3, 1, 1]);
