@@ -5,7 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { tap } from "../ui";
 import { useReduceMotion } from "../../useReduceMotion";
 
-export const GRAD = ["#8b1ee6", "#c21ad0", "#f0388f"] as const; // violet → magenta → pink, as on the mockups
+const GRAD = ["#8b1ee6", "#c21ad0", "#f0388f"] as const; // violet → magenta → pink, as on the mockups
 
 /** Press feedback: shrink to 0.98 and back (instant with «reduce motion»). */
 function usePressScale() {
