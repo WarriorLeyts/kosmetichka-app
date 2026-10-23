@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
 import { Stack } from "expo-router";
@@ -11,6 +11,9 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
+import { Curtain, curtainEase } from "@/components/Curtain";
+import { Image } from "expo-image";
+import { iosFont } from "@/ios";
 
 // In Expo Go don't hold the splash: Expo Go shows its own developer-menu intro right after
 // the app loads, and a splash kept on screen at that moment pushes that intro under the app
@@ -59,16 +62,6 @@ function AppRoot() {
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    if (!loading && !inExpoGo) SplashScreen.hideAsync().catch(() => {});
-  }, [loading]);
-
-  // Never keep the splash forever if the network is slow
-  useEffect(() => {
-    if (inExpoGo) return;
-    const t = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 4000);
-    return () => clearTimeout(t);
-  }, []);
 
   return (
     <SafeAreaProvider
@@ -95,7 +88,7 @@ function AppRoot() {
         <Stack.Screen name="filters" options={{ title: "Фильтры", presentation: "modal" }} />
         <Stack.Screen name="scanner" options={{ title: "Сканер штрихкода", presentation: "fullScreenModal", headerShown: false }} />
         <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal" }} />
-        <Stack.Screen name="register" options={{ title: "Регистрация" }} />
+        <Stack.Screen name="register" options={{ title: "Регистрация", headerShown: false, animation: "fade" }} />
         <Stack.Screen name="forgot" options={{ title: "Восстановление пароля" }} />
         <Stack.Screen name="waitlist" options={{ title: "Лист ожидания" }} />
         <Stack.Screen name="favorites" options={{ title: "Избранное" }} />
@@ -103,6 +96,7 @@ function AppRoot() {
         <Stack.Screen name="info" options={{ title: "" }} />
       </Stack>
       <ThemeFade mode={mode} />
+      <AppIntro ready={!loading} />
     </SafeAreaProvider>
   );
 }
@@ -133,3 +127,98 @@ function ThemeFade({ mode }: { mode: string }) {
   if (!fade) return null;
   return <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: fade, opacity: op, pointerEvents: "none" }]} />;
 }
+
+/**
+ * Opening screen, as on the reference: the native splash is plain black, then the white heart,
+ * «КОСМЕТИЧКА» in wide light capitals and a small line under it fade in; when the login check is done the black
+ * curtain lifts away with its curved edge (the words ride up with it), revealing the home screen.
+ */
+function AppIntro({ ready }: { ready: boolean }) {
+  const reduce = useReduceMotion();
+  const { height } = useWindowDimensions();
+  const title = useRef(new Animated.Value(0)).current;
+  const sub = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(0)).current;
+  const [shown, setShown] = useState(true);
+  const [minDone, setMinDone] = useState(false);
+  const lifting = useRef(false);
+
+  useEffect(() => {
+    // the intro is painted over the native splash (same plain black), which can go now
+    if (!inExpoGo) SplashScreen.hideAsync().catch(() => {});
+    const d = reduce ? 0 : 1;
+    Animated.sequence([
+      Animated.delay(250 * d),
+      Animated.timing(title, { toValue: 1, duration: 900 * d, easing: curtainEase, useNativeDriver: true }),
+      Animated.timing(sub, { toValue: 1, duration: 600 * d, easing: curtainEase, useNativeDriver: true }),
+    ]).start();
+    const min = setTimeout(() => setMinDone(true), reduce ? 0 : 2100);
+    // never keep the intro forever if the network is slow
+    const max = setTimeout(() => setShown(false), 7000);
+    return () => {
+      clearTimeout(min);
+      clearTimeout(max);
+    };
+  }, [title, sub, reduce]);
+
+  useEffect(() => {
+    if (!shown || lifting.current) return;
+    if (!minDone || !ready) return;
+    lifting.current = true;
+    if (reduce) {
+      setShown(false);
+      return;
+    }
+    Animated.timing(progress, { toValue: 2, duration: 1150, easing: curtainEase, useNativeDriver: true }).start(() => setShown(false));
+  }, [ready, minDone, shown, reduce, progress]);
+
+  if (disabled("intro") || !shown) return null;
+  const rise = (v: Animated.Value) => ({
+    opacity: v,
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+  });
+  return (
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: "box-only" }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <StatusBar style="light" />
+      <Curtain
+        progress={progress}
+        rest={height * 0.4}
+        colors={["#000000", "#000000"]}
+        riding={
+          <Animated.View style={[StyleSheet.absoluteFill, introStyles.center, { opacity: progress.interpolate({ inputRange: [0, 0.8, 2], outputRange: [1, 0, 0] }) }]}>
+            <Animated.View style={{ opacity: title }}>
+              <Image source={require("../assets/home2/logo-white.png")} style={introStyles.heart} contentFit="contain" />
+            </Animated.View>
+            <View style={introStyles.words}>
+              <Animated.Text
+                style={[
+                  introStyles.title,
+                  {
+                    opacity: title,
+                    transform: [
+                      { translateY: title.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
+                      { scale: title.interpolate({ inputRange: [0, 1], outputRange: [1.06, 1] }) },
+                    ],
+                  },
+                ]}
+              >
+                КОСМЕТИЧКА
+              </Animated.Text>
+              <Animated.Text style={[introStyles.sub, rise(sub)]}>Сеть магазинов косметики и парфюмерии</Animated.Text>
+            </View>
+          </Animated.View>
+        }
+      />
+    </View>
+  );
+}
+
+const HEART = 72;
+const introStyles = StyleSheet.create({
+  center: { alignItems: "center", justifyContent: "center" },
+  // heart and words together are centred on the screen
+  heart: { width: HEART, height: HEART },
+  words: { marginTop: 24, alignItems: "center" },
+  title: { color: "#fff", fontSize: 28, fontWeight: "300", letterSpacing: 7, textAlign: "center", fontFamily: iosFont.regular },
+  sub: { color: "rgba(255,255,255,0.65)", fontSize: 14, letterSpacing: 0.4, marginTop: 10, textAlign: "center", fontFamily: iosFont.regular },
+});
