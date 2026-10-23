@@ -1,0 +1,145 @@
+name: App check (Android APK + iOS)
+
+# Runs the real app on an Android emulator (the published APK) and on an iPhone simulator
+# (Release build from the same source as the .ipa), walks through all screens in light and
+# dark theme, saves screenshots and error logs to the release "app-check".
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - name: Download APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download native-android-latest -R ${{ github.repository }} -p '*.apk' -O app.apk
+      - name: Run
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: false
+          script: bash scripts/emu-check.sh
+      - name: Upload
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view app-check >/dev/null 2>&1 || gh release create app-check --title "App check" --notes "screenshots" --latest=false
+          for f in shots/*; do mv "$f" "shots/android-$(basename "$f")"; done
+          gh release upload app-check shots/* --clobber
+
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 75
+    defaults:
+      run:
+        working-directory: native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Generate iOS project
+        run: ../scripts/ci-run.sh npx expo prebuild --platform ios
+      - name: Build for simulator (Release, same code as the .ipa)
+        run: |
+          WS=$(ls -d ios/*.xcworkspace | head -1); SCHEME=$(basename "$WS" .xcworkspace)
+          ../scripts/ci-run.sh xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO build -quiet
+      - name: Run on simulator
+        run: |
+          mkdir -p shots
+          UDID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys;d=json.load(sys.stdin)["devices"];c=[x for k,v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone 16") or x["name"].startswith("iPhone 15")];print(c[0]["udid"])')
+          xcrun simctl boot "$UDID"; xcrun simctl bootstatus "$UDID" -b
+          APP=$(ls -d "$RUNNER_TEMP"/dd/Build/Products/Release-iphonesimulator/*.app | head -1)
+          xcrun simctl install "$UDID" "$APP"
+          xcrun simctl privacy "$UDID" grant all ru.kosmetichkaopt.app || true
+          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'subsystem == "com.facebook.react.log" OR eventMessage CONTAINS[c] "exception" OR eventMessage CONTAINS[c] "crash"' > shots/log.txt 2>&1 &
+          echo $! > ../logpid
+          xcrun simctl launch "$UDID" ru.kosmetichkaopt.app
+          sleep 6;  xcrun simctl io "$UDID" screenshot shots/01-home-scene-start.png
+          sleep 8;  xcrun simctl io "$UDID" screenshot shots/02-home-scene-middle.png
+          sleep 12; xcrun simctl io "$UDID" screenshot shots/03-home-scene-end.png
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          export PATH="$PATH:$HOME/.maestro/bin"
+          cat > flow.yaml <<'YAML'
+          appId: ru.kosmetichkaopt.app
+          ---
+          - tapOn: { text: "Каталог", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/10-light-catalog
+          - tapOn: { point: "27%,50%", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/11-light-product
+          - back
+          - tapOn: { text: "Корзина", optional: true }
+          - takeScreenshot: shots/12-light-cart
+          - tapOn: { text: "Заказы", optional: true }
+          - takeScreenshot: shots/13-light-orders
+          - tapOn: { text: "Профиль", optional: true }
+          - takeScreenshot: shots/14-light-profile
+          - tapOn: { text: "Избранное", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/15-light-favorites
+          - back
+          - tapOn: { text: "Главная", optional: true }
+          - tapOn: { text: "Тёмная тема", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/20-dark-home
+          - tapOn: { text: "Каталог", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/21-dark-catalog
+          - tapOn: { point: "27%,50%", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/22-dark-product
+          - back
+          - tapOn: { text: "Корзина", optional: true }
+          - takeScreenshot: shots/23-dark-cart
+          - tapOn: { text: "Заказы", optional: true }
+          - takeScreenshot: shots/24-dark-orders
+          - tapOn: { text: "Профиль", optional: true }
+          - takeScreenshot: shots/25-dark-profile
+          - tapOn: { text: "Главная", optional: true }
+          - tapOn: { text: "Светлая тема", optional: true }
+          - tapOn: { text: "Поиск: название, бренд, артикул", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/30-search
+          - tapOn: { text: "Главная", optional: true }
+          - tapOn: { text: "Перейти в каталог", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: shots/31-cta-catalog
+          YAML
+          sed -i '' 's/^          //' flow.yaml
+          perl -e 'alarm shift; exec @ARGV' 900 maestro --device "$UDID" test flow.yaml > shots/maestro.txt 2>&1 || echo "maestro ended with an error / timeout" >> shots/maestro.txt
+          xcrun simctl io "$UDID" screenshot shots/99-last.png
+          pgrep -f "ru.kosmetichkaopt" >/dev/null || echo "app process not running at the end" >> shots/maestro.txt
+      - name: Logs
+        if: always()
+        run: |
+          kill $(cat ../logpid) 2>/dev/null || true
+          grep -iE "error|exception|warn|unhandled|crash" shots/log.txt | cut -c1-300 | sort | uniq -c | sort -rn | head -60 > shots/errors.txt || true
+          msg=$( (tail -15 shots/maestro.txt; cat shots/errors.txt) | sed 's/%/%25/g' | cut -c1-230 | head -60 | awk '{printf "%s%%0A", $0}')
+          echo "::notice title=iOS check::${msg}"
+      - name: Upload
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view app-check >/dev/null 2>&1 || gh release create app-check --title "App check" --notes "screenshots" --latest=false
+          for f in shots/*; do mv "$f" "shots/ios-$(basename "$f")"; done
+          gh release upload app-check shots/* --clobber
