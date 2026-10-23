@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Animated, AppState, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { Image } from "expo-image";
@@ -8,11 +8,13 @@ import { useReduceMotion } from "../../useReduceMotion";
 import { GradientText } from "../GradientText";
 import { tap } from "../ui";
 import { useIOS } from "../../ios";
+import { BoxFlaps } from "./BoxFlaps";
 
 /*
- * Home scene assembled from layers: the same box (flat → open → closed, one colour, our white
- * heart logo) and the same four products in every stage. The products stand over the flat box,
- * hover over the open box and drop in one by one behind its front wall, then the box closes.
+ * Home scene assembled from layers: the same box (flat → open, one colour, our white heart logo)
+ * and the same four products in every stage. The products stand over the flat box, hover over the
+ * open box and drop in one by one behind its front wall, then the flaps close the box where it
+ * stands and the tape appears.
  * The scene plays by itself like a video and stops on the closed box; it plays again each time
  * the home tab is opened again or the app comes back.
  */
@@ -25,9 +27,10 @@ const CLIP = 1335; // products are clipped here (hidden behind the box's front w
 
 const BOX = {
   flat: { src: require("../../../assets/home2/box-flat.png"), x: 0, y: 1056, w: 853, h: 306 },
-  open: { src: require("../../../assets/home2/box-open.png"), x: 0, y: 845, w: 853, h: 541 },
-  front: { src: require("../../../assets/home2/box-open-front.png"), x: 0, y: 845, w: 853, h: 541 },
-  closed: { src: require("../../../assets/home2/box-closed.png"), x: -79, y: 924, w: 981, h: 446 },
+  // the open box without its flaps (the flaps are drawn by BoxFlaps and close the box in place)
+  body: { src: require("../../../assets/home2/box-body.png"), x: 0, y: 845, w: 853, h: 541 },
+  // only the outer front and side walls — products sink behind them
+  front: { src: require("../../../assets/home2/box-body-front.png"), x: 0, y: 845, w: 853, h: 541 },
 };
 
 type Pose = { cx: number; cy: number; r: number; k: number };
@@ -62,24 +65,34 @@ export function HomeScene({
   // progress of the «video»: 0 = flat box, ~0.5 = products dropping in, 1 = closed box
   const p = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   const anim = useRef<Animated.CompositeAnimation | null>(null);
+  // closing of the flaps (0 = open, 1 = closed with tape) — drawn with SVG, so JS-driven
+  const cl = useRef(new Animated.Value(reduce ? 1 : 0)).current;
+  const [closeT, setCloseT] = useState(reduce ? 1 : 0);
+  useEffect(() => {
+    const id = cl.addListener(({ value }) => setCloseT((v) => (Math.abs(v - value) > 0.004 || value === 0 || value === 1 ? value : v)));
+    return () => cl.removeListener(id);
+  }, [cl]);
 
   const play = useCallback(() => {
     anim.current?.stop();
     if (reduce) {
       p.setValue(1);
+      cl.setValue(1);
       return;
     }
     p.setValue(0);
+    cl.setValue(0);
     const step = (to: number, duration: number, easing = Easing.inOut(Easing.cubic)) =>
       Animated.timing(p, { toValue: to, duration, easing, useNativeDriver: true });
     anim.current = Animated.sequence([
       step(0.24, 1600, Easing.linear), // look at the flat box with products
       step(0.36, 1500), // → open box
       step(0.62, 2800, Easing.linear), // products dropping in one by one
-      step(0.74, 1500), // → closed box (stays as it is)
+      Animated.timing(cl, { toValue: 1, duration: 2600, easing: Easing.linear, useNativeDriver: false }), // flaps close, tape
+      step(0.74, 700), // last title; the closed box stays where it is
     ]);
     anim.current.start();
-  }, [p, reduce]);
+  }, [p, cl, reduce]);
 
   // play every time the home tab becomes active (coming from another section or opening the app);
   // staying on the home page does not replay it
@@ -102,7 +115,8 @@ export function HomeScene({
 
   // stage visibility: 1 → 2 at 0.24…0.36, 2 → 3 at 0.62…0.74
   const vis = [num(p, [0, 0.24, 0.36], [1, 1, 0]), num(p, [0.24, 0.36, 0.62, 0.74], [0, 1, 1, 0]), num(p, [0.62, 0.74], [0, 1])];
-  const openScale = num(p, [0.24, 0.36, 0.62, 0.74], [0.55, 1, 1, 0.86]);
+  const boxIn = num(p, [0.24, 0.36], [0, 1]);
+  const openScale = num(p, [0.24, 0.36], [0.55, 1]); // the walls rise from the flat box
   const textShift = [num(p, [0.24, 0.36], [0, -12]), num(p, [0.24, 0.36, 0.62, 0.74], [12, 0, 0, -12]), num(p, [0.62, 0.74], [12, 0])];
   const dot = (i: number) =>
     num(p, i === 0 ? [0, 0.3, 0.36] : i === 1 ? [0.3, 0.36, 0.68, 0.74] : [0.68, 0.74, 1], i === 0 ? [1, 1, 0.3] : i === 1 ? [0.3, 1, 1, 0.3] : [0.3, 1, 1]);
@@ -116,6 +130,8 @@ export function HomeScene({
   const bottomH = 104;
   const artAreaH = viewH - textH - bottomH;
   const k = Math.min((W - 24) / FW, artAreaH / FH); // mockup px → screen px
+  // flaps grow with the box walls (same bottom line as the box photo)
+  const flapsStyle = { opacity: boxIn, transformOrigin: [(FW * k) / 2, (1386 - FY) * k, 0] as [number, number, number], transform: [{ scaleY: openScale }] };
 
   return (
     <View style={{ height: viewH, backgroundColor: dark ? "#170D25" : "transparent" }}>
@@ -147,36 +163,44 @@ export function HomeScene({
         <View style={{ height: artAreaH, alignItems: "center", justifyContent: "center" }}>
           <View style={{ width: FW * k, height: FH * k, pointerEvents: "none" }}>
             <Layer box={BOX.flat} k={k} opacity={vis[0]} scaleY={num(p, [0.24, 0.36], [1, 1.12])} />
-            <Layer box={BOX.open} k={k} opacity={vis[1]} scaleY={openScale} />
-            <View style={{ position: "absolute", left: -40 * k, right: -40 * k, top: -200 * k, height: (CLIP - FY + 200) * k, overflow: "hidden" }}>
-              {PRODUCTS.map((it, i) => {
-                const [d0, d1] = it.drop;
-                const at = (f: (q: Pose) => number) => num(p, [0.24, 0.36, d0, d1], [f(it.a), f(it.b), f(it.b), f(it.c)]);
-                return (
-                  <Animated.View
-                    key={i}
-                    style={{
-                      position: "absolute",
-                      left: (it.a.cx - it.w / 2 + 40) * k,
-                      top: (it.a.cy - it.h / 2 - FY + 200) * k,
-                      width: it.w * k,
-                      height: it.h * k,
-                      opacity: num(p, [d1 - 0.01, d1], [1, 0]),
-                      transform: [
-                        { translateX: at((q) => (q.cx - it.a.cx) * k) },
-                        { translateY: at((q) => (q.cy - it.a.cy) * k) },
-                        { rotate: num(p, [0.24, 0.36, d0, d1], [it.a.r, it.b.r, it.b.r, it.c.r]).interpolate({ inputRange: [-360, 360], outputRange: ["-360deg", "360deg"] }) },
-                        { scale: at((q) => q.k) },
-                      ],
-                    }}
-                  >
-                    <Image source={it.src} style={{ width: "100%", height: "100%" }} contentFit="contain" cachePolicy="memory" />
-                  </Animated.View>
-                );
-              })}
+            {/* the open box: body, flaps and products move together and never leave their place */}
+            <View style={StyleSheet.absoluteFill}>
+              <Layer box={BOX.body} k={k} opacity={boxIn} scaleY={openScale} />
+              <Animated.View style={[StyleSheet.absoluteFill, flapsStyle]}>
+                <BoxFlaps t={closeT} layer="back" width={FW * k} height={FH * k} viewBox={`0 ${FY} ${FW} ${FH}`} />
+              </Animated.View>
+              <View style={{ position: "absolute", left: -40 * k, right: -40 * k, top: -200 * k, height: (CLIP - FY + 200) * k, overflow: "hidden" }}>
+                {PRODUCTS.map((it, i) => {
+                  const [d0, d1] = it.drop;
+                  const at = (f: (q: Pose) => number) => num(p, [0.24, 0.36, d0, d1], [f(it.a), f(it.b), f(it.b), f(it.c)]);
+                  return (
+                    <Animated.View
+                      key={i}
+                      style={{
+                        position: "absolute",
+                        left: (it.a.cx - it.w / 2 + 40) * k,
+                        top: (it.a.cy - it.h / 2 - FY + 200) * k,
+                        width: it.w * k,
+                        height: it.h * k,
+                        opacity: num(p, [d1 - 0.01, d1], [1, 0]),
+                        transform: [
+                          { translateX: at((q) => (q.cx - it.a.cx) * k) },
+                          { translateY: at((q) => (q.cy - it.a.cy) * k) },
+                          { rotate: num(p, [0.24, 0.36, d0, d1], [it.a.r, it.b.r, it.b.r, it.c.r]).interpolate({ inputRange: [-360, 360], outputRange: ["-360deg", "360deg"] }) },
+                          { scale: at((q) => q.k) },
+                        ],
+                      }}
+                    >
+                      <Image source={it.src} style={{ width: "100%", height: "100%" }} contentFit="contain" cachePolicy="memory" />
+                    </Animated.View>
+                  );
+                })}
+              </View>
+              <Layer box={BOX.front} k={k} opacity={boxIn} scaleY={openScale} />
+              <Animated.View style={[StyleSheet.absoluteFill, flapsStyle]}>
+                <BoxFlaps t={closeT} layer="front" width={FW * k} height={FH * k} viewBox={`0 ${FY} ${FW} ${FH}`} />
+              </Animated.View>
             </View>
-            <Layer box={BOX.front} k={k} opacity={vis[1]} scaleY={openScale} />
-            <Layer box={BOX.closed} k={k} opacity={vis[2]} scaleY={num(p, [0.62, 0.74], [0.82, 1])} />
           </View>
         </View>
 
@@ -211,11 +235,11 @@ export function HomeScene({
 
 function Layer({
   box, k, opacity, scaleY,
-}: { box: { src: number; x: number; y: number; w: number; h: number }; k: number; opacity: Animated.AnimatedInterpolation<number>; scaleY?: Animated.AnimatedInterpolation<number> }) {
+}: { box: { src: number; x: number; y: number; w: number; h: number }; k: number; opacity?: Animated.AnimatedInterpolation<number>; scaleY?: Animated.AnimatedInterpolation<number> }) {
   return (
     <Animated.View
       style={{
-        position: "absolute", left: box.x * k, top: (box.y - FY) * k, width: box.w * k, height: box.h * k, opacity,
+        position: "absolute", left: box.x * k, top: (box.y - FY) * k, width: box.w * k, height: box.h * k, opacity: opacity ?? 1,
         transformOrigin: "bottom", transform: scaleY ? [{ scaleY }] : [],
       }}
     >
