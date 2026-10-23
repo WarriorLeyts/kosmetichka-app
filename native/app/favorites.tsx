@@ -64,7 +64,6 @@ export default function Favorites() {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <Stack.Screen options={{ headerShown: false }} />
       <FlatList
         key={columns}
         data={items}

@@ -85,7 +85,6 @@ export default function EditProfile() {
   if (loadError || !form) {
     return (
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
-        <Stack.Screen options={{ headerShown: false }} />
         <TitleBar title="Мои данные" />
         {loadError ? <ErrorView message={loadError} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color="#8b3dff" />}
       </View>
@@ -147,7 +146,6 @@ export default function EditProfile() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior="padding">
-      <Stack.Screen options={{ headerShown: false }} />
       <View style={{ paddingTop: insets.top, paddingHorizontal: 16 }}>
         <View style={styles.wrap}>
           <TitleBar title="Мои данные" />

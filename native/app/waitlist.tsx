@@ -129,7 +129,6 @@ export default function Waitlist() {
   if (error || !items) {
     return (
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
-        <Stack.Screen options={{ headerShown: false }} />
         {header}
         {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
       </View>
@@ -138,7 +137,6 @@ export default function Waitlist() {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <Stack.Screen options={{ headerShown: false }} />
       <FlatList
         data={items}
         keyExtractor={(p) => String(p.id)}

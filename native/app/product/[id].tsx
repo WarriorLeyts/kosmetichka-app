@@ -196,7 +196,6 @@ export default function ProductScreen() {
   if (error || !product) {
     return (
       <View style={{ flex: 1, backgroundColor: bg }}>
-        <Stack.Screen options={{ headerShown: false }} />
         {topBar}
         {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
       </View>
@@ -283,7 +282,6 @@ export default function ProductScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <Stack.Screen options={{ headerShown: false }} />
       <Animated.ScrollView
         ref={scrollRef as never}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}

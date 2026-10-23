@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { disabled } from "@/debugFlags";
+import { useRef, useState } from "react";
 import { Animated, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -29,14 +28,6 @@ export default function Login() {
   const errAnim = useRef(new Animated.Value(0)).current;
   const busy = useRef(false);
   const passRef = useRef<TextInput>(null);
-  const renders = useRef(0);
-  renders.current++;
-  if (disabled("trace")) console.log(`[kos] login render ${renders.current}`);
-  useEffect(() => {
-    if (!disabled("trace")) return;
-    console.log("[kos] login mount");
-    return () => console.log("[kos] login unmount");
-  }, []);
 
   const showError = (text: string) => {
     setError(text);
@@ -72,7 +63,6 @@ export default function Login() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "transparent" }} behavior="padding">
-      <Stack.Screen options={{ headerShown: false }} />
       <AuthBackdrop />
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 20, paddingBottom: insets.bottom + 28 }}
@@ -93,7 +83,6 @@ export default function Login() {
               placeholder="Телефон или email"
               value={loginValue}
               onChangeText={(v) => {
-                if (disabled("trace")) console.log(`[kos] login typed ${v.length}`);
                 setLogin(v);
                 if (errors.login) setErrors({ ...errors, login: undefined });
               }}

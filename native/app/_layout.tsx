@@ -89,18 +89,20 @@ function AppRoot() {
           animation: "slide_from_right",
         }}
       >
+        {/* screens with their own top bar: the system header is off here, never toggled from inside
+            a screen — on iOS toggling it on a modal re-creates the screen (typing was lost) */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="product/[id]" options={{ title: "" }} />
-        <Stack.Screen name="order/[id]" options={{ title: "Заказ" }} />
+        <Stack.Screen name="product/[id]" options={{ title: "", headerShown: false }} />
+        <Stack.Screen name="order/[id]" options={{ title: "Заказ", headerShown: false }} />
         <Stack.Screen name="filters" options={{ title: "Фильтры", presentation: "modal" }} />
         <Stack.Screen name="scanner" options={{ title: "Сканер штрихкода", presentation: "fullScreenModal", headerShown: false }} />
-        <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal" }} />
-        <Stack.Screen name="register" options={{ title: "Регистрация" }} />
-        <Stack.Screen name="forgot" options={{ title: "Восстановление пароля" }} />
-        <Stack.Screen name="waitlist" options={{ title: "Лист ожидания" }} />
-        <Stack.Screen name="favorites" options={{ title: "Избранное" }} />
-        <Stack.Screen name="edit-profile" options={{ title: "Мои данные" }} />
-        <Stack.Screen name="info" options={{ title: "" }} />
+        <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal", headerShown: false }} />
+        <Stack.Screen name="register" options={{ title: "Регистрация", headerShown: false }} />
+        <Stack.Screen name="forgot" options={{ title: "Восстановление пароля", headerShown: false }} />
+        <Stack.Screen name="waitlist" options={{ title: "Лист ожидания", headerShown: false }} />
+        <Stack.Screen name="favorites" options={{ title: "Избранное", headerShown: false }} />
+        <Stack.Screen name="edit-profile" options={{ title: "Мои данные", headerShown: false }} />
+        <Stack.Screen name="info" options={{ title: "", headerShown: false }} />
       </Stack>
       <ThemeFade mode={mode} />
     </SafeAreaProvider>

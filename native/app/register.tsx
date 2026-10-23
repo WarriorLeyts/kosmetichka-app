@@ -180,7 +180,6 @@ export default function Register() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "transparent" }} behavior="padding">
-      <Stack.Screen options={{ headerShown: false }} />
       <AuthBackdrop />
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 18, paddingBottom: insets.bottom + 32 }}

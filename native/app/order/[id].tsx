@@ -149,7 +149,6 @@ export default function OrderScreen() {
   if (error || !order) {
     return (
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
-        <Stack.Screen options={{ headerShown: false }} />
         <BackBar onBack={goBack} color={c.label} />
         {error ? <ErrorView message={error} onRetry={loadOrder} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
       </View>
@@ -280,7 +279,6 @@ export default function OrderScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior="padding">
-      <Stack.Screen options={{ headerShown: false }} />
       <View style={{ paddingTop: insets.top, paddingHorizontal: 16, backgroundColor: bg }}>
         <View style={styles.wrap}>
           <BackBar onBack={goBack} color={c.label} />
