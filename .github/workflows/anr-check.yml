@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [none, blur, tabbar, mask, "blur,mask"]
+        variant: [none, "blur,mask"]
     env:
       VARIANT: ${{ matrix.variant == 'blur,mask' && 'blur-mask' || matrix.variant }}
     steps:
