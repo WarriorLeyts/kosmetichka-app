@@ -10,16 +10,33 @@ import { tap } from "../ui";
 import { useIOS } from "../../ios";
 
 /*
- * Home scene exactly as on the three mockups: the art of each stage is taken from the mockups
- * (flat box + products → products dropping into the open box → closed box), the texts, button
- * and progress dots are real components. The scene plays by itself like a video and stops on the
- * closed box; it plays again each time the home tab is opened again or the app comes back.
+ * Home scene assembled from layers: the same box (flat → open → closed, one colour, our white
+ * heart logo) and the same four products in every stage. The products stand over the flat box,
+ * hover over the open box and drop in one by one behind its front wall, then the box closes.
+ * The scene plays by itself like a video and stops on the closed box; it plays again each time
+ * the home tab is opened again or the app comes back.
  */
 
-const ART = [
-  { src: require("../../../assets/home2/stage1.png"), ratio: 1194 / 1050 },
-  { src: require("../../../assets/home2/stage2.png"), ratio: 1194 / 1103 },
-  { src: require("../../../assets/home2/stage3.png"), ratio: 1194 / 546 },
+// all coordinates are in the mockup's pixels (853 wide); the frame covers y 630…1395 of it
+const FW = 853;
+const FY = 630;
+const FH = 765;
+const CLIP = 1335; // products are clipped here (hidden behind the box's front wall anyway)
+
+const BOX = {
+  flat: { src: require("../../../assets/home2/box-flat.png"), x: 0, y: 1056, w: 853, h: 306 },
+  open: { src: require("../../../assets/home2/box-open.png"), x: 0, y: 845, w: 853, h: 541 },
+  front: { src: require("../../../assets/home2/box-open-front.png"), x: 0, y: 845, w: 853, h: 541 },
+  closed: { src: require("../../../assets/home2/box-closed.png"), x: -79, y: 924, w: 981, h: 446 },
+};
+
+type Pose = { cx: number; cy: number; r: number; k: number };
+const PRODUCTS: { src: number; w: number; h: number; a: Pose; b: Pose; c: Pose; drop: [number, number] }[] = [
+  // a = over the flat box, b = hovering over the open box, c = inside the box
+  { src: require("../../../assets/home/tube.png"), w: 159, h: 360, a: { cx: 514, cy: 865, r: 0, k: 1 }, b: { cx: 478, cy: 930, r: 14, k: 0.85 }, c: { cx: 455, cy: 1270, r: 6, k: 0.8 }, drop: [0.36, 0.44] },
+  { src: require("../../../assets/home/perfume.png"), w: 237, h: 325, a: { cx: 210, cy: 877, r: 0, k: 1 }, b: { cx: 290, cy: 770, r: -12, k: 0.85 }, c: { cx: 330, cy: 1260, r: -4, k: 0.8 }, drop: [0.42, 0.5] },
+  { src: require("../../../assets/home/jar.png"), w: 307, h: 258, a: { cx: 688, cy: 929, r: 0, k: 1 }, b: { cx: 650, cy: 800, r: 12, k: 0.8 }, c: { cx: 560, cy: 1250, r: 4, k: 0.72 }, drop: [0.48, 0.56] },
+  { src: require("../../../assets/home/lipstick.png"), w: 86, h: 278, a: { cx: 367, cy: 909, r: 0, k: 1 }, b: { cx: 520, cy: 740, r: 28, k: 0.8 }, c: { cx: 500, cy: 1250, r: 10, k: 0.8 }, drop: [0.54, 0.62] },
 ];
 
 const TEXTS: { a: string; b: string; bColors: readonly [string, string, ...string[]]; sub: string }[] = [
@@ -59,7 +76,7 @@ export function HomeScene({
     anim.current = Animated.sequence([
       step(0.24, 1600, Easing.linear), // look at the flat box with products
       step(0.36, 900), // → open box
-      step(0.62, 1700, Easing.linear), // products dropping in
+      step(0.62, 2800, Easing.linear), // products dropping in one by one
       step(0.74, 900), // → closed box (stays as it is)
     ]);
     anim.current.start();
@@ -84,22 +101,16 @@ export function HomeScene({
     return () => sub.remove();
   }, [play]);
 
-  // stage visibility: 1 → 2 at ~0.33, 2 → 3 at ~0.7; the closed box then gets a bit smaller and moves up
+  // stage visibility: 1 → 2 at 0.24…0.36, 2 → 3 at 0.62…0.74
   const vis = [num(p, [0, 0.24, 0.36], [1, 1, 0]), num(p, [0.24, 0.36, 0.62, 0.74], [0, 1, 1, 0]), num(p, [0.62, 0.74], [0, 1])];
   const textShift = [num(p, [0.24, 0.36], [0, -12]), num(p, [0.24, 0.36, 0.62, 0.74], [12, 0, 0, -12]), num(p, [0.62, 0.74], [12, 0])];
-  // the art: stage 1 sinks slightly, stage 2 settles, stage 3 (closed box) shrinks a little at the end
-  // no scaling: the art only fades between the stages with a soft vertical drift
-  const artMove = [
-    { transform: [{ translateY: num(p, [0, 0.36], [0, 14]) }] },
-    { transform: [{ translateY: num(p, [0.24, 0.36, 0.62, 0.74], [-14, 0, 0, 0]) }] },
-    { transform: [{ translateY: num(p, [0.62, 0.74], [-10, 0]) }] },
-  ];
   const dot = (i: number) =>
     num(p, i === 0 ? [0, 0.3, 0.36] : i === 1 ? [0.3, 0.36, 0.68, 0.74] : [0.68, 0.74, 1], i === 0 ? [1, 1, 0.3] : i === 1 ? [0.3, 1, 1, 0.3] : [0.3, 1, 1]);
 
   const textH = 170;
   const bottomH = 104;
   const artAreaH = viewH - textH - bottomH;
+  const k = Math.min(W / FW, artAreaH / FH); // mockup px → screen px
 
   return (
     <View style={{ height: viewH, backgroundColor: dark ? "#000" : BG }}>
@@ -122,16 +133,41 @@ export function HomeScene({
           ))}
         </View>
 
-        {/* art of the three stages (from the mockups) */}
-        <View style={{ height: artAreaH }}>
-          {ART.map((a, i) => (
-            <Animated.View
-              key={i}
-              style={[StyleSheet.absoluteFill, styles.artBox, { pointerEvents: "none", opacity: vis[i] }, artMove[i]]}
-            >
-              <Image source={a.src} style={{ width: Math.min(W, artAreaH * a.ratio), aspectRatio: a.ratio, maxHeight: artAreaH }} contentFit="contain" />
-            </Animated.View>
-          ))}
+        {/* the box and the products */}
+        <View style={{ height: artAreaH, alignItems: "center", justifyContent: "center" }}>
+          <View style={{ width: FW * k, height: FH * k, pointerEvents: "none" }}>
+            <Layer box={BOX.flat} k={k} opacity={vis[0]} />
+            <Layer box={BOX.open} k={k} opacity={vis[1]} />
+            <View style={{ position: "absolute", left: 0, right: 0, top: 0, height: (CLIP - FY) * k, overflow: "hidden" }}>
+              {PRODUCTS.map((it, i) => {
+                const [d0, d1] = it.drop;
+                const at = (f: (q: Pose) => number) => num(p, [0.24, 0.36, d0, d1], [f(it.a), f(it.b), f(it.b), f(it.c)]);
+                return (
+                  <Animated.View
+                    key={i}
+                    style={{
+                      position: "absolute",
+                      left: (it.a.cx - it.w / 2) * k,
+                      top: (it.a.cy - it.h / 2 - FY) * k,
+                      width: it.w * k,
+                      height: it.h * k,
+                      opacity: num(p, [d1 - 0.01, d1], [1, 0]),
+                      transform: [
+                        { translateX: at((q) => (q.cx - it.a.cx) * k) },
+                        { translateY: at((q) => (q.cy - it.a.cy) * k) },
+                        { rotate: num(p, [0.24, 0.36, d0, d1], [it.a.r, it.b.r, it.b.r, it.c.r]).interpolate({ inputRange: [-360, 360], outputRange: ["-360deg", "360deg"] }) },
+                        { scale: at((q) => q.k) },
+                      ],
+                    }}
+                  >
+                    <Image source={it.src} style={{ width: "100%", height: "100%" }} contentFit="contain" />
+                  </Animated.View>
+                );
+              })}
+            </View>
+            <Layer box={BOX.front} k={k} opacity={vis[1]} />
+            <Layer box={BOX.closed} k={k} opacity={vis[2]} />
+          </View>
         </View>
 
         {/* catalog is always one tap away */}
@@ -163,11 +199,18 @@ export function HomeScene({
   );
 }
 
+function Layer({ box, k, opacity }: { box: { src: number; x: number; y: number; w: number; h: number }; k: number; opacity: Animated.AnimatedInterpolation<number> }) {
+  return (
+    <Animated.View style={{ position: "absolute", left: box.x * k, top: (box.y - FY) * k, width: box.w * k, height: box.h * k, opacity }}>
+      <Image source={box.src} style={{ width: "100%", height: "100%" }} contentFit="fill" />
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   textBox: { paddingHorizontal: 22, paddingTop: 14 },
   h1: { fontSize: 44, lineHeight: 50, fontWeight: "800", letterSpacing: -0.8 },
   sub: { fontSize: 19, lineHeight: 25, marginTop: 6 },
-  artBox: { alignItems: "center", justifyContent: "center" },
   bottom: { paddingHorizontal: 36, paddingTop: 6 },
   cta: { height: 60, borderRadius: 30, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 12px 26px rgba(160,40,230,0.32)" },
   ctaText: { color: "#fff", fontSize: 20, fontWeight: "600" },
