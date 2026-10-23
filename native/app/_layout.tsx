@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
 import { Stack } from "expo-router";
@@ -11,6 +11,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
+import { Curtain, CurtainBrand, curtainEase } from "@/components/Curtain";
 
 // In Expo Go don't hold the splash: Expo Go shows its own developer-menu intro right after
 // the app loads, and a splash kept on screen at that moment pushes that intro under the app
@@ -59,16 +60,6 @@ function AppRoot() {
     refresh();
   }, [refresh]);
 
-  useEffect(() => {
-    if (!loading && !inExpoGo) SplashScreen.hideAsync().catch(() => {});
-  }, [loading]);
-
-  // Never keep the splash forever if the network is slow
-  useEffect(() => {
-    if (inExpoGo) return;
-    const t = setTimeout(() => SplashScreen.hideAsync().catch(() => {}), 4000);
-    return () => clearTimeout(t);
-  }, []);
 
   return (
     <SafeAreaProvider
@@ -95,7 +86,7 @@ function AppRoot() {
         <Stack.Screen name="filters" options={{ title: "Фильтры", presentation: "modal" }} />
         <Stack.Screen name="scanner" options={{ title: "Сканер штрихкода", presentation: "fullScreenModal", headerShown: false }} />
         <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal" }} />
-        <Stack.Screen name="register" options={{ title: "Регистрация" }} />
+        <Stack.Screen name="register" options={{ title: "Регистрация", headerShown: false, animation: "fade" }} />
         <Stack.Screen name="forgot" options={{ title: "Восстановление пароля" }} />
         <Stack.Screen name="waitlist" options={{ title: "Лист ожидания" }} />
         <Stack.Screen name="favorites" options={{ title: "Избранное" }} />
@@ -103,6 +94,7 @@ function AppRoot() {
         <Stack.Screen name="info" options={{ title: "" }} />
       </Stack>
       <ThemeFade mode={mode} />
+      <AppIntro ready={!loading} />
     </SafeAreaProvider>
   );
 }
@@ -132,4 +124,56 @@ function ThemeFade({ mode }: { mode: string }) {
   }, [mode, reduce, op]);
   if (!fade) return null;
   return <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: fade, opacity: op, pointerEvents: "none" }]} />;
+}
+
+/**
+ * Opening screen. It starts exactly like the native splash (same background, same logo in the centre),
+ * so the native splash is hidden at once; then «КОСМЕТИЧКА» comes in under the logo and, when the login
+ * check is done, the curtain lifts away with its curved edge, revealing the app.
+ */
+function AppIntro({ ready }: { ready: boolean }) {
+  const reduce = useReduceMotion();
+  const { height } = useWindowDimensions();
+  const appear = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(0)).current;
+  const [shown, setShown] = useState(true);
+  const [minDone, setMinDone] = useState(false);
+  const lifting = useRef(false);
+
+  useEffect(() => {
+    // the intro is painted over the native splash, which can go now
+    if (!inExpoGo) SplashScreen.hideAsync().catch(() => {});
+    Animated.timing(appear, { toValue: 1, duration: reduce ? 0 : 650, delay: reduce ? 0 : 120, easing: curtainEase, useNativeDriver: true }).start();
+    const min = setTimeout(() => setMinDone(true), reduce ? 0 : 1000);
+    // never keep the intro forever if the network is slow
+    const max = setTimeout(() => setShown(false), 6000);
+    return () => {
+      clearTimeout(min);
+      clearTimeout(max);
+    };
+  }, [appear, reduce]);
+
+  useEffect(() => {
+    if (!shown || lifting.current) return;
+    if (!minDone || !ready) return;
+    lifting.current = true;
+    if (reduce) {
+      setShown(false);
+      return;
+    }
+    Animated.timing(progress, { toValue: 2, duration: 1050, easing: curtainEase, useNativeDriver: true }).start(() => setShown(false));
+  }, [ready, minDone, shown, reduce, progress]);
+
+  if (disabled("intro") || !shown) return null;
+  const brandOut = progress.interpolate({ inputRange: [0, 0.55, 2], outputRange: [1, 0, 0] });
+  return (
+    <View style={[StyleSheet.absoluteFill, { pointerEvents: "box-only" }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <StatusBar style="light" />
+      <Curtain progress={progress} rest={height * 0.4}>
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity: brandOut }]}>
+          <CurtainBrand appear={appear} tagline="Косметика оптом и в розницу" />
+        </Animated.View>
+      </Curtain>
+    </View>
+  );
 }
