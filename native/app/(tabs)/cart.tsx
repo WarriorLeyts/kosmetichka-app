@@ -87,9 +87,9 @@ export default function Cart() {
   const toBig = amountUntilBigWholesale(items, customer);
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
-  const bg = dark ? "#000" : "#F7F7FA";
+  const bg = dark ? "#170D25" : "#F7F7FA";
   const card = [styles.card, { backgroundColor: c.cell }, !dark && styles.shadow];
-  const soft = dark ? "#2C2C2E" : "#F2F2F7";
+  const soft = dark ? "#352044" : "#F2F2F7";
   const pinkSoft = dark ? "rgba(232,44,135,0.16)" : "#FCEFF7";
 
   if (items.length === 0) {
@@ -274,7 +274,7 @@ export default function Cart() {
             </Pressable>
 
             <Text style={[styles.label, { color: c.label }]}>Комментарий к заказу</Text>
-            <CommentInput style={[styles.comment, { backgroundColor: dark ? "#1C1C1E" : "#EEEEF3", color: c.label }]} placeholderColor={c.secondary} />
+            <CommentInput style={[styles.comment, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }]} placeholderColor={c.secondary} />
 
             <View style={[styles.summary, { backgroundColor: pinkSoft }]}>
               <View style={styles.sumRow}>

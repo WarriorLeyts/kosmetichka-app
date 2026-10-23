@@ -19,15 +19,16 @@ export const iosLight = {
 };
 
 export const iosDark: typeof iosLight = {
-  bg: "#000000",
-  cell: "#1C1C1E",
-  cellPressed: "#3A3A3C",
-  label: "#FFFFFF",
-  secondary: "rgba(235,235,245,0.6)",
-  tertiary: "rgba(235,235,245,0.3)",
-  separator: "rgba(84,84,88,0.65)",
-  chevron: "#5A5A5E",
-  bar: "rgba(22,22,23,0.92)",
+  // plum dark theme (same colours as the dark home header)
+  bg: "#170D25", // page
+  cell: "#2B193D", // cards and fields
+  cellPressed: "#352044",
+  label: "#FAF7FD",
+  secondary: "#C3AECF",
+  tertiary: "rgba(195,174,207,0.5)",
+  separator: "rgba(200,160,255,0.16)",
+  chevron: "#8E77A6",
+  bar: "rgba(33,16,50,0.92)",
   blurTint: "dark",
 };
 

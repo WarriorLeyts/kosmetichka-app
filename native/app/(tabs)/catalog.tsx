@@ -167,7 +167,7 @@ export default function Catalog() {
       </Text>
 
       {/* search */}
-      <View style={[styles.search, { backgroundColor: c.blurTint === "dark" ? "#1C1C1E" : "rgba(118,118,128,0.12)" }]}>
+      <View style={[styles.search, { backgroundColor: c.blurTint === "dark" ? "#2B193D" : "rgba(118,118,128,0.12)" }]}>
         <Pressable
           onPress={() => { tap(); setCatOpen(true); }}
           accessibilityRole="button"
@@ -197,7 +197,7 @@ export default function Catalog() {
           onPress={() => { tap(); router.push("/filters"); }}
           accessibilityRole="button"
           accessibilityLabel={filterCount > 0 ? `Фильтры, выбрано ${filterCount}` : "Фильтры"}
-          style={[styles.filterBtn, { backgroundColor: c.blurTint === "dark" ? "#1C1C1E" : "rgba(118,118,128,0.12)" }]}
+          style={[styles.filterBtn, { backgroundColor: c.blurTint === "dark" ? "#2B193D" : "rgba(118,118,128,0.12)" }]}
         >
           <Ionicons name="options-outline" size={19} color={c.label} />
           {filterCount > 0 ? (
@@ -232,7 +232,7 @@ export default function Catalog() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.blurTint === "dark" ? "#000" : "#F7F7FA", paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: c.blurTint === "dark" ? "#170D25" : "#F7F7FA", paddingTop: insets.top }}>
       {error && products.length === 0 ? (
         <>
           <View style={{ paddingHorizontal: 11 }}>{header}</View>

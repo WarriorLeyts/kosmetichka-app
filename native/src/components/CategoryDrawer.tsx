@@ -212,8 +212,8 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
   // closed: render nothing (no work on every catalog keystroke)
   if (!visible) return null;
 
-  const sheetBg = dark ? "#1C1C1E" : "#F7F4FC";
-  const tileBg = dark ? "#2C2C2E" : "#fff";
+  const sheetBg = dark ? "#2B193D" : "#F7F4FC";
+  const tileBg = dark ? "#352044" : "#fff";
   const shadow = dark ? null : styles.shadow;
 
   const gridStyle = {
@@ -231,14 +231,14 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
   const header = (
     <View style={styles.header}>
       {stack.length ? (
-        <Pressable onPress={back} hitSlop={8} accessibilityRole="button" accessibilityLabel="Назад" style={[styles.round, { backgroundColor: dark ? "#2C2C2E" : "rgba(139,61,255,0.08)" }]}>
+        <Pressable onPress={back} hitSlop={8} accessibilityRole="button" accessibilityLabel="Назад" style={[styles.round, { backgroundColor: dark ? "#352044" : "rgba(139,61,255,0.08)" }]}>
           <Ionicons name="chevron-back" size={24} color={VIOLET} />
         </Pressable>
       ) : null}
       <Text style={[styles.title, { color: c.label }]} numberOfLines={2} accessibilityRole="header">
         {current ? current.name : "Категории"}
       </Text>
-      <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Закрыть" style={[styles.round, { backgroundColor: dark ? "#2C2C2E" : "rgba(118,118,128,0.1)" }]}>
+      <Pressable onPress={onClose} hitSlop={8} accessibilityRole="button" accessibilityLabel="Закрыть" style={[styles.round, { backgroundColor: dark ? "#352044" : "rgba(118,118,128,0.1)" }]}>
         <Ionicons name="close" size={22} color={c.secondary} />
       </Pressable>
     </View>
@@ -250,7 +250,7 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Закрыть меню" />
       </Animated.View>
       <Animated.View style={[styles.sheet, { top: insets.top + 12, backgroundColor: sheetBg, transform: [{ translateY: sheetY }] }]}>
-        <View style={[styles.grabber, { backgroundColor: dark ? "#48484A" : "#D6D2E2" }]} />
+        <View style={[styles.grabber, { backgroundColor: dark ? "#5A3D73" : "#D6D2E2" }]} />
         {header}
         <View style={{ flex: 1 }}>
           {/* level 1: emoji grid (kept mounted so its scroll position is restored on back) */}

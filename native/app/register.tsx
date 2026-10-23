@@ -54,7 +54,7 @@ function TypeCard({ t, selected, onPress }: { t: (typeof TYPES)[number]; selecte
           !dark && styles.shadow,
           {
             backgroundColor: a.interpolate({ inputRange: [0, 1], outputRange: [c.cell, dark ? "#2A1F38" : "#F7EDFC"] }),
-            borderColor: a.interpolate({ inputRange: [0, 1], outputRange: [dark ? "#2C2C2E" : "#EFEAF5", VIOLET] }),
+            borderColor: a.interpolate({ inputRange: [0, 1], outputRange: [dark ? "#352044" : "#EFEAF5", VIOLET] }),
           },
         ]}
       >
@@ -68,7 +68,7 @@ function TypeCard({ t, selected, onPress }: { t: (typeof TYPES)[number]; selecte
             <Ionicons name="checkmark" size={18} color="#fff" />
           </View>
         ) : (
-          <View style={[styles.radio, { borderColor: dark ? "#48484A" : "#C7C7CC" }]} />
+          <View style={[styles.radio, { borderColor: dark ? "#5A3D73" : "#C7C7CC" }]} />
         )}
       </Animated.View>
     </Pressable>
@@ -179,7 +179,7 @@ export default function Register() {
   const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: dark ? "#000" : "#F8F7FC" }} behavior="padding">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: dark ? "#170D25" : "#F8F7FC" }} behavior="padding">
       <Stack.Screen options={{ headerShown: false }} />
       <AuthBackdrop />
       <ScrollView
@@ -311,7 +311,7 @@ export default function Register() {
             accessibilityState={{ checked: consent }}
             style={styles.consent}
           >
-            <View style={[styles.box, { borderColor: errors.consent ? "#FF3B30" : consent ? VIOLET : dark ? "#48484A" : "#C7C7CC" }, consent && { backgroundColor: VIOLET }]}>
+            <View style={[styles.box, { borderColor: errors.consent ? "#FF3B30" : consent ? VIOLET : dark ? "#5A3D73" : "#C7C7CC" }, consent && { backgroundColor: VIOLET }]}>
               {consent ? <Ionicons name="checkmark" size={18} color="#fff" /> : null}
             </View>
             <Text style={[styles.consentText, { color: c.label }]}>

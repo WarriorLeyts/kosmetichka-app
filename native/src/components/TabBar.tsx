@@ -70,7 +70,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           experimentalBlurMethod={Platform.OS === "android" ? "dimezisBlurView" : undefined}
           style={StyleSheet.absoluteFill}
         />}
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? "rgba(28,28,30,0.65)" : "rgba(250,250,255,0.78)" }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? "rgba(33,16,50,0.65)" : "rgba(250,250,255,0.78)" }]} />
 
         {/* sliding capsule */}
         {itemW > 0 && !disabled("capsule") ? (
@@ -126,10 +126,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               {disabled("fade") ? null : <>
               <Animated.View style={[styles.content, { opacity: off }]}>
                 <View>
-                  <Ionicons name={t.icon} size={25} color={dark ? "#AEB4D0" : INACTIVE} />
+                  <Ionicons name={t.icon} size={25} color={dark ? "#C3AECF" : INACTIVE} />
                   {badge}
                 </View>
-                <Text numberOfLines={1} style={[styles.label, { color: dark ? "#AEB4D0" : INACTIVE }]}>
+                <Text numberOfLines={1} style={[styles.label, { color: dark ? "#C3AECF" : INACTIVE }]}>
                   {t.label}
                 </Text>
               </Animated.View>

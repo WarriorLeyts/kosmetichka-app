@@ -20,7 +20,7 @@ export const IOSField = forwardRef<TextInput, Props>(function IOSField({ label, 
   }, [error, err, reduce]);
 
   const to = (v: number) => Animated.timing(focus, { toValue: v, duration: reduce ? 0 : 180, useNativeDriver: false }).start();
-  const idle = dark ? "#3A3A3C" : "#E4E2EC";
+  const idle = dark ? "#43295A" : "#E4E2EC";
   const borderColor = error
     ? "#FF3B30"
     : focus.interpolate({ inputRange: [0, 1], outputRange: [idle, "#8b3dff"] });
@@ -32,7 +32,7 @@ export const IOSField = forwardRef<TextInput, Props>(function IOSField({ label, 
         style={[
           styles.box,
           multiline && { minHeight: 96, alignItems: "flex-start" },
-          { borderColor, backgroundColor: dark ? "#1C1C1E" : "#F8F7FB" },
+          { borderColor, backgroundColor: dark ? "#2B193D" : "#F8F7FB" },
         ]}
       >
         <TextInput

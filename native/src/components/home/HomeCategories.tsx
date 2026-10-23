@@ -23,8 +23,8 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
           accessibilityRole="link"
           style={styles.all}
         >
-          <Text style={styles.allText}>Все категории</Text>
-          <Ionicons name="arrow-forward" size={18} color="#8b2be0" />
+          <Text style={[styles.allText, dark && { color: "#D7B8FF" }]}>Все категории</Text>
+          <Ionicons name="arrow-forward" size={18} color={dark ? "#D7B8FF" : "#8b2be0"} />
         </Pressable>
       </View>
       <View style={styles.grid}>
@@ -41,18 +41,18 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
                 accessibilityLabel={cat.name}
                 style={({ pressed }) => [styles.card, { backgroundColor: c.cell, transform: [{ scale: pressed ? 0.98 : 1 }] }, !dark && styles.shadow]}
               >
-                <View style={[styles.pic, { backgroundColor: dark ? "#2C2C2E" : "#F3ECFA" }]}>
+                <View style={[styles.pic, { backgroundColor: dark ? "#352044" : "#F3ECFA" }]}>
                   {icon ? (
                     <Image source={icon} style={styles.img} contentFit="contain" />
                   ) : (
                     <Ionicons name="sparkles-outline" size={40} color="#c28be8" />
                   )}
                 </View>
-                <View style={[styles.label, { backgroundColor: dark ? "rgba(28,28,30,0.92)" : "rgba(255,255,255,0.94)" }]}>
+                <View style={[styles.label, { backgroundColor: dark ? "rgba(33,16,50,0.92)" : "rgba(255,255,255,0.94)" }]}>
                   <Text style={[styles.name, { color: c.label }]} numberOfLines={2}>
                     {cat.name}
                   </Text>
-                  <Ionicons name="chevron-forward" size={20} color="#8b2be0" />
+                  <Ionicons name="chevron-forward" size={20} color={dark ? "#D7B8FF" : "#8b2be0"} />
                 </View>
               </Pressable>
             </View>

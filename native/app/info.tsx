@@ -41,7 +41,7 @@ export default function Info() {
   const sep = { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator };
 
   return (
-    <View style={{ flex: 1, backgroundColor: dark ? "#000" : "#F7F5FB" }}>
+    <View style={{ flex: 1, backgroundColor: dark ? "#170D25" : "#F7F5FB" }}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 16, paddingBottom: insets.bottom + 28 }} showsVerticalScrollIndicator={false}>
         <View style={styles.wrap}>

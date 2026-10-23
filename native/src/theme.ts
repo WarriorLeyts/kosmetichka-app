@@ -3,7 +3,7 @@
  * theme, its values are replaced and the app re-mounts (see app/_layout.tsx),
  * so every screen — including styles made with `themed()` — picks up the new colors.
  */
-import { StyleSheet } from "react-native";
+import { Appearance, StyleSheet } from "react-native";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { persistStorage } from "./store/storage";
@@ -41,29 +41,30 @@ const light = {
 type Palette = typeof light;
 
 const dark: Palette = {
-  pink: "#ff4fa3",
-  pinkLight: "#ff7cbc",
-  violet: "#a57aff",
-  blue: "#5b7cff",
-  bg: "#0f0f17",
-  card: "#1a1a26",
-  text: "#f1f2f6",
-  muted: "#a3a8b8",
-  faint: "#6f7487",
-  border: "#2a2a3a",
-  soft: "#232333",
+  // plum dark theme (same colours as the dark home header)
+  pink: "#EF419A",
+  pinkLight: "#FF6FB5",
+  violet: "#B57CFF",
+  blue: "#7C8CFF",
+  bg: "#170D25",
+  card: "#2B193D",
+  text: "#FAF7FD",
+  muted: "#C3AECF",
+  faint: "#8E77A6",
+  border: "rgba(200,160,255,0.16)",
+  soft: "#211032",
   success: "#34d399",
-  successBg: "#0f2a22",
+  successBg: "#123027",
   warning: "#fbbf24",
-  warningBg: "#2b2210",
-  danger: "#f87171",
-  dangerBg: "#2d1517",
-  violetSoft: "#2a2342",
-  violetBorder: "#3a2f5c",
-  pinkSoft: "#331a2a",
-  strong: "#f1f2f6",
-  pageGradient: ["#1c1020", "#16122a", "#0f1426"],
-  overlay: "rgba(26,26,38,0.92)",
+  warningBg: "#33260f",
+  danger: "#ff7a8a",
+  dangerBg: "#3a1526",
+  violetSoft: "#2E1A48",
+  violetBorder: "rgba(181,124,255,0.3)",
+  pinkSoft: "#3A1934",
+  strong: "#FAF7FD",
+  pageGradient: ["#2A1030", "#211032", "#170D25"],
+  overlay: "rgba(33,16,50,0.92)",
   statusBar: "light",
 };
 
@@ -110,12 +111,16 @@ export function themed<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedSty
   });
 }
 
+const initialMode: ThemeMode = Appearance.getColorScheme() === "dark" ? "dark" : "light";
+applyTheme(initialMode);
+
 type ThemeState = { mode: ThemeMode; toggle: () => void };
 
 export const useTheme = create<ThemeState>()(
   persist(
     (set, get) => ({
-      mode: "light",
+      // first launch: follow the phone's theme until the user picks one
+      mode: initialMode,
       toggle: () => {
         const mode: ThemeMode = get().mode === "dark" ? "light" : "dark";
         applyTheme(mode);

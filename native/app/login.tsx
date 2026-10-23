@@ -62,7 +62,7 @@ export default function Login() {
   const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: dark ? "#000" : "#F8F7FC" }} behavior="padding">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: dark ? "#170D25" : "#F8F7FC" }} behavior="padding">
       <Stack.Screen options={{ headerShown: false }} />
       <AuthBackdrop />
       <ScrollView

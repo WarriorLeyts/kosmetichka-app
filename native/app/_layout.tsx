@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
@@ -99,6 +100,28 @@ function AppRoot() {
         <Stack.Screen name="edit-profile" options={{ title: "Мои данные" }} />
         <Stack.Screen name="info" options={{ title: "" }} />
       </Stack>
+      <ThemeFade mode={mode} />
     </SafeAreaProvider>
   );
+}
+
+/**
+ * Smooth theme switch: the UI re-mounts with the new palette under a layer of the old background,
+ * which fades out in ~220 ms (no movement, no size changes; instant with «reduce motion»).
+ */
+function ThemeFade({ mode }: { mode: string }) {
+  const reduce = useReduceMotion();
+  const prev = useRef({ mode, bg: colors.bg });
+  const op = useRef(new Animated.Value(0)).current;
+  const [bg, setBg] = useState(colors.bg);
+  useEffect(() => {
+    if (prev.current.mode === mode) return;
+    const old = prev.current.bg;
+    prev.current = { mode, bg: colors.bg };
+    if (reduce) return;
+    setBg(old);
+    op.setValue(1);
+    Animated.timing(op, { toValue: 0, duration: 220, useNativeDriver: true }).start();
+  }, [mode, reduce, op]);
+  return <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: bg, opacity: op, pointerEvents: "none" }]} />;
 }

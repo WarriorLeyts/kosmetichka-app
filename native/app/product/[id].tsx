@@ -191,7 +191,7 @@ export default function ProductScreen() {
     </View>
   );
 
-  const bg = dark ? "#000" : "#FFFFFF";
+  const bg = dark ? "#170D25" : "#FFFFFF";
 
   if (error || !product) {
     return (
@@ -265,7 +265,7 @@ export default function ProductScreen() {
   // compact header background: pinned, light with a thin shadow
   const headerBg = (
         <Animated.View
-          style={[{ pointerEvents: "none" }, styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#111" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
+          style={[{ pointerEvents: "none" }, styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#211032" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
         >
           {reduceMotion ? (
             <Animated.View style={[styles.reducedRow, { top: T }, anim.reducedThumb]}>
@@ -295,7 +295,7 @@ export default function ProductScreen() {
         <View style={{ height: S }} />
         <Animated.View style={[styles.dots, !reduceMotion && anim.fadeEarly]}>
           {images.length > 1
-            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? VIOLET : dark ? "#3A3A3C" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
+            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? VIOLET : dark ? "#43295A" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
             : null}
         </Animated.View>
 
@@ -317,7 +317,7 @@ export default function ProductScreen() {
         <View style={styles.pad} onLayout={(e) => (padY.current = e.nativeEvent.layout.y)}>
           <View style={styles.metaRow}>
             {volume ? (
-              <View style={[styles.volume, { backgroundColor: dark ? "#2C2C2E" : "#EFEAFF" }]}>
+              <View style={[styles.volume, { backgroundColor: dark ? "#352044" : "#EFEAFF" }]}>
                 <Text style={{ color: dark ? c.label : "#4b3a8c", fontSize: 14 }}>{volume}</Text>
               </View>
             ) : null}
@@ -328,7 +328,7 @@ export default function ProductScreen() {
           </View>
 
           {/* prices — existing pricing rules */}
-          <View style={[styles.prices, { backgroundColor: dark ? "#1C1C1E" : "#FDF2F8" }]}>
+          <View style={[styles.prices, { backgroundColor: dark ? "#2B193D" : "#FDF2F8" }]}>
             {rows.map((r, i) => (
               <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: dark ? "rgba(255,255,255,0.15)" : "rgba(139,61,255,0.18)" }]}>
                 <Text numberOfLines={1} style={{ fontSize: 13, color: PRICE_COLORS[i] ?? c.secondary }}>
@@ -474,7 +474,7 @@ export default function ProductScreen() {
       {topBar}
 
       {/* pinned bottom panel: quantity and «В корзину» (existing cart logic) */}
-      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: dark ? "rgba(17,17,17,0.97)" : "rgba(255,255,255,0.97)" }, !dark && styles.bottomShadow]}>
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: dark ? "rgba(33,16,50,0.97)" : "rgba(255,255,255,0.97)" }, !dark && styles.bottomShadow]}>
         <View style={styles.bottomInner}>
           {out ? (
             <GradientButton
@@ -534,7 +534,7 @@ function Qty({
   const dark = c.blurTint === "dark";
   const size = small ? 38 : 46;
   return (
-    <View style={[styles.qty, { backgroundColor: dark ? "#2C2C2E" : "#F2F2F7" }]}>
+    <View style={[styles.qty, { backgroundColor: dark ? "#352044" : "#F2F2F7" }]}>
       <Pressable onPress={onMinus} disabled={minusDisabled} hitSlop={6} accessibilityLabel="Уменьшить количество" style={{ width: size, height: size, alignItems: "center", justifyContent: "center", opacity: minusDisabled ? 0.35 : 1 }}>
         <Ionicons name="remove" size={22} color={c.label} />
       </Pressable>

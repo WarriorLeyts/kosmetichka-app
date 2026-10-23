@@ -111,7 +111,7 @@ function DescriptionBase({ text }: { text: string }) {
               const ic = lv ? itemIcon(lv[0]) : null;
               if (lv && ic) {
                 return (
-                  <View key={bi} style={[styles.sub, { backgroundColor: dark ? "#2C2C2E" : "#F6F3FF" }]}>
+                  <View key={bi} style={[styles.sub, { backgroundColor: dark ? "#352044" : "#F6F3FF" }]}>
                     <Ionicons name={ic} size={26} color={bi % 2 ? VIOLET : PINK} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.subLabel, { color: c.label }]}>{lv[0]}</Text>

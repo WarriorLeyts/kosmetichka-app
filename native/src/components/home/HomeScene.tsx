@@ -113,7 +113,7 @@ export function HomeScene({
   const k = Math.min(W / FW, artAreaH / FH); // mockup px → screen px
 
   return (
-    <View style={{ height: viewH, backgroundColor: dark ? "#000" : BG }}>
+    <View style={{ height: viewH, backgroundColor: dark ? "#170D25" : BG }}>
       <View style={{ height: viewH, overflow: "hidden" }}>
         {/* titles of the three stages */}
         <View style={{ height: textH }}>
@@ -128,7 +128,7 @@ export function HomeScene({
               <GradientText style={styles.h1} colors={t.bColors}>
                 {t.b}
               </GradientText>
-              <Text style={[styles.sub, { color: dark ? "#C7C7D1" : "#5b5d78" }]}>{t.sub}</Text>
+              <Text style={[styles.sub, { color: dark ? "#C3AECF" : "#5b5d78" }]}>{t.sub}</Text>
             </Animated.View>
           ))}
         </View>

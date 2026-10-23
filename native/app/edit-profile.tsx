@@ -79,7 +79,7 @@ export default function EditProfile() {
     }
   }, [msg, msgAnim, reduce]);
 
-  const bg = dark ? "#000" : "#F7F5FB";
+  const bg = dark ? "#170D25" : "#F7F5FB";
   const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
 
   if (loadError || !form) {
@@ -229,7 +229,7 @@ export default function EditProfile() {
       </ScrollView>
 
       {/* pinned save button */}
-      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 12), backgroundColor: dark ? "rgba(0,0,0,0.92)" : "rgba(247,245,251,0.94)" }]}>
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 12), backgroundColor: dark ? "rgba(23,13,37,0.92)" : "rgba(247,245,251,0.94)" }]}>
         <Pressable
           onPress={save}
           disabled={saving}

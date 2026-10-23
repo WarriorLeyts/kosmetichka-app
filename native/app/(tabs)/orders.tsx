@@ -154,7 +154,7 @@ export default function Orders() {
     }, [customerId])
   );
 
-  const bg = dark ? "#000" : "#F7F7FA";
+  const bg = dark ? "#170D25" : "#F7F7FA";
   const top = (
     <View style={{ paddingHorizontal: 16, paddingTop: insets.top, width: "100%", maxWidth: 640, alignSelf: "center" }}>
       <BrandHeader title="Мои заказы" />
@@ -243,7 +243,7 @@ export default function Orders() {
                         <Text style={[styles.chipText, { color: "#fff", fontWeight: "600" }]}>{f.label}</Text>
                       </LinearGradient>
                     ) : (
-                      <View style={[styles.chip, { backgroundColor: c.cell, borderColor: dark ? "#3A3A3C" : "#ECE8F5", borderWidth: 1 }]}>
+                      <View style={[styles.chip, { backgroundColor: c.cell, borderColor: dark ? "#43295A" : "#ECE8F5", borderWidth: 1 }]}>
                         <Text style={[styles.chipText, { color: c.secondary }]}>{f.label}</Text>
                       </View>
                     )}

@@ -144,7 +144,7 @@ export default function OrderScreen() {
   };
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/orders"));
-  const bg = dark ? "#000" : "#F7F7FA";
+  const bg = dark ? "#170D25" : "#F7F7FA";
 
   if (error || !order) {
     return (
@@ -268,7 +268,7 @@ export default function OrderScreen() {
   const outBubble = dark ? "rgba(139,61,255,0.28)" : "#F6E9FB";
 
   const bubble = (key: string | number, mine: boolean, body: string, at: string, extra?: ReactNode) => (
-    <View key={key} style={[styles.bubble, mine ? [styles.mine, { backgroundColor: outBubble }] : [styles.theirs, { backgroundColor: dark ? "#2C2C2E" : "#F2F2F7" }]]}>
+    <View key={key} style={[styles.bubble, mine ? [styles.mine, { backgroundColor: outBubble }] : [styles.theirs, { backgroundColor: dark ? "#352044" : "#F2F2F7" }]]}>
       {!mine ? <Text style={styles.from}>Менеджер</Text> : null}
       <MessageBody text={body} color={c.label} fromManager={!mine} />
       <View style={styles.metaRow}>
@@ -422,14 +422,14 @@ export default function OrderScreen() {
       </ScrollView>
 
       {/* message input, pinned to the bottom (stays above the keyboard) */}
-      <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: dark ? "#111" : "#fff" }, !dark && styles.composerShadow]}>
+      <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: dark ? "#211032" : "#fff" }, !dark && styles.composerShadow]}>
         <View style={[styles.wrap, { flexDirection: "row", alignItems: "flex-end", gap: 10 }]}>
           <TextInput
             value={text}
             onChangeText={setText}
             placeholder="Написать сообщение…"
             placeholderTextColor={c.secondary}
-            style={[styles.input, { backgroundColor: dark ? "#1C1C1E" : "#F2F2F7", color: c.label }]}
+            style={[styles.input, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", color: c.label }]}
             multiline
             maxLength={2000}
           />
