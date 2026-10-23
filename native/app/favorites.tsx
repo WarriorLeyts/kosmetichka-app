@@ -15,6 +15,7 @@ import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product } from "@/types";
+import { FavHeart } from "@/components/FavHeart";
 
 /** Card wrapper that fades out before the product leaves the list. */
 const Removable = memo(function Removable({ leaving, onGone, children }: { leaving: boolean; onGone: () => void; children: ReactNode }) {
@@ -79,7 +80,7 @@ export default function Favorites() {
         ListEmptyComponent={
           <View style={[styles.empty, { backgroundColor: c.cell }, !dark && styles.shadow]}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="heart-outline" size={34} color="#e82c87" />
+              <FavHeart size={34} />
             </View>
             <Text style={[styles.emptyTitle, { color: c.label }]}>В избранном пусто</Text>
             <Text style={[styles.emptyText, { color: c.secondary }]}>Нажимайте на сердечко у товаров, чтобы вернуться к ним позже</Text>

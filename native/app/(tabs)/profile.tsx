@@ -12,6 +12,7 @@ import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import { LoyaltyCardPanel } from "@/components/LoyaltyCard";
 import { TEST_CARD } from "@/loyalty";
+import { FavHeart } from "@/components/FavHeart";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -26,7 +27,7 @@ const TIER: Record<string, string> = {
   big_wholesale: "Крупный оптовый клиент",
 };
 
-type Item = { icon: IconName; title: string; pink?: boolean; count?: number; needsAuth?: boolean; onPress: () => void };
+type Item = { icon: IconName; title: string; pink?: boolean; fav?: boolean; count?: number; needsAuth?: boolean; onPress: () => void };
 
 /** Profile — iOS style: brand header, large title, one rounded menu block, gradient sign-in button. */
 export default function Profile() {
@@ -49,7 +50,7 @@ export default function Profile() {
     { icon: "person-outline", title: "Мои данные", needsAuth: true, onPress: () => go("/edit-profile", true) },
     { icon: "cube-outline", title: "Мои заказы", needsAuth: true, onPress: () => (customer ? router.navigate("/orders") : router.push("/login")) },
     { icon: "time-outline", title: "Лист ожидания", needsAuth: true, count: customer ? waitCount : 0, onPress: () => go("/waitlist", true) },
-    { icon: "heart-outline", title: "Избранное", pink: true, count: favCount, onPress: () => go("/favorites") },
+    { icon: "heart-outline", title: "Избранное", fav: true, count: favCount, onPress: () => go("/favorites") },
     { icon: "document-text-outline", title: "Контакты и документы", onPress: () => go("/info") },
   ];
 
@@ -94,7 +95,7 @@ export default function Profile() {
               style={({ pressed }) => [styles.row, pressed && { backgroundColor: c.cellPressed }]}
             >
               <View style={[styles.iconWrap, { backgroundColor: it.pink ? "rgba(232,44,135,0.1)" : "rgba(139,61,255,0.1)" }]}>
-                <Ionicons name={it.icon} size={21} color={it.pink ? PINK : VIOLET} />
+                {it.fav ? <FavHeart size={21} /> : <Ionicons name={it.icon} size={21} color={it.pink ? PINK : VIOLET} />}
               </View>
               <Text style={[iosText.body, { color: c.label, flex: 1 }]} numberOfLines={1}>
                 {it.title}

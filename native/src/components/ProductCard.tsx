@@ -12,6 +12,7 @@ import { priceRows, PriceRows } from "./Price";
 import { tap } from "./ui";
 import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
+import { FavHeart } from "./FavHeart";
 
 type Props = {
   product: Product;
@@ -47,7 +48,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
           }}
           style={styles.fav}
         >
-          <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={20} color="#e82c87" />
+          <FavHeart size={20} active={isFavorite} />
         </Pressable>
       </View>
 

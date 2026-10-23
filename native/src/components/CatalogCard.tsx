@@ -13,6 +13,7 @@ import { tap } from "./ui";
 import { useReduceMotion } from "../useReduceMotion";
 import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
+import { FavHeart } from "./FavHeart";
 
 type Props = {
   product: Product;
@@ -73,7 +74,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           style={styles.fav}
         >
           <Animated.View style={{ transform: [{ scale: heart }] }}>
-            <Ionicons name={isFavorite ? "heart" : "heart-outline"} size={23} color={isFavorite ? "#e82c87" : "#8E8E93"} />
+            <FavHeart size={23} active={isFavorite} />
           </Animated.View>
         </Pressable>
       </View>

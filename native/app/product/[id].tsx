@@ -24,6 +24,7 @@ import { ErrorView, tap } from "@/components/ui";
 import { useIOS } from "@/ios";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product, Variant } from "@/types";
+import { FavHeart } from "@/components/FavHeart";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -182,7 +183,7 @@ export default function ProductScreen() {
           accessibilityLabel={isFav ? "Убрать из избранного" : "В избранное"}
           style={[styles.barBtn, { alignItems: "flex-end" }]}
         >
-          <Ionicons name={isFav ? "heart" : "heart-outline"} size={28} color={PINK} />
+          <FavHeart size={28} active={isFav} />
         </Pressable>
       ) : (
         <View style={styles.barBtn} />

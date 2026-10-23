@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Animated, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Animated, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { BrandWord } from "@/components/iosui/BrandHeader";
+import { BRAND_PINK, BRAND_VIOLET, Wordmark } from "@/components/Wordmark";
+import { FavHeart } from "@/components/FavHeart";
 import { Ionicons } from "@expo/vector-icons";
 import { api } from "@/api";
 import { colors, gradient, radius, themed, useTheme } from "@/theme";
@@ -30,6 +31,7 @@ const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }
 
 export default function Home() {
   const insets = useSafeAreaInsets();
+  const { width: winW } = useWindowDimensions();
   const bottomSpace = useTabBarSpace();
   const mode = useTheme((s) => s.mode);
   const toggleTheme = useTheme((s) => s.toggle);
@@ -43,16 +45,19 @@ export default function Home() {
   const [sizeOpen, setSizeOpen] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
   const [sceneTop, setSceneTop] = useState<number | null>(null);
-  const [stats, setStats] = useState<{ totalProducts: number; totalBrands: number } | null>(null);
   const [fresh, setFresh] = useState<Product[]>([]);
 
   useEffect(() => {
     loadMeta();
-    api.homeStats().then(setStats).catch(() => {});
     api.catalog({ page: 1, quick: ["new"], onlyStock: true }).then((r) => setFresh(r.products.slice(0, 12))).catch(() => {});
   }, [loadMeta]);
 
   const active = effectivePriceType(cart, customer);
+  const dark = mode === "dark";
+  const iconColor = dark ? "#E7D9FF" : BRAND_VIOLET;
+  const glass = dark ? styles.glassDark : styles.glassLight;
+  // wordmark fits between the two left buttons and the right one on any phone width
+  const wordSize = Math.max(14, Math.min(19, (winW - 36 - 2 * 100) / 8.6));
   const tops = topCategories(categories).slice(0, 12);
 
   const openCatalog = (patch: Parameters<typeof setFilters>[0]) => {
@@ -70,20 +75,33 @@ export default function Home() {
       onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
       scrollEventThrottle={16}
     >
-      <LinearGradient colors={gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.hero, { paddingTop: insets.top }]}>
+      <View style={[styles.hero, { paddingTop: insets.top + 8, backgroundColor: dark ? "#170D25" : "#FFFFFF" }]}>
+        {/* soft glow: pink on the left, lavender on the right */}
+        <LinearGradient
+          colors={dark ? ["rgba(239,65,154,0.38)", "rgba(23,13,37,0)", "rgba(121,37,214,0.45)"] : ["rgba(239,65,154,0.13)", "rgba(255,255,255,0)", "rgba(155,110,240,0.16)"]}
+          locations={[0, 0.5, 1]}
+          start={{ x: 0, y: 0.6 }}
+          end={{ x: 1, y: 0.4 }}
+          style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}
+        />
+        <LinearGradient
+          colors={dark ? ["rgba(23,13,37,0)", colors.bg] : ["rgba(255,255,255,0)", colors.bg]}
+          start={{ x: 0, y: 0.55 }}
+          end={{ x: 0, y: 1 }}
+          style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}
+        />
         <View style={styles.heroTop}>
-          <BrandWord color="#fff" />
-          <View style={[styles.heroLeft, { flexDirection: "row", gap: 6 }]}>
+          <View style={[styles.heroSide, { left: 0 }]}>
             <Pressable
               onPress={() => {
                 tap();
                 toggleTheme();
               }}
               hitSlop={6}
-              style={styles.heroIcon}
+              style={[styles.glass, glass]}
               accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"}
             >
-              <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={20} color="#fff" />
+              <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={20} color={iconColor} />
             </Pressable>
             {uiScale.available ? (
               <Pressable
@@ -92,41 +110,51 @@ export default function Home() {
                   setSizeOpen(true);
                 }}
                 hitSlop={6}
-                style={styles.heroIcon}
+                style={[styles.glass, glass]}
                 accessibilityLabel="Размер интерфейса"
               >
-                <Text style={styles.sizeIcon}>Aa</Text>
+                <Text style={[styles.sizeIcon, { color: iconColor }]}>Aa</Text>
               </Pressable>
             ) : null}
           </View>
-          <Pressable onPress={() => router.push("/favorites")} hitSlop={10} style={[styles.heroIcon, styles.heroRight]} accessibilityLabel="Избранное">
-            <Ionicons name="heart-outline" size={22} color="#fff" />
-          </Pressable>
+          <Wordmark size={wordSize} />
+          <View style={[styles.heroSide, { right: 0 }]}>
+            <Pressable onPress={() => router.push("/favorites")} hitSlop={6} style={[styles.glass, glass]} accessibilityLabel="Избранное">
+              <FavHeart size={21} />
+            </Pressable>
+          </View>
         </View>
-        <Text style={styles.subtitle}>Косметика и парфюмерия оптом</Text>
+        <Text style={[styles.subtitle, { color: dark ? "#E3D3F2" : "#7A6A9A" }]} numberOfLines={1} adjustsFontSizeToFit>
+          Сеть магазинов косметики и парфюмерии
+        </Text>
 
         <View style={styles.searchRow}>
-          <Pressable style={styles.search} onPress={() => openCatalog({})}>
-            <Ionicons name="search" size={18} color={colors.muted} />
-            <Text style={styles.searchText}>Название, бренд, артикул</Text>
+          <Pressable
+            style={[styles.search, dark ? styles.searchDark : styles.searchLight]}
+            onPress={() => openCatalog({})}
+            accessibilityRole="search"
+            accessibilityLabel="Поиск: название, бренд, артикул"
+          >
+            <Ionicons name="search-outline" size={20} color={dark ? "#FAF7FD" : BRAND_VIOLET} />
+            <Text style={[styles.searchText, { color: dark ? "#C3AECF" : "#8A7CA6" }]} numberOfLines={1}>
+              Название, бренд, артикул
+            </Text>
           </Pressable>
           <Pressable
-            style={styles.scan}
             onPress={() => {
               tap();
               router.push("/scanner");
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Сканировать штрихкод"
+            style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.96 : 1 }] }]}
           >
-            <Ionicons name="barcode-outline" size={24} color={colors.violet} />
+            <LinearGradient colors={[BRAND_PINK, "#A93BF2"]} start={{ x: 0, y: 0.3 }} end={{ x: 1, y: 0.9 }} style={styles.scan}>
+              <Ionicons name="barcode-outline" size={26} color="#fff" />
+            </LinearGradient>
           </Pressable>
         </View>
-
-        {stats && (
-          <Text style={styles.stats}>
-            {stats.totalProducts.toLocaleString("ru-RU")} товаров · {stats.totalBrands.toLocaleString("ru-RU")} брендов · остатки из 1С
-          </Text>
-        )}
-      </LinearGradient>
+      </View>
 
       {/* new home content: scroll-driven box scene + categories with images */}
       <View onLayout={(e) => setSceneTop(e.nativeEvent.layout.y)}>
@@ -204,20 +232,20 @@ export default function Home() {
 }
 
 const styles = themed(() => ({
-  hero: { paddingHorizontal: 18, paddingBottom: 22, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
-  heroTop: { height: 50, alignItems: "center", justifyContent: "center" },
-  heroLeft: { position: "absolute", left: 0, top: 6 },
-  heroRight: { position: "absolute", right: 0, top: 6 },
-  sizeIcon: { color: "#fff", fontSize: 16, fontWeight: "700" },
-  logo: { color: "#fff", fontSize: 26, fontWeight: "900" },
-  logoImg: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: "rgba(255,255,255,0.85)" },
-  subtitle: { color: "rgba(255,255,255,0.85)", fontSize: 13, fontWeight: "600", textAlign: "center", marginBottom: 16 },
-  heroIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: "rgba(255,255,255,0.18)", alignItems: "center", justifyContent: "center" },
-  searchRow: { flexDirection: "row", gap: 10 },
-  search: { flex: 1, height: 48, borderRadius: radius.md, backgroundColor: colors.card, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14 },
-  searchText: { color: colors.faint, fontSize: 15 },
-  scan: { width: 48, height: 48, borderRadius: radius.md, backgroundColor: colors.card, alignItems: "center", justifyContent: "center" },
-  stats: { color: "rgba(255,255,255,0.9)", fontSize: 12, fontWeight: "600", marginTop: 12 },
+  hero: { paddingHorizontal: 18, paddingBottom: 18, overflow: "hidden" },
+  heroTop: { height: 56, alignItems: "center", justifyContent: "center" },
+  heroSide: { position: "absolute", top: 8, flexDirection: "row", gap: 8 },
+  glass: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", borderWidth: 1 },
+  glassLight: { backgroundColor: "rgba(255,255,255,0.62)", borderColor: "rgba(121,37,214,0.16)", boxShadow: "0 6px 16px rgba(121,37,214,0.12)" },
+  glassDark: { backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(220,190,255,0.24)", boxShadow: "0 6px 16px rgba(0,0,0,0.25)" },
+  sizeIcon: { fontSize: 16, fontWeight: "600" },
+  subtitle: { fontSize: 14, fontWeight: "500", textAlign: "center", marginTop: 4, marginBottom: 18 },
+  searchRow: { flexDirection: "row", gap: 10, alignItems: "center" },
+  search: { flex: 1, height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 18, borderWidth: 1 },
+  searchLight: { backgroundColor: "rgba(250,247,255,0.85)", borderColor: "rgba(121,37,214,0.22)", boxShadow: "0 8px 20px rgba(121,37,214,0.08)" },
+  searchDark: { backgroundColor: "rgba(255,255,255,0.09)", borderColor: "rgba(200,160,255,0.35)" },
+  searchText: { fontSize: 16, flexShrink: 1 },
+  scan: { width: 52, height: 52, borderRadius: 18, alignItems: "center", justifyContent: "center", boxShadow: "0 8px 18px rgba(169,59,242,0.32)" },
   loginBanner: {
     margin: 16, marginBottom: 0, padding: 14, borderRadius: radius.lg, backgroundColor: colors.violetSoft,
     flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderColor: colors.violetBorder,
