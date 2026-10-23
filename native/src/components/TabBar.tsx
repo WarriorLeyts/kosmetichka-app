@@ -73,7 +73,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
         <View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? "rgba(28,28,30,0.65)" : "rgba(250,250,255,0.78)" }]} />
 
         {/* sliding capsule */}
-        {itemW > 0 ? (
+        {itemW > 0 && !disabled("capsule") ? (
           <Animated.View
             style={[
               styles.capsule,
@@ -115,6 +115,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               accessibilityLabel={t.label}
               style={styles.item}
             >
+              {disabled("fade") ? (
+                <View style={styles.content}>
+                  <Ionicons name={focused ? t.active : t.icon} size={25} color={focused ? "#8b3dff" : INACTIVE} />
+                  <Text numberOfLines={1} style={[styles.label, { color: focused ? "#8b3dff" : INACTIVE }]}>
+                    {t.label}
+                  </Text>
+                </View>
+              ) : null}
+              {disabled("fade") ? null : <>
               <Animated.View style={[styles.content, { opacity: off }]}>
                 <View>
                   <Ionicons name={t.icon} size={25} color={dark ? "#AEB4D0" : INACTIVE} />
@@ -133,6 +142,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   {t.label}
                 </Text>
               </Animated.View>
+              </>}
             </Pressable>
           );
         })}
@@ -151,10 +161,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 6,
     borderWidth: 1,
-    boxShadow: "0 8px 26px rgba(60,40,140,0.12)",
+    boxShadow: disabled("shadow") ? undefined : "0 8px 26px rgba(60,40,140,0.12)",
   },
   capsule: { position: "absolute", top: 6, bottom: 6 },
-  capsuleFill: { flex: 1, borderRadius: 29, boxShadow: "0 6px 18px rgba(130,0,255,0.45)" },
+  capsuleFill: { flex: 1, borderRadius: 29, boxShadow: disabled("shadow") ? undefined : "0 6px 18px rgba(130,0,255,0.45)" },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: "center", justifyContent: "center" },
   content: { alignItems: "center", justifyContent: "center", gap: 3 },
   label: { fontSize: 12, fontWeight: "500" },
