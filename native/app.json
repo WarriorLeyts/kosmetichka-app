@@ -23,7 +23,10 @@
         "backgroundImage": "./assets/adaptive-background.png"
       },
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "plugins": [
@@ -62,7 +65,15 @@
       "fallbackToCacheTimeout": 0,
       "requestHeaders": {
         "expo-channel-name": "production"
+      },
+      "url": "https://u.expo.dev/79cf0a1d-4e68-4bdf-9389-10a7fc8bdc48"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "79cf0a1d-4e68-4bdf-9389-10a7fc8bdc48"
       }
-    }
+    },
+    "owner": "doshaeww"
   }
 }
