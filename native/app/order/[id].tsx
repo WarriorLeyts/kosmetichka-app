@@ -144,7 +144,7 @@ export default function OrderScreen() {
   };
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace("/orders"));
-  const bg = dark ? "#170D25" : "transparent";
+  const bg = "transparent";
 
   if (error || !order) {
     return (

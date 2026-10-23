@@ -119,7 +119,7 @@ export function HomeScene({
   const k = Math.min((W - 24) / FW, artAreaH / FH); // mockup px → screen px
 
   return (
-    <View style={{ height: viewH, backgroundColor: dark ? "#170D25" : "transparent" }}>
+    <View style={{ height: viewH, backgroundColor: "transparent" }}>
       <View style={{ height: viewH, overflow: "hidden" }}>
         {/* titles of the three stages */}
         <View style={{ height: textH }}>

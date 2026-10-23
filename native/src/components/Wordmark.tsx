@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { useIOS } from "../ios";
@@ -9,31 +10,48 @@ const LOGO_RED = "#E8202A";
 /**
  * «КОСМЕТИЧКА» wordmark, the same everywhere as in the home header: wide capitals in the brand
  * violet (light text on the dark theme), our K-heart logo in red above «И».
+ * The word is ONE text, so every letter has exactly the same size; the logo is placed over «И»
+ * by measuring the width of «КОСМЕТ» and «И» with invisible copies of the same text.
  */
 export function Wordmark({ size = 19, light, style }: { size?: number; light?: boolean; style?: ViewStyle }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const main = light ? "#ffffff" : dark ? "#FAF7FD" : BRAND_VIOLET;
   const spacing = size * 0.17;
-  const t = { fontSize: size, letterSpacing: spacing, fontWeight: "400" as const, lineHeight: size * 1.25, color: main };
+  const t = { fontSize: size, letterSpacing: spacing, fontWeight: "400" as const, lineHeight: size * 1.25 };
   const logo = size * 0.62;
+  const [pre, setPre] = useState(0); // width of «КОСМЕТ»
+  const [withI, setWithI] = useState(0); // width of «КОСМЕТИ»
+  const iCenter = pre + (withI - pre - spacing) / 2;
   return (
-    <View style={[styles.row, { paddingTop: size * 0.5 }, style]} accessible accessibilityRole="header" accessibilityLabel="Косметичка">
-      <Text style={t}>КОСМЕТ</Text>
-      <View>
-        <Text style={t}>И</Text>
+    <View style={[styles.wrap, { paddingTop: size * 0.5 }, style]} accessible accessibilityRole="header" accessibilityLabel="Косметичка">
+      <Text style={[t, { color: main }]} numberOfLines={1}>
+        КОСМЕТИЧКА
+      </Text>
+      {/* invisible measuring copies (same style) */}
+      <View style={styles.measure} pointerEvents="none">
+        <Text style={t} onLayout={(e) => setPre(e.nativeEvent.layout.width)}>
+          КОСМЕТ
+        </Text>
+      </View>
+      <View style={styles.measure} pointerEvents="none">
+        <Text style={t} onLayout={(e) => setWithI(e.nativeEvent.layout.width)}>
+          КОСМЕТИ
+        </Text>
+      </View>
+      {withI > 0 ? (
         <Image
           source={require("../../assets/home2/logo-white.png")}
           tintColor={LOGO_RED}
           contentFit="contain"
-          style={{ position: "absolute", width: logo, height: logo, top: -logo * 0.78, left: (size * 0.72 - logo) / 2 }}
+          style={{ position: "absolute", width: logo, height: logo, top: size * 0.5 - logo * 0.78, left: iCenter - logo / 2 }}
         />
-      </View>
-      <Text style={t}>ЧКА</Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: "row", alignItems: "flex-end" },
+  wrap: { alignSelf: "center" },
+  measure: { position: "absolute", left: 0, top: 0, opacity: 0, flexDirection: "row" },
 });

@@ -191,7 +191,7 @@ export default function ProductScreen() {
     </View>
   );
 
-  const bg = dark ? "#170D25" : "transparent";
+  const bg = "transparent";
 
   if (error || !product) {
     return (

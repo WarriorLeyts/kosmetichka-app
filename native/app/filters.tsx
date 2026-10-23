@@ -38,7 +38,7 @@ export default function Filters() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: useTheme.getState().mode === "dark" ? colors.bg : "transparent" }}>
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
         <Text style={styles.h}>Категория</Text>
         <View style={styles.box}>

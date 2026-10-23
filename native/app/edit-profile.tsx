@@ -79,7 +79,7 @@ export default function EditProfile() {
     }
   }, [msg, msgAnim, reduce]);
 
-  const bg = dark ? "#170D25" : "transparent";
+  const bg = "transparent";
   const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
 
   if (loadError || !form) {

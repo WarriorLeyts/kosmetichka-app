@@ -82,7 +82,7 @@ function AppRoot() {
           headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: "800" },
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: mode === "dark" ? colors.bg : "#FFFFFF" },
+          headerStyle: { backgroundColor: mode === "dark" ? "#1C0F2C" : "#FFFFFF" },
           contentStyle: { backgroundColor: colors.bg },
           headerBackTitle: "Назад",
           // smooth slide between screens

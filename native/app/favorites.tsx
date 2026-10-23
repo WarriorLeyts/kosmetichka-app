@@ -60,7 +60,7 @@ export default function Favorites() {
     });
   };
 
-  const bg = dark ? "#170D25" : "transparent";
+  const bg = "transparent";
 
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>

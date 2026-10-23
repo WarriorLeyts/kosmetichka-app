@@ -179,7 +179,7 @@ export default function Register() {
   const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: dark ? "#170D25" : "transparent" }} behavior="padding">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: "transparent" }} behavior="padding">
       <Stack.Screen options={{ headerShown: false }} />
       <AuthBackdrop />
       <ScrollView

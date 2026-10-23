@@ -57,7 +57,7 @@ export default function Profile() {
   const name = customer ? customer.companyName || customer.name || customer.phone : null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: dark ? "#170D25" : "transparent" }}>
+    <View style={{ flex: 1, backgroundColor: "transparent" }}>
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top,
