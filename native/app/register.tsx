@@ -13,8 +13,7 @@ import { Captcha } from "@/components/Captcha";
 import { tap } from "@/components/ui";
 import { IOSField } from "@/components/iosui/Field";
 import { GRAD, OutlineButton } from "@/components/iosui/Buttons";
-import { Curtain, CurtainBrand, CurtainHeader, curtainEase, Dots } from "@/components/Curtain";
-import { Wordmark } from "@/components/Wordmark";
+import { Curtain, CurtainHeader, curtainEase, Dots } from "@/components/Curtain";
 import { AuthBackdrop } from "@/components/iosui/AuthBackdrop";
 import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
@@ -85,7 +84,7 @@ function Rise({ v, children }: { v: Animated.Value; children: ReactNode }) {
   );
 }
 
-/** White text on the curtain header: back chevron, wordmark, title (same in the overlay and in the static header). */
+/** White text on the curtain header: back chevron and title (same in the overlay and in the static header). */
 function HeaderContent({ top, onBack }: { top: number; onBack: () => void }) {
   const { width } = useWindowDimensions();
   return (
@@ -93,7 +92,6 @@ function HeaderContent({ top, onBack }: { top: number; onBack: () => void }) {
       <Pressable onPress={onBack} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={styles.back}>
         <Ionicons name="chevron-back" size={30} color="#fff" />
       </Pressable>
-      <Wordmark size={18} light style={{ alignSelf: "flex-start", marginTop: 2 }} />
       <Text style={styles.heroTitle} accessibilityRole="header">
         Регистрация
       </Text>
@@ -169,21 +167,19 @@ export default function Register() {
   const [overlayRest, setOverlayRest] = useState(rest);
   const [done, setDone] = useState<Done | null>(null);
   const progress = useRef(new Animated.Value(reduce ? 1 : 0)).current;
-  const brand = useRef(new Animated.Value(0)).current;
   const result = useRef(new Animated.Value(0)).current;
   const sections = useRef([0, 1, 2, 3, 4].map(() => new Animated.Value(reduce ? 1 : 0))).current;
 
   const back = () => (router.canGoBack() ? router.back() : router.replace("/"));
 
-  // opening: the curtain shows the brand, lifts into the header, then the form comes in section by section
+  // opening: the screen comes in covered by the curtain, it lifts into the header, then the form comes in section by section
   useEffect(() => {
     if (reduce) {
       setOverlay(null);
       return;
     }
     Animated.sequence([
-      Animated.timing(brand, { toValue: 1, duration: 380, easing: curtainEase, useNativeDriver: true }),
-      Animated.delay(180),
+      Animated.delay(260),
       Animated.parallel([
         Animated.timing(progress, { toValue: 1, duration: 950, easing: curtainEase, useNativeDriver: true }),
         Animated.stagger(
@@ -485,14 +481,9 @@ export default function Register() {
         <View style={[StyleSheet.absoluteFill, { pointerEvents: "auto" }]}>
           <Curtain progress={progress} rest={overlay === "exit" ? overlayRest : rest}>
             {overlay === "intro" ? (
-              <>
-                <Animated.View style={[StyleSheet.absoluteFill, { opacity: progress.interpolate({ inputRange: [0, 0.45], outputRange: [1, 0], extrapolate: "clamp" }) }]}>
-                  <CurtainBrand appear={brand} />
-                </Animated.View>
-                <Animated.View style={{ opacity: progress.interpolate({ inputRange: [0.65, 1], outputRange: [0, 1], extrapolate: "clamp" }) }}>
-                  <HeaderContent top={insets.top} onBack={back} />
-                </Animated.View>
-              </>
+              <Animated.View style={{ opacity: progress.interpolate({ inputRange: [0.65, 1], outputRange: [0, 1], extrapolate: "clamp" }) }}>
+                <HeaderContent top={insets.top} onBack={back} />
+              </Animated.View>
             ) : null}
           </Curtain>
           {overlay === "exit" && done ? (
@@ -532,7 +523,7 @@ const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 596, alignSelf: "center" },
   h1: { fontSize: 30, fontWeight: "800", marginTop: 14, marginBottom: 14 },
   back: { width: 40, height: 44, justifyContent: "center", marginLeft: -8 },
-  heroTitle: { color: "#fff", fontSize: 32, fontWeight: "800", marginTop: 12 },
+  heroTitle: { color: "#fff", fontSize: 32, fontWeight: "800", marginTop: 14 },
   heroSub: { color: "rgba(255,255,255,0.75)", fontSize: 15, lineHeight: 20, marginTop: 4 },
   morph: { height: 56, borderRadius: 28, overflow: "hidden", alignItems: "center", justifyContent: "center", paddingHorizontal: 16 },
   morphText: { color: "#fff", fontSize: 18, fontWeight: "700" },

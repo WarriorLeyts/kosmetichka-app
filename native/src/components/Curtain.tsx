@@ -1,12 +1,11 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Animated, Easing, StyleSheet, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Image } from "expo-image";
-import { Wordmark } from "./Wordmark";
 
 /** Deep plum → brand violet → magenta: the curtain in both themes (same tones as the dark home header and buttons). */
 export const CURTAIN_GRAD = ["#1E0A33", "#3B0F73", "#7A1BD2", "#B41ACB"] as const;
 
+type Colors = readonly [string, string, ...string[]];
 
 /**
  * Geometry of the curved edge. The shape is a tall rectangle plus a big circle whose lower arc is the
@@ -25,15 +24,15 @@ function useShape(bottom: number) {
 }
 
 /** The curved gradient shape; its lowest edge point (left side) is at `bottom` in its own coordinates. */
-function Shape({ bottom, children }: { bottom: number; children?: ReactNode }) {
+function Shape({ bottom, colors = CURTAIN_GRAD, children }: { bottom: number; colors?: Colors; children?: ReactNode }) {
   const s = useShape(bottom);
   const gradH = s.bottom - s.gradTop;
   // (left, top) = where the shape's top-left corner is inside the piece being filled
   const fill = (left: number, top: number) => (
     <>
-      <View style={{ position: "absolute", left, top, width: s.W, height: s.gradTop - s.top + 1, backgroundColor: CURTAIN_GRAD[0] }} />
+      <View style={{ position: "absolute", left, top, width: s.W, height: s.gradTop - s.top + 1, backgroundColor: colors[0] }} />
       <LinearGradient
-        colors={CURTAIN_GRAD}
+        colors={colors}
         start={{ x: 0, y: 0 }}
         end={{ x: 0.7, y: 1 }}
         style={{ position: "absolute", left, top: top + s.gradTop - s.top, width: s.W, height: gradH }}
@@ -77,14 +76,17 @@ export function useCurtainRange(rest: number) {
 
 /**
  * Full-screen animated curtain. `progress` 0 → 1 lifts it into the header, 1 → 0 drops it back over the screen,
- * → 2 lifts it away. `children` are drawn on the curtain at screen coordinates (they don't move with it).
+ * → 2 lifts it away. `children` are drawn at screen coordinates (they don't move); `riding` is laid out at screen coordinates while the curtain covers the screen and then moves with it.
  */
-export function Curtain({ progress, rest, children }: { progress: Animated.Value; rest: number; children?: ReactNode }) {
+export function Curtain({
+  progress, rest, colors, riding, children,
+}: { progress: Animated.Value; rest: number; colors?: Colors; riding?: ReactNode; children?: ReactNode }) {
   const range = useCurtainRange(rest);
   return (
     <View style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}>
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: progress.interpolate(range) }] }]}>
-        <Shape bottom={rest} />
+        <Shape bottom={rest} colors={colors} />
+        {riding ? <View style={[StyleSheet.absoluteFill, { transform: [{ translateY: -range.outputRange[0] }] }]}>{riding}</View> : null}
       </Animated.View>
       {children}
     </View>
@@ -103,25 +105,6 @@ export function CurtainHeader({ rest, children }: { rest: number; children?: Rea
 
 /** Easing of the lift: quick start, long soft landing (like the reference). */
 export const curtainEase = Easing.bezier(0.65, 0, 0.2, 1);
-
-/** Logo + «КОСМЕТИЧКА» in the screen centre — what the curtain shows while it covers the screen. */
-export function CurtainBrand({ appear, tagline }: { appear: Animated.Value; tagline?: string }) {
-  const lift = appear.interpolate({ inputRange: [0, 1], outputRange: [14, 0] });
-  // the logo is already on screen (same place/size as the native splash), the words come in after it
-  const words = appear.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 0, 1] });
-  const spacing = appear.interpolate({ inputRange: [0, 1], outputRange: [1.18, 1] });
-  return (
-    <View style={[StyleSheet.absoluteFill, styles.center, { pointerEvents: "none" }]}>
-      <Image source={require("../../assets/splash-icon.png")} style={styles.logo} contentFit="contain" />
-      <Animated.View style={{ opacity: words, transform: [{ translateY: lift }, { scaleX: spacing }], marginTop: 22 }}>
-        <Wordmark size={24} light />
-      </Animated.View>
-      {tagline ? (
-        <Animated.Text style={[styles.tagline, { opacity: words, transform: [{ translateY: lift }] }]}>{tagline}</Animated.Text>
-      ) : null}
-    </View>
-  );
-}
 
 /** Three bouncing dots (loader inside the shrunken button). */
 export function Dots({ color = "#fff" }: { color?: string }) {
@@ -161,9 +144,6 @@ export function Dots({ color = "#fff" }: { color?: string }) {
 }
 
 const styles = StyleSheet.create({
-  center: { alignItems: "center", justifyContent: "center" },
-  logo: { width: 150, height: 150 },
-  tagline: { color: "rgba(255,255,255,0.72)", fontSize: 15, marginTop: 10, letterSpacing: 0.3 },
   dots: { flexDirection: "row", gap: 6, alignItems: "center", height: 20 },
   dot: { width: 8, height: 8, borderRadius: 4 },
 });

@@ -11,7 +11,9 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
-import { Curtain, CurtainBrand, curtainEase } from "@/components/Curtain";
+import { Curtain, curtainEase } from "@/components/Curtain";
+import { Image } from "expo-image";
+import { iosFont } from "@/ios";
 
 // In Expo Go don't hold the splash: Expo Go shows its own developer-menu intro right after
 // the app loads, and a splash kept on screen at that moment pushes that intro under the app
@@ -127,31 +129,37 @@ function ThemeFade({ mode }: { mode: string }) {
 }
 
 /**
- * Opening screen. It starts exactly like the native splash (same background, same logo in the centre),
- * so the native splash is hidden at once; then «КОСМЕТИЧКА» comes in under the logo and, when the login
- * check is done, the curtain lifts away with its curved edge, revealing the app.
+ * Opening screen, as on the reference: black screen, white heart in the centre (where the native splash had it),
+ * «КОСМЕТИЧКА» in wide light capitals and a small line under it fade in; when the login check is done the black
+ * curtain lifts away with its curved edge (the words ride up with it), revealing the home screen.
  */
 function AppIntro({ ready }: { ready: boolean }) {
   const reduce = useReduceMotion();
   const { height } = useWindowDimensions();
-  const appear = useRef(new Animated.Value(0)).current;
+  const title = useRef(new Animated.Value(0)).current;
+  const sub = useRef(new Animated.Value(0)).current;
   const progress = useRef(new Animated.Value(0)).current;
   const [shown, setShown] = useState(true);
   const [minDone, setMinDone] = useState(false);
   const lifting = useRef(false);
 
   useEffect(() => {
-    // the intro is painted over the native splash, which can go now
+    // the intro is painted over the native splash (same black, same heart), which can go now
     if (!inExpoGo) SplashScreen.hideAsync().catch(() => {});
-    Animated.timing(appear, { toValue: 1, duration: reduce ? 0 : 650, delay: reduce ? 0 : 120, easing: curtainEase, useNativeDriver: true }).start();
-    const min = setTimeout(() => setMinDone(true), reduce ? 0 : 1000);
+    const d = reduce ? 0 : 1;
+    Animated.sequence([
+      Animated.delay(250 * d),
+      Animated.timing(title, { toValue: 1, duration: 900 * d, easing: curtainEase, useNativeDriver: true }),
+      Animated.timing(sub, { toValue: 1, duration: 600 * d, easing: curtainEase, useNativeDriver: true }),
+    ]).start();
+    const min = setTimeout(() => setMinDone(true), reduce ? 0 : 2100);
     // never keep the intro forever if the network is slow
-    const max = setTimeout(() => setShown(false), 6000);
+    const max = setTimeout(() => setShown(false), 7000);
     return () => {
       clearTimeout(min);
       clearTimeout(max);
     };
-  }, [appear, reduce]);
+  }, [title, sub, reduce]);
 
   useEffect(() => {
     if (!shown || lifting.current) return;
@@ -161,19 +169,54 @@ function AppIntro({ ready }: { ready: boolean }) {
       setShown(false);
       return;
     }
-    Animated.timing(progress, { toValue: 2, duration: 1050, easing: curtainEase, useNativeDriver: true }).start(() => setShown(false));
+    Animated.timing(progress, { toValue: 2, duration: 1150, easing: curtainEase, useNativeDriver: true }).start(() => setShown(false));
   }, [ready, minDone, shown, reduce, progress]);
 
   if (disabled("intro") || !shown) return null;
-  const brandOut = progress.interpolate({ inputRange: [0, 0.55, 2], outputRange: [1, 0, 0] });
+  const rise = (v: Animated.Value) => ({
+    opacity: v,
+    transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
+  });
   return (
     <View style={[StyleSheet.absoluteFill, { pointerEvents: "box-only" }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <StatusBar style="light" />
-      <Curtain progress={progress} rest={height * 0.4}>
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity: brandOut }]}>
-          <CurtainBrand appear={appear} tagline="Косметика оптом и в розницу" />
-        </Animated.View>
-      </Curtain>
+      <Curtain
+        progress={progress}
+        rest={height * 0.4}
+        colors={["#000000", "#000000"]}
+        riding={
+          <Animated.View style={[StyleSheet.absoluteFill, introStyles.center, { opacity: progress.interpolate({ inputRange: [0, 0.8, 2], outputRange: [1, 0, 0] }) }]}>
+            <Image source={require("../assets/home2/logo-white.png")} style={introStyles.heart} contentFit="contain" />
+            <View style={introStyles.words}>
+              <Animated.Text
+                style={[
+                  introStyles.title,
+                  {
+                    opacity: title,
+                    transform: [
+                      { translateY: title.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) },
+                      { scale: title.interpolate({ inputRange: [0, 1], outputRange: [1.06, 1] }) },
+                    ],
+                  },
+                ]}
+              >
+                КОСМЕТИЧКА
+              </Animated.Text>
+              <Animated.Text style={[introStyles.sub, rise(sub)]}>Сеть магазинов косметики и парфюмерии</Animated.Text>
+            </View>
+          </Animated.View>
+        }
+      />
     </View>
   );
 }
+
+const HEART = 72;
+const introStyles = StyleSheet.create({
+  center: { alignItems: "center", justifyContent: "center" },
+  // the heart sits exactly in the screen centre (as on the native splash), the words hang under it
+  heart: { width: HEART, height: HEART },
+  words: { position: "absolute", top: "50%", left: 0, right: 0, marginTop: HEART / 2 + 26, alignItems: "center" },
+  title: { color: "#fff", fontSize: 28, fontWeight: "300", letterSpacing: 7, textAlign: "center", fontFamily: iosFont.regular },
+  sub: { color: "rgba(255,255,255,0.65)", fontSize: 14, letterSpacing: 0.4, marginTop: 10, textAlign: "center", fontFamily: iosFont.regular },
+});
