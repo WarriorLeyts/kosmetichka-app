@@ -61,7 +61,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: ["trace", "trace,layout"]
+        variant: ["trace"]
     env:
       V: ${{ matrix.variant == 'trace' && 'withlayout' || 'nolayout' }}
     defaults:
@@ -102,13 +102,16 @@ jobs:
           - tapOn: { text: "Войти", optional: true }
           - waitForAnimationToEnd
           - takeScreenshot: ios-${V}-1-login
-          - tapOn: { text: "Телефон или email", optional: true }
+          - tapOn: { text: "Телефон или email", index: 1, optional: true }
           - inputText: "89990001122"
           - takeScreenshot: ios-${V}-2-login-typed
           - tapOn: { text: "Пароль", index: 1, optional: true }
           - inputText: "secret12"
           - takeScreenshot: ios-${V}-3-pass-typed
           - assertVisible: { text: "89990001122", optional: true }
+          - tapOn: { text: "Телефон или email", index: 1, optional: true }
+          - inputText: "abc"
+          - takeScreenshot: ios-${V}-4-more
           YAML
           sed -i '' 's/^          //' flow.yaml
           perl -e 'alarm shift; exec @ARGV' 600 maestro --device "$UDID" test -e V="$V" --test-output-dir "$PWD/shots/m" flow.yaml > shots/ios-${V}-maestro.txt 2>&1 || true
