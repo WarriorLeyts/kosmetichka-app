@@ -115,16 +115,21 @@ function ThemeFade({ mode }: { mode: string }) {
   const reduce = useReduceMotion();
   const prev = useRef({ mode, bg: colors.bg });
   const op = useRef(new Animated.Value(0)).current;
-  const [bg, setBg] = useState(colors.bg);
+  // the layer exists only while it fades; it can never stay on screen
+  const [fade, setFade] = useState<string | null>(null);
   // layout effect: the old-colour layer is in place before the re-mounted screens are painted
   useLayoutEffect(() => {
     if (prev.current.mode === mode) return;
     const old = prev.current.bg;
     prev.current = { mode, bg: colors.bg };
     if (reduce) return;
-    setBg(old);
     op.setValue(1);
-    Animated.timing(op, { toValue: 0, duration: 220, useNativeDriver: true }).start();
+    setFade(old);
+    // JS driver: the layer re-renders while fading, a native-driven value would be reset by that re-render
+    Animated.timing(op, { toValue: 0, duration: 220, useNativeDriver: false }).start(() => setFade(null));
+    const t = setTimeout(() => setFade(null), 800); // safety net
+    return () => clearTimeout(t);
   }, [mode, reduce, op]);
-  return <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: bg, opacity: op, pointerEvents: "none" }]} />;
+  if (!fade) return null;
+  return <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: fade, opacity: op, pointerEvents: "none" }]} />;
 }

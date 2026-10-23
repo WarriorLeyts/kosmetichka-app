@@ -127,6 +127,8 @@ export function HomeScene({
             <Animated.View
               key={i}
               style={[StyleSheet.absoluteFill, styles.textBox, { opacity: vis[i], transform: [{ translateY: textShift[i] }] }]}
+              // Android: draw the (masked gradient) title once into a texture instead of on every animation frame
+              renderToHardwareTextureAndroid
             >
               {/* one centred line across the whole width, no wrapping */}
               <View style={styles.titleRow} accessible accessibilityRole="header" accessibilityLabel={`${t.a} ${t.b}`}>
