@@ -1,5 +1,6 @@
-import { useMemo, useRef } from "react";
-import { Animated, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useCallback, useEffect, useRef } from "react";
+import { Animated, AppState, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { useFocusEffect } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,9 +11,9 @@ import { useIOS } from "../../ios";
 
 /*
  * Home scene exactly as on the three mockups: the art of each stage is taken from the mockups
- * (flat box + products → products dropping into the open box → closed box), the texts, button,
- * hint and progress dots are real components. Everything follows the scroll position
- * (native-driver interpolations): stopping stops the scene, scrolling back plays it backwards.
+ * (flat box + products → products dropping into the open box → closed box), the texts, button
+ * and progress dots are real components. The scene plays by itself like a video and stops on the
+ * closed box; it plays again each time the home tab is opened again or the app comes back.
  */
 
 const ART = [
@@ -34,27 +35,55 @@ function num(p: Animated.AnimatedInterpolation<number> | Animated.Value, input: 
 }
 
 export function HomeScene({
-  scrollY, sectionTop, topInset, bottomSpace, onCatalog,
-}: { scrollY: Animated.Value; sectionTop: number | null; topInset: number; bottomSpace: number; onCatalog: () => void }) {
+  topInset, bottomSpace, onCatalog,
+}: { scrollY?: Animated.Value; sectionTop?: number | null; topInset: number; bottomSpace: number; onCatalog: () => void }) {
   const { width: W, height: H } = useWindowDimensions();
   const reduce = useReduceMotion();
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const viewH = Math.max(600, H - topInset - bottomSpace);
-  const RANGE = Math.round(H * 1.5);
-  const pinned = !reduce && sectionTop !== null;
 
-  const still = useRef(new Animated.Value(reduce ? 1 : 0)).current;
-  const p = useMemo(() => {
-    if (!pinned) return still;
-    const start = (sectionTop ?? 0) - topInset;
-    return scrollY.interpolate({ inputRange: [start, start + RANGE], outputRange: [0, 1], extrapolate: "clamp" });
-  }, [pinned, sectionTop, topInset, RANGE, scrollY, still]);
-  const pin = useMemo(() => {
-    if (!pinned) return 0;
-    const start = (sectionTop ?? 0) - topInset;
-    return scrollY.interpolate({ inputRange: [start, start + RANGE], outputRange: [0, RANGE], extrapolate: "clamp" });
-  }, [pinned, sectionTop, topInset, RANGE, scrollY]);
+  // progress of the «video»: 0 = flat box, ~0.5 = products dropping in, 1 = closed box
+  const p = useRef(new Animated.Value(reduce ? 1 : 0)).current;
+  const anim = useRef<Animated.CompositeAnimation | null>(null);
+
+  const play = useCallback(() => {
+    anim.current?.stop();
+    if (reduce) {
+      p.setValue(1);
+      return;
+    }
+    p.setValue(0);
+    const step = (to: number, duration: number, easing = Easing.inOut(Easing.cubic)) =>
+      Animated.timing(p, { toValue: to, duration, easing, useNativeDriver: true });
+    anim.current = Animated.sequence([
+      step(0.24, 1600, Easing.linear), // look at the flat box with products
+      step(0.36, 900), // → open box
+      step(0.62, 1700, Easing.linear), // products dropping in
+      step(0.74, 900), // → closed box
+      step(1, 900), // box settles a bit smaller
+    ]);
+    anim.current.start();
+  }, [p, reduce]);
+
+  // play every time the home tab becomes active (coming from another section or opening the app);
+  // staying on the home page does not replay it
+  useFocusEffect(
+    useCallback(() => {
+      play();
+      return () => anim.current?.stop();
+    }, [play])
+  );
+
+  // coming back to the app from the background counts as a new visit
+  useEffect(() => {
+    let prev = AppState.currentState;
+    const sub = AppState.addEventListener("change", (st) => {
+      if (st === "active" && prev !== "active") play();
+      prev = st;
+    });
+    return () => sub.remove();
+  }, [play]);
 
   // stage visibility: 1 → 2 at ~0.33, 2 → 3 at ~0.7; the closed box then gets a bit smaller and moves up
   const vis = [num(p, [0, 0.24, 0.36], [1, 1, 0]), num(p, [0.24, 0.36, 0.62, 0.74], [0, 1, 1, 0]), num(p, [0.62, 0.74], [0, 1])];
@@ -65,8 +94,6 @@ export function HomeScene({
     { transform: [{ translateY: num(p, [0.24, 0.36, 0.62, 0.74], [-18, 0, 0, 10]) }, { scale: num(p, [0.24, 0.36, 0.62, 0.74], [1.04, 1, 1, 0.95]) }] },
     { transform: [{ translateY: num(p, [0.62, 0.74, 0.9, 1], [-10, 0, 0, -viewH * 0.03]) }, { scale: num(p, [0.62, 0.74, 0.9, 1], [1.05, 1, 1, 0.9]) }] },
   ];
-  const hint = num(p, [0, 0.05], [1, 0]);
-  const dots = num(p, [0.03, 0.08], [0, 1]);
   const dot = (i: number) =>
     num(p, i === 0 ? [0, 0.3, 0.36] : i === 1 ? [0.3, 0.36, 0.68, 0.74] : [0.68, 0.74, 1], i === 0 ? [1, 1, 0.3] : i === 1 ? [0.3, 1, 1, 0.3] : [0.3, 1, 1]);
 
@@ -75,14 +102,14 @@ export function HomeScene({
   const artAreaH = viewH - textH - bottomH;
 
   return (
-    <View style={{ height: pinned ? viewH + RANGE : viewH, backgroundColor: dark ? "#000" : BG }}>
-      <Animated.View style={{ height: viewH, overflow: "hidden", transform: [{ translateY: pin as never }] }}>
+    <View style={{ height: viewH, backgroundColor: dark ? "#000" : BG }}>
+      <View style={{ height: viewH, overflow: "hidden" }}>
         {/* titles of the three stages */}
         <View style={{ height: textH }}>
           {TEXTS.map((t, i) => (
             <Animated.View
               key={i}
-              style={[StyleSheet.absoluteFill, styles.textBox, { opacity: reduce ? (i === 2 ? 1 : 0) : vis[i], transform: [{ translateY: textShift[i] }] }]}
+              style={[StyleSheet.absoluteFill, styles.textBox, { opacity: vis[i], transform: [{ translateY: textShift[i] }] }]}
             >
               <Text style={[styles.h1, { color: dark ? "#fff" : "#170f33" }]} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>
                 {t.a}
@@ -100,7 +127,7 @@ export function HomeScene({
           {ART.map((a, i) => (
             <Animated.View
               key={i}
-              style={[StyleSheet.absoluteFill, styles.artBox, { pointerEvents: "none", opacity: reduce ? (i === 2 ? 1 : 0) : vis[i] }, artMove[i]]}
+              style={[StyleSheet.absoluteFill, styles.artBox, { pointerEvents: "none", opacity: vis[i] }, artMove[i]]}
             >
               <Image source={a.src} style={{ width: Math.min(W, artAreaH * a.ratio), aspectRatio: a.ratio, maxHeight: artAreaH }} contentFit="contain" />
             </Animated.View>
@@ -123,21 +150,15 @@ export function HomeScene({
               <Ionicons name="arrow-forward" size={24} color="#fff" />
             </LinearGradient>
           </Pressable>
-          {pinned ? (
-            <View style={styles.under}>
-              <Animated.View style={[styles.hintRow, { opacity: hint }]}>
-                <Ionicons name="chevron-down" size={18} color="#6b6f8a" />
-                <Text style={styles.hint}>Листайте — соберём ваш заказ</Text>
-              </Animated.View>
-              <Animated.View style={[styles.dots, { opacity: dots }]}>
-                {[0, 1, 2].map((i) => (
-                  <Animated.View key={i} style={[styles.dot, { opacity: dot(i) }]} />
-                ))}
-              </Animated.View>
+          <View style={styles.under}>
+            <View style={styles.dots}>
+              {[0, 1, 2].map((i) => (
+                <Animated.View key={i} style={[styles.dot, { opacity: dot(i) }]} />
+              ))}
             </View>
-          ) : null}
+          </View>
         </View>
-      </Animated.View>
+      </View>
     </View>
   );
 }
@@ -151,8 +172,6 @@ const styles = StyleSheet.create({
   cta: { height: 60, borderRadius: 30, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 12px 26px rgba(160,40,230,0.32)" },
   ctaText: { color: "#fff", fontSize: 20, fontWeight: "600" },
   under: { height: 30, alignItems: "center", justifyContent: "center", marginTop: 8 },
-  hintRow: { position: "absolute", flexDirection: "row", alignItems: "center", gap: 10 },
-  hint: { color: "#6b6f8a", fontSize: 16 },
-  dots: { position: "absolute", flexDirection: "row", gap: 6 },
+  dots: { flexDirection: "row", gap: 6 },
   dot: { width: 22, height: 5, borderRadius: 3, backgroundColor: "#8b2be0" },
 });
