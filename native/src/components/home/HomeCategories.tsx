@@ -6,7 +6,16 @@ import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import type { Category } from "../../types";
 
-/** «Категории товаров» — two-column grid with the prepared category images (no emoji). */
+// photos from the home mockup for the four categories shown there; the rest use the prepared 3D images
+const PHOTOS: [RegExp, number][] = [
+  [/парфю/i, require("../../../assets/home2/cat-perfume.jpg")],
+  [/декоратив/i, require("../../../assets/home2/cat-decor.jpg")],
+  [/лиц/i, require("../../../assets/home2/cat-face.jpg")],
+  [/волос/i, require("../../../assets/home2/cat-hair.jpg")],
+];
+const photoFor = (name: string) => PHOTOS.find(([re]) => re.test(name))?.[1] ?? null;
+
+/** «Категории товаров» — two-column grid as on the mockup: picture on top, white label with a chevron over its bottom. */
 export function HomeCategories({ categories, onOpen }: { categories: Category[]; onOpen: (guid: string | null) => void }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -30,6 +39,7 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
       <View style={styles.grid}>
         {categories.map((cat) => {
           const icon = iconFor(cat.name);
+          const photo = photoFor(cat.name);
           return (
             <View key={cat.guid} style={styles.cell}>
               <Pressable
@@ -41,14 +51,20 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
                 accessibilityLabel={cat.name}
                 style={({ pressed }) => [styles.card, { backgroundColor: c.cell, transform: [{ scale: pressed ? 0.98 : 1 }] }, !dark && styles.shadow]}
               >
-                <View style={[styles.pic, { backgroundColor: dark ? "#2C2C2E" : "#F6EFFB" }]}>
-                  {icon ? <Image source={icon} style={styles.img} contentFit="contain" /> : <Ionicons name="sparkles-outline" size={40} color="#c28be8" />}
+                <View style={[styles.pic, { backgroundColor: dark ? "#2C2C2E" : "#F3ECFA" }]}>
+                  {photo ? (
+                    <Image source={photo} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  ) : icon ? (
+                    <Image source={icon} style={styles.img} contentFit="contain" />
+                  ) : (
+                    <Ionicons name="sparkles-outline" size={40} color="#c28be8" />
+                  )}
                 </View>
-                <View style={styles.label}>
+                <View style={[styles.label, { backgroundColor: dark ? "rgba(28,28,30,0.92)" : "rgba(255,255,255,0.94)" }]}>
                   <Text style={[styles.name, { color: c.label }]} numberOfLines={2}>
                     {cat.name}
                   </Text>
-                  <Ionicons name="chevron-forward" size={18} color="#8b2be0" />
+                  <Ionicons name="chevron-forward" size={20} color="#8b2be0" />
                 </View>
               </Pressable>
             </View>
@@ -62,15 +78,15 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 12, marginTop: 8 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 6, marginBottom: 8 },
-  h: { fontSize: 22, fontWeight: "700" },
+  h: { fontSize: 24, fontWeight: "700" },
   all: { flexDirection: "row", alignItems: "center", gap: 6 },
-  allText: { color: "#8b2be0", fontSize: 15, fontWeight: "500" },
+  allText: { color: "#7a1ee8", fontSize: 17, fontWeight: "500" },
   grid: { flexDirection: "row", flexWrap: "wrap" },
   cell: { width: "50%", padding: 5 },
-  card: { borderRadius: 20, overflow: "hidden" },
+  card: { borderRadius: 22, overflow: "hidden", height: 176 },
   shadow: { boxShadow: "0 4px 16px rgba(120,60,180,0.08)" },
-  pic: { height: 118, alignItems: "center", justifyContent: "center" },
+  pic: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", paddingBottom: 50 },
   img: { width: "78%", height: "92%" },
-  label: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 12, minHeight: 56 },
-  name: { flex: 1, fontSize: 15, fontWeight: "600", lineHeight: 19 },
+  label: { position: "absolute", left: 6, right: 6, bottom: 6, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, minHeight: 50, borderRadius: 16 },
+  name: { flex: 1, fontSize: 17, fontWeight: "600", lineHeight: 21 },
 });
