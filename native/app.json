@@ -55,6 +55,14 @@
     ],
     "experiments": {
       "typedRoutes": false
+    },
+    "runtimeVersion": "1",
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      }
     }
   }
 }

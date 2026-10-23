@@ -1,0 +1,62 @@
+name: EAS Update (обновление по воздуху)
+
+# Publishes the current JS code to installed apps via EAS Update (free plan).
+# Runs on every push that touches native/, or manually: Actions → «EAS Update» → Run.
+# Needs the repository secret EXPO_TOKEN (expo.dev → Account settings → Access tokens).
+# On the first run it creates the Expo project and writes its id/url into native/app.json.
+# Apps only receive updates built with the same runtimeVersion (native/app.json → "runtimeVersion").
+# Bump it and rebuild the .ipa/.apk after adding or upgrading native libraries.
+
+on:
+  push:
+    branches: [main]
+    paths: ["native/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: eas-update
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: native
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check token
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error title=Нет EXPO_TOKEN::Добавьте секрет EXPO_TOKEN: Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+      - name: Install
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Link Expo project (first run only)
+        run: |
+          if node -e "process.exit(require('./app.json').expo.updates.url ? 0 : 1)"; then
+            echo "Project already linked."; exit 0
+          fi
+          ../scripts/ci-run.sh npx --yes eas-cli@latest init --non-interactive --force
+          ../scripts/ci-run.sh npx --yes eas-cli@latest update:configure --platform all --non-interactive
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add app.json
+          git commit -m "eas: link Expo project for EAS Update"
+          git push
+      - name: Publish update
+        run: |
+          MSG=$(git log -1 --pretty=%s | cut -c1-200)
+          ../scripts/ci-run.sh npx --yes eas-cli@latest update --channel production \
+            --environment production --message "$MSG" --non-interactive
