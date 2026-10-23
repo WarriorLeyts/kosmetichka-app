@@ -232,7 +232,7 @@ export default function Catalog() {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.blurTint === "dark" ? "#170D25" : "#F7F7FA", paddingTop: insets.top }}>
+    <View style={{ flex: 1, backgroundColor: c.blurTint === "dark" ? "#170D25" : "transparent", paddingTop: insets.top }}>
       {error && products.length === 0 ? (
         <>
           <View style={{ paddingHorizontal: 11 }}>{header}</View>

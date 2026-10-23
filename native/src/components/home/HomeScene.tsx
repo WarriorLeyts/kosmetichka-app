@@ -34,18 +34,17 @@ type Pose = { cx: number; cy: number; r: number; k: number };
 const PRODUCTS: { src: number; w: number; h: number; a: Pose; b: Pose; c: Pose; drop: [number, number] }[] = [
   // a = over the flat box, b = hovering over the open box, c = inside the box
   { src: require("../../../assets/home/tube.png"), w: 159, h: 360, a: { cx: 514, cy: 865, r: 0, k: 1 }, b: { cx: 478, cy: 930, r: 14, k: 0.85 }, c: { cx: 455, cy: 1270, r: 6, k: 0.8 }, drop: [0.36, 0.44] },
-  { src: require("../../../assets/home/perfume.png"), w: 237, h: 325, a: { cx: 210, cy: 877, r: 0, k: 1 }, b: { cx: 290, cy: 770, r: -12, k: 0.85 }, c: { cx: 330, cy: 1260, r: -4, k: 0.8 }, drop: [0.42, 0.5] },
-  { src: require("../../../assets/home/jar.png"), w: 307, h: 258, a: { cx: 688, cy: 929, r: 0, k: 1 }, b: { cx: 650, cy: 800, r: 12, k: 0.8 }, c: { cx: 560, cy: 1250, r: 4, k: 0.72 }, drop: [0.48, 0.56] },
-  { src: require("../../../assets/home/lipstick.png"), w: 86, h: 278, a: { cx: 367, cy: 909, r: 0, k: 1 }, b: { cx: 520, cy: 740, r: 28, k: 0.8 }, c: { cx: 500, cy: 1250, r: 10, k: 0.8 }, drop: [0.54, 0.62] },
+  { src: require("../../../assets/home/perfume.png"), w: 237, h: 325, a: { cx: 210, cy: 877, r: 0, k: 1 }, b: { cx: 290, cy: 800, r: -12, k: 0.85 }, c: { cx: 330, cy: 1260, r: -4, k: 0.8 }, drop: [0.42, 0.5] },
+  { src: require("../../../assets/home/jar.png"), w: 307, h: 258, a: { cx: 688, cy: 929, r: 0, k: 1 }, b: { cx: 640, cy: 815, r: 12, k: 0.8 }, c: { cx: 560, cy: 1250, r: 4, k: 0.72 }, drop: [0.48, 0.56] },
+  { src: require("../../../assets/home/lipstick.png"), w: 86, h: 278, a: { cx: 367, cy: 909, r: 0, k: 1 }, b: { cx: 515, cy: 790, r: 24, k: 0.8 }, c: { cx: 500, cy: 1250, r: 10, k: 0.8 }, drop: [0.54, 0.62] },
 ];
 
 const TEXTS: { a: string; b: string; bColors: readonly [string, string, ...string[]]; sub: string }[] = [
-  { a: "Всё для вашей", b: "красоты", bColors: ["#6a2bf0", "#b62ee6", "#f0388f"], sub: "Косметика и парфюмерия\nдля себя и бизнеса" },
-  { a: "Собираем", b: "ваш заказ", bColors: ["#d81fa8", "#f0388f"], sub: "Любимые средства — вместе.\nКаждая деталь с заботой." },
-  { a: "Выбирайте", b: "любимое", bColors: ["#6a2bf0", "#b62ee6", "#f0388f"], sub: "Для себя, в подарок\nи для вашего бизнеса" },
+  { a: "Всё для вашей", b: "красоты", bColors: ["#6a2bf0", "#b62ee6", "#f0388f"], sub: "Косметика и парфюмерия для себя и бизнеса" },
+  { a: "Собираем", b: "ваш заказ", bColors: ["#d81fa8", "#f0388f"], sub: "Любимые средства — вместе. Каждая деталь с заботой" },
+  { a: "Выбирайте", b: "любимое", bColors: ["#6a2bf0", "#b62ee6", "#f0388f"], sub: "Для себя, в подарок и для вашего бизнеса" },
 ];
 
-const BG = "#FAF9FD"; // page background = the mockups' background
 
 function num(p: Animated.AnimatedInterpolation<number> | Animated.Value, input: number[], out: number[]) {
   return p.interpolate({ inputRange: input, outputRange: out, extrapolate: "clamp" });
@@ -75,9 +74,9 @@ export function HomeScene({
       Animated.timing(p, { toValue: to, duration, easing, useNativeDriver: true });
     anim.current = Animated.sequence([
       step(0.24, 1600, Easing.linear), // look at the flat box with products
-      step(0.36, 900), // → open box
+      step(0.36, 1500), // → open box
       step(0.62, 2800, Easing.linear), // products dropping in one by one
-      step(0.74, 900), // → closed box (stays as it is)
+      step(0.74, 1500), // → closed box (stays as it is)
     ]);
     anim.current.start();
   }, [p, reduce]);
@@ -103,17 +102,23 @@ export function HomeScene({
 
   // stage visibility: 1 → 2 at 0.24…0.36, 2 → 3 at 0.62…0.74
   const vis = [num(p, [0, 0.24, 0.36], [1, 1, 0]), num(p, [0.24, 0.36, 0.62, 0.74], [0, 1, 1, 0]), num(p, [0.62, 0.74], [0, 1])];
+  const openScale = num(p, [0.24, 0.36, 0.62, 0.74], [0.55, 1, 1, 0.86]);
   const textShift = [num(p, [0.24, 0.36], [0, -12]), num(p, [0.24, 0.36, 0.62, 0.74], [12, 0, 0, -12]), num(p, [0.62, 0.74], [12, 0])];
   const dot = (i: number) =>
     num(p, i === 0 ? [0, 0.3, 0.36] : i === 1 ? [0.3, 0.36, 0.68, 0.74] : [0.68, 0.74, 1], i === 0 ? [1, 1, 0.3] : i === 1 ? [0.3, 1, 1, 0.3] : [0.3, 1, 1]);
 
-  const textH = 170;
+  // title size: the longest title fits the screen width on one line
+  const titleFont = (t: { a: string; b: string }) => {
+    const fs = Math.min(40, (W - 36) / ((t.a.length + 1 + t.b.length) * 0.6));
+    return { fontSize: fs, lineHeight: fs * 1.2 };
+  };
+  const textH = 120;
   const bottomH = 104;
   const artAreaH = viewH - textH - bottomH;
-  const k = Math.min(W / FW, artAreaH / FH); // mockup px → screen px
+  const k = Math.min((W - 24) / FW, artAreaH / FH); // mockup px → screen px
 
   return (
-    <View style={{ height: viewH, backgroundColor: dark ? "#170D25" : BG }}>
+    <View style={{ height: viewH, backgroundColor: dark ? "#170D25" : "transparent" }}>
       <View style={{ height: viewH, overflow: "hidden" }}>
         {/* titles of the three stages */}
         <View style={{ height: textH }}>
@@ -122,13 +127,18 @@ export function HomeScene({
               key={i}
               style={[StyleSheet.absoluteFill, styles.textBox, { opacity: vis[i], transform: [{ translateY: textShift[i] }] }]}
             >
-              <Text style={[styles.h1, { color: dark ? "#fff" : "#170f33" }]} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>
-                {t.a}
+              {/* one centred line across the whole width, no wrapping */}
+              <View style={styles.titleRow} accessible accessibilityRole="header" accessibilityLabel={`${t.a} ${t.b}`}>
+                <Text style={[styles.h1, titleFont(t), { color: dark ? "#fff" : "#170f33" }]} numberOfLines={1}>
+                  {t.a}{" "}
+                </Text>
+                <GradientText style={[styles.h1, titleFont(t)]} colors={t.bColors}>
+                  {t.b}
+                </GradientText>
+              </View>
+              <Text style={[styles.sub, { color: dark ? "#C3AECF" : "#5b5d78" }]} numberOfLines={1} adjustsFontSizeToFit>
+                {t.sub}
               </Text>
-              <GradientText style={styles.h1} colors={t.bColors}>
-                {t.b}
-              </GradientText>
-              <Text style={[styles.sub, { color: dark ? "#C3AECF" : "#5b5d78" }]}>{t.sub}</Text>
             </Animated.View>
           ))}
         </View>
@@ -136,9 +146,9 @@ export function HomeScene({
         {/* the box and the products */}
         <View style={{ height: artAreaH, alignItems: "center", justifyContent: "center" }}>
           <View style={{ width: FW * k, height: FH * k, pointerEvents: "none" }}>
-            <Layer box={BOX.flat} k={k} opacity={vis[0]} />
-            <Layer box={BOX.open} k={k} opacity={vis[1]} />
-            <View style={{ position: "absolute", left: 0, right: 0, top: 0, height: (CLIP - FY) * k, overflow: "hidden" }}>
+            <Layer box={BOX.flat} k={k} opacity={vis[0]} scaleY={num(p, [0.24, 0.36], [1, 1.12])} />
+            <Layer box={BOX.open} k={k} opacity={vis[1]} scaleY={openScale} />
+            <View style={{ position: "absolute", left: -40 * k, right: -40 * k, top: -200 * k, height: (CLIP - FY + 200) * k, overflow: "hidden" }}>
               {PRODUCTS.map((it, i) => {
                 const [d0, d1] = it.drop;
                 const at = (f: (q: Pose) => number) => num(p, [0.24, 0.36, d0, d1], [f(it.a), f(it.b), f(it.b), f(it.c)]);
@@ -147,8 +157,8 @@ export function HomeScene({
                     key={i}
                     style={{
                       position: "absolute",
-                      left: (it.a.cx - it.w / 2) * k,
-                      top: (it.a.cy - it.h / 2 - FY) * k,
+                      left: (it.a.cx - it.w / 2 + 40) * k,
+                      top: (it.a.cy - it.h / 2 - FY + 200) * k,
                       width: it.w * k,
                       height: it.h * k,
                       opacity: num(p, [d1 - 0.01, d1], [1, 0]),
@@ -165,8 +175,8 @@ export function HomeScene({
                 );
               })}
             </View>
-            <Layer box={BOX.front} k={k} opacity={vis[1]} />
-            <Layer box={BOX.closed} k={k} opacity={vis[2]} />
+            <Layer box={BOX.front} k={k} opacity={vis[1]} scaleY={openScale} />
+            <Layer box={BOX.closed} k={k} opacity={vis[2]} scaleY={num(p, [0.62, 0.74], [0.82, 1])} />
           </View>
         </View>
 
@@ -199,18 +209,26 @@ export function HomeScene({
   );
 }
 
-function Layer({ box, k, opacity }: { box: { src: number; x: number; y: number; w: number; h: number }; k: number; opacity: Animated.AnimatedInterpolation<number> }) {
+function Layer({
+  box, k, opacity, scaleY,
+}: { box: { src: number; x: number; y: number; w: number; h: number }; k: number; opacity: Animated.AnimatedInterpolation<number>; scaleY?: Animated.AnimatedInterpolation<number> }) {
   return (
-    <Animated.View style={{ position: "absolute", left: box.x * k, top: (box.y - FY) * k, width: box.w * k, height: box.h * k, opacity }}>
+    <Animated.View
+      style={{
+        position: "absolute", left: box.x * k, top: (box.y - FY) * k, width: box.w * k, height: box.h * k, opacity,
+        transformOrigin: "bottom", transform: scaleY ? [{ scaleY }] : [],
+      }}
+    >
       <Image source={box.src} style={{ width: "100%", height: "100%" }} contentFit="fill" />
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  textBox: { paddingHorizontal: 22, paddingTop: 14 },
+  textBox: { paddingHorizontal: 18, paddingTop: 18, alignItems: "center" },
+  titleRow: { flexDirection: "row", justifyContent: "center", alignItems: "flex-end" },
   h1: { fontSize: 44, lineHeight: 50, fontWeight: "800", letterSpacing: -0.8 },
-  sub: { fontSize: 19, lineHeight: 25, marginTop: 6 },
+  sub: { fontSize: 17, lineHeight: 23, marginTop: 8, textAlign: "center", alignSelf: "stretch" },
   bottom: { paddingHorizontal: 36, paddingTop: 6 },
   cta: { height: 60, borderRadius: 30, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 12px 26px rgba(160,40,230,0.32)" },
   ctaText: { color: "#fff", fontSize: 20, fontWeight: "600" },

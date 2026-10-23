@@ -154,7 +154,7 @@ export default function Orders() {
     }, [customerId])
   );
 
-  const bg = dark ? "#170D25" : "#F7F7FA";
+  const bg = dark ? "#170D25" : "transparent";
   const top = (
     <View style={{ paddingHorizontal: 16, paddingTop: insets.top, width: "100%", maxWidth: 640, alignSelf: "center" }}>
       <BrandHeader title="Мои заказы" />

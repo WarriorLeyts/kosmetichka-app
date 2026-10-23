@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { colors, radius, themed } from "@/theme";
+import { colors, radius, themed, useTheme } from "@/theme";
 import { SORT_LABELS, useCatalog, type Quick, type Sort } from "@/store/catalog";
 import { Button, tap } from "@/components/ui";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
@@ -38,7 +38,7 @@ export default function Filters() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+    <View style={{ flex: 1, backgroundColor: useTheme.getState().mode === "dark" ? colors.bg : "transparent" }}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }} keyboardShouldPersistTaps="handled">
         <Text style={styles.h}>Категория</Text>
         <View style={styles.box}>

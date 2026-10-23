@@ -58,7 +58,7 @@ export default function Forgot() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: dark ? "#170D25" : "#F8F7FC" }} behavior="padding">
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: dark ? "#170D25" : "transparent" }} behavior="padding">
       <Stack.Screen options={{ headerShown: false }} />
       <AuthBackdrop />
       <ScrollView

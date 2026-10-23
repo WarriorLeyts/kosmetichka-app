@@ -5,6 +5,7 @@ import { colors } from "@/theme";
 import { PageTitle } from "@/components/PageTitle";
 import { TabBar } from "@/components/TabBar";
 import { disabled } from "@/debugFlags";
+import { PageLayout } from "@/components/PageBackdrop";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -19,6 +20,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
+      screenLayout={({ children }) => <PageLayout>{children}</PageLayout>}
       tabBar={disabled("tabbar") ? undefined : (props) => <TabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: colors.pink,

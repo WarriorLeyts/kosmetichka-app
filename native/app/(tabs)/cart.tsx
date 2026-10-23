@@ -87,7 +87,7 @@ export default function Cart() {
   const toBig = amountUntilBigWholesale(items, customer);
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
-  const bg = dark ? "#170D25" : "#F7F7FA";
+  const bg = dark ? "#170D25" : "transparent";
   const card = [styles.card, { backgroundColor: c.cell }, !dark && styles.shadow];
   const soft = dark ? "#352044" : "#F2F2F7";
   const pinkSoft = dark ? "rgba(232,44,135,0.16)" : "#FCEFF7";

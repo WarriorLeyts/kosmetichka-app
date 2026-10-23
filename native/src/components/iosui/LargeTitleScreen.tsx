@@ -20,7 +20,7 @@ export function LargeTitleScreen({ title, left, children }: { title: string; lef
   const bigScale = y.interpolate({ inputRange: [-120, 0], outputRange: [1.12, 1], extrapolate: "clamp" });
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.bg }}>
+    <View style={{ flex: 1, backgroundColor: c.blurTint === "dark" ? c.bg : "transparent" }}>
       <Animated.ScrollView
         contentContainerStyle={{ paddingTop: barH, paddingBottom: bottomSpace }}
         scrollEventThrottle={16}

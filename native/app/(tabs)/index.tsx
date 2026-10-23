@@ -70,26 +70,25 @@ export default function Home() {
   return (
     <>
     <Animated.ScrollView
-      style={{ flex: 1, backgroundColor: colors.bg }}
+      style={{ flex: 1, backgroundColor: dark ? colors.bg : "transparent" }}
       contentContainerStyle={{ paddingBottom: bottomSpace }}
       onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
       scrollEventThrottle={16}
     >
-      <View style={[styles.hero, { paddingTop: insets.top + 8, backgroundColor: dark ? "#170D25" : "#FFFFFF" }]}>
-        {/* soft glow: pink on the left, lavender on the right */}
-        <LinearGradient
-          colors={dark ? ["rgba(239,65,154,0.38)", "rgba(23,13,37,0)", "rgba(121,37,214,0.45)"] : ["rgba(239,65,154,0.13)", "rgba(255,255,255,0)", "rgba(155,110,240,0.16)"]}
-          locations={[0, 0.5, 1]}
-          start={{ x: 0, y: 0.6 }}
-          end={{ x: 1, y: 0.4 }}
-          style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}
-        />
-        <LinearGradient
-          colors={dark ? ["rgba(23,13,37,0)", colors.bg] : ["rgba(255,255,255,0)", colors.bg]}
-          start={{ x: 0, y: 0.55 }}
-          end={{ x: 0, y: 1 }}
-          style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}
-        />
+      <View style={[styles.hero, { paddingTop: insets.top + 8, backgroundColor: dark ? "#170D25" : "transparent" }]}>
+        {/* dark header keeps its own glow; in the light theme the page backdrop is the header's background */}
+        {dark ? (
+          <>
+            <LinearGradient
+              colors={["rgba(239,65,154,0.38)", "rgba(23,13,37,0)", "rgba(121,37,214,0.45)"]}
+              locations={[0, 0.5, 1]}
+              start={{ x: 0, y: 0.6 }}
+              end={{ x: 1, y: 0.4 }}
+              style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]}
+            />
+            <LinearGradient colors={["rgba(23,13,37,0)", colors.bg]} start={{ x: 0, y: 0.55 }} end={{ x: 0, y: 1 }} style={[StyleSheet.absoluteFill, { pointerEvents: "none" }]} />
+          </>
+        ) : null}
         <View style={styles.heroTop}>
           <View style={[styles.heroSide, { left: 0 }]}>
             <Pressable

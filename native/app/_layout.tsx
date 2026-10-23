@@ -10,6 +10,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
+import { PageLayout } from "@/components/PageBackdrop";
 
 // In Expo Go don't hold the splash: Expo Go shows its own developer-menu intro right after
 // the app loads, and a splash kept on screen at that moment pushes that intro under the app
@@ -76,6 +77,7 @@ function AppRoot() {
       <StatusBar style={colors.statusBar} />
       <Stack
         key={mode}
+        screenLayout={({ children }) => <PageLayout>{children}</PageLayout>}
         screenOptions={{
           headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: "800" },

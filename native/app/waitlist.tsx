@@ -119,7 +119,7 @@ export default function Waitlist() {
     setItems((prev) => (prev ?? []).filter((x) => x.id !== id));
   };
 
-  const bg = dark ? "#170D25" : "#F7F5FB";
+  const bg = dark ? "#170D25" : "transparent";
   const header = (
     <View style={styles.wrap}>
       <TitleBar title="Лист ожидания" />
