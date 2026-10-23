@@ -74,7 +74,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           style={styles.fav}
         >
           <Animated.View style={{ transform: [{ scale: heart }] }}>
-            <FavHeart size={23} active={isFavorite} />
+            <FavHeart size={23} active={isFavorite} color="#7925D6" /* on the white photo tile in both themes */ />
           </Animated.View>
         </Pressable>
       </View>

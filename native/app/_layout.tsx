@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
@@ -82,7 +82,7 @@ function AppRoot() {
           headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: "800" },
           headerShadowVisible: false,
-          headerStyle: { backgroundColor: colors.bg },
+          headerStyle: { backgroundColor: mode === "dark" ? colors.bg : "#FFFFFF" },
           contentStyle: { backgroundColor: colors.bg },
           headerBackTitle: "Назад",
           // smooth slide between screens
@@ -116,7 +116,8 @@ function ThemeFade({ mode }: { mode: string }) {
   const prev = useRef({ mode, bg: colors.bg });
   const op = useRef(new Animated.Value(0)).current;
   const [bg, setBg] = useState(colors.bg);
-  useEffect(() => {
+  // layout effect: the old-colour layer is in place before the re-mounted screens are painted
+  useLayoutEffect(() => {
     if (prev.current.mode === mode) return;
     const old = prev.current.bg;
     prev.current = { mode, bg: colors.bg };

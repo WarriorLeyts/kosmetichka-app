@@ -57,7 +57,8 @@ export function HomeScene({
   const reduce = useReduceMotion();
   const c = useIOS();
   const dark = c.blurTint === "dark";
-  const viewH = Math.max(600, H - topInset - bottomSpace);
+  // the whole scene (titles, box, «Перейти в каталог») fits between the header and the tab bar
+  const viewH = Math.max(420, H - topInset - bottomSpace);
 
   // progress of the «video»: 0 = flat box, ~0.5 = products dropping in, 1 = closed box
   const p = useRef(new Animated.Value(reduce ? 1 : 0)).current;
@@ -94,7 +95,7 @@ export function HomeScene({
   useEffect(() => {
     let prev = AppState.currentState;
     const sub = AppState.addEventListener("change", (st) => {
-      if (st === "active" && prev !== "active") play();
+      if (st === "active" && prev === "background") play(); // not after the notification shade / Control Center
       prev = st;
     });
     return () => sub.remove();

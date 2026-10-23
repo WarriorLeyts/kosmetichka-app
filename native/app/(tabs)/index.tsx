@@ -43,6 +43,7 @@ export default function Home() {
   const addToCart = useAddToCart();
 
   const [sizeOpen, setSizeOpen] = useState(false);
+  const [headerH, setHeaderH] = useState(0); // the scene fills exactly the screen below the header
   const scrollY = useRef(new Animated.Value(0)).current;
   const [sceneTop, setSceneTop] = useState<number | null>(null);
   const [fresh, setFresh] = useState<Product[]>([]);
@@ -75,7 +76,7 @@ export default function Home() {
       onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
       scrollEventThrottle={16}
     >
-      <View style={[styles.hero, { paddingTop: insets.top + 8, backgroundColor: dark ? "#170D25" : "transparent" }]}>
+      <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)} style={[styles.hero, { paddingTop: insets.top + 8, backgroundColor: dark ? "#170D25" : "transparent" }]}>
         {/* dark header keeps its own glow; in the light theme the page backdrop is the header's background */}
         {dark ? (
           <>
@@ -157,7 +158,7 @@ export default function Home() {
 
       {/* new home content: scroll-driven box scene + categories with images */}
       <View onLayout={(e) => setSceneTop(e.nativeEvent.layout.y)}>
-        <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={insets.top} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
+        <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={headerH || insets.top + 200} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
       </View>
       {tops.length > 0 && <HomeCategories categories={tops} onOpen={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />}
 
