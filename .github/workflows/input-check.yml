@@ -58,6 +58,12 @@ jobs:
     if: inputs.platform != 'android'
     runs-on: macos-15
     timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: ["trace", "trace,layout"]
+    env:
+      V: ${{ matrix.variant == 'trace' && 'withlayout' || 'nolayout' }}
     defaults:
       run:
         working-directory: native
@@ -68,6 +74,8 @@ jobs:
           node-version: 22
       - name: Install
         run: ../scripts/ci-run.sh npm run deps
+      - name: Debug switches
+        run: echo "EXPO_PUBLIC_DISABLE=${{ matrix.variant }}" >> $GITHUB_ENV
       - name: Generate iOS project
         run: ../scripts/ci-run.sh npx expo prebuild --platform ios
       - name: Build for simulator
@@ -82,7 +90,7 @@ jobs:
           UDID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys;d=json.load(sys.stdin)["devices"];c=[x for k,v in d.items() if "iOS" in k for x in v if x["name"].startswith("iPhone 16") or x["name"].startswith("iPhone 15")];print(c[0]["udid"])')
           xcrun simctl boot "$UDID"; xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" "$(ls -d "$RUNNER_TEMP"/dd/Build/Products/Release-iphonesimulator/*.app | head -1)"
-          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'subsystem == "com.facebook.react.log"' > shots/ios-input-log.txt 2>&1 &
+          xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'subsystem == "com.facebook.react.log"' > shots/ios-${V}-log.txt 2>&1 &
           xcrun simctl launch "$UDID" ru.kosmetichkaopt.app
           sleep 20
           curl -fsSL "https://get.maestro.mobile.dev" | bash
@@ -93,20 +101,20 @@ jobs:
           - tapOn: { text: "Профиль", optional: true }
           - tapOn: { text: "Войти", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ios-in-1-login
+          - takeScreenshot: ios-${V}-1-login
           - tapOn: { text: "Телефон или email", optional: true }
           - inputText: "89990001122"
-          - takeScreenshot: ios-in-2-login-typed
+          - takeScreenshot: ios-${V}-2-login-typed
           - tapOn: { text: "Пароль", index: 1, optional: true }
           - inputText: "secret12"
-          - takeScreenshot: ios-in-3-pass-typed
+          - takeScreenshot: ios-${V}-3-pass-typed
           - assertVisible: { text: "89990001122", optional: true }
           YAML
           sed -i '' 's/^          //' flow.yaml
-          perl -e 'alarm shift; exec @ARGV' 600 maestro --device "$UDID" test --test-output-dir "$PWD/shots/m" flow.yaml > shots/ios-input-maestro.txt 2>&1 || true
+          perl -e 'alarm shift; exec @ARGV' 600 maestro --device "$UDID" test -e V="$V" --test-output-dir "$PWD/shots/m" flow.yaml > shots/ios-${V}-maestro.txt 2>&1 || true
           find shots/m -name "*.png" -exec cp {} shots/ \; ; rm -rf shots/m
-          grep -iE "error|warn" shots/ios-input-log.txt | cut -c1-250 | tail -30 >> shots/ios-input-maestro.txt || true
-          msg=$(sed 's/%/%25/g' shots/ios-input-maestro.txt | cut -c1-200 | tail -40 | awk '{printf "%s%%0A", $0}')
+          grep -F "[kos]" shots/ios-${V}-log.txt | sed 's/.*\[kos\]/[kos]/' | uniq -c | head -60 >> shots/ios-${V}-maestro.txt || true
+          msg=$(sed 's/%/%25/g' shots/ios-${V}-maestro.txt | cut -c1-200 | tail -40 | awk '{printf "%s%%0A", $0}')
           echo "::notice title=iOS input::${msg}"
       - name: Upload
         if: always()

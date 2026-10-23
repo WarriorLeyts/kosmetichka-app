@@ -20,7 +20,7 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenLayout={({ children }) => <PageLayout>{children}</PageLayout>}
+      screenLayout={disabled("layout") ? undefined : ({ children }) => <PageLayout>{children}</PageLayout>}
       tabBar={disabled("tabbar") ? undefined : (props) => <TabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: colors.pink,

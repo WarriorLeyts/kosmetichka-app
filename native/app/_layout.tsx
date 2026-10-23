@@ -77,7 +77,7 @@ function AppRoot() {
       <StatusBar style={colors.statusBar} />
       <Stack
         key={mode}
-        screenLayout={({ children }) => <PageLayout>{children}</PageLayout>}
+        screenLayout={disabled("layout") ? undefined : ({ children }) => <PageLayout>{children}</PageLayout>}
         screenOptions={{
           headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: "800" },
