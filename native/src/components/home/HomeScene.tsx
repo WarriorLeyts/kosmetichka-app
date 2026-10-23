@@ -33,10 +33,10 @@ const BOX = {
 type Pose = { cx: number; cy: number; r: number; k: number };
 const PRODUCTS: { src: number; w: number; h: number; a: Pose; b: Pose; c: Pose; drop: [number, number] }[] = [
   // a = over the flat box, b = hovering over the open box, c = inside the box
-  { src: require("../../../assets/home/tube.png"), w: 159, h: 360, a: { cx: 514, cy: 865, r: 0, k: 1 }, b: { cx: 478, cy: 930, r: 14, k: 0.85 }, c: { cx: 455, cy: 1270, r: 6, k: 0.8 }, drop: [0.36, 0.44] },
-  { src: require("../../../assets/home/perfume.png"), w: 237, h: 325, a: { cx: 210, cy: 877, r: 0, k: 1 }, b: { cx: 290, cy: 800, r: -12, k: 0.85 }, c: { cx: 330, cy: 1260, r: -4, k: 0.8 }, drop: [0.42, 0.5] },
-  { src: require("../../../assets/home/jar.png"), w: 307, h: 258, a: { cx: 688, cy: 929, r: 0, k: 1 }, b: { cx: 640, cy: 815, r: 12, k: 0.8 }, c: { cx: 560, cy: 1250, r: 4, k: 0.72 }, drop: [0.48, 0.56] },
-  { src: require("../../../assets/home/lipstick.png"), w: 86, h: 278, a: { cx: 367, cy: 909, r: 0, k: 1 }, b: { cx: 515, cy: 790, r: 24, k: 0.8 }, c: { cx: 500, cy: 1250, r: 10, k: 0.8 }, drop: [0.54, 0.62] },
+  { src: require("../../../assets/home/tube.png"), w: 175, h: 366, a: { cx: 514, cy: 865, r: 0, k: 1 }, b: { cx: 478, cy: 930, r: 14, k: 0.85 }, c: { cx: 455, cy: 1270, r: 6, k: 0.8 }, drop: [0.36, 0.44] },
+  { src: require("../../../assets/home/perfume.png"), w: 222, h: 331, a: { cx: 208, cy: 875, r: 0, k: 1 }, b: { cx: 290, cy: 800, r: -12, k: 0.85 }, c: { cx: 330, cy: 1260, r: -4, k: 0.8 }, drop: [0.42, 0.5] },
+  { src: require("../../../assets/home/jar.png"), w: 285, h: 267, a: { cx: 689, cy: 928, r: 0, k: 1 }, b: { cx: 640, cy: 815, r: 12, k: 0.8 }, c: { cx: 560, cy: 1250, r: 4, k: 0.72 }, drop: [0.48, 0.56] },
+  { src: require("../../../assets/home/lipstick.png"), w: 93, h: 285, a: { cx: 368, cy: 910, r: 0, k: 1 }, b: { cx: 515, cy: 790, r: 24, k: 0.8 }, c: { cx: 500, cy: 1250, r: 10, k: 0.8 }, drop: [0.54, 0.62] },
 ];
 
 const TEXTS: { a: string; b: string; bColors: readonly [string, string, ...string[]]; sub: string }[] = [
@@ -170,7 +170,7 @@ export function HomeScene({
                       ],
                     }}
                   >
-                    <Image source={it.src} style={{ width: "100%", height: "100%" }} contentFit="contain" />
+                    <Image source={it.src} style={{ width: "100%", height: "100%" }} contentFit="contain" cachePolicy="memory" />
                   </Animated.View>
                 );
               })}
@@ -219,7 +219,7 @@ function Layer({
         transformOrigin: "bottom", transform: scaleY ? [{ scaleY }] : [],
       }}
     >
-      <Image source={box.src} style={{ width: "100%", height: "100%" }} contentFit="fill" />
+      <Image source={box.src} style={{ width: "100%", height: "100%" }} contentFit="fill" cachePolicy="memory" />
     </Animated.View>
   );
 }
