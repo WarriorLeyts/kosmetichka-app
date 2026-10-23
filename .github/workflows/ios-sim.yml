@@ -8,10 +8,6 @@ on:
       channel:
         description: "Канал Expo Go"
         default: main
-    inputs:
-      channel:
-        description: "Канал Expo Go"
-        default: main
 
 permissions:
   contents: write
