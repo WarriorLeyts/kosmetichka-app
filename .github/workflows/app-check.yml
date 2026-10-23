@@ -5,12 +5,17 @@ name: App check (Android APK + iOS)
 # dark theme, saves screenshots and error logs to the release "app-check".
 on:
   workflow_dispatch:
+    inputs:
+      platform:
+        description: "android / ios / both"
+        default: both
 
 permissions:
   contents: write
 
 jobs:
   android:
+    if: inputs.platform != 'ios'
     runs-on: ubuntu-latest
     timeout-minutes: 80
     steps:
@@ -53,6 +58,7 @@ jobs:
           gh release upload app-check shots/* --clobber
 
   ios:
+    if: inputs.platform != 'android'
     runs-on: macos-15
     timeout-minutes: 75
     defaults:
@@ -94,53 +100,53 @@ jobs:
           ---
           - tapOn: { text: "Каталог", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/10-light-catalog
+          - takeScreenshot: 10-light-catalog
           - tapOn: { point: "27%,50%", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/11-light-product
+          - takeScreenshot: 11-light-product
           - tapOn: { text: "Назад", optional: true }
           - waitForAnimationToEnd
           - tapOn: { text: "Корзина", optional: true }
-          - takeScreenshot: ${SHOTS}/12-light-cart
+          - takeScreenshot: 12-light-cart
           - tapOn: { text: "Заказы", optional: true }
-          - takeScreenshot: ${SHOTS}/13-light-orders
+          - takeScreenshot: 13-light-orders
           - tapOn: { text: "Профиль", optional: true }
-          - takeScreenshot: ${SHOTS}/14-light-profile
+          - takeScreenshot: 14-light-profile
           - tapOn: { text: "Избранное", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/15-light-favorites
+          - takeScreenshot: 15-light-favorites
           - tapOn: { text: "Назад", optional: true }
           - waitForAnimationToEnd
           - tapOn: { text: "Главная", optional: true }
           - tapOn: { text: "Тёмная тема", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/20-dark-home
+          - takeScreenshot: 20-dark-home
           - tapOn: { text: "Каталог", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/21-dark-catalog
+          - takeScreenshot: 21-dark-catalog
           - tapOn: { point: "27%,50%", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/22-dark-product
+          - takeScreenshot: 22-dark-product
           - tapOn: { text: "Назад", optional: true }
           - waitForAnimationToEnd
           - tapOn: { text: "Корзина", optional: true }
-          - takeScreenshot: ${SHOTS}/23-dark-cart
+          - takeScreenshot: 23-dark-cart
           - tapOn: { text: "Заказы", optional: true }
-          - takeScreenshot: ${SHOTS}/24-dark-orders
+          - takeScreenshot: 24-dark-orders
           - tapOn: { text: "Профиль", optional: true }
-          - takeScreenshot: ${SHOTS}/25-dark-profile
+          - takeScreenshot: 25-dark-profile
           - tapOn: { text: "Главная", optional: true }
           - tapOn: { text: "Светлая тема", optional: true }
           - tapOn: { text: "Поиск: название, бренд, артикул", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/30-search
+          - takeScreenshot: 30-search
           - tapOn: { text: "Главная", optional: true }
           - tapOn: { text: "Перейти в каталог", optional: true }
           - waitForAnimationToEnd
-          - takeScreenshot: ${SHOTS}/31-cta-catalog
+          - takeScreenshot: 31-cta-catalog
           YAML
           sed -i '' 's/^          //' flow.yaml
-          perl -e 'alarm shift; exec @ARGV' 900 maestro --device "$UDID" test -e SHOTS="$PWD/shots" flow.yaml > shots/maestro.txt 2>&1 || echo "maestro ended with an error / timeout" >> shots/maestro.txt
+          perl -e 'alarm shift; exec @ARGV' 900 maestro --device "$UDID" test --test-output-dir "$PWD/shots/m" flow.yaml > shots/maestro.txt 2>&1 || echo "maestro ended with an error / timeout" >> shots/maestro.txt
           xcrun simctl io "$UDID" screenshot shots/99-last.png
           xcrun simctl spawn "$UDID" launchctl list | grep -q kosmetichkaopt || echo "app process not running at the end" >> shots/maestro.txt
           xcrun simctl spawn "$UDID" defaults read com.apple.Accessibility ReduceMotionEnabled >> shots/maestro.txt 2>&1 || true
@@ -157,5 +163,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release view app-check >/dev/null 2>&1 || gh release create app-check --title "App check" --notes "screenshots" --latest=false
+          find shots/m -name "*.png" -exec cp {} shots/ \; 2>/dev/null || true
+          rm -rf shots/m
           for f in shots/*; do mv "$f" "shots/ios-$(basename "$f")"; done
-          gh release upload app-check shots/* --clobber
+          for f in shots/*; do [ -s "$f" ] && gh release upload app-check "$f" --clobber || true; done
