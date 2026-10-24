@@ -37,6 +37,7 @@ jobs:
         run: |
           ../scripts/ci-run.sh npm run deps
           ../scripts/ci-run.sh npx expo prebuild --platform android --no-install
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1536m -XX:+HeapDumpOnOutOfMemoryError/' android/gradle.properties && grep jvmargs android/gradle.properties
           cd android && ../../scripts/ci-run.sh ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64
           cp app/build/outputs/apk/release/app-release.apk ../../app.apk
       - name: Run

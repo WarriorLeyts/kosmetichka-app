@@ -58,6 +58,8 @@ jobs:
         run: ../scripts/ci-run.sh npm run deps
       - name: Generate Android project
         run: ../scripts/ci-run.sh npx expo prebuild --platform android --no-install
+      - name: More memory for Gradle (expo-updates KSP ran out of Metaspace)
+        run: sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1536m -XX:+HeapDumpOnOutOfMemoryError/' android/gradle.properties && grep jvmargs android/gradle.properties
       - name: Version
         run: |
           sed -i -E "s/versionCode [0-9]+/versionCode ${GITHUB_RUN_NUMBER}/; s/versionName \"[^\"]+\"/versionName \"1.0.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
