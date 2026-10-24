@@ -20,6 +20,10 @@ for e in r.iter('node'):
     else return; fi
   done
 }
+# the emulator's own launcher is not needed for this check and keeps showing «isn't responding»
+adb shell settings put global hide_error_dialogs 1 || true
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
+adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS || true
 adb logcat -c
 dismiss
 adb shell am start -n $PKG/.MainActivity
