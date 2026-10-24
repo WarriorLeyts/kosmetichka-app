@@ -4,11 +4,30 @@ set -x
 mkdir -p shots
 PKG=ru.kosmetichkaopt.app
 adb install -r app.apk
+# let the slow CI emulator settle; its own launcher often shows «isn't responding» right after boot
+sleep 60
+dismiss() {
+  for i in 1 2 3; do
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1
+    if grep -q "isn&apos;t responding\|isn't responding" ui.xml 2>/dev/null; then
+      xy=$(python3 -c "
+import re,xml.etree.ElementTree as ET
+r=ET.parse('ui.xml').getroot()
+for e in r.iter('node'):
+    if e.get('text')=='Wait':
+        b=list(map(int,re.findall(r'\d+',e.get('bounds')))); print((b[0]+b[2])//2,(b[1]+b[3])//2); break")
+      [ -n "$xy" ] && adb shell input tap $xy; sleep 3
+    else return; fi
+  done
+}
 adb logcat -c
+dismiss
 adb shell am start -n $PKG/.MainActivity
 SIZE=$(adb shell wm size | tail -1 | awk '{print $3}' | tr -d '\r'); W=${SIZE%x*}; H=${SIZE#*x}
 sleep 25
+dismiss
 tap() {
+  dismiss
   for try in 1 2 3; do
     adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1
     xy=$(python3 - "$1" <<'PY'
@@ -29,7 +48,7 @@ PY
   echo "NOT FOUND: $1" | tee -a shots/input.txt
 }
 typ() { adb shell input text "$1"; sleep 2; }
-shot() { adb exec-out screencap -p > "shots/in-$1.png"; }
+shot() { dismiss; adb exec-out screencap -p > "shots/in-$1.png"; }
 # profile → login
 adb shell input tap $((W*90/100)) $((H*94/100)); sleep 4
 tap "Войти"; sleep 5; shot 1-login
