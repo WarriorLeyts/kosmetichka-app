@@ -10,6 +10,8 @@ import type {
 
 export const BASE_URL = "https://kosmetichka-opt.ru";
 
+export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: string; size: number; mime: string };
+
 export class ApiError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -162,6 +164,20 @@ export const api = {
   },
   messages(orderId: number): Promise<{ messages: ChatMessage[] }> {
     return request(`/api/orders/${orderId}/messages`);
+  },
+  /** photo / video / file for the manager chat (site endpoint /api/uploads/chat, same cookie login) */
+  async uploadChat(file: { uri: string; name: string; mime: string }): Promise<ChatUpload> {
+    const form = new FormData();
+    form.append("file", { uri: file.uri, name: file.name, type: file.mime } as unknown as Blob);
+    let res: Response;
+    try {
+      res = await fetch(BASE_URL + "/api/uploads/chat", { method: "POST", body: form, credentials: "include", headers: { Accept: "application/json" } });
+    } catch {
+      throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
+    }
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.url) throw new ApiError(data?.error || `Не удалось загрузить файл (${res.status})`, res.status);
+    return data as ChatUpload;
   },
   sendMessage(orderId: number, text: string) {
     return request(`/api/orders/${orderId}/messages`, { method: "POST", body: json({ text }) });

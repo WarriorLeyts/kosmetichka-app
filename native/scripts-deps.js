@@ -11,7 +11,7 @@ const WANT = [
   "expo-constants", "expo-haptics", "expo-image", "expo-linear-gradient", "expo-linking", "expo-router",
   "expo-splash-screen", "expo-status-bar", "expo-updates", "expo-web-browser", "react", "react-native",
   "@react-native-masked-view/masked-view", "expo-blur", "expo-font",
-  "react-native-safe-area-context", "react-native-screens", "react-native-webview",
+  "react-native-safe-area-context", "react-native-screens", "react-native-webview", "expo-image-picker", "expo-document-picker",
 ];
 const DEV = ["typescript", "@types/react"];
 

@@ -10,6 +10,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
+import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { api, ApiError, BASE_URL, imageUrl } from "@/api";
 import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
@@ -27,15 +30,61 @@ const PINK = "#e82c87";
 
 type Pending = { key: string; text: string; createdAt: string; failed: boolean; sent?: boolean };
 
-/** Messages can be plain text or JSON cards (photo / product) sent by the manager. */
+function fileSize(bytes: unknown): string {
+  const b = typeof bytes === "number" ? bytes : 0;
+  if (b <= 0) return "";
+  if (b < 1024 * 1024) return `${Math.max(1, Math.round(b / 1024))} КБ`;
+  return `${(b / 1024 / 1024).toFixed(1).replace(".", ",")} МБ`;
+}
+
+/** opens a photo / video / file from the chat in the system viewer */
+function openAttachment(url: string) {
+  const u = imageUrl(url);
+  if (u) WebBrowser.openBrowserAsync(u).catch(() => {});
+}
+
+/** Messages can be plain text or JSON cards: photo / video / file (both sides), product (manager). */
 function MessageBody({ text, color, fromManager }: { text: string; color: string; fromManager: boolean }) {
-  // cards (photo / product) only from the manager — a customer can't fake them by typing JSON
-  if (!fromManager) return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
   try {
     const obj = JSON.parse(text);
-    if (obj?._t === "img" && typeof obj.url === "string") {
-      return <Image source={{ uri: imageUrl(obj.url) ?? undefined }} style={{ width: 200, height: 200, borderRadius: 12 }} contentFit="cover" />;
+    // attachments: from either side, but only files uploaded to our own server
+    const own = typeof obj?.url === "string" && (fromManager || obj.url.startsWith("/api/uploads/chat/"));
+    if (own && obj._t === "img") {
+      return (
+        <Pressable onPress={() => openAttachment(obj.url)} accessibilityRole="imagebutton" accessibilityLabel="Фото, открыть">
+          <Image source={{ uri: imageUrl(obj.url) ?? undefined }} style={{ width: 200, height: 200, borderRadius: 12 }} contentFit="cover" />
+        </Pressable>
+      );
     }
+    if (own && obj._t === "video") {
+      return (
+        <Pressable onPress={() => openAttachment(obj.url)} accessibilityRole="button" accessibilityLabel="Видео, смотреть" style={styles.video}>
+          <Ionicons name="play-circle" size={54} color="#fff" />
+          <Text style={styles.videoText} numberOfLines={1}>
+            Видео{fileSize(obj.size) ? ` · ${fileSize(obj.size)}` : ""}
+          </Text>
+        </Pressable>
+      );
+    }
+    if (own && obj._t === "file") {
+      const name = typeof obj.name === "string" ? obj.name : "Файл";
+      const ext = (name.split(".").pop() || "").toUpperCase().slice(0, 4);
+      return (
+        <Pressable onPress={() => openAttachment(obj.url)} accessibilityRole="button" accessibilityLabel={`Файл ${name}, открыть`} style={styles.file}>
+          <View style={styles.fileIcon}>
+            <Text style={styles.fileExt}>{ext || "FILE"}</Text>
+          </View>
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ color, fontWeight: "600", fontSize: 15 }} numberOfLines={2}>
+              {name}
+            </Text>
+            <Text style={{ color, opacity: 0.7, fontSize: 13, marginTop: 2 }}>{[fileSize(obj.size), "Открыть"].filter(Boolean).join(" · ")}</Text>
+          </View>
+        </Pressable>
+      );
+    }
+    // product cards only from the manager — a customer can't fake them by typing JSON
+    if (!fromManager) return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
     if (obj?._t === "product" && typeof obj.name === "string") {
       return (
         <View style={{ width: 210 }}>
@@ -70,6 +119,8 @@ export default function OrderScreen() {
   const [busy, setBusy] = useState<"" | "cancel" | "confirm">("");
   const [repeating, setRepeating] = useState(false);
   const [kb, setKb] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null); // name of the file being sent
   const scrollRef = useRef<ScrollView>(null);
   const nearBottom = useRef(true);
   const lastCount = useRef(0);
@@ -175,6 +226,61 @@ export default function OrderScreen() {
     } catch {
       setPending((p) => p.map((x) => (x.key === k ? { ...x, failed: true } : x)));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+    }
+  };
+
+  // ── attachments: photo / video from the gallery or camera, any file ──
+  const sendFile = async (file: { uri: string; name: string; mime: string }) => {
+    setUploading(file.name);
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 60);
+    try {
+      const up = await api.uploadChat(file);
+      const msg = up.kind === "img" ? JSON.stringify({ _t: "img", url: up.url }) : JSON.stringify({ _t: up.kind, url: up.url, name: up.name, size: up.size });
+      await api.sendMessage(orderId, msg);
+      await loadMessages();
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+    } catch (e) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      Alert.alert("Не отправлено", e instanceof Error ? e.message : "Не удалось отправить файл");
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const fromAsset = (a: ImagePicker.ImagePickerAsset) => {
+    const isVideo = a.type === "video";
+    const ext = isVideo ? (a.uri.split(".").pop() || "mp4").toLowerCase() : (a.uri.split(".").pop() || "jpg").toLowerCase();
+    const name = a.fileName || `${isVideo ? "video" : "photo"}-${Date.now()}.${ext}`;
+    const mime = a.mimeType || (isVideo ? (ext === "mov" ? "video/quicktime" : "video/mp4") : ext === "png" ? "image/png" : "image/jpeg");
+    return { uri: a.uri, name, mime };
+  };
+
+  const attach = async (how: string) => {
+    setAttachOpen(false);
+    // let the sheet close before the system picker opens (iOS can't show two at once)
+    await new Promise((r) => setTimeout(r, 450));
+    try {
+      if (how === "file") {
+        const r = await DocumentPicker.getDocumentAsync({ copyToCacheDirectory: true, multiple: false });
+        if (r.canceled || !r.assets?.[0]) return;
+        const d = r.assets[0];
+        await sendFile({ uri: d.uri, name: d.name || `file-${Date.now()}`, mime: d.mimeType || "application/octet-stream" });
+        return;
+      }
+      const opts: ImagePicker.ImagePickerOptions = { mediaTypes: ["images", "videos"], quality: 0.8, videoMaxDuration: 120 };
+      if (how === "camera") {
+        const p = await ImagePicker.requestCameraPermissionsAsync();
+        if (!p.granted) {
+          Alert.alert("Нет доступа к камере", "Разрешите доступ к камере в настройках телефона.");
+          return;
+        }
+      }
+      const r = how === "camera" ? await ImagePicker.launchCameraAsync(opts) : await ImagePicker.launchImageLibraryAsync(opts);
+      if (r.canceled || !r.assets?.[0]) return;
+      await sendFile(fromAsset(r.assets[0]));
+    } catch (e) {
+      Alert.alert("Не получилось", e instanceof Error ? e.message : "Попробуйте ещё раз");
     }
   };
 
@@ -415,6 +521,14 @@ export default function OrderScreen() {
                 bubble(p.key, true, p.text, p.createdAt, p.sent ? undefined : <ActivityIndicator size="small" color={c.secondary} style={{ transform: [{ scale: 0.7 }] }} />)
               )
             )}
+            {uploading ? (
+              <View style={[styles.bubble, styles.mine, { backgroundColor: dark ? "#352044" : "#F3ECFA", flexDirection: "row", alignItems: "center", gap: 8 }]}>
+                <ActivityIndicator size="small" color={VIOLET} />
+                <Text style={{ color: c.label, flexShrink: 1 }} numberOfLines={1}>
+                  Отправка: {uploading}
+                </Text>
+              </View>
+            ) : null}
           </View>
         </View>
       </ScrollView>
@@ -422,6 +536,19 @@ export default function OrderScreen() {
       {/* message input, pinned to the bottom (stays above the keyboard) */}
       <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: dark ? "#211032" : "#fff" }, !dark && styles.composerShadow]}>
         <View style={[styles.wrap, { flexDirection: "row", alignItems: "flex-end", gap: 10 }]}>
+          <Pressable
+            onPress={() => {
+              tap();
+              Keyboard.dismiss();
+              setAttachOpen(true);
+            }}
+            disabled={!!uploading}
+            accessibilityRole="button"
+            accessibilityLabel="Прикрепить фото, видео или файл"
+            style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: uploading ? 0.5 : pressed ? 0.7 : 1 }]}
+          >
+            {uploading ? <ActivityIndicator size="small" color={VIOLET} /> : <Ionicons name="attach" size={26} color={VIOLET} />}
+          </Pressable>
           <TextInput
             value={text}
             onChangeText={setText}
@@ -438,6 +565,17 @@ export default function OrderScreen() {
           </Pressable>
         </View>
       </View>
+      <Sheet open={attachOpen} onClose={() => setAttachOpen(false)} title="Отправить менеджеру">
+        <SheetOptions
+          options={[
+            { value: "library", label: "Фото или видео из галереи" },
+            { value: "camera", label: "Снять фото или видео" },
+            { value: "file", label: "Файл (PDF, документ, таблица)" },
+          ]}
+          value=""
+          onSelect={attach}
+        />
+      </Sheet>
     </KeyboardAvoidingView>
   );
 }
@@ -494,5 +632,11 @@ const styles = StyleSheet.create({
   composer: { paddingTop: 10, paddingHorizontal: 16 },
   composerShadow: { boxShadow: "0 -4px 18px rgba(31,41,55,0.07)" },
   input: { flex: 1, minHeight: 48, maxHeight: 130, borderRadius: 24, paddingHorizontal: 18, paddingTop: 13, paddingBottom: 13, fontSize: 16 },
+  attach: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
+  video: { width: 210, height: 140, borderRadius: 12, backgroundColor: "#1b1030", alignItems: "center", justifyContent: "center", gap: 4 },
+  videoText: { color: "#fff", fontSize: 13, fontWeight: "600" },
+  file: { flexDirection: "row", alignItems: "center", gap: 10, maxWidth: 240 },
+  fileIcon: { width: 44, height: 44, borderRadius: 10, backgroundColor: "rgba(139,61,255,0.16)", alignItems: "center", justifyContent: "center" },
+  fileExt: { color: VIOLET, fontSize: 11, fontWeight: "800" },
   send: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", boxShadow: "0 6px 14px rgba(139,61,255,0.35)" },
 });
