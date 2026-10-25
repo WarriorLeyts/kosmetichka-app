@@ -1,0 +1,19 @@
+name: Site API check
+
+# Checks from outside that the site's API routes answer (status codes only, no login).
+on:
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check routes
+        run: |
+          for p in /api/team/me /api/team/dashboard /api/team/picker/orders /api/uploads/chat/chat-1-x.jpg /api/admin/categories; do
+            code=$(curl -s -o body.txt -w '%{http_code}' "https://kosmetichka-opt.ru$p")
+            echo "$p → $code $(head -c 120 body.txt)" | tee -a out.txt
+          done
+          code=$(curl -s -o body.txt -w '%{http_code}' -X POST "https://kosmetichka-opt.ru/api/team/logout")
+          echo "POST /api/team/logout → $code $(head -c 120 body.txt)" | tee -a out.txt
+          echo "::notice title=Site API::$(sed 's/%/%25/g' out.txt | awk '{printf "%s%%0A", $0}')"
