@@ -1,4 +1,4 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -10,8 +10,6 @@ import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
-import { LoyaltyCardPanel } from "@/components/LoyaltyCard";
-import { TEST_CARD } from "@/loyalty";
 import { FavHeart } from "@/components/FavHeart";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -35,9 +33,7 @@ export default function Profile() {
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const bottomSpace = useTabBarSpace();
-  const { width: screenW } = useWindowDimensions();
   // card width: screen minus page and panel paddings, not wider than 420
-  const cardW = Math.min(Math.min(screenW, 600) - 32 - 28, 420);
   const customer = useAuth((s) => s.customer);
   const logout = useAuth((s) => s.logout);
   const favCount = useFavorites((s) => s.items.length);
@@ -78,8 +74,8 @@ export default function Profile() {
           </Text>
         ) : null}
 
-        {/* loyalty card (test data for now; later from MAXMA by phone number) */}
-        {customer ? <LoyaltyCardPanel card={TEST_CARD} width={cardW} /> : null}
+        {/* loyalty card: hidden until real cards come from MAXMA by phone number
+            (the test card had a real barcode — anyone could scan it) */}
 
         {/* one rounded menu block */}
         <View style={[styles.block, { backgroundColor: c.cell }, !dark && styles.shadow]}>
