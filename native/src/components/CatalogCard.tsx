@@ -154,7 +154,7 @@ function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; 
     useCartStore.getState().setQuantity(key, n < min ? 0 : Math.min(n, cap));
   };
   // narrow cards (small phones): the cart button keeps only its icon
-  const compact = w > 0 && w < 150;
+  const compact = w > 0 && w < 156;
   return (
     <View style={styles.qtyRow} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <View
@@ -204,7 +204,7 @@ function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; 
           {compact ? (
             <Ionicons name="cart" size={19} color="#fff" />
           ) : (
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.buttonText, { fontSize: 14 }]}>
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9} style={[styles.buttonText, { fontSize: 13 }]}>
               В корзине
             </Text>
           )}
@@ -248,8 +248,8 @@ const styles = StyleSheet.create({
   button: { height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 10 },
   buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
   qtyRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
-  stepper: { flexDirection: "row", alignItems: "center", height: 44, borderRadius: 22, borderWidth: 1, paddingHorizontal: 2 },
-  stepBtn: { width: 30, height: 42, alignItems: "center", justifyContent: "center" },
-  qty: { minWidth: 22, textAlign: "center", fontSize: 16, fontWeight: "800" },
-  inCartBtn: { marginTop: 0, paddingHorizontal: 8 },
+  stepper: { flexDirection: "row", alignItems: "center", height: 44, borderRadius: 22, borderWidth: 1, paddingHorizontal: 1 },
+  stepBtn: { width: 26, height: 42, alignItems: "center", justifyContent: "center" },
+  qty: { minWidth: 20, textAlign: "center", fontSize: 16, fontWeight: "800" },
+  inCartBtn: { marginTop: 0, paddingHorizontal: 4 },
 });
