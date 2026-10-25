@@ -102,6 +102,14 @@ jobs:
           - tapOn: { text: "Каталог", optional: true }
           - waitForAnimationToEnd
           - takeScreenshot: 10-light-catalog
+          - tapOn: { text: "В корзину", index: 1, optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: 10-qty-a-added
+          - tapOn: { text: "Увеличить количество", optional: true }
+          - tapOn: { text: "Увеличить количество", optional: true }
+          - takeScreenshot: 10-qty-b-plus
+          - tapOn: { text: "Уменьшить количество", optional: true }
+          - takeScreenshot: 10-qty-c-minus
           - tapOn: { point: "27%,50%", optional: true }
           - waitForAnimationToEnd
           - takeScreenshot: 11-light-product
@@ -125,6 +133,14 @@ jobs:
           - tapOn: { text: "Каталог", optional: true }
           - waitForAnimationToEnd
           - takeScreenshot: 21-dark-catalog
+          - tapOn: { text: "В корзину", index: 1, optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: 21-qty-a-added
+          - tapOn: { text: "Увеличить количество", optional: true }
+          - tapOn: { text: "Увеличить количество", optional: true }
+          - takeScreenshot: 21-qty-b-plus
+          - tapOn: { text: "Уменьшить количество", optional: true }
+          - takeScreenshot: 21-qty-c-minus
           - tapOn: { point: "27%,50%", optional: true }
           - waitForAnimationToEnd
           - takeScreenshot: 22-dark-product
