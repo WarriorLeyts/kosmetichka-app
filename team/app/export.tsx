@@ -16,11 +16,18 @@ export default function ExportScreen() {
   const c = useIOS();
   const [busy, setBusy] = useState(false);
   const { data, error, loading, reload } = useLoad(async () => {
-    const [a, b] = await Promise.all([
-      get<OrdersPage>("/api/team/orders?date=&status=approved"),
-      get<OrdersPage>("/api/team/orders?date=&status=payment"),
-    ]);
-    return [...a.orders, ...b.orders].sort((x, y) => x.createdAt.localeCompare(y.createdAt));
+    // every page of both statuses — the export takes them all
+    const all = async (status: string) => {
+      const out: OrdersPage["orders"] = [];
+      for (let page = 1; page <= 40; page++) {
+        const r = await get<OrdersPage>(`/api/team/orders?date=&status=${status}&page=${page}`);
+        out.push(...r.orders);
+        if (page >= r.totalPages) break;
+      }
+      return out;
+    };
+    const [a, b] = await Promise.all([all("approved"), all("payment")]);
+    return [...a, ...b].sort((x, y) => x.createdAt.localeCompare(y.createdAt));
   }, []);
   const sum = data?.reduce((s, o) => s + o.total, 0) ?? 0;
 

@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { persistStorage } from "./storage";
-import { get, post } from "../api";
+import { get, post, setOnUnauthorized } from "../api";
 
 export type Role = "admin" | "manager" | "picker";
 export type Staff = { id: number; name: string | null; login: string; role: Role; roleLabel?: string };
@@ -49,3 +49,8 @@ export const useAuth = create<AuthState>()(
 
 export const isPicker = (u: Staff | null) => u?.role === "picker";
 export const ROLE_LABEL: Record<Role, string> = { admin: "Администратор", manager: "Менеджер", picker: "Сборщик" };
+
+// any 401 during work signs the user out; the tabs layout then shows the login screen
+setOnUnauthorized(() => {
+  if (useAuth.getState().user) useAuth.setState({ user: null });
+});

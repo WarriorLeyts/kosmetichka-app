@@ -14,6 +14,7 @@ import type { Dashboard } from "@/types";
 /** Главная: today, active orders by status, week revenue, customers, latest orders (as /admin). */
 export default function Home() {
   const role = useAuth((s) => s.user?.role);
+  if (!role) return null; // profile not loaded yet
   if (role === "picker") return <Redirect href="/picker" />;
   return <Dashboard />;
 }

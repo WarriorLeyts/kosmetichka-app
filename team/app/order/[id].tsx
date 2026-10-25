@@ -82,11 +82,11 @@ export default function OrderScreen() {
     setBusy("save");
     try {
       await put(`/api/admin/orders/${orderId}/items`, {
-        items: edit.filter((d) => d.id).map((d) => ({ id: d.id, quantity: d.quantity, price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
+        items: edit.filter((d) => d.id).map((d) => ({ id: d.id, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
         removeIds: removed,
         newItems: edit
           .filter((d) => !d.id)
-          .map((d) => ({ productId: d.productId, productName: d.productName, barcode: d.barcode ?? null, quantity: d.quantity, price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
+          .map((d) => ({ productId: d.productId, productName: d.productName, barcode: d.barcode ?? null, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
       });
       setEdit(null);
       await reload();
@@ -235,8 +235,9 @@ export default function OrderScreen() {
                         <Ionicons name="remove" size={20} color={VIOLET} />
                       </Pressable>
                       <TextInput
-                        value={String(d.quantity)}
-                        onChangeText={(t) => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, quantity: Math.max(1, Number(t.replace(/\D/g, "")) || 1) } : x)))}
+                        value={d.quantity ? String(d.quantity) : ""}
+                        onChangeText={(t) => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, quantity: Number(t.replace(/\D/g, "")) || 0 } : x)))}
+                        onBlur={() => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, quantity: Math.max(1, x.quantity) } : x)))}
                         keyboardType="number-pad"
                         style={[styles.qty, { color: c.label }]}
                       />

@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import * as ImageManipulator from "expo-image-manipulator";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, ErrorState, Loading, SectionTitle, VIOLET } from "@/components/kit";
 import { ChatPanel, type ChatMsg } from "@/components/chat/ChatPanel";
@@ -54,10 +55,17 @@ export default function Pick() {
   const { data, error, loading, reload } = useLoad(() => get<PickerOrder>(`/api/team/picker/orders/${orderId}`), [orderId], { refocus: false });
   const o = data?.order;
 
+  // set once per item: a refresh must not wipe unsent marks, quantities and notes (as on the site)
   useEffect(() => {
     if (!o) return;
-    const s: Record<number, State> = {};
+    setItems((prev) => {
+    const s: Record<number, State> = { ...prev };
     for (const it of o.items) {
+      if (prev[it.id]) {
+        // keep local work, but take photos uploaded meanwhile
+        s[it.id] = { ...prev[it.id], photos: Array.from(new Set([...prev[it.id].photos, ...it.photos.map((p) => p.url)])) };
+        continue;
+      }
       s[it.id] = {
         statuses: (it.check?.statuses ?? []) as Code[],
         statusQtys: qtysFrom(it.check?.status),
@@ -68,7 +76,8 @@ export default function Pick() {
         uploading: false,
       };
     }
-    setItems(s);
+    return s;
+    });
   }, [o]);
 
   const upd = (itemId: number, f: (s: State) => State) => setItems((p) => ({ ...p, [itemId]: f(p[itemId]) }));
@@ -120,8 +129,10 @@ export default function Pick() {
     if (!f) return;
     upd(itemId, (s) => ({ ...s, uploading: true }));
     try {
+      // JPEG of a sensible size (iPhone photos can be HEIC and 10+ MB)
+      const jpg = await ImageManipulator.manipulateAsync(f.uri, [{ resize: { width: 1600 } }], { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG });
       const form = new FormData();
-      form.append("file", { uri: f.uri, name: f.name, type: f.mime } as unknown as Blob);
+      form.append("file", { uri: jpg.uri, name: `item-${itemId}-${Date.now()}.jpg`, type: "image/jpeg" } as unknown as Blob);
       form.append("orderItemId", String(itemId));
       const r = await request<{ photo: { url: string } }>("/api/picker/photos", { method: "POST", body: form });
       upd(itemId, (s) => ({ ...s, photos: [...s.photos, r.photo.url], uploading: false }));

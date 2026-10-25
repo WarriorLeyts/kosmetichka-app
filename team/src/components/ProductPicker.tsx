@@ -24,6 +24,9 @@ export function ProductPicker({ open, title, onClose, onPick }: { open: boolean;
   const [variants, setVariants] = useState<{ id: number; name: string; imageUrl: string }[] | null>(null);
   useEffect(() => {
     if (open) categories().then(setCats).catch(() => {});
+    // every opening starts from the product list
+    setVariantsFor(null);
+    setVariants(null);
   }, [open]);
   const list = usePaged<ProductRow>((offset) => (open ? searchProducts(q, cat, offset) : Promise.resolve({ items: [], hasMore: false })), [q, cat, open]);
 

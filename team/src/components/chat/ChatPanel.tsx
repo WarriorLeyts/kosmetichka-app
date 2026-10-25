@@ -85,11 +85,11 @@ export function ChatPanel({
   const attach = async (how: string) => {
     setSheet(false);
     const extra = extraActions?.find((a) => a.value === how);
+    await afterSheet(); // iOS shows one modal at a time — let the sheet close first
     if (extra) {
       extra.run();
       return;
     }
-    await afterSheet();
     try {
       const f = await pickFile(how as AttachHow);
       if (!f) return;
