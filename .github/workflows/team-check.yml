@@ -1,0 +1,51 @@
+name: Team app check (emulator)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  android:
+        runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Build x86_64 APK (blur and gradient text off — the CI emulator has no GPU)
+        working-directory: team
+        env:
+          EXPO_PUBLIC_DISABLE: "blur,mask"
+        run: |
+          ../scripts/ci-run.sh npm run deps
+          ../scripts/ci-run.sh npx expo prebuild --platform android --no-install
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1536m -XX:+HeapDumpOnOutOfMemoryError/' android/gradle.properties && grep jvmargs android/gradle.properties
+          cd android && ../../scripts/ci-run.sh ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64
+          cp app/build/outputs/apk/release/app-release.apk ../../app.apk
+      - name: Run
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          script: bash scripts/emu-team.sh
+      - name: Upload
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view app-check >/dev/null 2>&1 || gh release create app-check --title "App check" --notes "screenshots" --latest=false
+          for f in shots/*; do [ -s "$f" ] && gh release upload app-check "$f" --clobber || true; done
+
