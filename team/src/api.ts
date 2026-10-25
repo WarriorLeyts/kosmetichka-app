@@ -61,6 +61,7 @@ export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: st
 export async function uploadChat(file: { uri: string; name: string; mime: string }): Promise<ChatUpload> {
   const form = new FormData();
   form.append("file", { uri: file.uri, name: file.name, type: file.mime } as unknown as Blob);
-  const data = await request<ChatUpload & { url?: string }>("/api/uploads/chat", { method: "POST", body: form });
-  return { kind: "img", name: file.name, size: 0, mime: file.mime, ...data } as ChatUpload;
+  // until the site's attachments update is live the server answers only { url } (photos)
+  const data = await request<Partial<ChatUpload> & { url: string }>("/api/uploads/chat", { method: "POST", body: form });
+  return { url: data.url, kind: data.kind ?? "img", name: data.name ?? file.name, size: data.size ?? 0, mime: data.mime ?? file.mime };
 }
