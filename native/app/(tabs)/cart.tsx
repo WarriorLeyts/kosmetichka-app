@@ -174,7 +174,7 @@ export default function Cart() {
   }
 
   const renderItem = ({ item }: { item: CartItem }) => {
-    const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path);
+    const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
     const price = priceFor(item, active);
     const min = Math.max(1, item.minOrderQty ?? 1);
     const stock = typeof item.stock === "number" && item.stock > 0 ? item.stock : null;

@@ -55,11 +55,15 @@ const json = (body: unknown) => JSON.stringify(body);
 /** One URL path segment: ids come from routes / deep links, so «../» etc. must never reach the path. */
 const seg = (id: number | string) => encodeURIComponent(String(id));
 
-export function imageUrl(path?: string | null): string | null {
+/** Thumbnail widths the server makes (lib/thumb.ts on the site): 160 / 320 / 480 / 800 / 1200. */
+export type ThumbWidth = 160 | 320 | 480 | 800 | 1200;
+
+/** `w` → a small WebP copy made by the server instead of the full photo (5–10× fewer bytes). */
+export function imageUrl(path?: string | null, w?: ThumbWidth): string | null {
   if (!path) return null;
   if (/^https?:\/\//.test(path)) return path;
   if (path.startsWith("/")) return BASE_URL + path;
-  return `${BASE_URL}/1c/${path}`;
+  return `${BASE_URL}/1c/${path}${w ? `?w=${w}` : ""}`;
 }
 
 export type CatalogQuery = {
@@ -88,6 +92,8 @@ export const api = {
     if (q.onlyStock) p.set("onlyStock", "true");
     q.quick?.forEach((x) => p.append("quick", x));
     q.nameAny?.forEach((x) => p.append("nameAny", x));
+    // cards don't show the description — the server leaves it out (≈65% of the page)
+    p.set("lite", "1");
     return request(`/api/catalog/products?${p.toString()}`);
   },
   catalogMeta(): Promise<{ categories: Category[]; brands: Brand[] }> {

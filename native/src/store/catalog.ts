@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api, type CatalogQuery } from "../api";
 import type { Brand, Category } from "../types";
 
@@ -48,6 +49,9 @@ export function childCategories(all: Category[], parentGuid: string): Category[]
   return all.filter((c) => c.parentGuid === parentGuid);
 }
 
+const META_KEY = "kosmetichka-catalog-meta";
+let metaLoading: Promise<void> | null = null;
+
 export const useCatalog = create<CatalogState>((set, get) => ({
   ...DEFAULTS,
   version: 0,
@@ -55,14 +59,35 @@ export const useCatalog = create<CatalogState>((set, get) => ({
   brands: [],
   metaLoaded: false,
 
+  // categories + brands: shown at once from the phone's copy, refreshed from the server in the background
   loadMeta: async () => {
-    if (get().metaLoaded) return;
-    try {
-      const { categories, brands } = await api.catalogMeta();
-      set({ categories, brands, metaLoaded: true });
-    } catch {
-      /* filters just stay empty */
-    }
+    if (get().metaLoaded || metaLoading) return metaLoading ?? undefined;
+    metaLoading = (async () => {
+      let fresh = false;
+      try {
+        const raw = await AsyncStorage.getItem(META_KEY);
+        if (raw && !get().metaLoaded) {
+          const cached = JSON.parse(raw) as { at: number; categories: Category[]; brands: Brand[] };
+          if (Array.isArray(cached.categories) && Array.isArray(cached.brands)) {
+            set({ categories: cached.categories, brands: cached.brands, metaLoaded: true });
+            fresh = Date.now() - cached.at < 10 * 60_000;
+          }
+        }
+      } catch {
+        /* no cached copy */
+      }
+      if (fresh) return;
+      try {
+        const { categories, brands } = await api.catalogMeta();
+        set({ categories, brands, metaLoaded: true });
+        AsyncStorage.setItem(META_KEY, JSON.stringify({ at: Date.now(), categories, brands })).catch(() => {});
+      } catch {
+        /* filters just stay empty (or on the cached copy) */
+      }
+    })().finally(() => {
+      metaLoading = null;
+    });
+    return metaLoading;
   },
 
   // another category → its type chips no longer apply

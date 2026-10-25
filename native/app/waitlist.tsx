@@ -48,7 +48,7 @@ function WaitCard({ item, index, onRemoved }: { item: Row; index: number; onRemo
 
   const s = stockLabel(item.stock);
   const back = s.tone !== "out"; // real status: product is in stock again
-  const img = imageUrl(item.images?.[0]?.path);
+  const img = imageUrl(item.images?.[0]?.path, 160);
 
   return (
     <Animated.View style={{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) }, { scale: v.interpolate({ inputRange: [0, 1], outputRange: [0.97, 1] }) }] }}>

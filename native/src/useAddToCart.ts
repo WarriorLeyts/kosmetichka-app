@@ -4,6 +4,7 @@ import * as Haptics from "expo-haptics";
 import { api } from "./api";
 import { useCartStore } from "./store/cart";
 import type { Product } from "./types";
+import { seedProduct } from "./productSeed";
 
 /** Variant cache so a second tap doesn't hit the network again. */
 const variantCount = new Map<number, number>();
@@ -42,6 +43,7 @@ export function useAddToCart() {
       const n = await variantsOf(product.id);
       if (n === null || n > 0) {
         // has variants (or we couldn't check) — choose on the product screen
+        seedProduct(product);
         router.push(`/product/${product.id}?pick=1`);
         return;
       }

@@ -466,7 +466,7 @@ export default function OrderScreen() {
           <View style={panel}>
             <Text style={[styles.h, { color: c.label }]}>Товары в заказе</Text>
             {order.items.map((it, i) => {
-              const img = it.variantImageUrl ? imageUrl(it.variantImageUrl) : imageUrl(it.imagePath);
+              const img = it.variantImageUrl ? imageUrl(it.variantImageUrl) : imageUrl(it.imagePath, 160);
               return (
                 <Pressable
                   key={it.id}

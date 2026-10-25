@@ -94,6 +94,12 @@ function emojiFor(name: string): string {
   return "🛍️";
 }
 
+/** A long single word («Профессиональные») must fit one line instead of breaking mid-word. */
+function longWordSize(name: string) {
+  const longest = Math.max(...name.split(/\s+/).map((w) => w.length));
+  return longest >= 17 ? { fontSize: 13, lineHeight: 17 } : longest >= 14 ? { fontSize: 14, lineHeight: 18 } : null;
+}
+
 /** Light press feedback: scale to 0.98 and back. */
 function ScalePress({ onPress, style, children, label, reduce }: { onPress: () => void; style?: object; children: ReactNode; label: string; reduce: boolean }) {
   const s = useRef(new Animated.Value(1)).current;
@@ -289,7 +295,7 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
                         ) : (
                           <Text style={styles.emoji}>{emojiFor(cat.name)}</Text>
                         )}
-                        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.tileText, { color: active ? PINK : c.label }]}>{cat.name}</Text>
+                        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.tileText, longWordSize(cat.name), { color: active ? PINK : c.label }]}>{cat.name}</Text>
                         {kids ? <Ionicons name="chevron-forward" size={18} color={c.chevron} style={styles.tileChevron} /> : null}
                       </ScalePress>
                     </View>

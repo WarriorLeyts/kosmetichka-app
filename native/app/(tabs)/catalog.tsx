@@ -3,7 +3,8 @@ import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, Scrol
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "@/api";
+import { api, imageUrl } from "@/api";
+import { Image } from "expo-image";
 import { SORT_LABELS, useCatalog, type Sort } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -113,6 +114,8 @@ export default function Catalog() {
         // a site without the type filter yet returns everything — narrow by the main fragment instead
         if (type && !r.nameAnyApplied && !q.search) r = await api.catalog({ ...q, nameAny: undefined, search: type.q[0] });
         if (id !== reqId.current) return;
+        // warm the image cache for the cards that are about to scroll in
+        Image.prefetch(r.products.map((p) => imageUrl(p.images?.[0]?.path, 480)).filter((u): u is string => !!u), "disk").catch(() => {});
         setProducts((prev) => (mode === "append" ? [...prev, ...r.products.filter((p) => !prev.some((x) => x.id === p.id))] : r.products));
         setTotal(r.total);
         setPage(nextPage);
@@ -130,10 +133,13 @@ export default function Catalog() {
   );
 
   // reload whenever filters change (and on first open)
+  // a category's subcategories come from the meta — wait for it only when a category is chosen
+  const needMeta = !!f.categoryGuid && !f.metaLoaded;
   useEffect(() => {
+    if (needMeta) return;
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
     load(1, "replace");
-  }, [f.version, f.metaLoaded, load]);
+  }, [f.version, needMeta, load]);
 
   const active = effectivePriceType(cart, customer);
   // lookups built once per change instead of scanning arrays for every card
@@ -294,11 +300,11 @@ export default function Catalog() {
           keyboardDismissMode="on-drag"
           renderItem={renderItem}
           // keep fewer cards mounted on mid-range phones
-          initialNumToRender={6}
-          maxToRenderPerBatch={6}
-          windowSize={7}
+          initialNumToRender={8}
+          maxToRenderPerBatch={8}
+          windowSize={9}
           removeClippedSubviews={Platform.OS === "android"}
-          onEndReachedThreshold={0.6}
+          onEndReachedThreshold={1.2}
           onEndReached={() => {
             if (!loading && hasMore && products.length > 0) load(page + 1, "append");
           }}

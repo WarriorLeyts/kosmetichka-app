@@ -25,6 +25,7 @@ import { useIOS } from "@/ios";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product, Variant } from "@/types";
 import { FavHeart } from "@/components/FavHeart";
+import { takeSeed } from "@/productSeed";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -68,7 +69,7 @@ export default function ProductScreen() {
   const toggleWait = useWaitlistStore((s) => s.toggle);
   const addToCart = useAddToCart();
 
-  const [product, setProduct] = useState<Product | null>(null);
+  const [product, setProduct] = useState<Product | null>(() => takeSeed(id));
   const [variants, setVariants] = useState<Variant[]>([]);
   const [variantQty, setVariantQty] = useState<Record<number, number>>({});
   const [related, setRelated] = useState<Product[]>([]);
@@ -101,17 +102,20 @@ export default function ProductScreen() {
       setError("Товар не найден");
       return;
     }
+    // everything in parallel: the product, its variants and (when the list item gave the brand) related goods
+    const seed = takeSeed(id);
+    const loadRelated = (brandGuid: string, selfId: number) =>
+      api
+        .catalog({ page: 1, brandGuids: [brandGuid], sort: "name" })
+        .then((r) => setRelated(r.products.filter((x) => x.id !== selfId).slice(0, 10)))
+        .catch(() => {});
+    api.variants(Number(id)).then((r) => setVariants(r.variants ?? [])).catch(() => {});
+    if (seed?.brandGuid) loadRelated(seed.brandGuid, seed.id);
     try {
       const p = await api.product(id);
       setProduct(p);
       setLocalQty(Math.max(1, p.minOrderQty ?? 1));
-      api.variants(p.id).then((r) => setVariants(r.variants ?? [])).catch(() => {});
-      if (p.brandGuid) {
-        api
-          .catalog({ page: 1, brandGuids: [p.brandGuid], sort: "name" })
-          .then((r) => setRelated(r.products.filter((x) => x.id !== p.id).slice(0, 10)))
-          .catch(() => {});
-      }
+      if (p.brandGuid && p.brandGuid !== seed?.brandGuid) loadRelated(p.brandGuid, p.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка");
     }
@@ -213,7 +217,7 @@ export default function ProductScreen() {
   }
 
   const active = effectivePriceType(cart, customer);
-  const images = (product.images ?? []).map((i) => imageUrl(i.path)).filter(Boolean) as string[];
+  const images = (product.images ?? []).map((i) => imageUrl(i.path, 800)).filter(Boolean) as string[];
   const stock = stockLabel(product.stock);
   const st = STOCK[stock.tone];
   const out = stock.tone === "out";
@@ -379,7 +383,7 @@ export default function ProductScreen() {
                 const q = variantQty[v.id] ?? 0;
                 return (
                   <View key={v.id} style={[styles.variantRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator }]}>
-                    <Image source={{ uri: imageUrl(v.imageUrl) ?? undefined }} style={styles.variantImg} contentFit="cover" />
+                    <Image source={{ uri: imageUrl(v.imageUrl, 160) ?? undefined }} style={styles.variantImg} contentFit="cover" />
                     <Text style={{ flex: 1, color: c.label, fontSize: 15 }} numberOfLines={2}>
                       {v.name}
                     </Text>

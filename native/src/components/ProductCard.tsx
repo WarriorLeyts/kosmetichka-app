@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_GRADIENT } from "./GradientText";
 import { Ionicons } from "@expo/vector-icons";
 import { imageUrl } from "../api";
+import { seedProduct } from "../productSeed";
 import { colors, radius, themed } from "../theme";
 import { stockLabel } from "../format";
 import { priceRows, PriceRows } from "./Price";
@@ -25,13 +26,16 @@ type Props = {
 };
 
 function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite }: Props) {
-  const img = imageUrl(product.images?.[0]?.path);
+  const img = imageUrl(product.images?.[0]?.path, 480);
   const stock = stockLabel(product.stock);
   const out = stock.tone === "out";
 
   return (
     <Pressable
-      onPress={() => router.push(`/product/${product.id}`)}
+      onPress={() => {
+        seedProduct(product);
+        router.push(`/product/${product.id}`);
+      }}
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]}
     >
       <View style={styles.imageWrap}>
