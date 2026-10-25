@@ -8,6 +8,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
+import { RoleGuard } from "@/components/RoleGuard";
 import { useReduceMotion } from "@/useReduceMotion";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -35,7 +36,11 @@ export default function RootLayout() {
       <StatusBar style={colors.statusBar} />
       <Stack
         key={mode}
-        screenLayout={({ children }) => <PageLayout>{children}</PageLayout>}
+        screenLayout={({ children, route }) => (
+          <PageLayout>
+            <RoleGuard route={route.name}>{children}</RoleGuard>
+          </PageLayout>
+        )}
         screenOptions={{
           // every screen draws its own top bar (BackBar / large title); the system header stays off
           headerShown: false,

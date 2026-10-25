@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
-import { imageUrl } from "../../api";
+import { chatFileUrl, imageUrl, safeOpenUrl } from "../../api";
 import { money } from "../../format";
 
 const VIOLET = "#8b3dff";
@@ -14,9 +14,15 @@ export function fileSize(bytes: unknown): string {
   return `${(b / 1024 / 1024).toFixed(1).replace(".", ",")} МБ`;
 }
 
-export function openUrl(url: string) {
-  const u = imageUrl(url);
+/** opens a site photo / file in the in-app browser (https only) */
+export function openUrl(url: string | null | undefined) {
+  const u = safeOpenUrl(url);
   if (u) WebBrowser.openBrowserAsync(u).catch(() => {});
+}
+
+/** chat attachment: only our own /api/uploads/chat/ files are opened */
+function openChatFile(url: string) {
+  WebBrowser.openBrowserAsync(url).catch(() => {});
 }
 
 /** short text for lists / previews */
@@ -36,26 +42,31 @@ export function messagePreview(text: string): string {
 export function MessageBody({ text, color }: { text: string; color: string }) {
   try {
     const o = JSON.parse(text);
-    if (o?._t === "img" && typeof o.url === "string") {
+    // attachment links from other people's messages: our upload paths only (no phishing / foreign hosts)
+    const file = o && typeof o === "object" ? chatFileUrl(o.url) : null;
+    if ((o?._t === "img" || o?._t === "video" || o?._t === "file") && !file) {
+      return <Text style={{ color, fontSize: 15, fontStyle: "italic", opacity: 0.75 }}>Вложение недоступно</Text>;
+    }
+    if (o?._t === "img" && file) {
       return (
-        <Pressable onPress={() => openUrl(o.url)} accessibilityRole="imagebutton" accessibilityLabel="Фото, открыть">
-          <Image source={{ uri: imageUrl(o.url) ?? undefined }} style={styles.photo} contentFit="cover" />
+        <Pressable onPress={() => openChatFile(file)} accessibilityRole="imagebutton" accessibilityLabel="Фото, открыть">
+          <Image source={{ uri: file }} style={styles.photo} contentFit="cover" />
         </Pressable>
       );
     }
-    if (o?._t === "video" && typeof o.url === "string") {
+    if (o?._t === "video" && file) {
       return (
-        <Pressable onPress={() => openUrl(o.url)} accessibilityRole="button" accessibilityLabel="Видео, смотреть" style={styles.video}>
+        <Pressable onPress={() => openChatFile(file)} accessibilityRole="button" accessibilityLabel="Видео, смотреть" style={styles.video}>
           <Ionicons name="play-circle" size={54} color="#fff" />
           <Text style={styles.videoText}>Видео{fileSize(o.size) ? ` · ${fileSize(o.size)}` : ""}</Text>
         </Pressable>
       );
     }
-    if (o?._t === "file" && typeof o.url === "string") {
+    if (o?._t === "file" && file) {
       const name = typeof o.name === "string" ? o.name : "Файл";
       const ext = (name.split(".").pop() || "").toUpperCase().slice(0, 4);
       return (
-        <Pressable onPress={() => openUrl(o.url)} accessibilityRole="button" accessibilityLabel={`Файл ${name}`} style={styles.file}>
+        <Pressable onPress={() => openChatFile(file)} accessibilityRole="button" accessibilityLabel={`Файл ${name}`} style={styles.file}>
           <View style={styles.fileIcon}>
             <Text style={styles.fileExt}>{ext || "FILE"}</Text>
           </View>
@@ -71,7 +82,7 @@ export function MessageBody({ text, color }: { text: string; color: string }) {
     if ((o?._t === "product" || o?._t === "product-problem") && typeof o.name === "string") {
       return (
         <View style={{ width: 210 }}>
-          {o.imagePath ? <Image source={{ uri: imageUrl(o.imagePath) ?? undefined }} style={styles.product} contentFit="contain" /> : null}
+          {typeof o.imagePath === "string" && o.imagePath ? <Image source={{ uri: imageUrl(o.imagePath, 320) ?? undefined }} style={styles.product} contentFit="contain" /> : null}
           <Text style={{ fontWeight: "600", marginTop: 6, color }}>{o.name}</Text>
           {typeof o.price === "number" && o.price > 0 ? <Text style={{ color: "#e82c87", fontWeight: "700" }}>{money(o.price)}</Text> : null}
           {o._t === "product-problem" && o.problem ? (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, FlatList, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -46,7 +46,7 @@ export function ProductPicker({ open, title, onClose, onPick }: { open: boolean;
   };
 
   return (
-    <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={Platform.OS === "android" && variantsFor ? () => setVariantsFor(null) : onClose}>
       <View style={{ flex: 1, backgroundColor: c.bg, paddingTop: 12 }}>
         <View style={styles.head}>
           <Text style={[styles.title, { color: c.label }]}>{variantsFor ? "Выберите вариант" : title}</Text>
@@ -97,7 +97,7 @@ export function ProductPicker({ open, title, onClose, onPick }: { open: boolean;
             renderItem={({ item: p }) => (
               <Pressable onPress={() => choose(p)} style={({ pressed }) => [styles.row, { backgroundColor: c.cell, opacity: pressed ? 0.8 : 1 }]}>
                 <View style={styles.thumb}>
-                  {p.imagePath ? <Image source={{ uri: imageUrl(p.imagePath) ?? undefined }} style={{ width: "90%", height: "90%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={22} color="#C7C7CC" />}
+                  {p.imagePath ? <Image source={{ uri: imageUrl(p.imagePath, 160) ?? undefined }} style={{ width: "90%", height: "90%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={22} color="#C7C7CC" />}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: c.label, fontSize: 15, fontWeight: "600" }} numberOfLines={2}>

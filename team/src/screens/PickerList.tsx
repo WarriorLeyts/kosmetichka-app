@@ -33,7 +33,7 @@ export function PickerList({ tab }: { tab: boolean }) {
         <Empty icon="basket-outline" text="Заказов на сборке нет" />
       ) : (
         data?.orders.map((o) => {
-          const pr = PROGRESS[o.progress];
+          const pr = PROGRESS[o.progress] ?? PROGRESS.not_started;
           return (
             <Card key={o.id} onPress={() => router.push({ pathname: "/pick/[id]", params: { id: String(o.id) } })} style={o.isMine ? { borderWidth: 2, borderColor: "#8b3dff" } : undefined}>
               <View style={styles.row}>
@@ -43,19 +43,19 @@ export function PickerList({ tab }: { tab: boolean }) {
                     <Text style={styles.mineText}>Мой заказ</Text>
                   </View>
                 ) : o.isAssignedToOther ? (
-                  <Text style={{ color: c.secondary, fontSize: 13 }}>Назначен: {o.picker?.name}</Text>
+                  <Text style={{ color: c.secondary, fontSize: 13 }}>Назначен: {o.picker?.name ?? "другому"}</Text>
                 ) : null}
               </View>
               <Text style={[styles.client, { color: c.label }]} numberOfLines={1}>
                 {o.clientName}
               </Text>
-              {o.itemsPreview.map((i) => (
+              {(o.itemsPreview ?? []).map((i) => (
                 <Text key={i.id} style={{ color: c.secondary }} numberOfLines={1}>
                   • {i.productName}
                   {i.variantName ? ` (${i.variantName})` : ""} × {i.quantity}
                 </Text>
               ))}
-              {o.itemsCount > o.itemsPreview.length ? <Text style={{ color: c.secondary }}>и ещё {o.itemsCount - o.itemsPreview.length}</Text> : null}
+              {o.itemsCount > (o.itemsPreview?.length ?? 0) ? <Text style={{ color: c.secondary }}>и ещё {o.itemsCount - (o.itemsPreview?.length ?? 0)}</Text> : null}
               <View style={[styles.row, { marginTop: 10 }]}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                   <Ionicons name={pr.icon} size={16} color={pr.color} />

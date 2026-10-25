@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { useEffect, useRef } from "react";
+import { Linking, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -8,26 +8,38 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export function Scanner({ open, onClose, onCode }: { open: boolean; onClose: () => void; onCode: (code: string) => void }) {
   const insets = useSafeAreaInsets();
   const [perm, request] = useCameraPermissions();
-  const [done, setDone] = useState(false);
+  // a ref, not state: the camera reports the same code several times before a re-render
+  const done = useRef(false);
+  useEffect(() => {
+    if (open) done.current = false;
+  }, [open]);
+  const denied = perm && !perm.granted && !perm.canAskAgain;
   return (
-    <Modal visible={open} animationType="slide" onRequestClose={onClose} onShow={() => setDone(false)}>
+    <Modal visible={open} animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: "#000" }}>
         {perm?.granted ? (
           <CameraView
             style={StyleSheet.absoluteFill}
             facing="back"
             barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128", "code39", "qr"] }}
-            onBarcodeScanned={(r) => {
-              if (done || !r.data) return;
-              setDone(true);
-              onCode(r.data);
-            }}
+            onBarcodeScanned={
+              open
+                ? (r) => {
+                    const code = typeof r.data === "string" ? r.data.trim() : "";
+                    if (done.current || !code) return;
+                    done.current = true;
+                    onCode(code);
+                  }
+                : undefined
+            }
           />
         ) : (
           <View style={styles.center}>
-            <Text style={styles.text}>Нужен доступ к камере, чтобы сканировать штрихкоды</Text>
-            <Pressable onPress={request} style={styles.btn}>
-              <Text style={styles.btnText}>Разрешить</Text>
+            <Text style={styles.text}>
+              {denied ? "Доступ к камере запрещён. Разрешите его в настройках телефона, чтобы сканировать штрихкоды" : "Нужен доступ к камере, чтобы сканировать штрихкоды"}
+            </Text>
+            <Pressable onPress={() => (denied ? Linking.openSettings().catch(() => {}) : request())} style={styles.btn}>
+              <Text style={styles.btnText}>{denied ? "Открыть настройки" : "Разрешить"}</Text>
             </Pressable>
           </View>
         )}

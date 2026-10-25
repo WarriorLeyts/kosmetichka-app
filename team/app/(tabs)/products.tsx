@@ -42,7 +42,7 @@ export default function Products() {
       renderItem={({ item: p }) => (
         <Card onPress={() => router.push({ pathname: "/product/[id]", params: { id: String(p.id) } })} style={styles.row}>
           <View style={styles.thumb}>
-            {p.imagePath ? <Image source={{ uri: imageUrl(p.imagePath) ?? undefined }} style={styles.img} contentFit="contain" /> : <Ionicons name="image-outline" size={26} color="#C7C7CC" />}
+            {p.imagePath ? <Image source={{ uri: imageUrl(p.imagePath, 160) ?? undefined }} style={styles.img} contentFit="contain" /> : <Ionicons name="image-outline" size={26} color="#C7C7CC" />}
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.name, { color: c.label }]} numberOfLines={2}>

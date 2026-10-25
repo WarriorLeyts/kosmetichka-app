@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
@@ -29,6 +29,8 @@ export default function OrderScreen() {
   const me = useAuth((s) => s.user);
   const [tab, setTab] = useState<Tab>("items");
   const [busy, setBusy] = useState("");
+  // status / picker / items changes: one request at a time (a state flag is too late for two quick taps)
+  const running = useRef(false);
   const [pickerSheet, setPickerSheet] = useState(false);
   const [edit, setEdit] = useState<Draft[] | null>(null);
   const [removed, setRemoved] = useState<number[]>([]);
@@ -44,13 +46,17 @@ export default function OrderScreen() {
         text: "Да",
         style: to === "cancelled" ? "destructive" : "default",
         onPress: async () => {
+          if (running.current) return;
+          running.current = true;
           setBusy(to);
           try {
             await post(`/api/admin/orders/${orderId}/status`, { status: to });
             await reload();
           } catch (e) {
             Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+            reload();
           } finally {
+            running.current = false;
             setBusy("");
           }
         },
@@ -60,6 +66,8 @@ export default function OrderScreen() {
 
   const assign = async (pickerId: number | null) => {
     setPickerSheet(false);
+    if (running.current) return;
+    running.current = true;
     setBusy("assign");
     try {
       await post(`/api/admin/orders/${orderId}/assign`, { pickerId });
@@ -67,6 +75,7 @@ export default function OrderScreen() {
     } catch (e) {
       Alert.alert("Не получилось", e instanceof Error ? e.message : "");
     } finally {
+      running.current = false;
       setBusy("");
     }
   };
@@ -78,7 +87,8 @@ export default function OrderScreen() {
   };
 
   const saveEdit = async () => {
-    if (!edit || !o) return;
+    if (!edit || !o || running.current) return;
+    running.current = true;
     setBusy("save");
     try {
       await put(`/api/admin/orders/${orderId}/items`, {
@@ -93,6 +103,7 @@ export default function OrderScreen() {
     } catch (e) {
       Alert.alert("Не сохранено", e instanceof Error ? e.message : "");
     } finally {
+      running.current = false;
       setBusy("");
     }
   };
@@ -170,8 +181,8 @@ export default function OrderScreen() {
           <Ionicons name="chevron-forward" size={18} color={c.chevron} />
         </View>
         {cust.companyName && cust.name ? <Text style={{ color: c.secondary }}>{cust.name}</Text> : null}
-        <KV k="Телефон" v={cust.phone} onPress={cust.phone ? () => Linking.openURL(`tel:${cust.phone}`) : undefined} />
-        <KV k="Email" v={cust.email} onPress={cust.email ? () => Linking.openURL(`mailto:${cust.email}`) : undefined} />
+        <KV k="Телефон" v={cust.phone} onPress={cust.phone ? () => Linking.openURL(`tel:${(cust.phone ?? "").replace(/[^\d+]/g, "")}`).catch(() => {}) : undefined} />
+        <KV k="Email" v={cust.email} onPress={cust.email ? () => Linking.openURL(`mailto:${cust.email}`).catch(() => {}) : undefined} />
         <KV k="Город" v={cust.city} />
         <KV k="ИНН" v={cust.inn} />
         <KV k="Менеджер 1С" v={cust.manager} />
@@ -344,7 +355,7 @@ export default function OrderScreen() {
     return (
       <Card>
         <View style={{ flexDirection: "row", gap: 12 }}>
-          <View style={styles.thumb}>{img ? <Image source={{ uri: imageUrl(img) ?? undefined }} style={{ width: "90%", height: "90%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={22} color="#C7C7CC" />}</View>
+          <View style={styles.thumb}>{img ? <Image source={{ uri: imageUrl(img, 160) ?? undefined }} style={{ width: "90%", height: "90%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={22} color="#C7C7CC" />}</View>
           <View style={{ flex: 1 }}>
             <Text style={{ color: c.label, fontWeight: "600", fontSize: 15.5 }} numberOfLines={3}>
               {it.productName}

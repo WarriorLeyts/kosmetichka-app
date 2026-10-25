@@ -1,6 +1,7 @@
 import { Alert } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 
 export type PickedFile = { uri: string; name: string; mime: string };
 export type AttachHow = "library" | "camera" | "file";
@@ -11,10 +12,18 @@ export const ATTACH_OPTIONS: { value: AttachHow; label: string }[] = [
   { value: "file", label: "Файл (PDF, документ, таблица)" },
 ];
 
+/** extension of the last path segment, "" when there is none (content:// URIs on Android often have none) */
+function extOf(uri: string): string {
+  const last = uri.split(/[?#]/)[0].split("/").pop() || "";
+  const m = /\.([A-Za-z0-9]{1,5})$/.exec(last);
+  return m ? m[1].toLowerCase() : "";
+}
+
 function fromAsset(a: ImagePicker.ImagePickerAsset): PickedFile {
   const isVideo = a.type === "video";
-  const ext = (a.uri.split(".").pop() || (isVideo ? "mp4" : "jpg")).toLowerCase();
-  const name = a.fileName || `${isVideo ? "video" : "photo"}-${Date.now()}.${ext}`;
+  const ext = extOf(a.fileName || "") || extOf(a.uri) || (isVideo ? "mp4" : "jpg");
+  // the server picks the file type by the name's extension — the name must always have one
+  const name = a.fileName && extOf(a.fileName) ? a.fileName : `${isVideo ? "video" : "photo"}-${Date.now()}.${ext}`;
   const mime = a.mimeType || (isVideo ? (ext === "mov" ? "video/quicktime" : "video/mp4") : ext === "png" ? "image/png" : "image/jpeg");
   return { uri: a.uri, name, mime };
 }
@@ -42,3 +51,14 @@ export async function pickFile(how: AttachHow, photosOnly = false): Promise<Pick
 
 /** small pause so a closing sheet doesn't block the system picker (iOS shows one modal at a time) */
 export const afterSheet = () => new Promise((r) => setTimeout(r, 450));
+
+/**
+ * Photos for chats → JPEG ≤ 1600 px: iPhone HEIC can't be shown by the site's browsers and
+ * full-size photos hit the upload limit. GIFs and non-images are sent as they are.
+ */
+export async function prepareForUpload(f: PickedFile): Promise<PickedFile> {
+  if (!f.mime.startsWith("image/") || f.mime === "image/gif") return f;
+  const jpg = await ImageManipulator.manipulateAsync(f.uri, [{ resize: { width: 1600 } }], { compress: 0.82, format: ImageManipulator.SaveFormat.JPEG });
+  const base = f.name.replace(/\.[^./]*$/, "") || `photo-${Date.now()}`;
+  return { uri: jpg.uri, name: `${base}.jpg`, mime: "image/jpeg" };
+}

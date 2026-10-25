@@ -17,12 +17,15 @@
     },
     "android": {
       "package": "ru.kosmetichkaopt.team",
+      "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-foreground.png",
         "backgroundImage": "./assets/adaptive-background.png"
       },
       "permissions": [
-        "android.permission.CAMERA",
+        "android.permission.CAMERA"
+      ],
+      "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -40,7 +43,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды и фотографировать собранные заказы."
+          "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды и фотографировать собранные заказы.",
+          "recordAudioAndroid": false
         }
       ],
       [

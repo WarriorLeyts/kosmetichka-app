@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Alert, Text } from "react-native";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card } from "@/components/kit";
@@ -10,6 +10,8 @@ export default function ImportScreen() {
   const c = useIOS();
   const [busy, setBusy] = useState("");
   const [result, setResult] = useState<string[]>([]);
+  // one import at a time (two quick taps open two confirmations → two parallel imports on the server)
+  const running = useRef(false);
 
   const run = (kind: "catalog" | "customers") =>
     Alert.alert(kind === "catalog" ? "Загрузить каталог из 1С?" : "Загрузить контрагентов из 1С?", "Это может занять несколько минут.", [
@@ -17,6 +19,8 @@ export default function ImportScreen() {
       {
         text: "Загрузить",
         onPress: async () => {
+          if (running.current) return;
+          running.current = true;
           setBusy(kind);
           try {
             if (kind === "catalog") {
@@ -29,6 +33,7 @@ export default function ImportScreen() {
           } catch (e) {
             Alert.alert("Импорт не выполнен", e instanceof Error ? e.message : "");
           } finally {
+            running.current = false;
             setBusy("");
           }
         },

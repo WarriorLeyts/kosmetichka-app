@@ -1,5 +1,5 @@
 import { useState, type ReactNode, type RefObject } from "react";
-import { RefreshControl, ScrollView, View, type ScrollViewProps } from "react-native";
+import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, View, type ScrollViewProps } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarSpace } from "./TabBar";
 import { TeamHeader } from "./TeamHeader";
@@ -25,10 +25,13 @@ export function Screen({
   const tabSpace = useTabBarSpace();
   const [refreshing, setRefreshing] = useState(false);
   return (
-    <View style={{ flex: 1 }}>
+    // the keyboard must not cover the chat composer and the inputs of the order / assembly screens:
+    // iOS — scroll view insets; Android (edge-to-edge since SDK 54, the window no longer resizes) — padding
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "android" ? "padding" : undefined}>
       <ScrollView
         ref={scrollRef}
         keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 16, paddingBottom: tab ? tabSpace + 8 : insets.bottom + 24 }}
         refreshControl={
           onRefresh ? (
@@ -55,6 +58,6 @@ export function Screen({
         </View>
       </ScrollView>
       {footer}
-    </View>
+    </KeyboardAvoidingView>
   );
 }

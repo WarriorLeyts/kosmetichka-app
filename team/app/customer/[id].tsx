@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Alert, Linking, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/Screen";
@@ -15,6 +15,7 @@ export default function Customer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useIOS();
   const [busy, setBusy] = useState("");
+  const running = useRef(false);
   const { data, error, loading, reload } = useLoad(() => get<CustomerDetail>(`/api/team/customers/${id}`), [id]);
   const x = data?.customer;
 
@@ -27,6 +28,8 @@ export default function Customer() {
         text: kind === "approve" ? "Подтвердить" : "Снять",
         style: kind === "block" ? "destructive" : "default",
         onPress: async () => {
+          if (running.current) return;
+          running.current = true;
           setBusy(kind);
           try {
             await post(`/api/admin/customers/${id}/${kind}`);
@@ -34,6 +37,7 @@ export default function Customer() {
           } catch (e) {
             Alert.alert("Не получилось", e instanceof Error ? e.message : "");
           } finally {
+            running.current = false;
             setBusy("");
           }
         },
@@ -53,8 +57,8 @@ export default function Customer() {
             <View style={{ height: 8 }} />
             <KV k="Контактное лицо" v={x.name} />
             <KV k="Компания" v={x.companyName} />
-            <KV k="Телефон" v={x.phone} onPress={x.phone ? () => Linking.openURL(`tel:${x.phone}`) : undefined} />
-            <KV k="Email" v={x.email} onPress={x.email ? () => Linking.openURL(`mailto:${x.email}`) : undefined} />
+            <KV k="Телефон" v={x.phone} onPress={x.phone ? () => Linking.openURL(`tel:${(x.phone ?? "").replace(/[^\d+]/g, "")}`).catch(() => {}) : undefined} />
+            <KV k="Email" v={x.email} onPress={x.email ? () => Linking.openURL(`mailto:${x.email}`).catch(() => {}) : undefined} />
             <KV k="ИНН" v={x.inn} />
             <KV k="Город" v={x.city} />
             <KV k="Адрес" v={x.address} />

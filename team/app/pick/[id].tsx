@@ -37,6 +37,16 @@ function qtysFrom(raw: string | null | undefined): Partial<Record<Code, string>>
   return {};
 }
 
+/** scanner codes vs barcodes in the order: trimmed, case-insensitive; numeric codes compared without
+ * leading zeros (iOS reports UPC-A as a 13-digit EAN with a leading 0, the 1C barcode may be 12 digits) */
+function sameBarcode(a: string | null | undefined, b: string): boolean {
+  if (!a) return false;
+  const x = a.trim().toLowerCase();
+  const y = b.trim().toLowerCase();
+  if (x === y) return true;
+  return /^\d+$/.test(x) && /^\d+$/.test(y) && x.replace(/^0+/, "") === y.replace(/^0+/, "");
+}
+
 /** Assembly of one order (as /picker/[id]): check every item, fact quantity, problems, photos, scanner, chat with the manager. */
 export default function Pick() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -52,6 +62,7 @@ export default function Pick() {
   const [scan, setScan] = useState(false);
   const [photoFor, setPhotoFor] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const { data, error, loading, reload } = useLoad(() => get<PickerOrder>(`/api/team/picker/orders/${orderId}`), [orderId], { refocus: false });
   const o = data?.order;
 
@@ -105,19 +116,22 @@ export default function Pick() {
     });
   };
 
-  const locate = (value: string) => {
+  const locate = (value: string): boolean => {
     setFind(value);
     const v = value.trim().toLowerCase();
     if (!v || !o) {
       setHl(null);
-      return;
+      return false;
     }
-    const found = o.items.find((i) => i.barcode?.toLowerCase() === v || i.productName.toLowerCase().includes(v));
+    const found = o.items.find((i) => sameBarcode(i.barcode, v)) ?? o.items.find((i) => i.productName.toLowerCase().includes(v));
     if (found) {
       setHl(found.id);
       scrollRef.current?.scrollTo({ y: Math.max(0, (ys.current[found.id] ?? 0) - 120), animated: true });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    } else setHl(null);
+      return true;
+    }
+    setHl(null);
+    return false;
   };
 
   const addPhoto = async (how: string) => {
@@ -146,17 +160,19 @@ export default function Pick() {
   const all = !!o && checked === o.items.length;
 
   const submit = async () => {
-    if (!o) return;
+    if (!o || submittingRef.current) return;
     if (!all) {
       Alert.alert("Проверены не все позиции", `Отмечено ${checked} из ${o.items.length}.`);
       return;
     }
+    // two quick taps would send the check twice (the second one fails: the order already left assembly)
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       const r = await post<{ partial: boolean; newStatus?: string; message?: string }>("/api/picker/checks", {
         orderId: o.id,
         items: o.items.map((i) => {
-          const s = items[i.id];
+          const s: State = items[i.id] ?? { statuses: [], statusQtys: {}, availableQty: "", factQty: "", note: "", photos: [], uploading: false };
           const statusData = s.statuses.map((code) => {
             if (code === "ok") return "ok";
             const raw = code === "insufficient_qty" ? s.availableQty : s.statusQtys[code];
@@ -181,6 +197,7 @@ export default function Pick() {
     } catch (e) {
       Alert.alert("Не отправлено", e instanceof Error ? e.message : "");
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
@@ -208,6 +225,10 @@ export default function Pick() {
         <Text style={{ color: c.secondary, marginTop: 6 }}>
           Проверено {checked} из {o.items.length}
         </Text>
+        {error ? (
+          // e.g. 409 after a refresh: a manager moved the order out of assembly meanwhile
+          <Text style={{ color: "#DC2626", marginTop: 8, fontWeight: "600" }}>{error}</Text>
+        ) : null}
       </Card>
 
       <View style={styles.findRow}>
@@ -229,7 +250,7 @@ export default function Pick() {
             <Card style={hl === it.id ? { borderWidth: 2, borderColor: VIOLET } : s.statuses.length ? { borderWidth: 1.5, borderColor: s.statuses.includes("ok") ? "rgba(22,163,74,0.5)" : "rgba(234,88,12,0.5)" } : undefined}>
               <View style={{ flexDirection: "row", gap: 12 }}>
                 <Pressable onPress={() => img && openUrl(img)} style={styles.thumb}>
-                  {img ? <Image source={{ uri: imageUrl(img) ?? undefined }} style={{ width: "92%", height: "92%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={24} color="#C7C7CC" />}
+                  {img ? <Image source={{ uri: imageUrl(img, 320) ?? undefined }} style={{ width: "92%", height: "92%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={24} color="#C7C7CC" />}
                 </Pressable>
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: c.label, fontWeight: "600", fontSize: 15.5 }} numberOfLines={3}>
@@ -323,7 +344,12 @@ export default function Pick() {
         onClose={() => setScan(false)}
         onCode={(code) => {
           setScan(false);
-          setTimeout(() => locate(code), 350);
+          setTimeout(() => {
+            if (!locate(code)) {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+              Alert.alert("Нет в заказе", `Товара со штрихкодом ${code.trim()} в этом заказе нет.`);
+            }
+          }, 350);
         }}
       />
       <Sheet open={photoFor !== null} onClose={() => setPhotoFor(null)} title="Фото позиции">

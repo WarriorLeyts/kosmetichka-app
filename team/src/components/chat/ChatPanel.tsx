@@ -10,7 +10,7 @@ import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import { Sheet, SheetOptions } from "../iosui/Sheet";
 import { MessageBody } from "./MessageBody";
-import { ATTACH_OPTIONS, afterSheet, pickFile, type AttachHow } from "./Attach";
+import { ATTACH_OPTIONS, afterSheet, pickFile, prepareForUpload, type AttachHow } from "./Attach";
 
 const VIOLET = "#8b3dff";
 const GRAD = ["#8b3dff", "#b832e0", "#e82c87"] as const;
@@ -39,16 +39,19 @@ export function ChatPanel({
   const [uploading, setUploading] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
   const alive = useRef(true);
+  const seq = useRef(0);
 
   const refresh = useCallback(async () => {
+    const my = ++seq.current;
     try {
       const m = await load();
-      if (alive.current) {
+      // a slow older poll must not overwrite a newer answer
+      if (alive.current && my === seq.current) {
         setMsgs(m);
         setError(false);
       }
     } catch {
-      if (alive.current) setError(true);
+      if (alive.current && my === seq.current) setError(true);
     }
   }, [load]);
 
@@ -67,9 +70,12 @@ export function ChatPanel({
     }, [refresh])
   );
 
+  const sendingRef = useRef(false);
   const sendText = async () => {
     const t = text.trim();
-    if (!t || sending) return;
+    // a ref, not state: two quick taps arrive before the re-render and would send the message twice
+    if (!t || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       await send(t);
@@ -78,6 +84,7 @@ export function ChatPanel({
     } catch (e) {
       Alert.alert("Не отправлено", e instanceof Error ? e.message : "Попробуйте ещё раз");
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -94,7 +101,7 @@ export function ChatPanel({
       const f = await pickFile(how as AttachHow);
       if (!f) return;
       setUploading(f.name);
-      const up = await uploadChat(f);
+      const up = await uploadChat(await prepareForUpload(f));
       const msg = up.kind === "img" ? JSON.stringify({ _t: "img", url: up.url }) : JSON.stringify({ _t: up.kind, url: up.url, name: up.name, size: up.size });
       await send(msg);
       await refresh();

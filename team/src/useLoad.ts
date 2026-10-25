@@ -10,11 +10,13 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = [], opts: { r
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const run = useCallback(fn, deps);
 
+  const loadedAt = useRef(0);
   const reload = useCallback(async () => {
     const my = ++seq.current;
     try {
       const d = await run();
       if (my === seq.current) {
+        loadedAt.current = Date.now();
         setData(d);
         setError("");
       }
@@ -37,7 +39,8 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = [], opts: { r
         first.current = false;
         return;
       }
-      if (opts.refocus !== false) reload();
+      // coming back to a screen: refresh only if the data is older than 20 s (saves traffic on a slow link)
+      if (opts.refocus !== false && Date.now() - loadedAt.current > 20_000) reload();
     }, [reload, opts.refocus])
   );
 
