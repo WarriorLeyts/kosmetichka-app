@@ -92,17 +92,18 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
         <Text style={[styles.stockText, { color: st.fg }]}>{stock.text}</Text>
       </View>
 
-      <View style={[styles.prices, { backgroundColor: dark ? "rgba(232,44,135,0.1)" : "#fdf2f8" }]}>
+      {/* light panel in both themes: pink/violet prices stay readable in the dark theme */}
+      <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
         {rows.map((r, i) => (
-          <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: dark ? "rgba(255,255,255,0.15)" : "rgba(139,61,255,0.18)" }]}>
-            <Text numberOfLines={1} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? c.secondary }]}>
+          <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
+            <Text numberOfLines={1} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? "#6B5A7B" }]}>
               {r.label}
             </Text>
             <Text
               numberOfLines={1}
               adjustsFontSizeToFit
               minimumFontScale={0.6}
-              style={[styles.priceValue, { color: PRICE_COLORS[i] ?? c.label, fontSize: rows.length >= 3 ? 16 : 19 }]}
+              style={[styles.priceValue, { color: PRICE_COLORS[i] ?? "#2A1A3A", fontSize: rows.length >= 3 ? 16 : 19 }]}
             >
               {money(r.value)}
             </Text>

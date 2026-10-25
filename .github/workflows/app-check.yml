@@ -110,6 +110,17 @@ jobs:
           - takeScreenshot: 10-qty-b-plus
           - tapOn: { point: "11%,75%", optional: true }
           - takeScreenshot: 10-qty-c-minus
+          - tapOn: { text: "Все категории", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: 10-types-0-drawer
+          - tapOn: { text: "Уход па телом", optional: true }
+          - waitForAnimationToEnd
+          - tapOn: { text: "Мисты и спреи для тела", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: 10-types-a-sub
+          - tapOn: { text: "Мисты", optional: true }
+          - waitForAnimationToEnd
+          - takeScreenshot: 10-types-b-mists
           - tapOn: { point: "27%,50%", optional: true }
           - waitForAnimationToEnd
           - takeScreenshot: 11-light-product

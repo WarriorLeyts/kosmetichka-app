@@ -36,12 +36,20 @@ const ICONS = {
   face: require("../../assets/categories/face.png"),
   hair: require("../../assets/categories/hair.png"),
   hands: require("../../assets/categories/hands.png"),
+  pro: require("../../assets/categories/pro.png"),
+  hygiene: require("../../assets/categories/hygiene.png"),
+  bags: require("../../assets/categories/bags.png"),
+  home: require("../../assets/categories/home.png"),
 };
 
 /** 3D icon by the meaning of the category name; null → fall back to an emoji. */
 export function iconFor(name: string): number | null {
   const n = name.toLowerCase();
   const map: [RegExp, keyof typeof ICONS][] = [
+    [/^профессион|парикмах/, "pro"],
+    [/^гигиен/, "hygiene"],
+    [/^пакет/, "bags"],
+    [/^товары для дома/, "home"],
     [/парфю|духи|аромат/, "perfume"],
     [/аксессуар/, "accessories"],
     [/полост|зуб|рта/, "mouth"],

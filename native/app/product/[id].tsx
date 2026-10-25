@@ -326,13 +326,13 @@ export default function ProductScreen() {
           </View>
 
           {/* prices — existing pricing rules */}
-          <View style={[styles.prices, { backgroundColor: dark ? "#2B193D" : "#FDF2F8" }]}>
+          <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#FDF2F8" }]}>
             {rows.map((r, i) => (
-              <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: dark ? "rgba(255,255,255,0.15)" : "rgba(139,61,255,0.18)" }]}>
-                <Text numberOfLines={1} style={{ fontSize: 13, color: PRICE_COLORS[i] ?? c.secondary }}>
+              <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
+                <Text numberOfLines={1} style={{ fontSize: 13, color: PRICE_COLORS[i] ?? "#6B5A7B" }}>
                   {r.label}
                 </Text>
-                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontSize: 22, fontWeight: "700", color: PRICE_COLORS[i] ?? c.label }}>
+                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontSize: 22, fontWeight: "700", color: PRICE_COLORS[i] ?? "#2A1A3A" }}>
                   {money(r.value)}
                 </Text>
               </View>

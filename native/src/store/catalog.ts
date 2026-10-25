@@ -19,6 +19,8 @@ type CatalogState = {
   sort: Sort;
   onlyStock: boolean;
   quick: Quick[];
+  /** product-type chip inside a subcategory (label from SUB_FILTERS) */
+  typeLabel: string | null;
   /** bumps when filters change, so the list reloads */
   version: number;
 
@@ -27,14 +29,14 @@ type CatalogState = {
   metaLoaded: boolean;
   loadMeta: () => Promise<void>;
 
-  set: (patch: Partial<Pick<CatalogState, "search" | "categoryGuid" | "brandGuids" | "sort" | "onlyStock" | "quick">>) => void;
+  set: (patch: Partial<Pick<CatalogState, "search" | "categoryGuid" | "brandGuids" | "sort" | "onlyStock" | "quick" | "typeLabel">>) => void;
   reset: () => void;
   activeFilterCount: () => number;
   /** category + all its descendants, as the site does */
   categoryGuidsFor: (guid: string | null) => string[];
 };
 
-const DEFAULTS = { search: "", categoryGuid: null, brandGuids: [], sort: "popularity" as Sort, onlyStock: false, quick: [] as Quick[] };
+const DEFAULTS = { search: "", categoryGuid: null, brandGuids: [], sort: "popularity" as Sort, onlyStock: false, quick: [] as Quick[], typeLabel: null as string | null };
 
 /** Top-level categories, like the site's sidebar (children of «Каталог», or roots). */
 export function topCategories(all: Category[]): Category[] {
@@ -63,12 +65,18 @@ export const useCatalog = create<CatalogState>((set, get) => ({
     }
   },
 
-  set: (patch) => set((s) => ({ ...patch, version: s.version + 1 })),
+  // another category → its type chips no longer apply
+  set: (patch) =>
+    set((s) => ({
+      ...("categoryGuid" in patch && patch.categoryGuid !== s.categoryGuid && !("typeLabel" in patch) ? { typeLabel: null } : {}),
+      ...patch,
+      version: s.version + 1,
+    })),
   reset: () => set((s) => ({ ...DEFAULTS, version: s.version + 1 })),
 
   activeFilterCount: () => {
     const s = get();
-    return (s.categoryGuid ? 1 : 0) + s.brandGuids.length + (s.onlyStock ? 1 : 0) + s.quick.length + (s.sort !== "popularity" ? 1 : 0);
+    return (s.categoryGuid ? 1 : 0) + s.brandGuids.length + (s.onlyStock ? 1 : 0) + s.quick.length + (s.typeLabel ? 1 : 0) + (s.sort !== "popularity" ? 1 : 0);
   },
 
   categoryGuidsFor: (guid) => {

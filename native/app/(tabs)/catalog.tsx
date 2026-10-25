@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +18,7 @@ import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
 import { useAddToCart } from "@/useAddToCart";
+import { SUB_FILTERS } from "@/subFilters";
 import type { Product } from "@/types";
 
 const SORT_OPTIONS = (Object.keys(SORT_LABELS) as Sort[]).map((v) => ({ value: v, label: SORT_LABELS[v] }));
@@ -96,8 +97,9 @@ export default function Catalog() {
       else setLoading(true);
       setError("");
       const s = useCatalog.getState();
+      const type = s.categoryGuid && s.typeLabel ? SUB_FILTERS[s.categoryGuid]?.find((x) => x.label === s.typeLabel) : undefined;
       try {
-        const r = await api.catalog({
+        const q = {
           page: nextPage,
           search: s.search || undefined,
           categoryGuids: s.categoryGuidsFor(s.categoryGuid),
@@ -105,7 +107,11 @@ export default function Catalog() {
           sort: s.sort,
           onlyStock: s.onlyStock,
           quick: s.quick,
-        });
+          nameAny: type?.q,
+        };
+        let r = await api.catalog(q);
+        // a site without the type filter yet returns everything — narrow by the main fragment instead
+        if (type && !r.nameAnyApplied && !q.search) r = await api.catalog({ ...q, nameAny: undefined, search: type.q[0] });
         if (id !== reqId.current) return;
         setProducts((prev) => (mode === "append" ? [...prev, ...r.products.filter((p) => !prev.some((x) => x.id === p.id))] : r.products));
         setTotal(r.total);
@@ -153,6 +159,8 @@ export default function Catalog() {
   const selectCat = useCallback((guid: string | null) => useCatalog.getState().set({ categoryGuid: guid }), []);
   const filterCount = f.activeFilterCount() - (f.sort !== "popularity" ? 1 : 0);
   const selectedCat = f.categories.find((x) => x.guid === f.categoryGuid);
+  const types = f.categoryGuid ? SUB_FILTERS[f.categoryGuid] : undefined;
+  const dark = c.blurTint === "dark";
 
   const header = (
     <View>
@@ -228,6 +236,42 @@ export default function Catalog() {
           <Ionicons name="close" size={15} color="#8b3dff" />
         </Pressable>
       ) : null}
+
+      {/* product types inside a subcategory: «Все», «Мисты», «Спреи»… */}
+      {types ? (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.types}
+          style={styles.typesWrap}
+        >
+          {[null, ...types.map((t) => t.label)].map((label) => {
+            const on = f.typeLabel === label;
+            return (
+              <Pressable
+                key={label ?? "all"}
+                onPress={() => {
+                  tap();
+                  if (!on) f.set({ typeLabel: label });
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={label ?? "Все товары подкатегории"}
+                style={[
+                  styles.typeChip,
+                  on
+                    ? { backgroundColor: "#8b3dff", borderColor: "#8b3dff" }
+                    : { backgroundColor: c.cell, borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(139,61,255,0.18)" },
+                ]}
+              >
+                <Text style={[styles.typeChipText, { color: on ? "#fff" : c.label }]} numberOfLines={1}>
+                  {label ?? "Все"}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
     </View>
   );
 
@@ -298,6 +342,10 @@ export default function Catalog() {
 }
 
 const styles = StyleSheet.create({
+  typesWrap: { marginHorizontal: -11, marginTop: 4, marginBottom: 6 },
+  types: { paddingHorizontal: 16, gap: 8 },
+  typeChip: { height: 36, paddingHorizontal: 15, borderRadius: 18, borderWidth: 1, justifyContent: "center" },
+  typeChipText: { fontSize: 15, fontWeight: "500" },
   title: { paddingHorizontal: 5, marginTop: 14, marginBottom: 12 },
   search: { flexDirection: "row", alignItems: "center", gap: 9, height: 52, borderRadius: 26, paddingLeft: 5, paddingRight: 5, marginHorizontal: 5 },
   searchInput: { flex: 1, fontSize: 17, height: "100%" },
