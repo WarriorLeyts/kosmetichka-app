@@ -82,6 +82,11 @@ export default function ProductScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const padY = useRef(0);
   const picked = useRef(false);
+  // the waitlist call is a toggle: a double tap would add and immediately remove the product
+  const waitRef = useRef(false);
+  // the current variant selection, read once per «Добавить» tap (a double tap adds it only once)
+  const variantQtyRef = useRef(variantQty);
+  variantQtyRef.current = variantQty;
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion).catch(() => {});
@@ -91,6 +96,11 @@ export default function ProductScreen() {
 
   const load = useCallback(async () => {
     setError("");
+    // deep links can carry anything here — only a numeric product id goes to the API
+    if (!/^[0-9]+$/.test(String(id ?? ""))) {
+      setError("Товар не найден");
+      return;
+    }
     try {
       const p = await api.product(id);
       setProduct(p);
@@ -228,6 +238,8 @@ export default function ProductScreen() {
       router.push("/login");
       return;
     }
+    if (waitRef.current) return;
+    waitRef.current = true;
     setWaitBusy(true);
     try {
       const added = await toggleWait(product.id);
@@ -236,6 +248,7 @@ export default function ProductScreen() {
     } catch (e) {
       Alert.alert("Ошибка", e instanceof Error ? e.message : "Не удалось");
     } finally {
+      waitRef.current = false;
       setWaitBusy(false);
     }
   };
@@ -487,7 +500,10 @@ export default function ProductScreen() {
               icon="bag-add-outline"
               disabled={pickedTotal === 0}
               onPress={() => {
-                addVariants(product, variants.map((v) => ({ variant: v, quantity: variantQty[v.id] ?? 0 })));
+                const sel = variantQtyRef.current;
+                if (!Object.values(sel).some((n) => n > 0)) return;
+                variantQtyRef.current = {};
+                addVariants(product, variants.map((v) => ({ variant: v, quantity: sel[v.id] ?? 0 })));
                 setVariantQty({});
                 Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
                 Alert.alert("Добавлено в корзину", undefined, [
@@ -509,7 +525,8 @@ export default function ProductScreen() {
                 title={inCart > 0 ? "Перейти в корзину" : "В корзину"}
                 icon="bag-handle-outline"
                 onPress={() => {
-                  if (inCart > 0) {
+                  // read the store, not this render: a fast second tap must not add the product twice
+                  if (inCart > 0 || useCartStore.getState().quantityOf(key) > 0) {
                     router.navigate("/cart");
                     return;
                   }

@@ -104,12 +104,13 @@ export default function Orders() {
       try {
         const r = await api.orders(page, status);
         if (id !== reqId.current) return; // a newer request (another filter) wins
-        r.orders.forEach((o) => orderCache.set(o.id, o));
+        const list = Array.isArray(r?.orders) ? r.orders : [];
+        list.forEach((o) => orderCache.set(o.id, o));
         setData(r);
         setOrders((prev) => {
-          if (mode !== "append") return r.orders;
+          if (mode !== "append") return list;
           const seen = new Set(prev.map((o) => o.id));
-          return [...prev, ...r.orders.filter((o) => !seen.has(o.id))];
+          return [...prev, ...list.filter((o) => !seen.has(o.id))];
         });
         orderStatus(true)
           .then((s) => setUnread(new Set(s.managerMessages.map((m) => m.orderId))))
@@ -129,9 +130,13 @@ export default function Orders() {
   // another account (or logout): forget the previous list
   const customerId = customer?.id ?? null;
   useEffect(() => {
+    reqId.current++; // a request still running for the previous account must not fill the list
     setOrders([]);
     setData(null);
     setUnread(new Set());
+    setError("");
+    setLoading(false);
+    setRefreshing(false);
   }, [customerId]);
 
   useEffect(() => {

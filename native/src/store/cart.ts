@@ -80,6 +80,8 @@ export const useCartStore = create<CartState>()(
       },
 
       setQuantity: (cartKey, quantity) => {
+        if (!Number.isFinite(quantity)) return;
+        quantity = Math.floor(quantity);
         if (quantity <= 0) {
           set({ items: get().items.filter((i) => i.cartKey !== cartKey) });
           return;
@@ -126,6 +128,18 @@ export const useCartStore = create<CartState>()(
       count: () => get().items.reduce((s, i) => s + i.quantity, 0),
       quantityOf: (cartKey) => get().items.find((i) => i.cartKey === cartKey)?.quantity ?? 0,
     }),
-    { name: "kosmetichka-cart", storage: persistStorage, partialize: (s) => ({ items: s.items, comment: s.comment }) }
+    {
+      name: "kosmetichka-cart",
+      storage: persistStorage,
+      partialize: (s) => ({ items: s.items, comment: s.comment }),
+      // saved data from an older version / a broken write: keep only lines that can be ordered
+      merge: (saved, current) => {
+        const p = (saved ?? {}) as Partial<CartState>;
+        const items = Array.isArray(p.items)
+          ? p.items.filter((i) => i && typeof i.id === "number" && typeof i.cartKey === "string" && Number.isInteger(i.quantity) && i.quantity > 0)
+          : current.items;
+        return { ...current, items, comment: typeof p.comment === "string" ? p.comment : current.comment };
+      },
+    }
   )
 );

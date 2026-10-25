@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
 import { api, BASE_URL } from "@/api";
-import { useAuth } from "@/store/auth";
+import { clearPendingLogout, useAuth } from "@/store/auth";
 import { Captcha } from "@/components/Captcha";
 import { tap } from "@/components/ui";
 import { TitleBar } from "@/components/iosui/TitleBar";
@@ -92,6 +92,7 @@ export default function Register() {
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
   const submitting = useRef(false);
+  const smsBusy = useRef(false);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -107,6 +108,7 @@ export default function Register() {
   const wholesale = priceType === "wholesale" || priceType === "big_wholesale";
 
   const sendSms = async () => {
+    if (smsBusy.current) return; // a double tap would send two SMS (the second one fails with «wait 60 s»)
     const e: Errors = {};
     if (!captcha) e.captcha = "Сначала отметьте «Я не робот»";
     if (f.phone.replace(/\D/g, "").length < 10) e.phone = "Введите номер телефона";
@@ -114,6 +116,7 @@ export default function Register() {
       setErrors({ ...errors, ...e });
       return;
     }
+    smsBusy.current = true;
     setBusy("sms");
     setError("");
     try {
@@ -123,6 +126,7 @@ export default function Register() {
     } catch (err) {
       setErrors({ ...errors, phone: err instanceof Error ? err.message : "Не удалось отправить SMS" });
     } finally {
+      smsBusy.current = false;
       setBusy("");
     }
   };
@@ -152,6 +156,7 @@ export default function Register() {
       const r = await api.register({ ...f, captchaToken: captcha ?? "", smsCode: smsCode.trim(), priceType });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       if (r.autoLogin) {
+        await clearPendingLogout();
         await refresh();
         Alert.alert("Готово!", r.message, [{ text: "Перейти в каталог", onPress: () => router.replace("/catalog") }]);
       } else {

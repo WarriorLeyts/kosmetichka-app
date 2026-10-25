@@ -102,7 +102,7 @@ export default function Waitlist() {
     setError("");
     try {
       const r = await api.wishlist();
-      setItems(r.products);
+      setItems(Array.isArray(r?.products) ? r.products : []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка");
     } finally {

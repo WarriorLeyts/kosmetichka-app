@@ -23,9 +23,10 @@
         "backgroundImage": "./assets/adaptive-background.png"
       },
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
+        "android.permission.CAMERA"
+      ],
+      "allowBackup": false,
+      "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
       ]
     },
@@ -43,7 +44,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды товаров."
+          "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды товаров.",
+          "recordAudioAndroid": false
         }
       ],
       [

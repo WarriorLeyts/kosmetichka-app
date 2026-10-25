@@ -21,6 +21,8 @@ function init(){
 }
 </script></body></html>`;
 
+const ALLOWED = /^https:\/\/(kosmetichka-opt\.ru|smartcaptcha\.yandexcloud\.net)(?::443)?(?:[/?#]|$)/i;
+
 /**
  * Renders the website's «Я не робот» check inside a native WebView. The page is
  * loaded with the site's own origin so the captcha key's domain check passes.
@@ -43,12 +45,8 @@ export function Captcha({ onToken, onExpired }: { onToken: (token: string) => vo
         domStorageEnabled
         setSupportMultipleWindows={false}
         // the captcha page may only load itself and Yandex SmartCaptcha — nothing else
-        onShouldStartLoadWithRequest={(r) =>
-          r.url.startsWith("about:") ||
-          r.url.startsWith("data:") ||
-          r.url.startsWith("https://kosmetichka-opt.ru") ||
-          r.url.startsWith("https://smartcaptcha.yandexcloud.net")
-        }
+        // (exact hosts: a prefix check would also let «https://kosmetichka-opt.ru.evil.com» through)
+        onShouldStartLoadWithRequest={(r) => r.url.startsWith("about:") || r.url.startsWith("data:") || ALLOWED.test(r.url)}
         onMessage={(e) => {
           try {
             const m = JSON.parse(e.nativeEvent.data);

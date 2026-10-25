@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -6,7 +6,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { api, imageUrl } from "@/api";
+import { api, ApiError, imageUrl } from "@/api";
 import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -80,6 +80,8 @@ export default function Cart() {
   const setComment = useCartStore((s) => s.setComment);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  // a second tap before the re-render must not send the same order twice
+  const submitting = useRef(false);
 
   const active = effectivePriceType(items, customer);
   const total = rawCartTotal(items, active);
@@ -113,15 +115,20 @@ export default function Cart() {
   }
 
   const checkout = async () => {
+    if (submitting.current) return;
     if (!customer) {
       router.push("/login");
       return;
     }
+    submitting.current = true;
     setLoading(true);
     setError("");
     try {
+      // the latest cart from the store (not this render's copy), whole positive quantities only
+      const lines = useCartStore.getState().items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0);
+      if (lines.length === 0) return;
       const r = await api.createOrder(
-        items.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
+        lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim()
       );
       clear();
@@ -134,7 +141,10 @@ export default function Cart() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось оформить заказ");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      // the login expired on the server: show the signed-out state instead of failing again and again
+      if (e instanceof ApiError && e.status === 401) useAuth.getState().refresh();
     } finally {
+      submitting.current = false;
       setLoading(false);
     }
   };

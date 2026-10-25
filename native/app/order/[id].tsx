@@ -37,9 +37,21 @@ function fileSize(bytes: unknown): string {
   return `${(b / 1024 / 1024).toFixed(1).replace(".", ",")} МБ`;
 }
 
+/**
+ * Chat attachments are only ever files uploaded to our own /api/uploads/chat/ (same name format the
+ * server accepts). Anything else — another host, http://, «..» in the path — is shown as plain text
+ * and never loaded or opened, whoever sent it.
+ */
+const CHAT_FILE = /^\/api\/uploads\/chat\/chat-[0-9]+-[a-z0-9]+\.[a-z0-9]+$/;
+function chatFileUrl(url: unknown): string | null {
+  if (typeof url !== "string") return null;
+  const path = url.startsWith(BASE_URL + "/") ? url.slice(BASE_URL.length) : url;
+  return CHAT_FILE.test(path) ? BASE_URL + path : null;
+}
+
 /** opens a photo / video / file from the chat in the system viewer */
 function openAttachment(url: string) {
-  const u = imageUrl(url);
+  const u = chatFileUrl(url);
   if (u) WebBrowser.openBrowserAsync(u).catch(() => {});
 }
 
@@ -48,11 +60,12 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
   try {
     const obj = JSON.parse(text);
     // attachments: from either side, but only files uploaded to our own server
-    const own = typeof obj?.url === "string" && (fromManager || obj.url.startsWith("/api/uploads/chat/"));
+    const fileUrl = chatFileUrl(obj?.url);
+    const own = fileUrl !== null;
     if (own && obj._t === "img") {
       return (
         <Pressable onPress={() => openAttachment(obj.url)} accessibilityRole="imagebutton" accessibilityLabel="Фото, открыть">
-          <Image source={{ uri: imageUrl(obj.url) ?? undefined }} style={{ width: 200, height: 200, borderRadius: 12 }} contentFit="cover" />
+          <Image source={{ uri: fileUrl }} style={{ width: 200, height: 200, borderRadius: 12 }} contentFit="cover" />
         </Pressable>
       );
     }
@@ -88,7 +101,7 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
     if (obj?._t === "product" && typeof obj.name === "string") {
       return (
         <View style={{ width: 210 }}>
-          {obj.imagePath ? (
+          {typeof obj.imagePath === "string" && imageUrl(obj.imagePath)?.startsWith(BASE_URL + "/") ? (
             <Image source={{ uri: imageUrl(obj.imagePath) ?? undefined }} style={{ width: 210, height: 120, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" />
           ) : null}
           <Text style={{ fontWeight: "600", marginTop: 6, color }}>{obj.name}</Text>
@@ -104,7 +117,8 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
 
 export default function OrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const orderId = Number(id);
+  // deep links can carry anything here — only a positive whole number is an order id
+  const orderId = /^[0-9]+$/.test(String(id ?? "")) ? Number(id) : NaN;
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
@@ -121,6 +135,9 @@ export default function OrderScreen() {
   const [kb, setKb] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null); // name of the file being sent
+  // taps that arrive before the re-render (double tap) must not add the order to the cart twice
+  const repeatBusy = useRef(false);
+  const actionBusy = useRef(false);
   const scrollRef = useRef<ScrollView>(null);
   const nearBottom = useRef(true);
   const lastCount = useRef(0);
@@ -136,22 +153,38 @@ export default function OrderScreen() {
 
   const loadOrder = useCallback(async () => {
     setError("");
+    if (!Number.isFinite(orderId)) {
+      setError("Заказ не найден");
+      return;
+    }
     try {
       const fresh = await api.order(orderId);
-      setOrder((prev) => ({ ...(prev ?? {}), ...fresh, items: fresh.items.map((it) => {
-        const old = prev?.items.find((x) => x.id === it.id);
+      setOrder((prev) => ({ ...(prev ?? {}), ...fresh, items: (fresh.items ?? []).map((it) => {
+        const old = prev?.items?.find((x) => x.id === it.id);
         return { ...old, ...it };
       }) }) as Order);
     } catch (e) {
+      // not this account's order (or signed out): never keep showing a cached copy
+      if (e instanceof ApiError && (e.status === 401 || e.status === 403 || e.status === 404)) {
+        orderCache.delete(orderId);
+        setOrder(null);
+        setError(e.message);
+        return;
+      }
       if (!orderCache.get(orderId)) setError(e instanceof Error ? e.message : "Ошибка");
     }
   }, [orderId]);
 
   const loadMessages = useCallback(async () => {
+    if (!Number.isFinite(orderId)) {
+      setChatLoading(false);
+      return false;
+    }
     try {
       const r = await api.messages(orderId);
+      const list = Array.isArray(r?.messages) ? r.messages : [];
       setMessages((prev) =>
-        prev.length === r.messages.length && prev[prev.length - 1]?.id === r.messages[r.messages.length - 1]?.id ? prev : r.messages
+        prev.length === list.length && prev[prev.length - 1]?.id === list[list.length - 1]?.id ? prev : list
       );
       // messages already sent are now in the server list
       setPending((p) => (p.some((x) => x.sent) ? p.filter((x) => !x.sent) : p));
@@ -286,7 +319,8 @@ export default function OrderScreen() {
 
   // repeat with current prices and stock; unavailable items are skipped and listed
   const repeatOrder = async () => {
-    if (repeating) return;
+    if (repeating || repeatBusy.current) return;
+    repeatBusy.current = true;
     setRepeating(true);
     try {
       const ids = [...new Set(order.items.map((i) => i.productId))];
@@ -331,6 +365,7 @@ export default function OrderScreen() {
         router.navigate("/cart");
       }
     } finally {
+      repeatBusy.current = false;
       setRepeating(false);
     }
   };
@@ -342,6 +377,8 @@ export default function OrderScreen() {
         text: "Отменить заказ",
         style: "destructive",
         onPress: async () => {
+          if (actionBusy.current) return;
+          actionBusy.current = true;
           setBusy("cancel");
           try {
             await api.cancelOrder(order.id);
@@ -350,6 +387,7 @@ export default function OrderScreen() {
           } catch (e) {
             Alert.alert("Ошибка", e instanceof Error ? e.message : "Не удалось отменить");
           } finally {
+            actionBusy.current = false;
             setBusy("");
           }
         },
@@ -357,6 +395,8 @@ export default function OrderScreen() {
     ]);
 
   const confirm = async () => {
+    if (actionBusy.current) return;
+    actionBusy.current = true;
     setBusy("confirm");
     try {
       await api.confirmOrder(order.id);
@@ -365,6 +405,7 @@ export default function OrderScreen() {
     } catch (e) {
       Alert.alert("Ошибка", e instanceof Error ? e.message : "Не удалось подтвердить");
     } finally {
+      actionBusy.current = false;
       setBusy("");
     }
   };

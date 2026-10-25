@@ -43,12 +43,17 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     data = null;
   }
   if (!res.ok) {
-    throw new ApiError(data?.error || `Ошибка сервера (${res.status})`, res.status);
+    // only a string can be shown in <Text> — anything else would crash the screen that renders it
+    const msg = typeof data?.error === "string" && data.error ? data.error : `Ошибка сервера (${res.status})`;
+    throw new ApiError(msg, res.status);
   }
   return data as T;
 }
 
 const json = (body: unknown) => JSON.stringify(body);
+
+/** One URL path segment: ids come from routes / deep links, so «../» etc. must never reach the path. */
+const seg = (id: number | string) => encodeURIComponent(String(id));
 
 export function imageUrl(path?: string | null): string | null {
   if (!path) return null;
@@ -92,10 +97,10 @@ export const api = {
     return request("/api/mobile/home");
   },
   product(id: number | string): Promise<Product> {
-    return request(`/api/products/${id}`);
+    return request(`/api/products/${seg(id)}`);
   },
   variants(id: number): Promise<{ variants: Variant[] }> {
-    return request(`/api/products/${id}/variants`);
+    return request(`/api/products/${seg(id)}/variants`);
   },
 
   // ── Auth ──
@@ -149,13 +154,13 @@ export const api = {
     return request(`/api/mobile/orders?${p.toString()}`);
   },
   order(id: number | string): Promise<Order> {
-    return request(`/api/mobile/orders/${id}`);
+    return request(`/api/mobile/orders/${seg(id)}`);
   },
   cancelOrder(id: number) {
-    return request(`/api/orders/${id}/cancel`, { method: "POST" });
+    return request(`/api/orders/${seg(id)}/cancel`, { method: "POST" });
   },
   confirmOrder(id: number) {
-    return request(`/api/orders/${id}/confirm`, { method: "POST" });
+    return request(`/api/orders/${seg(id)}/confirm`, { method: "POST" });
   },
   orderStatus(): Promise<{
     pending: number;
@@ -166,7 +171,7 @@ export const api = {
     return request("/api/orders/status");
   },
   messages(orderId: number): Promise<{ messages: ChatMessage[] }> {
-    return request(`/api/orders/${orderId}/messages`);
+    return request(`/api/orders/${seg(orderId)}/messages`);
   },
   /** photo / video / file for the manager chat (site endpoint /api/uploads/chat, same cookie login) */
   async uploadChat(file: { uri: string; name: string; mime: string }): Promise<ChatUpload> {
@@ -179,11 +184,13 @@ export const api = {
       throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
     }
     const data = await res.json().catch(() => null);
-    if (!res.ok || !data?.url) throw new ApiError(data?.error || `Не удалось загрузить файл (${res.status})`, res.status);
+    if (!res.ok || typeof data?.url !== "string") {
+      throw new ApiError(typeof data?.error === "string" && data.error ? data.error : `Не удалось загрузить файл (${res.status})`, res.status);
+    }
     return data as ChatUpload;
   },
   sendMessage(orderId: number, text: string) {
-    return request(`/api/orders/${orderId}/messages`, { method: "POST", body: json({ text }) });
+    return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ text }) });
   },
 
   // ── Waiting list ──
@@ -195,6 +202,6 @@ export const api = {
     return request("/api/wishlist", { method: "POST", body: json({ productId }) });
   },
   wishlistRemove(productId: number) {
-    return request(`/api/wishlist?productId=${productId}`, { method: "DELETE" });
+    return request(`/api/wishlist?productId=${seg(productId)}`, { method: "DELETE" });
   },
 };
