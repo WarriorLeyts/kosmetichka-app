@@ -1,0 +1,26 @@
+{
+  "name": "kosmetichka-team",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "typecheck": "tsc --noEmit",
+    "deps": "npm install --no-audit --no-fund --legacy-peer-deps && node scripts-deps.js && npm install --no-audit --no-fund --legacy-peer-deps"
+  },
+  "dependencies": {
+    "expo": "~54.0.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "zustand": "^5.0.0",
+    "@expo-google-fonts/inter": "*",
+    "expo-image-picker": "*",
+    "expo-document-picker": "*",
+    "expo-file-system": "*",
+    "expo-sharing": "*",
+    "expo-image-manipulator": "*"
+  },
+  "devDependencies": {}
+}

@@ -1,0 +1,106 @@
+name: Team app (Косметичка Team)
+
+# Staff app from the folder team/: type check, Android APK (release "team-android-latest"),
+# and on manual run also an unsigned iPhone .ipa (release "team-ios-latest") for SideStore / AltStore / Sideloadly.
+on:
+  push:
+    branches: [main]
+    paths: ['team/**', '.github/workflows/team.yml']
+  workflow_dispatch:
+    inputs:
+      ios:
+        description: "Собрать и .ipa для iPhone"
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: team
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install (versions matched to the Expo SDK)
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Type check
+        run: ../scripts/ci-run.sh npx tsc --noEmit --pretty false
+      - name: Bundle JS (catches import errors)
+        run: ../scripts/ci-run.sh npx expo export --platform android --output-dir dist
+
+  android:
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Install
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Generate Android project
+        run: |
+          ../scripts/ci-run.sh npx expo prebuild --platform android --no-install
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1536m/' android/gradle.properties
+      - name: Version
+        run: |
+          sed -i -E "s/versionCode [0-9]+/versionCode ${GITHUB_RUN_NUMBER}/; s/versionName \"[^\"]+\"/versionName \"1.0.${GITHUB_RUN_NUMBER}\"/" android/app/build.gradle
+      - name: Build APK
+        working-directory: team/android
+        run: ../../scripts/ci-run.sh ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+      - name: Publish APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk kosmetichka-team.apk
+          gh release view team-android-latest >/dev/null 2>&1 || \
+            gh release create team-android-latest --prerelease --title "Косметичка Team — Android" --notes "Приложение для сотрудников."
+          gh release upload team-android-latest kosmetichka-team.apk --clobber
+          gh release edit team-android-latest --notes "Косметичка Team, сборка 1.0.${GITHUB_RUN_NUMBER} от $(date -u +'%d.%m.%Y %H:%M') UTC. Скачайте kosmetichka-team.apk на телефон и установите."
+
+  ios:
+    if: github.event_name == 'workflow_dispatch' && inputs.ios
+    needs: check
+    runs-on: macos-15
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Generate iOS project
+        run: ../scripts/ci-run.sh npx expo prebuild --platform ios
+      - name: Version
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString 1.0.${GITHUB_RUN_NUMBER}" ios/*/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${GITHUB_RUN_NUMBER}" ios/*/Info.plist
+      - name: Build for iPhone without signing
+        run: |
+          WS=$(ls -d ios/*.xcworkspace | head -1); SCHEME=$(basename "$WS" .xcworkspace)
+          ../scripts/ci-run.sh xcodebuild -workspace "$WS" -scheme "$SCHEME" -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath "$RUNNER_TEMP/dd" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" build -quiet
+      - name: Package and publish .ipa
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          APP=$(ls -d "$RUNNER_TEMP"/dd/Build/Products/Release-iphoneos/*.app | head -1)
+          rm -rf Payload && mkdir Payload && cp -R "$APP" Payload/
+          rm -f kosmetichka-team.ipa && zip -qry kosmetichka-team.ipa Payload
+          gh release view team-ios-latest >/dev/null 2>&1 || \
+            gh release create team-ios-latest --prerelease --title "Косметичка Team — iPhone (.ipa без подписи)" --notes "Приложение для сотрудников."
+          gh release upload team-ios-latest kosmetichka-team.ipa --clobber
+          gh release edit team-ios-latest --notes "Косметичка Team, сборка 1.0.${GITHUB_RUN_NUMBER} от $(date -u +'%d.%m.%Y %H:%M') UTC. Файл без подписи: установите так же, как «Косметичку» (xtool → Sideloadly)."
