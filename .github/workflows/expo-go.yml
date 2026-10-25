@@ -3,10 +3,8 @@ name: Expo Go (iPhone)
 # Publishes the app's JS to Expo (EAS Update) so it opens in Expo Go on iPhone/Android
 # from a permanent QR code — no computer needed. Requires the EXPO_TOKEN secret.
 
+# Автозапуск выключен: Expo Go больше не используется. Только вручную.
 on:
-  push:
-    branches: [main]
-    paths: ['native/**', '.github/workflows/expo-go.yml']
   workflow_dispatch:
     inputs:
       channel:
