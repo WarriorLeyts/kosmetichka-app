@@ -289,7 +289,7 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
                         ) : (
                           <Text style={styles.emoji}>{emojiFor(cat.name)}</Text>
                         )}
-                        <Text style={[styles.tileText, { color: active ? PINK : c.label }]}>{cat.name}</Text>
+                        <Text numberOfLines={2} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.tileText, { color: active ? PINK : c.label }]}>{cat.name}</Text>
                         {kids ? <Ionicons name="chevron-forward" size={18} color={c.chevron} style={styles.tileChevron} /> : null}
                       </ScalePress>
                     </View>
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
   cell: { width: "50%", padding: 6 },
   tile: { minHeight: 128, borderRadius: 20, borderWidth: 1.5, alignItems: "center", justifyContent: "center", paddingHorizontal: 14, paddingVertical: 14 },
   emoji: { fontSize: 44, marginBottom: 6 },
-  tileText: { fontSize: 16, fontWeight: "600", textAlign: "center", lineHeight: 20, paddingHorizontal: 12 },
+  tileText: { fontSize: 16, fontWeight: "600", textAlign: "center", lineHeight: 20, paddingHorizontal: 8 },
   tileChevron: { position: "absolute", right: 10, top: "50%", marginTop: -9 },
   subCard: { flexDirection: "row", alignItems: "center", gap: 10, minHeight: 60, borderRadius: 18, borderWidth: 1.5, paddingHorizontal: 18, paddingVertical: 14 },
   subText: { flex: 1, fontSize: 17, fontWeight: "600", lineHeight: 22 },
