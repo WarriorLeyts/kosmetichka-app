@@ -1,4 +1,4 @@
-import { memo, useRef } from "react";
+import { memo, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -14,6 +14,7 @@ import { useReduceMotion } from "../useReduceMotion";
 import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
 import { FavHeart } from "./FavHeart";
+import { useCartStore } from "../store/cart";
 
 type Props = {
   product: Product;
@@ -110,29 +111,106 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       </View>
 
       <View style={{ flex: 1 }} />
+      {inCart > 0 && !out ? (
+        <QtyRow product={product} qty={inCart} dark={dark} label={c.label} />
+      ) : (
+        <Pressable
+          disabled={out}
+          accessibilityRole="button"
+          accessibilityLabel={out ? "Нет в наличии" : "Добавить в корзину"}
+          onPress={() => {
+            tap();
+            onAdd(product);
+          }}
+          style={({ pressed }) => [{ opacity: out ? 0.45 : pressed ? 0.88 : 1 }]}
+        >
+          <LinearGradient
+            colors={out ? ["#AEAEB2", "#AEAEB2"] : VIOLET_PINK}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[styles.button, !out && { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
+          >
+            <Ionicons name="cart-outline" size={18} color="#fff" />
+            <Text numberOfLines={1} style={styles.buttonText}>
+              {out ? "Нет в наличии" : "В корзину"}
+            </Text>
+          </LinearGradient>
+        </Pressable>
+      )}
+    </Pressable>
+  );
+}
+
+/** «− n +» and «В корзине», as on the site: change the quantity right in the card. */
+function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; dark: boolean; label: string }) {
+  const [w, setW] = useState(0);
+  const key = String(product.id);
+  const min = Math.max(1, product.minOrderQty ?? 1);
+  const cap = typeof product.stock === "number" && product.stock > 0 ? product.stock : Infinity;
+  const atCap = qty >= cap;
+  const set = (n: number) => {
+    tap();
+    // below the minimum order the line is removed, like «−» at 1 on the site
+    useCartStore.getState().setQuantity(key, n < min ? 0 : Math.min(n, cap));
+  };
+  // narrow cards (small phones): the cart button keeps only its icon
+  const compact = w > 0 && w < 150;
+  return (
+    <View style={styles.qtyRow} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
+      <View
+        style={[
+          styles.stepper,
+          dark ? { backgroundColor: "rgba(255,255,255,0.06)", borderColor: "rgba(255,255,255,0.16)" } : { backgroundColor: "#fff", borderColor: "rgba(31,41,55,0.14)" },
+        ]}
+      >
+        <Pressable
+          hitSlop={4}
+          accessibilityRole="button"
+          accessibilityLabel={qty <= min ? "Убрать из корзины" : "Уменьшить количество"}
+          onPress={() => set(qty - 1)}
+          style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.5 }]}
+        >
+          <Ionicons name="remove" size={18} color={label} />
+        </Pressable>
+        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.qty, { color: label }]}>
+          {qty}
+        </Text>
+        <Pressable
+          hitSlop={4}
+          disabled={atCap}
+          accessibilityRole="button"
+          accessibilityLabel="Увеличить количество"
+          onPress={() => set(qty + 1)}
+          style={({ pressed }) => [styles.stepBtn, { opacity: atCap ? 0.3 : pressed ? 0.5 : 1 }]}
+        >
+          <Ionicons name="add" size={18} color={label} />
+        </Pressable>
+      </View>
       <Pressable
-        disabled={out}
         accessibilityRole="button"
-        accessibilityLabel={out ? "Нет в наличии" : "Добавить в корзину"}
+        accessibilityLabel="В корзине, перейти в корзину"
         onPress={() => {
           tap();
-          onAdd(product);
+          router.navigate("/cart");
         }}
-        style={({ pressed }) => [{ opacity: out ? 0.45 : pressed ? 0.88 : 1 }]}
+        style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.88 : 1 }]}
       >
         <LinearGradient
-          colors={out ? ["#AEAEB2", "#AEAEB2"] : VIOLET_PINK}
+          colors={VIOLET_PINK}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
-          style={[styles.button, !out && { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
+          style={[styles.button, styles.inCartBtn, { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
         >
-          <Ionicons name={inCart > 0 ? "checkmark" : "cart-outline"} size={18} color="#fff" />
-          <Text numberOfLines={1} style={styles.buttonText}>
-            {out ? "Нет в наличии" : inCart > 0 ? `В корзине: ${inCart}` : "В корзину"}
-          </Text>
+          {compact ? (
+            <Ionicons name="cart" size={19} color="#fff" />
+          ) : (
+            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.buttonText, { fontSize: 14 }]}>
+              В корзине
+            </Text>
+          )}
         </LinearGradient>
       </Pressable>
-    </Pressable>
+    </View>
   );
 }
 
@@ -169,4 +247,9 @@ const styles = StyleSheet.create({
   priceValue: { fontWeight: "700", marginTop: 1, textAlign: "center" },
   button: { height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 10 },
   buttonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
+  qtyRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
+  stepper: { flexDirection: "row", alignItems: "center", height: 44, borderRadius: 22, borderWidth: 1, paddingHorizontal: 2 },
+  stepBtn: { width: 30, height: 42, alignItems: "center", justifyContent: "center" },
+  qty: { minWidth: 22, textAlign: "center", fontSize: 16, fontWeight: "800" },
+  inCartBtn: { marginTop: 0, paddingHorizontal: 8 },
 });
