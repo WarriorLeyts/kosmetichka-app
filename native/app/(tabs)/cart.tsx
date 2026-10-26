@@ -13,7 +13,7 @@ import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
-  amountUntilBigWholesale, amountUntilWholesale, effectivePriceType, priceFor, priceTypeLabel, rawCartTotal, type PriceType,
+  amountUntilMinOrder, minOrderFor, effectivePriceType, priceFor, priceTypeLabel, rawCartTotal, type PriceType,
 } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -141,8 +141,9 @@ export default function Cart() {
 
   const active = effectivePriceType(items, customer);
   const total = rawCartTotal(items, active);
-  const toWholesale = amountUntilWholesale(items, customer);
-  const toBig = amountUntilBigWholesale(items, customer);
+  // опт — заказ от 5 000 ₽, крупный опт — от 50 000 ₽ (цены сразу по типу клиента)
+  const minOrder = minOrderFor(customer);
+  const toMin = amountUntilMinOrder(items, customer);
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
   const bg = "transparent";
@@ -225,28 +226,18 @@ export default function Cart() {
     }
   };
 
-  // wholesale threshold banner (existing rules: only wholesale customers get the upgrade)
+  // minimum order banner for wholesale / big wholesale
   let banner: { icon: keyof typeof Ionicons.glyphMap; node: ReactNode } | null = null;
-  if (customer && toWholesale > 0) {
+  if (customer && minOrder > 0 && toMin > 0) {
     banner = {
       icon: "bag-handle",
       node: (
         <>
-          Добавьте товаров ещё на <Text style={styles.bannerSum}>{money(toWholesale)}</Text> — включится оптовая цена
+          Заказ по ценам «{priceTypeLabel(active)}» — от {money(minOrder)}. Добавьте товаров ещё на{" "}
+          <Text style={styles.bannerSum}>{money(toMin)}</Text>
         </>
       ),
     };
-  } else if (customer && active === "wholesale" && toBig > 0) {
-    banner = {
-      icon: "checkmark-circle",
-      node: (
-        <>
-          Оптовая цена включена. До цены «Крупный опт» ещё <Text style={styles.bannerSum}>{money(toBig)}</Text>
-        </>
-      ),
-    };
-  } else if (customer && active === "big_wholesale" && customer.priceType === "wholesale") {
-    banner = { icon: "checkmark-circle", node: <>Включена цена «Крупный опт»</> };
   }
 
   const renderItem = ({ item }: { item: CartItem }) => {
@@ -433,8 +424,14 @@ export default function Cart() {
               title={customer ? "Оформить заказ" : "Войти и оформить"}
               icon={customer ? undefined : "log-in-outline"}
               loading={loading}
+              disabled={!!customer && toMin > 0}
               onPress={() => checkout()}
             />
+            {customer && toMin > 0 ? (
+              <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginTop: 8 }]}>
+                Минимальная сумма заказа — {money(minOrder)}
+              </Text>
+            ) : null}
             <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginTop: 10 }]}>
               Заказ попадёт менеджеру на подтверждение. Оплата — после согласования.
             </Text>
@@ -446,19 +443,20 @@ export default function Cart() {
 }
 
 function GradientButton({
-  title, icon, loading, onPress, style,
-}: { title: string; icon?: keyof typeof Ionicons.glyphMap; loading?: boolean; onPress: () => void; style?: object }) {
+  title, icon, loading, disabled, onPress, style,
+}: { title: string; icon?: keyof typeof Ionicons.glyphMap; loading?: boolean; disabled?: boolean; onPress: () => void; style?: object }) {
+  const off = loading || disabled;
   return (
     <Pressable
       onPress={() => {
-        if (loading) return;
+        if (off) return;
         tap();
         onPress();
       }}
       accessibilityRole="button"
       accessibilityLabel={title}
-      accessibilityState={{ busy: !!loading }}
-      style={({ pressed }) => [{ opacity: pressed || loading ? 0.9 : 1, transform: [{ scale: pressed ? 0.99 : 1 }] }, style]}
+      accessibilityState={{ busy: !!loading, disabled: !!disabled }}
+      style={({ pressed }) => [{ opacity: disabled ? 0.45 : pressed || loading ? 0.9 : 1, transform: [{ scale: pressed && !off ? 0.99 : 1 }] }, style]}
     >
       <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
         {loading ? <ActivityIndicator color="#fff" /> : icon ? <Ionicons name={icon} size={22} color="#fff" /> : null}
