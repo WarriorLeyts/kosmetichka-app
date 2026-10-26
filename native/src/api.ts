@@ -138,6 +138,21 @@ export const api = {
     return request("/api/auth/forgot-password", { method: "POST", body: json({ email }) });
   },
 
+  // ── Loyalty card (MAXMA, by the customer's phone) ──
+  loyalty(): Promise<{
+    card: {
+      number: string;
+      name: string;
+      level: string | null;
+      cashback: string | null;
+      bonuses: number;
+      pendingBonuses: number;
+    } | null;
+    reason?: string;
+  }> {
+    return request("/api/mobile/loyalty");
+  },
+
   // ── Profile ──
   profile(): Promise<{ customer: Customer }> {
     return request("/api/mobile/profile");

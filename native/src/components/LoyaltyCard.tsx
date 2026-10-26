@@ -3,7 +3,7 @@ import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View 
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
-import { ean13Modules, runs } from "../ean13";
+import { code128Modules, ean13Modules, runs } from "../ean13";
 import type { LoyaltyCard as Card } from "../loyalty";
 import { useIOS } from "../ios";
 import { tap } from "./ui";
@@ -18,7 +18,8 @@ const CARD_H = 322;
 const COLLAPSED_H = 176; // header + picture + cashback / bonuses
 
 function Barcode({ code, width, height }: { code: string; width: number; height: number }) {
-  const mods = ean13Modules(code);
+  // EAN-13 like the printed card; other MAXMA card numbers as Code 128 (cashiers' scanners read both)
+  const mods = ean13Modules(code) ?? code128Modules(code);
   if (!mods) return <Text style={{ color: "#000" }}>{code}</Text>;
   return (
     <View style={{ flexDirection: "row", width, height }} accessible accessibilityLabel={`Штрихкод ${code}`}>
@@ -75,7 +76,7 @@ export function LoyaltyCardPanel({ card, width }: { card: Card; width: number })
             <Text style={[styles.brand, { fontSize: 13.5 * k, marginLeft: 4 * k }]}>КОСМЕТИЧКА</Text>
             <View style={{ flex: 1 }} />
             <View style={{ alignItems: "flex-end" }}>
-              <Text style={[styles.small, { fontSize: 7 * k }]}>{card.level}</Text>
+              {card.level ? <Text style={[styles.small, { fontSize: 7 * k }]}>{card.level}</Text> : null}
               <Text style={[styles.value, { fontSize: 11.5 * k, lineHeight: 13 * k }]}>{card.name}</Text>
             </View>
           </View>
@@ -85,13 +86,17 @@ export function LoyaltyCardPanel({ card, width }: { card: Card; width: number })
 
           {/* cashback / bonuses */}
           <View style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 10 * k, marginTop: 6 * k }}>
-            <View>
-              <Text style={[styles.small, { fontSize: 7 * k }]}>КЕШБЭК</Text>
-              <Text style={[styles.value, { fontSize: 12.5 * k, marginTop: 1 * k }]}>{card.cashback}</Text>
-            </View>
+            {card.cashback ? (
+              <View>
+                <Text style={[styles.small, { fontSize: 7 * k }]}>КЕШБЭК</Text>
+                <Text style={[styles.value, { fontSize: 12.5 * k, marginTop: 1 * k }]}>{card.cashback}</Text>
+              </View>
+            ) : (
+              <View />
+            )}
             <View style={{ alignItems: "flex-end" }}>
               <Text style={[styles.small, { fontSize: 7 * k }]}>БОНУСЫ</Text>
-              <Text style={[styles.value, { fontSize: 12.5 * k, marginTop: 1 * k }]}>{card.bonuses}</Text>
+              <Text style={[styles.value, { fontSize: 12.5 * k, marginTop: 1 * k }]}>{card.bonuses.toLocaleString("ru-RU")}</Text>
             </View>
           </View>
 

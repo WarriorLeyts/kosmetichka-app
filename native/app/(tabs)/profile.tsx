@@ -1,6 +1,7 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useCallback, useState } from "react";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/store/auth";
@@ -11,6 +12,9 @@ import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import { FavHeart } from "@/components/FavHeart";
+import { LoyaltyCardPanel } from "@/components/LoyaltyCard";
+import { api } from "@/api";
+import type { LoyaltyCard } from "@/loyalty";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -35,6 +39,33 @@ export default function Profile() {
   const bottomSpace = useTabBarSpace();
   // card width: screen minus page and panel paddings, not wider than 420
   const customer = useAuth((s) => s.customer);
+  const { width: screenW } = useWindowDimensions();
+  const cardW = Math.min(Math.min(screenW, 600) - 32 - 28, 420);
+  // MAXMA card by phone: refreshed when the tab opens (the site caches it for a minute)
+  const [card, setCard] = useState<LoyaltyCard | null>(null);
+  const customerId = customer?.id;
+  useFocusEffect(
+    useCallback(() => {
+      if (!customerId) {
+        setCard(null);
+        return;
+      }
+      let alive = true;
+      api
+        .loyalty()
+        .then((r) => {
+          if (!alive) return;
+          const c = r.card;
+          setCard(c ? { level: c.level, name: c.name, cashback: c.cashback, bonuses: c.bonuses, pendingBonuses: c.pendingBonuses, barcode: c.number } : null);
+        })
+        .catch(() => {
+          /* keep what is shown; no card on a failed first load */
+        });
+      return () => {
+        alive = false;
+      };
+    }, [customerId])
+  );
   const logout = useAuth((s) => s.logout);
   const favCount = useFavorites((s) => s.items.length);
   const waitCount = useWaitlistStore((s) => s.ids.length);
@@ -74,8 +105,8 @@ export default function Profile() {
           </Text>
         ) : null}
 
-        {/* loyalty card: hidden until real cards come from MAXMA by phone number
-            (the test card had a real barcode — anyone could scan it) */}
+        {/* loyalty card from MAXMA (by phone); customers without a card see nothing */}
+        {customer && card ? <LoyaltyCardPanel card={card} width={cardW} /> : null}
 
         {/* one rounded menu block */}
         <View style={[styles.block, { backgroundColor: c.cell }, !dark && styles.shadow]}>

@@ -1,19 +1,13 @@
 /**
- * Loyalty card data. For now — fixed test data (the owner's card);
- * later it comes from MAXMA by the customer's phone number.
+ * Loyalty card shown in «Профиль». It comes from MAXMA through the site
+ * (GET /api/mobile/loyalty, found by the customer's phone number);
+ * customers without a card in MAXMA see nothing.
  */
 export type LoyaltyCard = {
-  level: string; // «VIP»
-  name: string; // «ЛАЛА»
-  cashback: string; // «5%»
+  level: string | null; // MAXMA level name, e.g. «VIP»
+  name: string; // customer's name on the card
+  cashback: string | null; // «5%» — by level, configured on the site
   bonuses: number;
-  barcode: string; // EAN-13
-};
-
-export const TEST_CARD: LoyaltyCard = {
-  level: "VIP",
-  name: "ЛАЛА",
-  cashback: "5%",
-  bonuses: 1000,
-  barcode: "9900164815148",
+  pendingBonuses: number;
+  barcode: string; // card number (EAN-13 or any other format)
 };
