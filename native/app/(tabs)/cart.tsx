@@ -94,6 +94,12 @@ export default function Cart() {
   const cartKey = JSON.stringify(items.map((i) => [i.id, i.quantity, i.variantName ?? null]));
   const maxRef = useRef(0);
   maxRef.current = calc?.bonuses?.maxToApply ?? maxRef.current;
+  // price type switched in the profile (retail ↔ wholesale): bonuses are retail-only — start over
+  const priceType = customer?.priceType ?? null;
+  useEffect(() => {
+    setSpend(false);
+    maxRef.current = 0;
+  }, [priceType]);
   useEffect(() => {
     if (!customer || items.length === 0) {
       setCalc(null);
@@ -131,7 +137,7 @@ export default function Cart() {
     }, 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customer?.id, cartKey, promoCode, spend]);
+  }, [customer?.id, priceType, cartKey, promoCode, spend]);
 
   const active = effectivePriceType(items, customer);
   const total = rawCartTotal(items, active);
