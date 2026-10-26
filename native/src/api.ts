@@ -173,10 +173,17 @@ export const api = {
   },
 
   // ── Orders ──
-  createOrder(items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[], comment: string) {
+  createOrder(items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[], comment: string, promocode?: string) {
     return request<{ success: boolean; orderId: number }>("/api/orders", {
       method: "POST",
-      body: json({ items, comment }),
+      body: json(promocode ? { items, comment, promocode } : { items, comment }),
+    });
+  },
+  /** Promo code from MAXMA: the server prices the cart and asks MAXMA for the discount (nothing is reserved yet). */
+  promoCheck(code: string, items: { id: number; quantity: number; variantName?: string | null }[]) {
+    return request<{ ok: true; code: string; name?: string; subtotal: number; discount: number; total: number }>("/api/promo/check", {
+      method: "POST",
+      body: json({ code, items }),
     });
   },
   orders(page = 1, status = ""): Promise<OrdersPage> {

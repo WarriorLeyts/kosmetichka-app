@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api, ApiError, imageUrl } from "@/api";
+import { PromoBox, type Promo } from "@/components/PromoBox";
 import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -82,6 +83,8 @@ export default function Cart() {
   const [error, setError] = useState("");
   // a second tap before the re-render must not send the same order twice
   const submitting = useRef(false);
+  // promo code checked by the site with MAXMA (null — none)
+  const [promo, setPromo] = useState<Promo | null>(null);
 
   const active = effectivePriceType(items, customer);
   const total = rawCartTotal(items, active);
@@ -129,9 +132,11 @@ export default function Cart() {
       if (lines.length === 0) return;
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
-        currentComment().trim()
+        currentComment().trim(),
+        promo?.code
       );
       clear();
+      setPromo(null);
       draft = null;
       setComment("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -286,6 +291,8 @@ export default function Cart() {
             <Text style={[styles.label, { color: c.label }]}>Комментарий к заказу</Text>
             <CommentInput style={[styles.comment, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }]} placeholderColor={c.secondary} />
 
+            {customer ? <PromoBox items={items} promo={promo} onChange={setPromo} /> : null}
+
             <View style={[styles.summary, { backgroundColor: pinkSoft }]}>
               <View style={styles.sumRow}>
                 <Text style={[iosText.subhead, { color: c.secondary }]}>
@@ -295,10 +302,22 @@ export default function Cart() {
                   Цена: <Text style={{ color: PINK }}>{shortLabel(active)}</Text>
                 </Text>
               </View>
+              {promo ? (
+                <>
+                  <View style={[styles.sumRow, { marginTop: 6 }]}>
+                    <Text style={[iosText.body, { color: c.label }]}>Сумма</Text>
+                    <Text style={[iosText.body, { color: c.label }]}>{money(promo.subtotal)}</Text>
+                  </View>
+                  <View style={[styles.sumRow, { marginTop: 2 }]}>
+                    <Text style={[iosText.body, { color: "#1f8a3b" }]}>Скидка по промокоду</Text>
+                    <Text style={[iosText.body, { color: "#1f8a3b" }]}>−{money(promo.discount)}</Text>
+                  </View>
+                </>
+              ) : null}
               <View style={[styles.sumRow, { marginTop: 4 }]}>
                 <Text style={[styles.totalLabel, { color: c.label }]}>Итого</Text>
                 <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
-                  {money(total)}
+                  {money(promo ? promo.total : total)}
                 </Text>
               </View>
             </View>

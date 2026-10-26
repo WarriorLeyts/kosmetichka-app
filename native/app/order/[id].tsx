@@ -495,6 +495,14 @@ export default function OrderScreen() {
                 </Pressable>
               );
             })}
+            {order.promoCode && order.discount ? (
+              <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
+                <Text style={[iosText.subhead, { color: "#1f8a3b", flex: 1 }]} numberOfLines={1}>
+                  Промокод {order.promoCode}
+                </Text>
+                <Text style={[iosText.subhead, { color: "#1f8a3b" }]}>−{money(order.discount)}</Text>
+              </View>
+            ) : null}
             <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
               <Text style={[iosText.headline, { color: c.label }]}>Итого</Text>
               <Text style={styles.total}>{money(order.total)}</Text>

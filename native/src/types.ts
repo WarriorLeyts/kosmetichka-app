@@ -65,6 +65,9 @@ export type Order = {
   comment?: string | null;
   createdAt: string;
   customerConfirmed?: boolean;
+  /** MAXMA promo code used for the order and its discount (₽); total is already after it */
+  promoCode?: string | null;
+  discount?: number;
   items: OrderItem[];
 };
 
