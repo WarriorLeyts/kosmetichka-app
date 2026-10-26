@@ -2,16 +2,28 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
-import { Stack } from "expo-router";
+import { Stack, usePathname, type ErrorBoundaryProps } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import Constants, { ExecutionEnvironment } from "expo-constants";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
+import { installCrashReporter, reportError, setCrashScreen } from "@/crash";
+import { ErrorScreen } from "@/components/ErrorScreen";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
 import { AnimatedSplash } from "@/components/AnimatedSplash";
+
+installCrashReporter();
+
+/** A screen crashed while rendering: report it and offer «Повторить» instead of a blank app. */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    reportError(error, true);
+  }, [error]);
+  return <ErrorScreen onRetry={retry} />;
+}
 
 // In Expo Go don't hold the splash: Expo Go shows its own developer-menu intro right after
 // the app loads, and a splash kept on screen at that moment pushes that intro under the app
@@ -49,6 +61,10 @@ export default function RootLayout() {
 }
 
 function AppRoot() {
+  const pathname = usePathname();
+  useEffect(() => {
+    setCrashScreen(pathname);
+  }, [pathname]);
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
   // re-mount the whole UI when the theme changes so every screen re-reads the palette

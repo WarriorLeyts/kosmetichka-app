@@ -1,19 +1,35 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Animated, StyleSheet } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, usePathname, type ErrorBoundaryProps } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
+import { installCrashReporter, reportError, setCrashScreen } from "@/crash";
+import { ErrorScreen } from "@/components/ErrorScreen";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
 import { RoleGuard } from "@/components/RoleGuard";
 import { useReduceMotion } from "@/useReduceMotion";
 
+installCrashReporter();
+
+/** A screen crashed while rendering: report it and offer «Повторить» instead of a blank app. */
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  useEffect(() => {
+    reportError(error, true);
+  }, [error]);
+  return <ErrorScreen onRetry={retry} />;
+}
+
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
+  const pathname = usePathname();
+  useEffect(() => {
+    setCrashScreen(pathname);
+  }, [pathname]);
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
   // re-mount the UI when the theme changes so every screen re-reads the palette
