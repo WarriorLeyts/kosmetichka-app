@@ -217,7 +217,10 @@ export default function ProductScreen() {
   }
 
   const active = effectivePriceType(cart, customer);
-  const images = (product.images ?? []).map((i) => imageUrl(i.path, 800)).filter(Boolean) as string[];
+  const imgPaths = (product.images ?? []).map((i) => i.path).filter(Boolean);
+  const images = imgPaths.map((pth) => imageUrl(pth, 800)).filter(Boolean) as string[];
+  // the catalog card already loaded the 480 px copy — show it at once while the big one loads
+  const previews = imgPaths.map((pth) => imageUrl(pth, 480));
   const stock = stockLabel(product.stock);
   const st = STOCK[stock.tone];
   const out = stock.tone === "out";
@@ -266,9 +269,16 @@ export default function ProductScreen() {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(u, i) => u + i}
         onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / S))}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={{ width: S, height: S, alignItems: "center", justifyContent: "center" }}>
-            <Image source={{ uri: item }} style={{ width: S, height: S }} contentFit="contain" transition={150} />
+            <Image
+              source={{ uri: item }}
+              placeholder={previews[index] ? { uri: previews[index]! } : undefined}
+              placeholderContentFit="contain"
+              style={{ width: S, height: S }}
+              contentFit="contain"
+              transition={150}
+            />
           </View>
         )}
       />
