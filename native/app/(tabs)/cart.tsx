@@ -164,7 +164,7 @@ export default function Cart() {
     );
   }
 
-  const checkout = async () => {
+  const checkout = async (noBonuses = false) => {
     if (submitting.current) return;
     if (!customer) {
       router.push("/login");
@@ -180,7 +180,7 @@ export default function Cart() {
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim(),
-        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend ? calc?.bonuses?.applied ?? 0 : 0 }
+        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0 }
       );
       clear();
       setPromoCode(null);
@@ -194,6 +194,21 @@ export default function Cart() {
         { text: "Мои заказы", onPress: () => router.navigate("/orders") },
       ]);
     } catch (e) {
+      // MAXMA didn't confirm the bonuses: nothing was ordered — retry, or order without bonuses
+      if (e instanceof ApiError && e.code === "bonuses_unavailable") {
+        Alert.alert("Не удалось списать бонусы", e.message, [
+          { text: "Отмена", style: "cancel" },
+          { text: "Повторить", onPress: () => setTimeout(() => checkout(), 0) },
+          {
+            text: "Без бонусов",
+            onPress: () => {
+              setSpend(false);
+              setTimeout(() => checkout(true), 0);
+            },
+          },
+        ]);
+        return;
+      }
       setError(e instanceof Error ? e.message : "Не удалось оформить заказ");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       // the login expired on the server: show the signed-out state instead of failing again and again
@@ -412,7 +427,7 @@ export default function Cart() {
               title={customer ? "Оформить заказ" : "Войти и оформить"}
               icon={customer ? undefined : "log-in-outline"}
               loading={loading}
-              onPress={checkout}
+              onPress={() => checkout()}
             />
             <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginTop: 10 }]}>
               Заказ попадёт менеджеру на подтверждение. Оплата — после согласования.

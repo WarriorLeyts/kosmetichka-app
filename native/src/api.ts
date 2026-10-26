@@ -14,9 +14,12 @@ export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: st
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  /** machine-readable reason from the server, e.g. «bonuses_unavailable» */
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -45,7 +48,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     // only a string can be shown in <Text> — anything else would crash the screen that renders it
     const msg = typeof data?.error === "string" && data.error ? data.error : `Ошибка сервера (${res.status})`;
-    throw new ApiError(msg, res.status);
+    throw new ApiError(msg, res.status, typeof data?.code === "string" ? data.code : undefined);
   }
   return data as T;
 }
