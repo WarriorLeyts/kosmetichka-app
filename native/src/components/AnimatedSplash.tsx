@@ -73,6 +73,9 @@ function Scene({ onEnd }: { onEnd: () => void }) {
   const letters = useRef(WORD.map(() => new Animated.Value(0))).current;
   const wordOut = useRef(new Animated.Value(1)).current;
   const bg = useRef(new Animated.Value(1)).current;
+  // the system splash is one flat colour: start from exactly that colour and let the gradient emerge
+  const flat = useRef(new Animated.Value(1)).current;
+  const root = useRef<View>(null);
   const fly = useRef(new Animated.Value(0)).current;
   const red = useRef(new Animated.Value(0)).current;
   const flyOn = useRef(new Animated.Value(0)).current;
@@ -96,15 +99,25 @@ function Scene({ onEnd }: { onEnd: () => void }) {
     const word = Animated.parallel(
       letters.map((v, i) => Animated.sequence([t(1350 + i * 45), Animated.timing(v, { toValue: 1, duration: 320, easing: ease, useNativeDriver: true })]))
     );
-    Animated.parallel([draw, breathe, glowA, word]).start();
+    const unflat = Animated.timing(flat, { toValue: 0, duration: 500, easing: ease, useNativeDriver: true });
+    Animated.parallel([unflat, draw, breathe, glowA, word]).start();
 
     let cancelled = false;
     const timer = setTimeout(async () => {
-      const r = await getSplashTarget();
+      // both rects in the same (window) coordinates: on Android the window may start below
+      // the status bar, so the splash's own position is measured instead of assuming 0,0
+      const [r, o] = await Promise.all([
+        getSplashTarget(),
+        new Promise<{ x: number; y: number }>((resolve) => {
+          const v = root.current;
+          if (!v) return resolve({ x: 0, y: 0 });
+          v.measureInWindow((x, y) => resolve({ x: x || 0, y: y || 0 }));
+        }),
+      ]);
       if (cancelled) return;
       console.log(`[splash] fly to ${r ? `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.w)}px` : "nowhere (no header)"}`);
       // no home header on screen (e.g. opened from a link): the logo just fades in place
-      setTarget(r ? { dx: r.x + r.w / 2 - cx, dy: r.y + r.h / 2 - cy, s: r.w / L } : { dx: 0, dy: 0, s: 0.6 });
+      setTarget(r ? { dx: r.x - o.x + r.w / 2 - cx, dy: r.y - o.y + r.h / 2 - cy, s: r.w / L } : { dx: 0, dy: 0, s: 0.6 });
       flyOn.setValue(1);
       Animated.parallel([
         Animated.timing(wordOut, { toValue: 0, duration: 250, useNativeDriver: true }),
@@ -140,7 +153,7 @@ function Scene({ onEnd }: { onEnd: () => void }) {
   const fontSize = 25;
 
   return (
-    <View style={[StyleSheet.absoluteFill, { zIndex: 1000, elevation: 1000 }]} pointerEvents={target ? "none" : "auto"}>
+    <View ref={root} collapsable={false} style={[StyleSheet.absoluteFill, { zIndex: 1000, elevation: 1000 }]} pointerEvents={target ? "none" : "auto"}>
       {/* background — fades out to the home screen */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: bg }]}>
         {dark ? (
@@ -161,6 +174,7 @@ function Scene({ onEnd }: { onEnd: () => void }) {
         ) : (
           <LinearGradient colors={["#a020f0", "#c21ae8", "#e82c87"]} locations={[0, 0.45, 1]} start={{ x: 0.32, y: 0 }} end={{ x: 0.68, y: 1 }} style={StyleSheet.absoluteFill} />
         )}
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: dark ? "#170D25" : "#C322CA", opacity: flat }]} />
         <Animated.View style={{ position: "absolute", left: cx - 210, top: cy - 210, width: 420, height: 420, opacity: glow }}>
           <Image source={dark ? GLOW_DARK : GLOW_LIGHT} style={{ width: 420, height: 420 }} />
         </Animated.View>
