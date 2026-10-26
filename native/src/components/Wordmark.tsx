@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, Text, View, type ViewStyle } from "react-native";
 import { Image } from "expo-image";
 import { useIOS } from "../ios";
+import { setSplashTarget } from "../splashTarget";
 
 export const BRAND_VIOLET = "#7925D6";
 export const BRAND_PINK = "#EF419A";
@@ -13,7 +14,8 @@ const LOGO_RED = "#E8202A";
  * The word is ONE text, so every letter has exactly the same size; the logo is placed over «И»
  * by measuring the width of «КОСМЕТ» and «И» with invisible copies of the same text.
  */
-export function Wordmark({ size = 19, light, style }: { size?: number; light?: boolean; style?: ViewStyle }) {
+export function Wordmark({ size = 19, light, style, anchor }: { size?: number; light?: boolean; style?: ViewStyle; anchor?: boolean }) {
+  const logoRef = useRef<View>(null);
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const main = light ? "#ffffff" : dark ? "#FAF7FD" : BRAND_VIOLET;
@@ -40,12 +42,26 @@ export function Wordmark({ size = 19, light, style }: { size?: number; light?: b
         </Text>
       </View>
       {withI > 0 ? (
-        <Image
-          source={require("../../assets/home2/logo-white.png")}
-          tintColor={LOGO_RED}
-          contentFit="contain"
+        <View
+          ref={logoRef}
+          collapsable={false}
+          onLayout={
+            anchor
+              ? () =>
+                  setSplashTarget(
+                    () =>
+                      new Promise((resolve) => {
+                        const v = logoRef.current;
+                        if (!v) return resolve(null);
+                        v.measureInWindow((x, y, w, h) => resolve(w > 0 ? { x, y, w, h } : null));
+                      })
+                  )
+              : undefined
+          }
           style={{ position: "absolute", width: logo, height: logo, top: size * 0.5 - logo * 0.78, left: iCenter - logo / 2 }}
-        />
+        >
+          <Image source={require("../../assets/home2/logo-white.png")} tintColor={LOGO_RED} contentFit="contain" style={{ width: logo, height: logo }} />
+        </View>
       ) : null}
     </View>
   );

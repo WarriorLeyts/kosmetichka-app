@@ -111,28 +111,60 @@ export function themed<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedSty
   });
 }
 
-const initialMode: ThemeMode = Appearance.getColorScheme() === "dark" ? "dark" : "light";
+/** «Как в телефоне» (default) or a theme the customer picked in the app. */
+export type ThemePref = "system" | "light" | "dark";
+
+const systemMode = (): ThemeMode => (Appearance.getColorScheme() === "dark" ? "dark" : "light");
+const initialMode: ThemeMode = systemMode();
 applyTheme(initialMode);
 
-type ThemeState = { mode: ThemeMode; toggle: () => void };
+type ThemeState = {
+  pref: ThemePref;
+  mode: ThemeMode;
+  /** header button: switch to the other theme (becomes the customer's choice) */
+  toggle: () => void;
+  setPref: (pref: ThemePref) => void;
+};
 
 export const useTheme = create<ThemeState>()(
   persist(
     (set, get) => ({
-      // first launch: follow the phone's theme until the user picks one
+      pref: "system",
       mode: initialMode,
       toggle: () => {
         const mode: ThemeMode = get().mode === "dark" ? "light" : "dark";
         applyTheme(mode);
-        set({ mode });
+        set({ mode, pref: mode });
+      },
+      setPref: (pref) => {
+        const mode = pref === "system" ? systemMode() : pref;
+        applyTheme(mode);
+        set({ pref, mode });
       },
     }),
     {
       name: "kosmetichka-theme",
+      version: 1,
       storage: persistStorage,
+      partialize: (s) => ({ pref: s.pref }),
+      // v0 saved only the current mode, also when nobody chose it — start following the phone again
+      migrate: () => ({ pref: "system" as ThemePref }),
       onRehydrateStorage: () => (state) => {
-        if (state) applyTheme(state.mode);
+        if (!state) return;
+        const mode = state.pref === "system" ? systemMode() : state.pref;
+        applyTheme(mode);
+        useTheme.setState({ mode });
       },
     }
   )
 );
+
+// the phone switched between light and dark: follow it while the customer hasn't picked a theme
+Appearance.addChangeListener(({ colorScheme }) => {
+  const st = useTheme.getState();
+  if (st.pref !== "system") return;
+  const mode: ThemeMode = colorScheme === "dark" ? "dark" : "light";
+  if (mode === st.mode) return;
+  applyTheme(mode);
+  useTheme.setState({ mode });
+});

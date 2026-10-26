@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
@@ -11,6 +11,7 @@ import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_7
 import { useAuth } from "@/store/auth";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
+import { AnimatedSplash } from "@/components/AnimatedSplash";
 
 // In Expo Go don't hold the splash: Expo Go shows its own developer-menu intro right after
 // the app loads, and a splash kept on screen at that moment pushes that intro under the app
@@ -59,9 +60,12 @@ function AppRoot() {
     refresh();
   }, [refresh]);
 
+  // the system splash goes once the account is known and the launch animation has its first frame
+  const [splashReady, setSplashReady] = useState(false);
+  const onSplashReady = useCallback(() => setSplashReady(true), []);
   useEffect(() => {
-    if (!loading && !inExpoGo) SplashScreen.hideAsync().catch(() => {});
-  }, [loading]);
+    if (!loading && splashReady && !inExpoGo) SplashScreen.hideAsync().catch(() => {});
+  }, [loading, splashReady]);
 
   // Never keep the splash forever if the network is slow
   useEffect(() => {
@@ -106,6 +110,7 @@ function AppRoot() {
         <Stack.Screen name="info" options={{ title: "", headerShown: false }} />
       </Stack>
       <ThemeFade mode={mode} />
+      {inExpoGo ? null : <AnimatedSplash onReady={onSplashReady} />}
     </SafeAreaProvider>
   );
 }

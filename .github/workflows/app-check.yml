@@ -90,8 +90,12 @@ jobs:
           xcrun simctl privacy "$UDID" grant all ru.kosmetichkaopt.app || true
           xcrun simctl spawn "$UDID" log stream --level debug --style compact --predicate 'subsystem == "com.facebook.react.log" OR eventMessage CONTAINS[c] "exception" OR eventMessage CONTAINS[c] "crash"' > shots/log.txt 2>&1 &
           echo $! > ../logpid
+          xcrun simctl ui "$UDID" appearance light
+          xcrun simctl io "$UDID" recordVideo --codec h264 --force shots/launch-light.mp4 & REC=$!
+          sleep 1
           xcrun simctl launch "$UDID" ru.kosmetichkaopt.app
-          sleep 6;  xcrun simctl io "$UDID" screenshot shots/01-home-scene-start.png
+          sleep 7; kill -INT $REC; wait $REC || true
+          xcrun simctl io "$UDID" screenshot shots/01-home-scene-start.png
           sleep 8;  xcrun simctl io "$UDID" screenshot shots/02-home-scene-middle.png
           sleep 12; xcrun simctl io "$UDID" screenshot shots/03-home-scene-end.png
           curl -fsSL "https://get.maestro.mobile.dev" | bash
@@ -176,6 +180,14 @@ jobs:
           sed -i '' 's/^          //' flow.yaml
           perl -e 'alarm shift; exec @ARGV' 900 maestro --device "$UDID" test --test-output-dir "$PWD/shots/m" flow.yaml > shots/maestro.txt 2>&1 || echo "maestro ended with an error / timeout" >> shots/maestro.txt
           xcrun simctl io "$UDID" screenshot shots/99-last.png
+          # launch animation in the dark theme: fresh install (the animation plays once a day)
+          xcrun simctl terminate "$UDID" ru.kosmetichkaopt.app || true
+          xcrun simctl uninstall "$UDID" ru.kosmetichkaopt.app; xcrun simctl install "$UDID" "$APP"
+          xcrun simctl ui "$UDID" appearance dark
+          xcrun simctl io "$UDID" recordVideo --codec h264 --force shots/launch-dark.mp4 & REC=$!
+          sleep 1
+          xcrun simctl launch "$UDID" ru.kosmetichkaopt.app
+          sleep 7; kill -INT $REC; wait $REC || true
           xcrun simctl spawn "$UDID" launchctl list | grep -q kosmetichkaopt || echo "app process not running at the end" >> shots/maestro.txt
           xcrun simctl spawn "$UDID" defaults read com.apple.Accessibility ReduceMotionEnabled >> shots/maestro.txt 2>&1 || true
       - name: Logs

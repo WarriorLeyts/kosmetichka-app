@@ -104,7 +104,7 @@ export default function Home() {
               </Pressable>
             ) : null}
           </View>
-          <Wordmark size={wordSize} />
+          <Wordmark size={wordSize} anchor />
           <View style={[styles.heroSide, { right: 0 }]}>
             <Pressable onPress={() => router.push("/favorites")} hitSlop={6} style={[styles.glass, glass]} accessibilityLabel="Избранное">
               <FavHeart size={21} />

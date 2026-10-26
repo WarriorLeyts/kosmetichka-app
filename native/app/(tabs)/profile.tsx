@@ -13,6 +13,8 @@ import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import { FavHeart } from "@/components/FavHeart";
 import { EmptyLoyaltyCard, LoyaltyCardPanel } from "@/components/LoyaltyCard";
+import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
+import { useTheme, type ThemePref } from "@/theme";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
 
@@ -29,7 +31,7 @@ const TIER: Record<string, string> = {
   big_wholesale: "Крупный оптовый клиент",
 };
 
-type Item = { icon: IconName; title: string; pink?: boolean; fav?: boolean; count?: number; needsAuth?: boolean; onPress: () => void };
+type Item = { icon: IconName; title: string; pink?: boolean; fav?: boolean; count?: number; value?: string; needsAuth?: boolean; onPress: () => void };
 
 /** Profile — iOS style: brand header, large title, one rounded menu block, gradient sign-in button. */
 export default function Profile() {
@@ -71,6 +73,9 @@ export default function Profile() {
     }, [customerId])
   );
   const logout = useAuth((s) => s.logout);
+  const themePref = useTheme((s) => s.pref);
+  const setThemePref = useTheme((s) => s.setPref);
+  const [themeOpen, setThemeOpen] = useState(false);
   const favCount = useFavorites((s) => s.items.length);
   const waitCount = useWaitlistStore((s) => s.ids.length);
 
@@ -83,6 +88,7 @@ export default function Profile() {
     { icon: "time-outline", title: "Лист ожидания", needsAuth: true, count: customer ? waitCount : 0, onPress: () => go("/waitlist", true) },
     { icon: "heart-outline", title: "Избранное", fav: true, count: favCount, onPress: () => go("/favorites") },
     { icon: "document-text-outline", title: "Контакты и документы", onPress: () => go("/info") },
+    { icon: "contrast-outline", title: "Оформление", value: THEME_LABEL[themePref], onPress: () => setThemeOpen(true) },
   ];
 
   const name = customer ? customer.companyName || customer.name || customer.phone : null;
@@ -151,6 +157,7 @@ export default function Profile() {
                 {it.title}
               </Text>
               {it.count ? <Text style={[iosText.body, { color: c.secondary }]}>{it.count}</Text> : null}
+              {it.value ? <Text style={[iosText.body, { color: c.secondary }]}>{it.value}</Text> : null}
               <Ionicons name="chevron-forward" size={19} color={c.chevron} />
               {i < items.length - 1 ? <View style={[styles.sep, { backgroundColor: c.separator }]} /> : null}
             </Pressable>
@@ -191,9 +198,26 @@ export default function Profile() {
           </Pressable>
         )}
       </ScrollView>
+      <Sheet open={themeOpen} onClose={() => setThemeOpen(false)} title="Оформление">
+        <SheetOptions
+          options={THEME_OPTIONS}
+          value={themePref}
+          onSelect={(v) => {
+            setThemeOpen(false);
+            if (v !== themePref) setThemePref(v);
+          }}
+        />
+      </Sheet>
     </View>
   );
 }
+
+const THEME_LABEL: Record<ThemePref, string> = { system: "Как в телефоне", light: "Светлая", dark: "Тёмная" };
+const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
+  { value: "system", label: "Как в телефоне" },
+  { value: "light", label: "Светлая" },
+  { value: "dark", label: "Тёмная" },
+];
 
 const styles = StyleSheet.create({
   block: { borderRadius: 20, overflow: "hidden" },
