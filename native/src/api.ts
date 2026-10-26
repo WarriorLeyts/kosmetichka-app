@@ -78,6 +78,15 @@ export type CatalogQuery = {
   nameAny?: string[];
 };
 
+export type CheckoutCalc = {
+  subtotal: number;
+  promo: { code: string; name: string | null; discount: number } | null;
+  promoError?: string;
+  bonuses: { canSpend: boolean; balance: number | null; maxToApply: number; applied: number; collected: number } | null;
+  total: number;
+  loyaltyError?: string;
+};
+
 export type CatalogPage = { products: Product[]; total: number; page: number; hasMore: boolean; nameAnyApplied?: boolean };
 
 export const api = {
@@ -173,11 +182,24 @@ export const api = {
   },
 
   // ── Orders ──
-  createOrder(items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[], comment: string, promocode?: string) {
-    return request<{ success: boolean; orderId: number }>("/api/orders", {
+  createOrder(
+    items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[],
+    comment: string,
+    extra: { promocode?: string; applyBonuses?: number } = {}
+  ) {
+    return request<{ success: boolean; orderId: number; loyaltyWarning?: string }>("/api/orders", {
       method: "POST",
-      body: json(promocode ? { items, comment, promocode } : { items, comment }),
+      body: json({
+        items,
+        comment,
+        ...(extra.promocode ? { promocode: extra.promocode } : {}),
+        ...(extra.applyBonuses ? { applyBonuses: extra.applyBonuses } : {}),
+      }),
     });
+  },
+  /** Cart total with MAXMA: promo code, bonuses to spend, bonuses to be accrued (nothing is reserved yet). */
+  checkoutCalc(body: { items: { id: number; quantity: number; variantName?: string | null }[]; promocode?: string; applyBonuses?: number }) {
+    return request<CheckoutCalc>("/api/checkout/calc", { method: "POST", body: json(body) });
   },
   /** Promo code from MAXMA: the server prices the cart and asks MAXMA for the discount (nothing is reserved yet). */
   promoCheck(code: string, items: { id: number; quantity: number; variantName?: string | null }[]) {

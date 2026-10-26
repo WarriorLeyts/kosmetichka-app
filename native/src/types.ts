@@ -68,6 +68,9 @@ export type Order = {
   /** MAXMA promo code used for the order and its discount (₽); total is already after it */
   promoCode?: string | null;
   discount?: number;
+  /** MAXMA bonuses spent on the order (₽) and to be accrued when it is done */
+  bonusesApplied?: number;
+  bonusesCollected?: number;
   items: OrderItem[];
 };
 

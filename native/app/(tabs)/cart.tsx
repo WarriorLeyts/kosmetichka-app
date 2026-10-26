@@ -7,7 +7,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api, ApiError, imageUrl } from "@/api";
-import { PromoBox, type Promo } from "@/components/PromoBox";
+import { BonusBox, PromoBox } from "@/components/PromoBox";
+import type { CheckoutCalc } from "@/api";
 import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -83,8 +84,54 @@ export default function Cart() {
   const [error, setError] = useState("");
   // a second tap before the re-render must not send the same order twice
   const submitting = useRef(false);
-  // promo code checked by the site with MAXMA (null — none)
-  const [promo, setPromo] = useState<Promo | null>(null);
+  // promo code and bonuses — the site calculates them with MAXMA for the current cart
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [promoErr, setPromoErr] = useState("");
+  const [spend, setSpend] = useState(false);
+  const [calc, setCalc] = useState<CheckoutCalc | null>(null);
+  const [calcBusy, setCalcBusy] = useState(false);
+  const calcSeq = useRef(0);
+  const cartKey = JSON.stringify(items.map((i) => [i.id, i.quantity, i.variantName ?? null]));
+  const maxRef = useRef(0);
+  maxRef.current = calc?.bonuses?.maxToApply ?? maxRef.current;
+  useEffect(() => {
+    if (!customer || items.length === 0) {
+      setCalc(null);
+      return;
+    }
+    const my = ++calcSeq.current;
+    setCalcBusy(true);
+    const t = setTimeout(async () => {
+      try {
+        const lines = useCartStore
+          .getState()
+          .items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0)
+          .map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null }));
+        // «Списать бонусы» on: ask for the last known maximum — the site re-asks MAXMA if it changed
+        const want = spend ? Math.max(1, maxRef.current || calc?.bonuses?.balance || 1) : 0;
+        const r = await api.checkoutCalc({ items: lines, promocode: promoCode ?? undefined, applyBonuses: want });
+        if (my !== calcSeq.current) return;
+        setCalc(r);
+        if (promoCode && !r.promo) {
+          // the code doesn't fit (any more): show why and drop it
+          setPromoErr(r.promoError || "Промокод не подходит");
+          setPromoCode(null);
+        }
+      } catch (e) {
+        if (my !== calcSeq.current) return;
+        // the site without this feature yet / no network: plain cart total, no promo or bonuses
+        setCalc(null);
+        if (promoCode) {
+          setPromoErr(e instanceof Error ? e.message : "Не удалось проверить промокод");
+          setPromoCode(null);
+        }
+      } finally {
+        if (my === calcSeq.current) setCalcBusy(false);
+      }
+    }, 450);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customer?.id, cartKey, promoCode, spend]);
 
   const active = effectivePriceType(items, customer);
   const total = rawCartTotal(items, active);
@@ -133,10 +180,13 @@ export default function Cart() {
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim(),
-        promo?.code
+        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend ? calc?.bonuses?.applied ?? 0 : 0 }
       );
       clear();
-      setPromo(null);
+      setPromoCode(null);
+      setSpend(false);
+      setCalc(null);
+      if (r.loyaltyWarning) Alert.alert("Бонусы", r.loyaltyWarning);
       draft = null;
       setComment("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -291,7 +341,24 @@ export default function Cart() {
             <Text style={[styles.label, { color: c.label }]}>Комментарий к заказу</Text>
             <CommentInput style={[styles.comment, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }]} placeholderColor={c.secondary} />
 
-            {customer ? <PromoBox items={items} promo={promo} onChange={setPromo} /> : null}
+            {customer ? (
+              <PromoBox
+                applied={promoCode}
+                name={calc?.promo?.name}
+                discount={calc?.promo?.discount}
+                error={promoErr}
+                busy={calcBusy && !!promoCode}
+                onApply={(code) => {
+                  setPromoErr("");
+                  setPromoCode(code);
+                }}
+                onRemove={() => {
+                  setPromoErr("");
+                  setPromoCode(null);
+                }}
+              />
+            ) : null}
+            {customer && calc?.bonuses ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
 
             <View style={[styles.summary, { backgroundColor: pinkSoft }]}>
               <View style={styles.sumRow}>
@@ -302,22 +369,30 @@ export default function Cart() {
                   Цена: <Text style={{ color: PINK }}>{shortLabel(active)}</Text>
                 </Text>
               </View>
-              {promo ? (
+              {calc && (calc.promo || (spend && calc.bonuses?.applied)) ? (
                 <>
                   <View style={[styles.sumRow, { marginTop: 6 }]}>
                     <Text style={[iosText.body, { color: c.label }]}>Сумма</Text>
-                    <Text style={[iosText.body, { color: c.label }]}>{money(promo.subtotal)}</Text>
+                    <Text style={[iosText.body, { color: c.label }]}>{money(calc.subtotal)}</Text>
                   </View>
-                  <View style={[styles.sumRow, { marginTop: 2 }]}>
-                    <Text style={[iosText.body, { color: "#1f8a3b" }]}>Скидка по промокоду</Text>
-                    <Text style={[iosText.body, { color: "#1f8a3b" }]}>−{money(promo.discount)}</Text>
-                  </View>
+                  {calc.promo ? (
+                    <View style={[styles.sumRow, { marginTop: 2 }]}>
+                      <Text style={[iosText.body, { color: "#1f8a3b" }]}>Скидка по промокоду</Text>
+                      <Text style={[iosText.body, { color: "#1f8a3b" }]}>−{money(calc.promo.discount)}</Text>
+                    </View>
+                  ) : null}
+                  {spend && calc.bonuses?.applied ? (
+                    <View style={[styles.sumRow, { marginTop: 2 }]}>
+                      <Text style={[iosText.body, { color: VIOLET }]}>Списано бонусов</Text>
+                      <Text style={[iosText.body, { color: VIOLET }]}>−{money(calc.bonuses.applied)}</Text>
+                    </View>
+                  ) : null}
                 </>
               ) : null}
               <View style={[styles.sumRow, { marginTop: 4 }]}>
                 <Text style={[styles.totalLabel, { color: c.label }]}>Итого</Text>
                 <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
-                  {money(promo ? promo.total : total)}
+                  {money(calc && (calc.promo || (spend && calc.bonuses?.applied)) ? calc.total : total)}
                 </Text>
               </View>
             </View>

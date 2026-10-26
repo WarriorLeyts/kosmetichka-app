@@ -503,10 +503,21 @@ export default function OrderScreen() {
                 <Text style={[iosText.subhead, { color: "#1f8a3b" }]}>−{money(order.discount)}</Text>
               </View>
             ) : null}
+            {order.bonusesApplied ? (
+              <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
+                <Text style={[iosText.subhead, { color: "#8b3dff", flex: 1 }]}>Списано бонусов</Text>
+                <Text style={[iosText.subhead, { color: "#8b3dff" }]}>−{money(order.bonusesApplied)}</Text>
+              </View>
+            ) : null}
             <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
               <Text style={[iosText.headline, { color: c.label }]}>Итого</Text>
               <Text style={styles.total}>{money(order.total)}</Text>
             </View>
+            {order.bonusesCollected ? (
+              <Text style={[iosText.footnote, { color: c.secondary, marginTop: 6 }]}>
+                {order.status === "exported" ? "Начислено" : "Начислится после выполнения"}: {order.bonusesCollected.toLocaleString("ru-RU")} бонусов
+              </Text>
+            ) : null}
           </View>
 
           {order.comment ? (

@@ -1,86 +1,43 @@
-import { useEffect, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "../api";
 import { iosText, useIOS } from "../ios";
 import { money } from "../format";
 import { tap } from "./ui";
-import type { CartItem } from "../types";
-
-export type Promo = { code: string; name?: string; subtotal: number; discount: number; total: number };
 
 const VIOLET = "#8b3dff";
-const lines = (items: CartItem[]) =>
-  items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0).map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null }));
 
-/**
- * «Промокод» in the cart: the code is checked by the site with MAXMA against the current cart;
- * when the cart changes it is checked again (a code can stop fitting — e.g. a minimum sum).
- */
-export function PromoBox({ items, promo, onChange }: { items: CartItem[]; promo: Promo | null; onChange: (p: Promo | null) => void }) {
+/** «Промокод» in the cart — the parent checks the code with the site (MAXMA) and passes the result in. */
+export function PromoBox({
+  applied, name, discount, error, busy, onApply, onRemove,
+}: {
+  applied: string | null;
+  name?: string | null;
+  discount?: number;
+  error?: string;
+  busy?: boolean;
+  onApply: (code: string) => void;
+  onRemove: () => void;
+}) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const seq = useRef(0);
 
-  const check = async (value: string, quiet = false) => {
-    const my = ++seq.current;
-    setBusy(true);
-    if (!quiet) setError("");
-    try {
-      const r = await api.promoCheck(value, lines(items));
-      if (my !== seq.current) return;
-      onChange({ code: r.code || value, name: r.name, subtotal: r.subtotal, discount: r.discount, total: r.total });
-      setError("");
-    } catch (e) {
-      if (my !== seq.current) return;
-      onChange(null);
-      const msg = e instanceof Error ? e.message : "Не удалось проверить промокод";
-      setError(quiet ? `Промокод ${value} больше не подходит: ${msg}` : msg);
-    } finally {
-      if (my === seq.current) setBusy(false);
-    }
-  };
-
-  // the cart changed: check the applied code again (debounced)
-  const key = JSON.stringify(lines(items));
-  const applied = promo?.code;
-  useEffect(() => {
-    if (!applied) return;
-    const t = setTimeout(() => check(applied, true), 600);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, applied]);
-
-  const field = dark ? "#2B193D" : "#EEEEF3";
-
-  if (promo) {
+  if (applied) {
     return (
       <View style={[styles.applied, { backgroundColor: dark ? "rgba(52,199,89,0.14)" : "rgba(52,199,89,0.1)" }]}>
         <Ionicons name="pricetag" size={18} color="#1f8a3b" />
         <View style={{ flex: 1 }}>
           <Text style={[iosText.subhead, { color: c.label, fontWeight: "600" }]} numberOfLines={1}>
-            Промокод {promo.code}
+            Промокод {applied}
           </Text>
-          <Text style={[iosText.footnote, { color: c.secondary }]} numberOfLines={2}>
-            {promo.name ? `${promo.name} · ` : ""}скидка {money(promo.discount)}
+          <Text style={[iosText.footnote, { color: error ? "#FF3B30" : c.secondary }]} numberOfLines={2}>
+            {error ? error : `${name ? `${name} · ` : ""}скидка ${money(discount ?? 0)}`}
           </Text>
         </View>
         {busy ? <ActivityIndicator color={VIOLET} /> : null}
-        <Pressable
-          hitSlop={10}
-          accessibilityRole="button"
-          accessibilityLabel="Убрать промокод"
-          onPress={() => {
-            tap();
-            seq.current++;
-            onChange(null);
-            setError("");
-          }}
-        >
+        <Pressable hitSlop={10} accessibilityRole="button" accessibilityLabel="Убрать промокод" onPress={() => { tap(); onRemove(); }}>
           <Ionicons name="close-circle" size={22} color={c.secondary} />
         </Pressable>
       </View>
@@ -90,14 +47,7 @@ export function PromoBox({ items, promo, onChange }: { items: CartItem[]; promo:
   if (!open) {
     return (
       <View>
-        <Pressable
-          onPress={() => {
-            tap();
-            setOpen(true);
-          }}
-          accessibilityRole="button"
-          style={styles.toggle}
-        >
+        <Pressable onPress={() => { tap(); setOpen(true); }} accessibilityRole="button" style={styles.toggle}>
           <Ionicons name="pricetag-outline" size={19} color={VIOLET} />
           <Text style={[iosText.body, { color: VIOLET }]}>Есть промокод?</Text>
         </Pressable>
@@ -110,7 +60,7 @@ export function PromoBox({ items, promo, onChange }: { items: CartItem[]; promo:
     const v = code.trim();
     if (!v || busy) return;
     tap();
-    check(v);
+    onApply(v);
   };
 
   return (
@@ -119,17 +69,14 @@ export function PromoBox({ items, promo, onChange }: { items: CartItem[]; promo:
       <View style={styles.row}>
         <TextInput
           value={code}
-          onChangeText={(v) => {
-            setCode(v);
-            if (error) setError("");
-          }}
+          onChangeText={setCode}
           placeholder="Введите промокод"
           placeholderTextColor={c.secondary}
           autoCapitalize="characters"
           autoCorrect={false}
           returnKeyType="done"
           onSubmitEditing={submit}
-          style={[styles.input, { backgroundColor: field, color: c.label }]}
+          style={[styles.input, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }]}
         />
         <Pressable
           onPress={submit}
@@ -145,6 +92,56 @@ export function PromoBox({ items, promo, onChange }: { items: CartItem[]; promo:
   );
 }
 
+/** MAXMA bonuses: «Списать бонусы» (retail with a card) and how many will be accrued for the order. */
+export function BonusBox({
+  bonuses, on, onToggle, busy,
+}: {
+  bonuses: { canSpend: boolean; balance: number | null; maxToApply: number; applied: number; collected: number };
+  on: boolean;
+  onToggle: (v: boolean) => void;
+  busy?: boolean;
+}) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const canSpend = bonuses.canSpend && (bonuses.maxToApply > 0 || on);
+  return (
+    <View style={[styles.bonus, { backgroundColor: dark ? "rgba(139,61,255,0.14)" : "rgba(139,61,255,0.07)" }]}>
+      {canSpend ? (
+        <View style={styles.bonusRow}>
+          <Ionicons name="gift-outline" size={20} color={VIOLET} />
+          <View style={{ flex: 1 }}>
+            <Text style={[iosText.body, { color: c.label, fontWeight: "600" }]}>Списать бонусы</Text>
+            <Text style={[iosText.footnote, { color: c.secondary }]}>
+              {bonuses.balance != null ? `Доступно ${bonuses.balance.toLocaleString("ru-RU")} · ` : ""}можно списать до {bonuses.maxToApply.toLocaleString("ru-RU")}
+            </Text>
+          </View>
+          {busy ? <ActivityIndicator color={VIOLET} style={{ marginRight: 6 }} /> : null}
+          <Switch
+            value={on}
+            onValueChange={(v) => {
+              tap();
+              onToggle(v);
+            }}
+            trackColor={{ true: VIOLET, false: dark ? "#4A3A5C" : "#D1D1D6" }}
+            thumbColor="#fff"
+            accessibilityLabel="Списать бонусы"
+          />
+        </View>
+      ) : bonuses.balance != null ? (
+        <View style={styles.bonusRow}>
+          <Ionicons name="gift-outline" size={20} color={VIOLET} />
+          <Text style={[iosText.subhead, { color: c.secondary, flex: 1 }]}>На карте {bonuses.balance.toLocaleString("ru-RU")} бонусов</Text>
+        </View>
+      ) : null}
+      {bonuses.collected > 0 ? (
+        <Text style={[iosText.footnote, { color: c.secondary, marginTop: canSpend || bonuses.balance != null ? 8 : 0 }]}>
+          За заказ начислится {bonuses.collected.toLocaleString("ru-RU")} бонусов — после выполнения заказа
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   toggle: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, marginTop: 8 },
   label: { fontSize: 20, fontWeight: "700", marginBottom: 10 },
@@ -154,4 +151,6 @@ const styles = StyleSheet.create({
   applyText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   applied: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 16, padding: 14, marginTop: 14 },
   err: { color: "#FF3B30", marginTop: 6 },
+  bonus: { borderRadius: 16, padding: 14, marginTop: 14 },
+  bonusRow: { flexDirection: "row", alignItems: "center", gap: 10 },
 });

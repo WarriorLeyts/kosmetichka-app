@@ -91,7 +91,7 @@ export default function OrderScreen() {
     running.current = true;
     setBusy("save");
     try {
-      const res = await put<{ promoWarning?: string }>(`/api/admin/orders/${orderId}/items`, {
+      const res = await put<{ promoWarning?: string; loyaltyWarning?: string }>(`/api/admin/orders/${orderId}/items`, {
         items: edit.filter((d) => d.id).map((d) => ({ id: d.id, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
         removeIds: removed,
         newItems: edit
@@ -102,6 +102,7 @@ export default function OrderScreen() {
       await reload();
       // the promo code no longer fits the new items — the discount was removed by the server
       if (res?.promoWarning) Alert.alert("Промокод снят", res.promoWarning);
+      if (res?.loyaltyWarning) Alert.alert("Бонусы", res.loyaltyWarning);
     } catch (e) {
       Alert.alert("Не сохранено", e instanceof Error ? e.message : "");
     } finally {
@@ -156,6 +157,9 @@ export default function OrderScreen() {
           <StatusPill status={o.status} label={o.statusLabel} />
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
+        {o.bonusesApplied ? (
+          <Text style={{ color: "#8b3dff", marginTop: 6, fontWeight: "600" }}>Списано бонусов: {money(o.bonusesApplied)}</Text>
+        ) : null}
         {o.promoCode && o.discount ? (
           <Text style={{ color: "#1f8a3b", marginTop: 6, fontWeight: "600" }}>
             Промокод {o.promoCode} · скидка {money(o.discount)}
