@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Haptics from "expo-haptics";
 import { useTheme } from "../theme";
 import { getSplashTarget } from "../splashTarget";
 
@@ -104,6 +105,8 @@ function Scene({ onEnd }: { onEnd: () => void }) {
     );
     const unflat = Animated.timing(flat, { toValue: 0, duration: 500, easing: ease, useNativeDriver: true });
     Animated.parallel([unflat, draw, breathe, glowA, word]).start();
+    // a light tap in the hand when the heart «breathes»
+    const pulse = setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}), 1300);
 
     let cancelled = false;
     const timer = setTimeout(async () => {
@@ -138,6 +141,7 @@ function Scene({ onEnd }: { onEnd: () => void }) {
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      clearTimeout(pulse);
       clearTimeout(safety);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
