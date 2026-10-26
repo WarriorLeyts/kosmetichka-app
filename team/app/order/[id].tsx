@@ -91,7 +91,7 @@ export default function OrderScreen() {
     running.current = true;
     setBusy("save");
     try {
-      await put(`/api/admin/orders/${orderId}/items`, {
+      const res = await put<{ promoWarning?: string }>(`/api/admin/orders/${orderId}/items`, {
         items: edit.filter((d) => d.id).map((d) => ({ id: d.id, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
         removeIds: removed,
         newItems: edit
@@ -100,6 +100,8 @@ export default function OrderScreen() {
       });
       setEdit(null);
       await reload();
+      // the promo code no longer fits the new items — the discount was removed by the server
+      if (res?.promoWarning) Alert.alert("Промокод снят", res.promoWarning);
     } catch (e) {
       Alert.alert("Не сохранено", e instanceof Error ? e.message : "");
     } finally {
