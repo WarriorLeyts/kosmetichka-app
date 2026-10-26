@@ -51,7 +51,7 @@ export default function LoyaltyAdd() {
 
   const confirm = () =>
     run(async () => {
-      if (code.replace(/\D/g, "").length < 4) throw new Error("Введите код из СМС");
+      if (!code.replace(/\D/g, "")) throw new Error("Введите код из СМС");
       await api.loyaltyConfirm(code);
       router.back(); // the profile reloads the card when it comes back into view
     });
@@ -104,7 +104,7 @@ export default function LoyaltyAdd() {
               <>
                 <IOSField
                   label="Код из СМС"
-                  placeholder="0000"
+                  placeholder="Код"
                   value={code}
                   onChangeText={(v) => {
                     setCode(v.replace(/\D/g, "").slice(0, 8));
