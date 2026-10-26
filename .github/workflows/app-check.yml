@@ -56,7 +56,7 @@ jobs:
         run: |
           gh release view app-check >/dev/null 2>&1 || gh release create app-check --title "App check" --notes "screenshots" --latest=false
           for f in shots/*; do mv "$f" "shots/android-$(basename "$f")"; done
-          gh release upload app-check shots/* --clobber
+          find shots -type f -size 0 -delete; gh release upload app-check shots/* --clobber
 
   ios:
     if: inputs.platform != 'android'
