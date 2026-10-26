@@ -47,15 +47,30 @@ for theme in light dark; do
   tap "Профиль"; sleep 4; shot $theme-profile
   tap "Избранное"; sleep 4; shot $theme-favorites; back
   tap "Главная"; sleep 25; shot $theme-home
-  if [ $theme = light ]; then tap "Тёмная тема"; sleep 4; shot dark-switched; fi
+  if [ $theme = light ]; then tap "Профиль"; sleep 3; tap "Оформление"; sleep 2; tap "Тёмная"; sleep 5; shot dark-switched; fi
 done
-tap "Светлая тема"; sleep 4; shot back-to-light
+tap "Профиль"; sleep 3; tap "Оформление"; sleep 2; tap "Светлая"; sleep 5; shot back-to-light
 tap "Поиск: название, бренд, артикул"; sleep 5; shot search; back
 tap "Главная"; sleep 3
 tap "Избранное"; sleep 4; shot header-favorites; back
 tap "Сканировать штрихкод"; sleep 5; shot scanner; back
 tap "Перейти в каталог"; sleep 5; shot cta-catalog
-tap "Профиль"; sleep 3; tap "Войти*"; sleep 4; shot login; back
+tap "Профиль"; sleep 3; tap "Войти*"; sleep 4; shot login
+tap "Зарегистрироваться"; sleep 4; shot register
+adb shell input swipe $((W/2)) $((H*80/100)) $((W/2)) $((H*20/100)) 500; sleep 2; shot register-bottom; back; back
+
+# small phone + large system font (accessibility): clipped texts, buttons, tab bar
+adb shell wm size 720x1280; adb shell wm density 320; adb shell settings put system font_scale 1.3
+adb shell am force-stop $PKG; adb shell am start -n $PKG/.MainActivity; sleep 30
+SIZE=$(adb shell wm size | tail -1 | awk '{print $3}' | tr -d '\r'); W=${SIZE%x*}; H=${SIZE#*x}
+shot small-home
+tap "Каталог"; sleep 6; shot small-catalog
+adb shell input tap $((W*27/100)) $((H*50/100)); sleep 6; shot small-product; back
+tap "Корзина"; sleep 4; shot small-cart
+tap "Профиль"; sleep 4; shot small-profile
+tap "Войти*"; sleep 4; shot small-login
+tap "Зарегистрироваться"; sleep 4; shot small-register; back; back
+adb shell settings put system font_scale 1.0; adb shell wm size reset; adb shell wm density reset
 
 adb logcat -d -v brief AndroidRuntime:E ReactNativeJS:V ReactNative:W '*:S' > shots/logcat.txt || true
 grep -E "FATAL|Exception|Error|ERROR|TypeError|undefined is not|Warning:|WARN" shots/logcat.txt | sort | uniq -c | sort -rn | head -60 > shots/errors.txt || true
