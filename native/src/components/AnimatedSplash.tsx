@@ -52,6 +52,7 @@ function useShouldPlay() {
       if (!alive) return;
       const go = day !== today() && !reduce;
       if (go) AsyncStorage.setItem(DAY_KEY, today()).catch(() => {});
+      console.log(`[splash] ${go ? "play" : "skip"} (day=${day}, reduce=${reduce})`);
       setPlay(go);
     });
     return () => {
@@ -112,6 +113,7 @@ function Scene({ onEnd }: { onEnd: () => void }) {
     const timer = setTimeout(async () => {
       const r = await getSplashTarget();
       if (cancelled) return;
+      console.log(`[splash] fly to ${r ? `${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.w)}px` : "nowhere (no header)"}`);
       // no home header on screen (e.g. opened from a link): the logo just fades in place
       setTarget(r ? { dx: r.x + r.w / 2 - cx, dy: r.y + r.h / 2 - cy, s: r.w / L } : { dx: 0, dy: 0, s: 0.6 });
       flyOn.setValue(1);
@@ -121,7 +123,10 @@ function Scene({ onEnd }: { onEnd: () => void }) {
         Animated.sequence([t(150), Animated.timing(red, { toValue: 1, duration: 350, useNativeDriver: true })]),
         Animated.sequence([t(200), Animated.timing(bg, { toValue: 0, duration: 650, easing: ease, useNativeDriver: true })]),
         Animated.sequence([t(1020), Animated.timing(flyOn, { toValue: 0, duration: 180, useNativeDriver: true })]),
-      ]).start(() => !cancelled && onEnd());
+      ]).start(() => {
+        console.log("[splash] end");
+        if (!cancelled) onEnd();
+      });
     }, T);
     // never stay on screen
     const safety = setTimeout(() => !cancelled && onEnd(), T + 2500);

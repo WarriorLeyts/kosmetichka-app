@@ -7,7 +7,11 @@ PKG=ru.kosmetichkaopt.app
 adb install -r app.apk || { echo "::error::APK install failed"; exit 1; }
 adb logcat -c
 adb shell pm grant $PKG android.permission.CAMERA || true
+adb shell screenrecord --time-limit 10 --bit-rate 6000000 /sdcard/launch.mp4 & REC=$!
+sleep 1
 adb shell am start -n $PKG/.MainActivity
+wait $REC || true
+mkdir -p shots; adb pull /sdcard/launch.mp4 shots/launch-light.mp4 || true
 SIZE=$(adb shell wm size | tail -1 | awk '{print $3}' | tr -d '\r'); W=${SIZE%x*}; H=${SIZE#*x}
 n=0
 shot() { n=$((n+1)); adb exec-out screencap -p > "shots/$(printf %02d $n)-$1.png"; alive "$1"; }
