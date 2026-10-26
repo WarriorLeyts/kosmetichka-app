@@ -43,6 +43,13 @@ export async function clearPendingLogout() {
   await AsyncStorage.removeItem(LOGOUT_PENDING_KEY).catch(() => {});
 }
 
+/** The last signed-in customer: the app opens with it at once, the server check runs in the background. */
+const CUSTOMER_KEY = "kosmetichka-customer";
+function saveCustomer(c: Customer | null) {
+  (c ? AsyncStorage.setItem(CUSTOMER_KEY, JSON.stringify(c)) : AsyncStorage.removeItem(CUSTOMER_KEY)).catch(() => {});
+}
+let started = false;
+
 /** Bumped by every login / logout: an older /api/auth/me answer must not overwrite a newer state. */
 let epoch = 0;
 
@@ -75,6 +82,13 @@ async function full(c: Customer): Promise<Customer> {
   }
 }
 
+/** me + profile in parallel (one round trip instead of two). */
+async function whoAmI(): Promise<Customer | null> {
+  const [me, profile] = await Promise.all([api.me(), api.profile().catch(() => null)]);
+  if (!me.customer) return null;
+  return profile?.customer ? { ...me.customer, ...profile.customer } : me.customer;
+}
+
 let retrying = false;
 function retryWhenActive() {
   if (retrying) return;
@@ -101,17 +115,30 @@ export const useAuth = create<AuthState>((set) => ({
   refresh: async () => {
     const my = epoch;
     try {
+      const pendingLogout = (await AsyncStorage.getItem(LOGOUT_PENDING_KEY).catch(() => null)) === "1";
+      // first start: show the app right away with the last known account (no waiting on the network)
+      if (!started) {
+        started = true;
+        const raw = pendingLogout ? null : await AsyncStorage.getItem(CUSTOMER_KEY).catch(() => null);
+        let cached: Customer | null = null;
+        try {
+          cached = raw ? (JSON.parse(raw) as Customer) : null;
+        } catch {
+          cached = null;
+        }
+        if (my === epoch) set({ customer: cached, loading: false });
+      }
       // a logout that couldn't reach the server earlier: finish it before trusting the cookie
-      if ((await AsyncStorage.getItem(LOGOUT_PENDING_KEY).catch(() => null)) === "1") {
+      if (pendingLogout) {
         await api.logout();
         await AsyncStorage.removeItem(LOGOUT_PENDING_KEY).catch(() => {});
       }
-      const { customer } = await api.me();
-      const value = customer ? await full(customer) : null;
+      const value = await whoAmI();
       if (my !== epoch) return; // logged in / out meanwhile — that state is newer
       if (value) await claimLocalData(value.id);
       if (my !== epoch) return;
       set({ customer: value, loading: false });
+      saveCustomer(value);
       if (value) useWaitlistStore.getState().load();
     } catch (e) {
       if (my !== epoch) return;
@@ -131,6 +158,7 @@ export const useAuth = create<AuthState>((set) => ({
     if (my !== epoch) return;
     if (value) await claimLocalData(value.id);
     set({ customer: value, loading: false });
+    saveCustomer(value);
     if (value) useWaitlistStore.getState().load();
   },
 
@@ -145,9 +173,13 @@ export const useAuth = create<AuthState>((set) => ({
       await AsyncStorage.setItem(LOGOUT_PENDING_KEY, "1").catch(() => {});
     }
     clearLocalAccountData();
+    saveCustomer(null);
     await AsyncStorage.removeItem(OWNER_KEY).catch(() => {});
     set({ customer: null, loading: false });
   },
 
-  setCustomer: (customer) => set({ customer }),
+  setCustomer: (customer) => {
+    set({ customer });
+    saveCustomer(customer);
+  },
 }));
