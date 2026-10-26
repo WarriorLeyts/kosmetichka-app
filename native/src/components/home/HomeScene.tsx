@@ -21,7 +21,9 @@ import { useIOS } from "../../ios";
 const FW = 853;
 const FY = 630;
 const FH = 765;
-const CLIP = 1335; // products are clipped here (hidden behind the box's front wall anyway)
+// products are clipped here: above the front wall's bottom edge (it is lowest on the left, ~1307),
+// so nothing can poke out under the box while dropping in
+const CLIP = 1295;
 
 const BOX = {
   flat: { src: require("../../../assets/home2/box-flat.png"), x: 0, y: 1056, w: 853, h: 306 },

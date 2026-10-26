@@ -9,7 +9,7 @@ import { getSplashTarget } from "../splashTarget";
  * Launch animation (every cold start): the logo draws itself with a white line, «КОСМЕТИЧКА» appears
  * letter by letter, then the logo shrinks, turns red and flies to its place above «И» in the
  * home header while the home screen shows through. Light / dark versions follow the app theme.
- * The drawing is a sprite sheet (8 × 4 frames of 300 px) rendered from the real logo outline.
+ * The drawing is a sprite sheet (8 × 4 frames of 340 px) rendered from the real logo outline.
  */
 
 const SHEET = require("../../assets/splash/draw-sheet.png");
@@ -20,6 +20,9 @@ const WORD = "КОСМЕТИЧКА".split("");
 const FRAMES = 32;
 const COLS = 8;
 const L = 124; // logo size on the splash
+// sprite cells are 340 px with the 300 px logo in the middle: the empty margin keeps
+// neighbouring frames from bleeding in as a thin line at the edge
+const C = (L * 340) / 300;
 const RED = "#E8202A";
 
 /** null = still deciding, false = skip today, true = play */
@@ -143,8 +146,8 @@ function Scene({ onEnd }: { onEnd: () => void }) {
   // sprite sheet: step to frame i
   const steps = Array.from({ length: FRAMES }, (_, i) => i);
   const inRange = steps.flatMap((i) => [i, i + 0.999]);
-  const tx = frame.interpolate({ inputRange: inRange, outputRange: steps.flatMap((i) => [-(i % COLS) * L, -(i % COLS) * L]) });
-  const ty = frame.interpolate({ inputRange: inRange, outputRange: steps.flatMap((i) => [-Math.floor(i / COLS) * L, -Math.floor(i / COLS) * L]) });
+  const tx = frame.interpolate({ inputRange: inRange, outputRange: steps.flatMap((i) => [-(i % COLS) * C, -(i % COLS) * C]) });
+  const ty = frame.interpolate({ inputRange: inRange, outputRange: steps.flatMap((i) => [-Math.floor(i / COLS) * C, -Math.floor(i / COLS) * C]) });
   const scale = breath.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 1.06, 1] });
 
   const fdx = fly.interpolate({ inputRange: [0, 1], outputRange: [0, target?.dx ?? 0] });
@@ -181,9 +184,9 @@ function Scene({ onEnd }: { onEnd: () => void }) {
 
         {/* the logo drawing itself */}
         {!target ? (
-          <Animated.View style={{ position: "absolute", left: cx - L / 2, top: cy - L / 2, width: L, height: L, overflow: "hidden", transform: [{ scale }] }}>
-            <Animated.View style={{ width: L * COLS, height: L * (FRAMES / COLS), transform: [{ translateX: tx }, { translateY: ty }] }}>
-              <Image source={SHEET} style={{ width: L * COLS, height: L * (FRAMES / COLS) }} />
+          <Animated.View style={{ position: "absolute", left: cx - C / 2, top: cy - C / 2, width: C, height: C, overflow: "hidden", transform: [{ scale }] }}>
+            <Animated.View style={{ width: C * COLS, height: C * (FRAMES / COLS), transform: [{ translateX: tx }, { translateY: ty }] }}>
+              <Image source={SHEET} style={{ width: C * COLS, height: C * (FRAMES / COLS) }} />
             </Animated.View>
           </Animated.View>
         ) : null}
