@@ -154,6 +154,11 @@ export default function OrderScreen() {
           <StatusPill status={o.status} label={o.statusLabel} />
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
+        {o.promoCode && o.discount ? (
+          <Text style={{ color: "#1f8a3b", marginTop: 6, fontWeight: "600" }}>
+            Промокод {o.promoCode} · скидка {money(o.discount)}
+          </Text>
+        ) : null}
         <Text style={{ color: c.secondary, marginTop: 8 }}>
           Создан {date(o.createdAt)} в {time(o.createdAt)} · {o.items.length} поз.
         </Text>

@@ -34,6 +34,8 @@ export type StaffMsg = { id: number; text: string; isFromPicker: boolean; userId
 export type OrderDetail = {
   order: {
     id: number; status: string; statusLabel: string; total: number; comment: string | null; customerConfirmed: boolean;
+    /** MAXMA promo code and its discount (₽); total is after the discount */
+    promoCode?: string | null; discount?: number;
     changesSnapshot: null | {
       added: { productName: string; quantity: number; price: number; variantName: string | null }[];
       removed: { productName: string; quantity: number; price: number; variantName: string | null }[];
