@@ -157,6 +157,11 @@ export default function OrderScreen() {
           <StatusPill status={o.status} label={o.statusLabel} />
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
+        {o.maxmaStuck ? (
+          <Text style={{ color: "#FF3B30", marginTop: 6, fontWeight: "600" }}>
+            Не синхронизировано с MAXMA{o.maxmaError ? `: ${o.maxmaError}` : ""}. Сайт повторяет попытки сам.
+          </Text>
+        ) : null}
         {o.bonusesApplied ? (
           <Text style={{ color: "#8b3dff", marginTop: 6, fontWeight: "600" }}>Списано бонусов: {money(o.bonusesApplied)}</Text>
         ) : null}
