@@ -2,12 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, StyleSheet, useWindowDimensions, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useTheme } from "../theme";
 import { getSplashTarget } from "../splashTarget";
 
 /**
- * Launch animation (once a day): the logo draws itself with a white line, «КОСМЕТИЧКА» appears
+ * Launch animation (every cold start): the logo draws itself with a white line, «КОСМЕТИЧКА» appears
  * letter by letter, then the logo shrinks, turns red and flies to its place above «И» in the
  * home header while the home screen shows through. Light / dark versions follow the app theme.
  * The drawing is a sprite sheet (8 × 4 frames of 300 px) rendered from the real logo outline.
@@ -17,17 +16,11 @@ const SHEET = require("../../assets/splash/draw-sheet.png");
 const LOGO = require("../../assets/home2/logo-white.png");
 const GLOW_LIGHT = require("../../assets/splash/glow-light.png");
 const GLOW_DARK = require("../../assets/splash/glow-dark.png");
-const DAY_KEY = "kosmetichka-splash-day";
 const WORD = "КОСМЕТИЧКА".split("");
 const FRAMES = 32;
 const COLS = 8;
 const L = 124; // logo size on the splash
 const RED = "#E8202A";
-
-const today = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-};
 
 /** null = still deciding, false = skip today, true = play */
 function useShouldPlay() {
@@ -44,15 +37,11 @@ function useShouldPlay() {
         setTimeout(resolve, 600);
       }
     });
-    Promise.all([
-      AsyncStorage.getItem(DAY_KEY).catch(() => null),
-      AccessibilityInfo.isReduceMotionEnabled().catch(() => false),
-      themeReady,
-    ]).then(([day, reduce]) => {
+    Promise.all([AccessibilityInfo.isReduceMotionEnabled().catch(() => false), themeReady]).then(([reduce]) => {
       if (!alive) return;
-      const go = day !== today() && !reduce;
-      if (go) AsyncStorage.setItem(DAY_KEY, today()).catch(() => {});
-      console.log(`[splash] ${go ? "play" : "skip"} (day=${day}, reduce=${reduce})`);
+      // every launch; only «reduce motion» in the phone settings turns it off
+      const go = !reduce;
+      console.log(`[splash] ${go ? "play" : "skip"} (reduce=${reduce})`);
       setPlay(go);
     });
     return () => {
