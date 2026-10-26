@@ -12,7 +12,7 @@ import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import { FavHeart } from "@/components/FavHeart";
-import { LoyaltyCardPanel } from "@/components/LoyaltyCard";
+import { EmptyLoyaltyCard, LoyaltyCardPanel } from "@/components/LoyaltyCard";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
 
@@ -43,11 +43,14 @@ export default function Profile() {
   const cardW = Math.min(Math.min(screenW, 600) - 32 - 28, 420);
   // MAXMA card by phone: refreshed when the tab opens (the site caches it for a minute)
   const [card, setCard] = useState<LoyaltyCard | null>(null);
+  // «Добавить карту» only once the site's MAXMA connection is set up
+  const [canLink, setCanLink] = useState(false);
   const customerId = customer?.id;
   useFocusEffect(
     useCallback(() => {
       if (!customerId) {
         setCard(null);
+        setCanLink(false);
         return;
       }
       let alive = true;
@@ -56,6 +59,7 @@ export default function Profile() {
         .then((r) => {
           if (!alive) return;
           const c = r.card;
+          setCanLink(r.reason !== "not_configured");
           setCard(c ? { level: c.level, name: c.name, cashback: c.cashback, bonuses: c.bonuses, pendingBonuses: c.pendingBonuses, barcode: c.number } : null);
         })
         .catch(() => {
@@ -106,7 +110,26 @@ export default function Profile() {
         ) : null}
 
         {/* loyalty card from MAXMA (by phone); customers without a card see nothing */}
-        {customer && card ? <LoyaltyCardPanel card={card} width={cardW} /> : null}
+        {customer && card ? (
+          <LoyaltyCardPanel
+            card={card}
+            width={cardW}
+            onUnlink={() =>
+              Alert.alert("Отвязать карту?", "Её можно будет добавить снова по номеру телефона или карты.", [
+                { text: "Отмена", style: "cancel" },
+                {
+                  text: "Отвязать",
+                  style: "destructive",
+                  onPress: () => {
+                    api.loyaltyUnlink().then(() => setCard(null)).catch((e) => Alert.alert("Не получилось", e instanceof Error ? e.message : ""));
+                  },
+                },
+              ])
+            }
+          />
+        ) : customer && canLink ? (
+          <EmptyLoyaltyCard width={cardW} onAdd={() => router.push("/loyalty-add")} />
+        ) : null}
 
         {/* one rounded menu block */}
         <View style={[styles.block, { backgroundColor: c.cell }, !dark && styles.shadow]}>

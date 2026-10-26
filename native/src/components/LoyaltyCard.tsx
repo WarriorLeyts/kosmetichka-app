@@ -30,8 +30,45 @@ function Barcode({ code, width, height }: { code: string; width: number; height:
   );
 }
 
+/** No card linked yet: the same card, without data and barcode, with «Добавить карту». */
+export function EmptyLoyaltyCard({ width, onAdd }: { width: number; onAdd: () => void }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const k = width / CARD_W;
+  const press = () => {
+    tap();
+    onAdd();
+  };
+  return (
+    <View style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+      <Text style={[styles.title, { color: c.label }]}>Моя карта</Text>
+      <Pressable onPress={press} accessibilityRole="button" accessibilityLabel="Добавить карту лояльности">
+        <View style={[styles.card, { width, height: COLLAPSED_H * k, borderRadius: 9 * k }]}>
+          <LinearGradient colors={["#024697", "#004290"]} style={StyleSheet.absoluteFill} />
+          <View style={{ height: 41 * k, flexDirection: "row", alignItems: "center", paddingHorizontal: 9 * k }}>
+            <Image source={LOGO} style={{ width: 36 * k, height: 33 * k, marginLeft: -2 * k }} contentFit="contain" />
+            <Text style={[styles.brand, { fontSize: 13.5 * k, marginLeft: 4 * k }]}>КОСМЕТИЧКА</Text>
+          </View>
+          <Image source={BANNER} style={{ width, height: 90 * k }} contentFit="cover" />
+          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 * k }}>
+            <Ionicons name="add-circle" size={16 * k} color="#fff" />
+            <Text style={[styles.small, { fontSize: 11 * k }]}>ДОБАВИТЬ КАРТУ</Text>
+          </View>
+        </View>
+      </Pressable>
+      <Pressable onPress={press} style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]} accessibilityRole="button">
+        <View style={[styles.rowIcon, { backgroundColor: "rgba(139,61,255,0.1)" }]}>
+          <Ionicons name="add" size={22} color={VIOLET} />
+        </View>
+        <Text style={styles.rowText}>Добавить карту</Text>
+        <Ionicons name="chevron-forward" size={19} color={VIOLET} />
+      </Pressable>
+    </View>
+  );
+}
+
 /** «Моя карта» — exact copy of the loyalty card; «Показать штрихкод» opens it with an animation. */
-export function LoyaltyCardPanel({ card, width }: { card: Card; width: number }) {
+export function LoyaltyCardPanel({ card, width, onUnlink }: { card: Card; width: number; onUnlink?: () => void }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const [open, setOpen] = useState(false);
@@ -142,6 +179,14 @@ export function LoyaltyCardPanel({ card, width }: { card: Card; width: number })
           <Ionicons name="chevron-forward" size={19} color={VIOLET} />
         </Animated.View>
       </Pressable>
+      {card.pendingBonuses > 0 ? (
+        <Text style={[styles.pending, { color: c.secondary }]}>Ещё {card.pendingBonuses.toLocaleString("ru-RU")} бонусов скоро станут доступны</Text>
+      ) : null}
+      {onUnlink ? (
+        <Pressable onPress={onUnlink} hitSlop={6} accessibilityRole="button" style={{ alignSelf: "center", paddingVertical: 8 }}>
+          <Text style={{ color: c.secondary, fontSize: 14 }}>Отвязать карту</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -159,4 +204,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, minHeight: 44 },
   rowIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   rowText: { flex: 1, color: VIOLET, fontSize: 17 },
+  pending: { fontSize: 13, textAlign: "center", marginTop: 4 },
 });

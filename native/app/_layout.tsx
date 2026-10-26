@@ -99,6 +99,7 @@ function AppRoot() {
         <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal", headerShown: false }} />
         <Stack.Screen name="register" options={{ title: "Регистрация", headerShown: false }} />
         <Stack.Screen name="forgot" options={{ title: "Восстановление пароля", headerShown: false }} />
+        <Stack.Screen name="loyalty-add" options={{ title: "Добавить карту", headerShown: false }} />
         <Stack.Screen name="waitlist" options={{ title: "Лист ожидания", headerShown: false }} />
         <Stack.Screen name="favorites" options={{ title: "Избранное", headerShown: false }} />
         <Stack.Screen name="edit-profile" options={{ title: "Мои данные", headerShown: false }} />
