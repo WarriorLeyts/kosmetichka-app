@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Stack } from "expo-router";
+import { Stack, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -223,6 +223,15 @@ export default function EditProfile() {
               />
             ) : null}
           </View>
+
+          <Pressable
+            onPress={() => router.push("/delete-account")}
+            accessibilityRole="button"
+            accessibilityLabel="Удалить аккаунт"
+            style={({ pressed }) => [{ alignSelf: "center", paddingVertical: 18, paddingHorizontal: 12, opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Text style={{ color: "#FF3B30", fontSize: 16 }}>Удалить аккаунт</Text>
+          </Pressable>
         </View>
       </ScrollView>
 

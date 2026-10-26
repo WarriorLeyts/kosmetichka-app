@@ -188,6 +188,10 @@ export const api = {
   },
 
   // ── Profile ──
+  /** Deletes the account (personal data erased, orders stay without it); the password confirms it. */
+  deleteAccount(password: string): Promise<{ success: boolean }> {
+    return request("/api/mobile/profile", { method: "DELETE", body: json({ password }) });
+  },
   profile(): Promise<{ customer: Customer }> {
     return request("/api/mobile/profile");
   },
