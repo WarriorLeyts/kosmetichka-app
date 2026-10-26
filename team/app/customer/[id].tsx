@@ -45,6 +45,35 @@ export default function Customer() {
     ]);
   };
 
+  const decide = (action: "approve" | "reject") => {
+    const label = x?.roleRequestLabel ?? "";
+    Alert.alert(
+      action === "approve" ? `Одобрить «${label}»?` : "Отклонить заявку?",
+      action === "approve" ? "Клиент сразу получит эти цены и сможет сам переключаться на розницу и обратно." : "Клиент увидит, что заявка отклонена.",
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: action === "approve" ? "Одобрить" : "Отклонить",
+          style: action === "reject" ? "destructive" : "default",
+          onPress: async () => {
+            if (running.current) return;
+            running.current = true;
+            setBusy(action);
+            try {
+              await post(`/api/admin/customers/${id}/role-request`, { action });
+              await reload();
+            } catch (e) {
+              Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+            } finally {
+              running.current = false;
+              setBusy("");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <Screen title={x?.displayName ?? "Клиент"} onRefresh={reload}>
       {loading && !data ? <Loading /> : !x ? <ErrorState text={error || "Клиент не найден"} onRetry={reload} /> : (
@@ -63,10 +92,24 @@ export default function Customer() {
             <KV k="Город" v={x.city} />
             <KV k="Адрес" v={x.address} />
             <KV k="Тип цен" v={x.priceTypeLabel} />
+            <KV k="Доступ к опту" v={x.wholesaleAccess === "big_wholesale" ? "Крупный опт" : x.wholesaleAccess === "wholesale" ? "Опт" : "Нет"} />
             <KV k="Менеджер 1С" v={x.manager} />
             <KV k="Код 1С" v={x.oneCId} />
             <KV k="Заказов" v={x.ordersCount} onPress={() => router.navigate({ pathname: "/orders", params: { all: "1", status: "", customer: x.phone || x.companyName || x.name || "" } })} />
           </Card>
+          {x.roleRequestStatus === "pending" && x.roleRequestLabel ? (
+            <Card>
+              <Text style={{ color: c.label, fontSize: 16.5, fontWeight: "700" }}>Заявка на «{x.roleRequestLabel}»</Text>
+              <Text style={{ color: c.secondary, marginTop: 4 }}>
+                Сейчас: {x.priceTypeLabel}
+                {x.roleRequestedAt ? ` · ${date(x.roleRequestedAt)}` : ""}
+              </Text>
+              <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
+                <ActionButton label="Одобрить" kind="success" loading={busy === "approve"} onPress={() => decide("approve")} />
+                <ActionButton label="Отклонить" kind="danger" loading={busy === "reject"} onPress={() => decide("reject")} />
+              </View>
+            </Card>
+          ) : null}
           <View style={{ flexDirection: "row", gap: 8 }}>
             {!x.isApproved ? <ActionButton label="Подтвердить" kind="success" loading={busy === "approve"} onPress={() => act("approve")} /> : null}
             {x.isApproved ? <ActionButton label="Снять подтверждение" kind="danger" loading={busy === "block"} onPress={() => act("block")} /> : null}

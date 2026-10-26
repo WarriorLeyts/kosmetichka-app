@@ -63,10 +63,15 @@ export type CustomerMsg = { id: number; text: string; isFromPicker: boolean; use
 export type CustomerRow = {
   id: number; name: string | null; companyName: string | null; phone: string | null; email: string | null; inn: string | null; city: string | null;
   priceType: string; priceTypeLabel: string; isActive: boolean; isApproved: boolean; manager: string | null; displayName: string; createdAt: string;
+  /** customer's request for a wholesale price type */
+  roleRequest?: string | null; roleRequestStatus?: string | null;
 };
 export type CustomersPage = Paging & { customers: CustomerRow[]; filters: { q: string; status: string } };
 export type CustomerDetail = {
-  customer: CustomerRow & { address: string | null; oneCId: string | null; role: string; ordersCount: number; updatedAt: string };
+  customer: CustomerRow & {
+    address: string | null; oneCId: string | null; role: string; ordersCount: number; updatedAt: string;
+    wholesaleAccess?: string | null; roleRequestLabel?: string | null; roleRequestedAt?: string | null;
+  };
 };
 
 export type Stats = {

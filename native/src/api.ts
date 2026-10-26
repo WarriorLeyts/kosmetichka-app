@@ -5,7 +5,7 @@
  * after /api/auth/login — exactly like the website.
  */
 import type {
-  Brand, Category, ChatMessage, Customer, Order, OrdersPage, Product, Variant,
+  Brand, Category, ChatMessage, Customer, Order, OrdersPage, Product, RoleInfo, Variant,
 } from "./types";
 
 export const BASE_URL = "https://kosmetichka-opt.ru";
@@ -174,6 +174,17 @@ export const api = {
   },
   loyaltyUnlink(): Promise<{ ok: boolean }> {
     return request("/api/mobile/loyalty", { method: "DELETE" });
+  },
+
+  // ── Price type: retail ↔ granted wholesale at once, a higher level by request ──
+  role(): Promise<RoleInfo> {
+    return request("/api/mobile/role");
+  },
+  roleSet(priceType: string): Promise<RoleInfo> {
+    return request("/api/mobile/role", { method: "POST", body: json({ priceType }) });
+  },
+  roleWithdraw(): Promise<RoleInfo> {
+    return request("/api/mobile/role", { method: "DELETE" });
   },
 
   // ── Profile ──

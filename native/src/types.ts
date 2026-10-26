@@ -42,7 +42,25 @@ export type Customer = {
   city?: string | null;
   address?: string | null;
   priceType?: string | null;
+  /** wholesale level the admin granted ("wholesale" | "big_wholesale") */
+  wholesaleAccess?: string | null;
+  /** request for a wholesale price type: "pending" | "rejected" */
+  roleRequest?: string | null;
+  roleRequestStatus?: string | null;
   manager?: string | null;
+};
+
+/** Price type («роль») the customer can switch to — /api/mobile/role */
+export type RoleOption = { value: string; label: string; state: "current" | "available" | "request" | "pending" };
+export type RoleInfo = {
+  priceType: string;
+  priceTypeLabel: string;
+  wholesaleAccess: string | null;
+  roleRequest: string | null;
+  roleRequestStatus: string | null;
+  roleOptions: RoleOption[];
+  switched?: boolean;
+  requested?: boolean;
 };
 
 export type OrderItem = {

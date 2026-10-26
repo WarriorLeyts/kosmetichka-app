@@ -14,6 +14,7 @@ import { tap } from "@/components/ui";
 import { FavHeart } from "@/components/FavHeart";
 import { EmptyLoyaltyCard, LoyaltyCardPanel } from "@/components/LoyaltyCard";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
+import { RoleSheet } from "@/components/RoleSheet";
 import { useTheme, type ThemePref } from "@/theme";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
@@ -76,6 +77,7 @@ export default function Profile() {
   const themePref = useTheme((s) => s.pref);
   const setThemePref = useTheme((s) => s.setPref);
   const [themeOpen, setThemeOpen] = useState(false);
+  const [roleOpen, setRoleOpen] = useState(false);
   const favCount = useFavorites((s) => s.items.length);
   const waitCount = useWaitlistStore((s) => s.ids.length);
 
@@ -84,6 +86,9 @@ export default function Profile() {
 
   const items: Item[] = [
     { icon: "person-outline", title: "Мои данные", needsAuth: true, onPress: () => go("/edit-profile", true) },
+    ...(customer
+      ? [{ icon: "pricetags-outline" as IconName, title: "Тип цен", value: PRICE_LABEL[customer.priceType ?? ""] ?? undefined, onPress: () => setRoleOpen(true) }]
+      : []),
     { icon: "cube-outline", title: "Мои заказы", needsAuth: true, onPress: () => (customer ? router.navigate("/orders") : router.push("/login")) },
     { icon: "time-outline", title: "Лист ожидания", needsAuth: true, count: customer ? waitCount : 0, onPress: () => go("/waitlist", true) },
     { icon: "heart-outline", title: "Избранное", fav: true, count: favCount, onPress: () => go("/favorites") },
@@ -198,6 +203,7 @@ export default function Profile() {
           </Pressable>
         )}
       </ScrollView>
+      <RoleSheet open={roleOpen} onClose={() => setRoleOpen(false)} />
       <Sheet open={themeOpen} onClose={() => setThemeOpen(false)} title="Оформление">
         <SheetOptions
           options={THEME_OPTIONS}
@@ -212,6 +218,7 @@ export default function Profile() {
   );
 }
 
+const PRICE_LABEL: Record<string, string> = { retail: "Розница", discount: "Скидка", wholesale: "Опт", big_wholesale: "Крупный опт" };
 const THEME_LABEL: Record<ThemePref, string> = { system: "Как в телефоне", light: "Светлая", dark: "Тёмная" };
 const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
   { value: "system", label: "Как в телефоне" },

@@ -45,6 +45,7 @@ export default function Customers() {
               { value: "pending", label: "Ожидают" },
               { value: "approved", label: "Подтверждённые" },
               { value: "blocked", label: "Заблокированные" },
+              { value: "requests", label: "Заявки на опт" },
             ]}
             value={status}
             onChange={setStatus}
@@ -65,12 +66,17 @@ export default function Customers() {
           <Text style={{ color: c.secondary, marginTop: 4 }} numberOfLines={1}>
             {[x.phone, x.city, x.priceTypeLabel].filter(Boolean).join(" · ")}
           </Text>
+          {x.roleRequestStatus === "pending" && x.roleRequest ? (
+            <Text style={{ color: "#B45309", fontWeight: "700", marginTop: 4 }}>Заявка: {ROLE_LABELS[x.roleRequest] ?? x.roleRequest}</Text>
+          ) : null}
           <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>С {date(x.createdAt)}</Text>
         </Card>
       )}
     />
   );
 }
+
+const ROLE_LABELS: Record<string, string> = { wholesale: "Опт", big_wholesale: "Крупный опт" };
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
