@@ -378,6 +378,11 @@ export default function ProductScreen() {
             </View>
           ) : null}
 
+    </>
+  );
+
+  const descriptionBlock = (
+    <>
           {/* description right on the page */}
           {product.description ? (
             <View style={{ marginTop: 18 }}>
@@ -545,6 +550,7 @@ export default function ProductScreen() {
             </Text>
             {details}
             <View style={styles.dActions}>{actions}</View>
+            {descriptionBlock}
           </View>
         </View>
         <View style={{ marginTop: 16 }}>{relatedBlock}</View>
@@ -586,6 +592,7 @@ export default function ProductScreen() {
 
         <View style={styles.pad} onLayout={(e) => (padY.current = e.nativeEvent.layout.y)}>
           {details}
+          {descriptionBlock}
         </View>
 
         {relatedBlock}
