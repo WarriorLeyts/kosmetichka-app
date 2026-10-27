@@ -135,7 +135,7 @@ export function HomeScene({
               {/* one centred line across the whole width, no wrapping */}
               <View style={styles.titleRow} accessible accessibilityRole="header" accessibilityLabel={`${t.a} ${t.b}`}>
                 <Text style={[styles.h1, titleFont(t), { color: dark ? "#fff" : "#170f33" }]} numberOfLines={1}>
-                  {t.a}{" "}
+                  {t.a}{"\u00A0"}
                 </Text>
                 <GradientText style={[styles.h1, titleFont(t)]} colors={t.bColors}>
                   {t.b}
