@@ -2,13 +2,13 @@ name: Website build (app for the browser)
 
 # Builds the customer app «Косметичка» for the browser (same code as the phone apps) and publishes
 # it to the release "web-latest" (kosmetichka-web.tar.gz). The site's server downloads and serves it.
-# Input base_url: the path the site serves it under ("/new" while it is a preview, "" at the root).
+# Input base_url: the path the site serves it under ("" = the site root, kosmetichka-opt.ru/).
 on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: "Путь на сайте (/new — предпросмотр, пусто — корень)"
-        default: "/new"
+        description: "Путь на сайте (пусто — корень сайта)"
+        default: ""
   push:
     branches: [main, web-app]
     paths: ["native/**", ".github/workflows/web.yml"]
@@ -34,7 +34,7 @@ jobs:
         run: ../scripts/ci-run.sh npx tsc --noEmit --pretty false
       - name: Build for the browser
         env:
-          WEB_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '/new' }}
+          WEB_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '' }}
         run: ../scripts/ci-run.sh npx expo export --platform web --output-dir web-dist
       - name: Publish
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/web-app' || github.event_name == 'workflow_dispatch'
