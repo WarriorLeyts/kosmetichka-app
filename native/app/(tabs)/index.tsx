@@ -3,6 +3,7 @@ import { Alert, Animated, FlatList, Pressable, ScrollView, StyleSheet, Text, Vie
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
+import { useDesktop } from "@/useDesktop";
 import { BRAND_PINK, BRAND_VIOLET, Wordmark } from "@/components/Wordmark";
 import { FavHeart } from "@/components/FavHeart";
 import { Ionicons } from "@expo/vector-icons";
@@ -33,6 +34,7 @@ export default function Home() {
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
   const bottomSpace = useTabBarSpace();
+  const desktop = useDesktop();
   const mode = useTheme((s) => s.mode);
   const toggleTheme = useTheme((s) => s.toggle);
   const customer = useAuth((s) => s.customer);
@@ -77,6 +79,7 @@ export default function Home() {
       scrollEventThrottle={16}
     >
       <View onLayout={(e) => setHeaderH(e.nativeEvent.layout.height)} style={[styles.hero, { paddingTop: insets.top + 8, backgroundColor: "transparent" }]}>
+        {desktop ? null : (
         <View style={styles.heroTop}>
           <View style={[styles.heroSide, { left: 0 }]}>
             <Pressable
@@ -111,10 +114,12 @@ export default function Home() {
             </Pressable>
           </View>
         </View>
-        <Text style={[styles.subtitle, { color: dark ? "#E3D3F2" : "#7A6A9A" }]} numberOfLines={1} adjustsFontSizeToFit>
+        )}
+        <Text style={[styles.subtitle, { color: dark ? "#E3D3F2" : "#7A6A9A" }, desktop && { fontSize: 22, marginTop: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
           Сеть магазинов косметики и парфюмерии
         </Text>
 
+        {desktop ? null : (
         <View style={styles.searchRow}>
           <Pressable
             style={[styles.search, dark ? styles.searchDark : styles.searchLight]}
@@ -141,6 +146,7 @@ export default function Home() {
             </LinearGradient>
           </Pressable>
         </View>
+        )}
       </View>
 
       {/* new home content: scroll-driven box scene + categories with images */}

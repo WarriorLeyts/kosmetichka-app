@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartStore } from "../store/cart";
 import { useIOS } from "../ios";
+import { useDesktop } from "../useDesktop";
 import { tap } from "./ui";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -31,6 +32,9 @@ const BAR_HEIGHT = 70;
 /** Space a tab screen must leave at the bottom so content scrolls fully above the floating bar. */
 export function useTabBarSpace() {
   const insets = useSafeAreaInsets();
+  // website on a computer: no bottom bar, only breathing room under the content
+  const desktop = useDesktop();
+  if (desktop) return 32;
   return BAR_HEIGHT + Math.max(insets.bottom, 10) + 18;
 }
 

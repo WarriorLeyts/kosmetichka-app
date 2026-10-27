@@ -6,6 +6,7 @@ import { PageTitle } from "@/components/PageTitle";
 import { TabBar } from "@/components/TabBar";
 import { disabled } from "@/debugFlags";
 import { PageLayout } from "@/components/PageBackdrop";
+import { useDesktop } from "@/useDesktop";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -18,10 +19,12 @@ function icon(active: IconName, inactive: IconName) {
 export default function TabsLayout() {
   const count = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
 
+  const desktop = useDesktop();
+
   return (
     <Tabs
       screenLayout={disabled("layout") ? undefined : ({ children }) => <PageLayout>{children}</PageLayout>}
-      tabBar={disabled("tabbar") ? undefined : (props) => <TabBar {...props} />}
+      tabBar={disabled("tabbar") ? undefined : desktop ? () => null : (props) => <TabBar {...props} />}
       screenOptions={{
         tabBarActiveTintColor: colors.pink,
         tabBarInactiveTintColor: colors.faint,

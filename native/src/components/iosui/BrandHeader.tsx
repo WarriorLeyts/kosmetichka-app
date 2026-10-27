@@ -8,6 +8,7 @@ import { useNotifications } from "../../store/notifications";
 import { iosText, useIOS } from "../../ios";
 import { Wordmark } from "../Wordmark";
 import { tap } from "../ui";
+import { useDesktop } from "../../useDesktop";
 
 /**
  * Top bar used on all tab screens: «КОСМЕТИЧКА» centred (same font and place as on the product page), bell on the right.
@@ -19,6 +20,7 @@ export function BrandHeader({ title }: { title?: string }) {
   const [chatUnread, setChatUnread] = useState(false);
   const notifUnread = useNotifications((s) => s.unread);
   const unread = !!customer && (chatUnread || notifUnread > 0);
+  const desktop = useDesktop();
 
   useFocusEffect(
     useCallback(() => {
@@ -33,7 +35,7 @@ export function BrandHeader({ title }: { title?: string }) {
 
   return (
     <View>
-      <View style={styles.topRow}>
+      {desktop ? <View style={{ height: 20 }} /> : <View style={styles.topRow}>
         <BrandWord color={c.label} />
         <Pressable
           hitSlop={12}
@@ -48,7 +50,7 @@ export function BrandHeader({ title }: { title?: string }) {
           <Ionicons name="notifications-outline" size={27} color={c.label} />
           {unread ? <View style={styles.bellDot} /> : null}
         </Pressable>
-      </View>
+      </View>}
       {title ? (
         <Text style={[iosText.largeTitle, styles.title, { color: c.label }]} accessibilityRole="header">
           {title}

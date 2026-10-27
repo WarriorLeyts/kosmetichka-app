@@ -16,6 +16,8 @@ import { ErrorScreen } from "@/components/ErrorScreen";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
 import { AnimatedSplash } from "@/components/AnimatedSplash";
+import { DesktopHeader } from "@/components/DesktopHeader";
+import { useDesktop } from "@/useDesktop";
 
 installCrashReporter();
 
@@ -94,6 +96,7 @@ function AppRoot() {
   useEffect(() => {
     setCrashScreen(pathname);
   }, [pathname]);
+  const desktop = useDesktop();
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
   // re-mount the whole UI when the theme changes so every screen re-reads the palette
@@ -124,6 +127,7 @@ function AppRoot() {
       onTouchStart={inExpoGo ? () => console.log("[kos] touch") : undefined}
     >
       <StatusBar style={colors.statusBar} />
+      {desktop ? <DesktopHeader key={`dh-${mode}`} /> : null}
       <Stack
         key={mode}
         screenLayout={disabled("layout") ? undefined : ({ children }) => <PageLayout>{children}</PageLayout>}
@@ -155,7 +159,7 @@ function AppRoot() {
         <Stack.Screen name="info" options={{ title: "", headerShown: false }} />
       </Stack>
       <ThemeFade mode={mode} />
-      {inExpoGo ? null : <AnimatedSplash onReady={onSplashReady} />}
+      {inExpoGo || desktop ? null : <AnimatedSplash onReady={onSplashReady} />}
     </SafeAreaProvider>
   );
 }
