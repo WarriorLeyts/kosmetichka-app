@@ -6,6 +6,8 @@ mkdir -p shots
 PKG=ru.kosmetichkaopt.app
 adb install -r app.apk || { echo "::error::APK install failed"; exit 1; }
 adb logcat -c
+# the stock launcher hangs on slow CI emulators and covers the app with an ANR dialog
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher >/dev/null 2>&1 || true
 adb shell pm grant $PKG android.permission.CAMERA || true
 adb shell screenrecord --time-limit 10 --bit-rate 6000000 /sdcard/launch.mp4 & REC=$!
 sleep 1
@@ -19,6 +21,19 @@ alive() { if ! adb shell pidof $PKG >/dev/null; then echo "CRASH after: $1" | te
 # tap an element by its text or accessibility label (content-desc)
 tap() {
   adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1
+  # the CI emulator's own launcher sometimes hangs («Pixel Launcher isn't responding») over our app
+  if grep -q "isn&apos;t responding\|isn't responding" ui.xml 2>/dev/null; then
+    echo "system ANR dialog closed before: $1" >> shots/problems.txt
+    wxy=$(python3 -c "
+import re,xml.etree.ElementTree as ET
+r=ET.parse('ui.xml').getroot()
+for e in r.iter('node'):
+    if e.get('text')=='Wait':
+        b=list(map(int,re.findall(r'\\d+',e.get('bounds'))));print((b[0]+b[2])//2,(b[1]+b[3])//2);break")
+    [ -n "$wxy" ] && adb shell input tap $wxy || adb shell input keyevent 4
+    sleep 2
+    adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml ui.xml >/dev/null 2>&1
+  fi
   xy=$(python3 - "$1" <<'PY'
 import sys,re,xml.etree.ElementTree as ET
 want=sys.argv[1]
