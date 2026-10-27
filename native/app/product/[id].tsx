@@ -1,3 +1,4 @@
+import { useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AccessibilityInfo, ActivityIndicator, Alert, Animated, FlatList, ScrollView, Pressable, StyleSheet, Text, useWindowDimensions, View,
@@ -57,6 +58,7 @@ export default function ProductScreen() {
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const { width: W, height: H } = useWindowDimensions();
+  const desktop = useDesktop();
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const add = useCartStore((s) => s.add);
@@ -288,58 +290,9 @@ export default function ProductScreen() {
       </View>
     );
 
-  // compact header background: pinned, light with a thin shadow
-  const headerBg = (
-        <Animated.View
-          style={[{ pointerEvents: "none" }, styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#211032" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
-        >
-          {reduceMotion ? (
-            <Animated.View style={[styles.reducedRow, { top: T }, anim.reducedThumb]}>
-              {images[slide] ? <Image source={{ uri: images[slide] }} style={{ width: THUMB, height: THUMB }} contentFit="contain" /> : null}
-              <Text style={{ flex: 1, fontSize: SMALL_FONT, fontWeight: "600", color: c.label }} numberOfLines={2}>
-                {product.name}
-              </Text>
-            </Animated.View>
-          ) : null}
-        </Animated.View>
-  );
 
-  const titleStyle = [styles.title, { color: c.label, width: TW }];
-  const bottomH = 76 + Math.max(insets.bottom, 10);
-
-  return (
-    <View style={{ flex: 1, backgroundColor: bg }}>
-      <Animated.ScrollView
-        ref={scrollRef as never}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
-        scrollEventThrottle={16}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingTop: PHOTO_TOP, paddingBottom: bottomH + 24 }}
-      >
-        {/* place for the big photo (the photo itself is drawn above, see below) */}
-        <View style={{ height: S }} />
-        <Animated.View style={[styles.dots, !reduceMotion && anim.fadeEarly]}>
-          {images.length > 1
-            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? VIOLET : dark ? "#43295A" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
-            : null}
-        </Animated.View>
-
-        <View style={styles.pad}>
-          {product.brand?.name ? (
-            <Text style={[styles.brand, { color: VIOLET }]} numberOfLines={1}>
-              {product.brand.name.toUpperCase()}
-            </Text>
-          ) : null}
-        </View>
-        {/* title placeholder: keeps the place in the layout; the visible title is the animated copy */}
-        <Text
-          style={[titleStyle, { marginLeft: 16, opacity: titleBox && !reduceMotion ? 0 : 1 }]}
-          onLayout={(e) => setTitleBox({ y: e.nativeEvent.layout.y, h: e.nativeEvent.layout.height })}
-        >
-          {product.name}
-        </Text>
-
-        <View style={styles.pad} onLayout={(e) => (padY.current = e.nativeEvent.layout.y)}>
+  const details = (
+    <>
           <View style={styles.metaRow}>
             {volume ? (
               <View style={[styles.volume, { backgroundColor: dark ? "#352044" : "#EFEAFF" }]}>
@@ -431,8 +384,11 @@ export default function ProductScreen() {
               <Description text={product.description} />
             </View>
           ) : null}
-        </View>
+    </>
+  );
 
+  const relatedBlock = (
+    <>
         {related.length > 0 ? (
           <>
             <Text style={[styles.h, { color: c.label, marginHorizontal: 16, marginTop: 24 }]}>Ещё от {product.brand?.name ?? "бренда"}</Text>
@@ -458,49 +414,11 @@ export default function ProductScreen() {
             />
           </>
         ) : null}
+    </>
+  );
 
-        {!reduceMotion ? headerBg : null}
-
-        {/* the photo: shrinks into the compact header thumbnail while scrolling (same element, no swap) */}
-        <Animated.View
-          style={[
-            styles.photo,
-            { top: PHOTO_TOP, left: (W - S) / 2, width: S, height: S, backgroundColor: dark ? "#fff" : "transparent" },
-            !reduceMotion && anim.photo,
-          ]}
-        >
-          {gallery}
-        </Animated.View>
-
-        {/* the title: moves next to the thumbnail and gets smaller */}
-        {titleBox && !reduceMotion ? (
-          <>
-            <Animated.Text importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[titleStyle, styles.abs, { top: titleBox.y, left: 16 }, anim.title]}>
-              {product.name}
-            </Animated.Text>
-            <Animated.Text
-              importantForAccessibility="no-hide-descendants"
-              accessibilityElementsHidden
-              numberOfLines={2}
-              style={[
-                styles.abs,
-                styles.compactTitle,
-                { color: c.label, width: TW * k, left: textLeft, top: thumbCenterY - (TITLE_LINE * k * Math.min(2, Math.round(titleBox.h / TITLE_LINE))) / 2 },
-                anim.compactTitle,
-              ]}
-            >
-              {product.name}
-            </Animated.Text>
-          </>
-        ) : null}
-        {reduceMotion ? headerBg : null}
-      </Animated.ScrollView>
-
-      {topBar}
-
-      {/* pinned bottom panel: quantity and «В корзину» (existing cart logic) */}
-      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: dark ? "rgba(33,16,50,0.97)" : "rgba(255,255,255,0.97)" }, !dark && styles.bottomShadow]}>
-        <View style={styles.bottomInner}>
+  const actions = (
+    <>
           {out ? (
             <GradientButton
               title={waiting ? "Вы в листе ожидания" : "Сообщить о поступлении"}
@@ -550,6 +468,171 @@ export default function ProductScreen() {
               />
             </>
           )}
+    </>
+  );
+
+  // compact header background: pinned, light with a thin shadow
+  const headerBg = (
+        <Animated.View
+          style={[{ pointerEvents: "none" }, styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#211032" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
+        >
+          {reduceMotion ? (
+            <Animated.View style={[styles.reducedRow, { top: T }, anim.reducedThumb]}>
+              {images[slide] ? <Image source={{ uri: images[slide] }} style={{ width: THUMB, height: THUMB }} contentFit="contain" /> : null}
+              <Text style={{ flex: 1, fontSize: SMALL_FONT, fontWeight: "600", color: c.label }} numberOfLines={2}>
+                {product.name}
+              </Text>
+            </Animated.View>
+          ) : null}
+        </Animated.View>
+  );
+
+  const titleStyle = [styles.title, { color: c.label, width: TW }];
+  const bottomH = 76 + Math.max(insets.bottom, 10);
+
+  if (desktop) {
+    // website on a computer: photo on the left, everything about the product on the right
+    const big = images[slide] ?? images[0];
+    return (
+      <ScrollView style={{ flex: 1, backgroundColor: bg }} contentContainerStyle={styles.dWrap}>
+        <View style={styles.dTop}>
+          <Pressable onPress={goBack} accessibilityRole="button" accessibilityLabel="Назад" style={styles.dBack}>
+            <Ionicons name="chevron-back" size={20} color={VIOLET} />
+            <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Назад</Text>
+          </Pressable>
+        </View>
+        <View style={styles.dRow}>
+          <View style={{ width: 520 }}>
+            <View style={[styles.dPhoto, { backgroundColor: "#fff" }, !dark && styles.shadow]}>
+              {big ? (
+                <Image source={{ uri: big }} placeholder={previews[slide] ? { uri: previews[slide]! } : undefined} placeholderContentFit="contain" style={{ width: 472, height: 472 }} contentFit="contain" transition={150} />
+              ) : (
+                <Ionicons name="image-outline" size={56} color={c.secondary} />
+              )}
+              <Pressable
+                onPress={() => { tap(); toggleFav(product); }}
+                accessibilityRole="button"
+                accessibilityLabel={isFav ? "Убрать из избранного" : "В избранное"}
+                style={styles.dFav}
+              >
+                <FavHeart size={26} active={isFav} />
+              </Pressable>
+            </View>
+            {images.length > 1 ? (
+              <View style={styles.dThumbs}>
+                {images.map((u, i) => (
+                  <Pressable
+                    key={u + i}
+                    onPress={() => setSlide(i)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Фото ${i + 1}`}
+                    style={[styles.dThumb, { borderColor: i === slide ? VIOLET : "transparent" }]}
+                  >
+                    <Image source={{ uri: previews[i] ?? u }} style={{ width: 64, height: 64 }} contentFit="contain" />
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+          </View>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            {product.brand?.name ? (
+              <Text style={[styles.brand, { color: VIOLET }]} numberOfLines={1}>
+                {product.brand.name.toUpperCase()}
+              </Text>
+            ) : null}
+            <Text style={[styles.dTitle, { color: c.label }]} accessibilityRole="header">
+              {product.name}
+            </Text>
+            {details}
+            <View style={styles.dActions}>{actions}</View>
+          </View>
+        </View>
+        <View style={{ marginTop: 16 }}>{relatedBlock}</View>
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={{ flex: 1, backgroundColor: bg }}>
+      <Animated.ScrollView
+        ref={scrollRef as never}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingTop: PHOTO_TOP, paddingBottom: bottomH + 24 }}
+      >
+        {/* place for the big photo (the photo itself is drawn above, see below) */}
+        <View style={{ height: S }} />
+        <Animated.View style={[styles.dots, !reduceMotion && anim.fadeEarly]}>
+          {images.length > 1
+            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? VIOLET : dark ? "#43295A" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
+            : null}
+        </Animated.View>
+
+        <View style={styles.pad}>
+          {product.brand?.name ? (
+            <Text style={[styles.brand, { color: VIOLET }]} numberOfLines={1}>
+              {product.brand.name.toUpperCase()}
+            </Text>
+          ) : null}
+        </View>
+        {/* title placeholder: keeps the place in the layout; the visible title is the animated copy */}
+        <Text
+          style={[titleStyle, { marginLeft: 16, opacity: titleBox && !reduceMotion ? 0 : 1 }]}
+          onLayout={(e) => setTitleBox({ y: e.nativeEvent.layout.y, h: e.nativeEvent.layout.height })}
+        >
+          {product.name}
+        </Text>
+
+        <View style={styles.pad} onLayout={(e) => (padY.current = e.nativeEvent.layout.y)}>
+          {details}
+        </View>
+
+        {relatedBlock}
+
+        {!reduceMotion ? headerBg : null}
+
+        {/* the photo: shrinks into the compact header thumbnail while scrolling (same element, no swap) */}
+        <Animated.View
+          style={[
+            styles.photo,
+            { top: PHOTO_TOP, left: (W - S) / 2, width: S, height: S, backgroundColor: dark ? "#fff" : "transparent" },
+            !reduceMotion && anim.photo,
+          ]}
+        >
+          {gallery}
+        </Animated.View>
+
+        {/* the title: moves next to the thumbnail and gets smaller */}
+        {titleBox && !reduceMotion ? (
+          <>
+            <Animated.Text importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[titleStyle, styles.abs, { top: titleBox.y, left: 16 }, anim.title]}>
+              {product.name}
+            </Animated.Text>
+            <Animated.Text
+              importantForAccessibility="no-hide-descendants"
+              accessibilityElementsHidden
+              numberOfLines={2}
+              style={[
+                styles.abs,
+                styles.compactTitle,
+                { color: c.label, width: TW * k, left: textLeft, top: thumbCenterY - (TITLE_LINE * k * Math.min(2, Math.round(titleBox.h / TITLE_LINE))) / 2 },
+                anim.compactTitle,
+              ]}
+            >
+              {product.name}
+            </Animated.Text>
+          </>
+        ) : null}
+        {reduceMotion ? headerBg : null}
+      </Animated.ScrollView>
+
+      {topBar}
+
+      {/* pinned bottom panel: quantity and «В корзину» (existing cart logic) */}
+      <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 10), backgroundColor: dark ? "rgba(33,16,50,0.97)" : "rgba(255,255,255,0.97)" }, !dark && styles.bottomShadow]}>
+        <View style={styles.bottomInner}>
+          {actions}
         </View>
       </View>
     </View>
@@ -605,6 +688,16 @@ function GradientButton({
 }
 
 const styles = StyleSheet.create({
+  dWrap: { width: "100%", maxWidth: 1240, alignSelf: "center", paddingHorizontal: 24, paddingBottom: 48 },
+  dTop: { flexDirection: "row", alignItems: "center", paddingVertical: 16 },
+  dBack: { flexDirection: "row", alignItems: "center", gap: 2, paddingVertical: 6, paddingRight: 10 },
+  dRow: { flexDirection: "row", gap: 48, alignItems: "flex-start" },
+  dPhoto: { width: 520, height: 520, borderRadius: 28, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  dFav: { position: "absolute", top: 16, right: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.9)", alignItems: "center", justifyContent: "center" },
+  dThumbs: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 14 },
+  dThumb: { width: 76, height: 76, borderRadius: 14, borderWidth: 2, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  dTitle: { fontSize: 30, lineHeight: 37, fontWeight: "700", marginTop: 4, marginBottom: 14 },
+  dActions: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, maxWidth: 520 },
   topBar: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 },
   barBtn: { width: 44, height: 44, justifyContent: "center" },
   brandWord: { flex: 1, textAlign: "center", fontSize: 19, letterSpacing: 3.2 },
