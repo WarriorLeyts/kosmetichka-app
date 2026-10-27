@@ -257,6 +257,17 @@ export const api = {
   order(id: number | string): Promise<Order> {
     return request(`/api/mobile/orders/${seg(id)}`);
   },
+  /** customer changes the order: quantities, removed lines, added products (prices are set by the site) */
+  editOrder(
+    id: number,
+    body: {
+      items: { id: number; quantity: number }[];
+      removeIds: number[];
+      newItems: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[];
+    }
+  ) {
+    return request<{ order: unknown }>(`/api/orders/${seg(id)}/items`, { method: "PUT", body: json(body) });
+  },
   cancelOrder(id: number) {
     return request(`/api/orders/${seg(id)}/cancel`, { method: "POST" });
   },

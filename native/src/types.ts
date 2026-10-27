@@ -88,6 +88,29 @@ export type OrderItem = {
   variantName?: string | null;
   variantImageUrl?: string | null;
   imagePath?: string | null;
+  /** what the manager did to this line (order detail only) */
+  staffChange?: LineChange | null;
+};
+
+/** A manager's change of an order line: added it, or changed quantity / price / variant (old values). */
+export type LineChange = {
+  kind: "added" | "changed";
+  oldQuantity: number | null;
+  oldPrice: number | null;
+  oldVariant: string | null;
+  at: string;
+};
+
+/** A line taken out of the order — by the manager ("staff") or by the customer. */
+export type RemovedOrderItem = {
+  productId: number | null;
+  productName: string;
+  variantName: string | null;
+  quantity: number | null;
+  price: number | null;
+  imagePath: string | null;
+  by: "staff" | "customer";
+  at: string;
 };
 
 export type Order = {
@@ -104,6 +127,9 @@ export type Order = {
   bonusesApplied?: number;
   bonusesCollected?: number;
   items: OrderItem[];
+  /** order detail: the customer may still change it (quantities, remove, add) — until it waits for payment */
+  editable?: boolean;
+  removedItems?: RemovedOrderItem[];
 };
 
 export type OrdersPage = {

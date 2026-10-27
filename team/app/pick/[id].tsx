@@ -19,6 +19,7 @@ import { useIOS } from "@/ios";
 import { CHECK_LABELS } from "@/orderStatus";
 import { useAuth } from "@/store/auth";
 import { clientName, type PickerOrder } from "@/types";
+import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 
 type Code = "ok" | "out_of_stock" | "expired" | "bad_condition" | "insufficient_qty";
 const CODES: Code[] = ["ok", "out_of_stock", "expired", "bad_condition", "insufficient_qty"];
@@ -259,6 +260,8 @@ export default function Pick() {
                   {it.variantName ? <Text style={{ color: VIOLET, marginTop: 2 }}>{it.variantName}</Text> : null}
                   {it.barcode ? <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>{it.barcode}</Text> : null}
                   <Text style={{ color: c.label, fontSize: 17, fontWeight: "800", marginTop: 4 }}>Нужно: {it.quantity} шт.</Text>
+                  {it.customerChange ? <ChangePill ch={it.customerChange} who="customer" /> : null}
+                  {it.staffChange ? <ChangePill ch={it.staffChange} who="staff" /> : null}
                 </View>
               </View>
 
@@ -331,6 +334,7 @@ export default function Pick() {
           </View>
         );
       })}
+      {o.removedItems?.length ? <RemovedItems items={o.removedItems} /> : null}
 
       <ActionButton label={all ? "Отправить проверку" : `Проверено ${checked} из ${o.items.length}`} kind={all ? "primary" : "soft"} loading={submitting} onPress={submit} icon="checkmark-done" />
 

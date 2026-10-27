@@ -29,6 +29,16 @@ export type OrderItem = {
   id: number; productId: number; productName: string; barcode: string | null; quantity: number; price: number; total: number;
   variantName: string | null; variantImageUrl: string | null; imagePath: string | null; imageUrl: string | null;
   check: ItemCheck | null; photos: { id: number; url: string; createdAt: string }[];
+  /** what the customer / staff did to this line (null — nothing) */
+  customerChange?: LineChange | null;
+  staffChange?: LineChange | null;
+};
+/** A change of an order line: added, or quantity / price / variant changed (old values). */
+export type LineChange = { kind: "added" | "changed"; actorName: string | null; oldQuantity: number | null; oldPrice: number | null; oldVariant: string | null; at: string };
+/** A line taken out of the order — by the customer or by staff. */
+export type RemovedItem = {
+  productId: number | null; productName: string; variantName: string | null; barcode: string | null;
+  quantity: number | null; price: number | null; imagePath: string | null; by: "staff" | "customer"; actorName: string | null; at: string;
 };
 export type StaffMsg = { id: number; text: string; isFromPicker: boolean; userId: number | null; userName: string | null; userRole?: string | null; createdAt: string };
 export type OrderDetail = {
@@ -49,6 +59,7 @@ export type OrderDetail = {
     customer: { id: number; companyName: string | null; name: string | null; phone: string | null; email: string | null; city: string | null; inn: string | null; manager: string | null; priceType: string };
     pickerId: number | null; picker: { id: number; name: string } | null;
     items: OrderItem[];
+    removedItems?: RemovedItem[];
     messages: StaffMsg[];
     statusLogs: { id: number; fromStatus: string | null; toStatus: string; userId: number | null; userName: string | null; createdAt: string }[];
   };
@@ -108,7 +119,10 @@ export type PickerOrder = {
       variantName: string | null; variantImageUrl: string | null; imageUrl: string | null;
       check: null | { status: string; statuses: string[]; availableQty: number | null; note: string | null; pickerId: number | null; checkedAt: string };
       photos: { id: number; url: string; createdAt: string }[];
+      customerChange?: LineChange | null;
+      staffChange?: LineChange | null;
     }[];
+    removedItems?: RemovedItem[];
   };
 };
 

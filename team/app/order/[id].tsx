@@ -16,6 +16,7 @@ import { useIOS } from "@/ios";
 import { CHECK_LABELS, STATUS_ACTIONS, STATUS_LABELS } from "@/orderStatus";
 import { useAuth } from "@/store/auth";
 import type { CustomerMsg, OrderDetail, OrderItem } from "@/types";
+import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 
 type Tab = "items" | "customer" | "picker" | "history";
 type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null };
@@ -307,6 +308,7 @@ export default function OrderScreen() {
               {o.items.map((it) => (
                 <ItemCard key={it.id} it={it} />
               ))}
+              {o.removedItems?.length ? <RemovedItems items={o.removedItems} /> : null}
               {data!.canEditItems ? <ActionButton label="Изменить состав" kind="soft" icon="create-outline" onPress={startEdit} /> : null}
             </>
           )}
@@ -384,6 +386,8 @@ export default function OrderScreen() {
               </Text>
               <Text style={{ color: c.label, fontWeight: "700" }}>{money(it.total)}</Text>
             </View>
+            {it.customerChange ? <ChangePill ch={it.customerChange} who="customer" /> : null}
+            {it.staffChange ? <ChangePill ch={it.staffChange} who="staff" /> : null}
           </View>
         </View>
         {it.check ? (

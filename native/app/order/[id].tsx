@@ -17,13 +17,16 @@ import { api, ApiError, BASE_URL, imageUrl } from "@/api";
 import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
 import { useCartStore } from "@/store/cart";
+import { useAuth } from "@/store/auth";
+import { useOrderEdit } from "@/store/orderEdit";
+import { priceFor, resolveCustomerPriceType } from "@/pricing";
 import { ErrorView, tap } from "@/components/ui";
 import { BackBar } from "@/components/iosui/BrandHeader";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
 import { clearOrderStatus } from "@/unread";
-import type { ChatMessage, Order, Product, Variant } from "@/types";
+import type { ChatMessage, LineChange, Order, Product, RemovedOrderItem, Variant } from "@/types";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -130,7 +133,14 @@ export default function OrderScreen() {
   const [chatError, setChatError] = useState(false);
   const [pending, setPending] = useState<Pending[]>([]);
   const [text, setText] = useState("");
-  const [busy, setBusy] = useState<"" | "cancel" | "confirm">("");
+  const [busy, setBusy] = useState<"" | "cancel" | "confirm" | "save">("");
+  // changing the order: new quantities, removed lines; added products wait in useOrderEdit
+  const [editing, setEditing] = useState(false);
+  const [qty, setQty] = useState<Record<number, number>>({});
+  const [removed, setRemoved] = useState<Set<number>>(new Set());
+  const added = useOrderEdit((st) => (st.orderId === orderId ? st.added : []));
+  const editStore = useOrderEdit();
+  const customer = useAuth((st) => st.customer);
   const [repeating, setRepeating] = useState(false);
   const [kb, setKb] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
@@ -410,6 +420,54 @@ export default function OrderScreen() {
     }
   };
 
+  const startEdit = () => {
+    tap();
+    setQty(Object.fromEntries(order.items.map((it) => [it.id, it.quantity])));
+    setRemoved(new Set());
+    editStore.start(order.id);
+    setEditing(true);
+  };
+  const stopEdit = () => {
+    setEditing(false);
+    setQty({});
+    setRemoved(new Set());
+    editStore.clear();
+  };
+  const priceType = resolveCustomerPriceType(customer);
+  const draftTotal =
+    order.items.filter((it) => !removed.has(it.id)).reduce((sum, it) => sum + it.price * (qty[it.id] ?? it.quantity), 0) +
+    added.reduce((sum, l) => sum + priceFor(l.product, priceType) * l.quantity, 0);
+  const draftChanged =
+    removed.size > 0 || added.length > 0 || order.items.some((it) => (qty[it.id] ?? it.quantity) !== it.quantity);
+
+  const saveEdit = async () => {
+    if (actionBusy.current) return;
+    if (!draftChanged) {
+      stopEdit();
+      return;
+    }
+    actionBusy.current = true;
+    setBusy("save");
+    try {
+      await api.editOrder(order.id, {
+        items: order.items
+          .filter((it) => !removed.has(it.id) && (qty[it.id] ?? it.quantity) !== it.quantity)
+          .map((it) => ({ id: it.id, quantity: qty[it.id] ?? it.quantity })),
+        removeIds: [...removed],
+        newItems: added.map((l) => ({ id: l.product.id, quantity: l.quantity, variantName: l.variantName, variantImageUrl: l.variantImageUrl })),
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      stopEdit();
+      await loadOrder();
+      loadMessages();
+    } catch (e) {
+      Alert.alert("Не удалось сохранить", e instanceof Error ? e.message : "Попробуйте ещё раз");
+    } finally {
+      actionBusy.current = false;
+      setBusy("");
+    }
+  };
+
   const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
   const outBubble = dark ? "rgba(139,61,255,0.28)" : "#F6E9FB";
 
@@ -464,37 +522,169 @@ export default function OrderScreen() {
 
           {/* items */}
           <View style={panel}>
-            <Text style={[styles.h, { color: c.label }]}>Товары в заказе</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+              <Text style={[styles.h, { color: c.label }]}>{editing ? "Изменение заказа" : "Товары в заказе"}</Text>
+              {order.editable && !editing ? (
+                <Pressable onPress={startEdit} hitSlop={8} accessibilityRole="button" style={styles.editLink}>
+                  <Ionicons name="create-outline" size={18} color={VIOLET} />
+                  <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "600" }}>Изменить</Text>
+                </Pressable>
+              ) : null}
+            </View>
+            {editing ? (
+              <Text style={[iosText.footnote, { color: c.secondary, marginBottom: 4 }]}>
+                Измените количество, уберите лишнее или добавьте товары. Менеджер увидит изменения.
+              </Text>
+            ) : null}
             {order.items.map((it, i) => {
               const img = it.variantImageUrl ? imageUrl(it.variantImageUrl) : imageUrl(it.imagePath, 160);
+              const gone = editing && removed.has(it.id);
+              const q = editing ? qty[it.id] ?? it.quantity : it.quantity;
               return (
                 <Pressable
                   key={it.id}
+                  disabled={editing}
                   onPress={() => {
                     tap();
                     router.push(`/product/${it.productId}`);
                   }}
-                  accessibilityRole="button"
+                  accessibilityRole={editing ? undefined : "button"}
                   accessibilityLabel={it.productName}
-                  style={({ pressed }) => [styles.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator }, pressed && { opacity: 0.7 }]}
+                  style={({ pressed }) => [styles.item, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator }, pressed && { opacity: 0.7 }, gone && { opacity: 0.45 }]}
                 >
-                  <View style={[styles.photo, { backgroundColor: dark ? "#fff" : "#F4F4F7" }]}>
+                  <View style={[styles.photo, editing && styles.photoSmall, { backgroundColor: dark ? "#fff" : "#F4F4F7" }]}>
                     {img ? <Image source={{ uri: img }} style={{ width: "88%", height: "88%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={26} color="#AEAEB2" />}
                   </View>
                   <View style={{ flex: 1, gap: 6 }}>
-                    <Text style={{ fontSize: 16, lineHeight: 21, color: c.label }}>{it.productName}</Text>
+                    <Text style={{ fontSize: 16, lineHeight: 21, color: c.label, textDecorationLine: gone ? "line-through" : "none" }}>{it.productName}</Text>
                     {it.variantName ? <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>{it.variantName}</Text> : null}
-                    <View style={[styles.pricePill, { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "rgba(139,61,255,0.09)" }]}>
-                      <Text style={styles.priceText}>
-                        {money(it.price)}
-                        {it.quantity > 1 ? ` × ${it.quantity}` : ""}
-                      </Text>
-                    </View>
+                    {editing ? (
+                      gone ? (
+                        <Pressable
+                          onPress={() => {
+                            tap();
+                            setRemoved((r) => {
+                              const n = new Set(r);
+                              n.delete(it.id);
+                              return n;
+                            });
+                          }}
+                          accessibilityRole="button"
+                          style={styles.restore}
+                        >
+                          <Ionicons name="arrow-undo-outline" size={16} color={VIOLET} />
+                          <Text style={{ color: VIOLET, fontWeight: "600" }}>Вернуть</Text>
+                        </Pressable>
+                      ) : (
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                          <Stepper value={q} onChange={(n) => setQty((m) => ({ ...m, [it.id]: n }))} />
+                          <Text style={{ color: c.secondary, fontSize: 14 }}>× {money(it.price)}</Text>
+                        </View>
+                      )
+                    ) : (
+                      <>
+                        <View style={[styles.pricePill, { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "rgba(139,61,255,0.09)" }]}>
+                          <Text style={styles.priceText}>
+                            {money(it.price)}
+                            {it.quantity > 1 ? ` × ${it.quantity}` : ""}
+                          </Text>
+                        </View>
+                        {it.staffChange ? <ManagerBadge ch={it.staffChange} /> : null}
+                      </>
+                    )}
                   </View>
-                  <Ionicons name="chevron-forward" size={19} color={c.chevron} />
+                  {editing ? (
+                    gone ? null : (
+                      <Pressable
+                        onPress={() => {
+                          tap();
+                          setRemoved((r) => new Set(r).add(it.id));
+                        }}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Убрать ${it.productName}`}
+                        style={styles.trash}
+                      >
+                        <Ionicons name="trash-outline" size={22} color="#FF3B30" />
+                      </Pressable>
+                    )
+                  ) : (
+                    <Ionicons name="chevron-forward" size={19} color={c.chevron} />
+                  )}
                 </Pressable>
               );
             })}
+            {editing
+              ? added.map((l) => {
+                  const img = l.variantImageUrl ? imageUrl(l.variantImageUrl) : imageUrl(l.product.images?.[0]?.path, 160);
+                  return (
+                    <View key={l.key} style={[styles.item, { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator }]}>
+                      <View style={[styles.photo, styles.photoSmall, { backgroundColor: dark ? "#fff" : "#F4F4F7" }]}>
+                        {img ? <Image source={{ uri: img }} style={{ width: "88%", height: "88%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={26} color="#AEAEB2" />}
+                      </View>
+                      <View style={{ flex: 1, gap: 6 }}>
+                        <View style={[styles.badge, { backgroundColor: "rgba(31,138,59,0.12)" }]}>
+                          <Text style={[styles.badgeText, { color: "#1f8a3b" }]}>Новый</Text>
+                        </View>
+                        <Text style={{ fontSize: 16, lineHeight: 21, color: c.label }}>{l.product.name}</Text>
+                        {l.variantName ? <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>{l.variantName}</Text> : null}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+                          <Stepper value={l.quantity} onChange={(n) => editStore.setQty(l.key, n)} />
+                          <Text style={{ color: c.secondary, fontSize: 14 }}>× {money(priceFor(l.product, priceType))}</Text>
+                        </View>
+                      </View>
+                      <Pressable
+                        onPress={() => {
+                          tap();
+                          editStore.remove(l.key);
+                        }}
+                        hitSlop={8}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Убрать ${l.product.name}`}
+                        style={styles.trash}
+                      >
+                        <Ionicons name="trash-outline" size={22} color="#FF3B30" />
+                      </Pressable>
+                    </View>
+                  );
+                })
+              : null}
+            {editing ? (
+              <Pressable
+                onPress={() => {
+                  tap();
+                  router.push(`/order-add?order=${order.id}`);
+                }}
+                accessibilityRole="button"
+                style={[styles.addRow, { borderColor: dark ? "rgba(200,160,255,0.35)" : "rgba(139,61,255,0.35)" }]}
+              >
+                <Ionicons name="add-circle-outline" size={22} color={VIOLET} />
+                <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "600" }}>Добавить товары</Text>
+              </Pressable>
+            ) : null}
+            {editing ? (
+              <View style={[styles.totalRow, { borderTopColor: c.separator, marginTop: 12 }]}>
+                <Text style={[iosText.headline, { color: c.label }]}>Будет</Text>
+                <Text style={styles.total}>{money(draftTotal)}</Text>
+              </View>
+            ) : null}
+            {editing ? (
+              <View style={{ flexDirection: "row", gap: 10, marginTop: 12 }}>
+                <Pressable
+                  onPress={() => {
+                    tap();
+                    stopEdit();
+                  }}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.outline, { backgroundColor: c.cell, opacity: pressed ? 0.8 : 1 }]}
+                >
+                  <Text style={styles.outlineText}>Отмена</Text>
+                </Pressable>
+                <GradientButton title="Сохранить" icon="checkmark" loading={busy === "save"} onPress={saveEdit} />
+              </View>
+            ) : null}
+            {editing ? null : (
+            <>
             {order.promoCode && order.discount ? (
               <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
                 <Text style={[iosText.subhead, { color: "#1f8a3b", flex: 1 }]} numberOfLines={1}>
@@ -518,7 +708,12 @@ export default function OrderScreen() {
                 {order.status === "exported" ? "Начислено" : "Начислится после выполнения"}: {order.bonusesCollected.toLocaleString("ru-RU")} бонусов
               </Text>
             ) : null}
+            </>
+            )}
           </View>
+
+          {/* lines taken out of the order — by the manager or by the customer */}
+          {!editing && order.removedItems && order.removedItems.length > 0 ? <RemovedBlock items={order.removedItems} /> : null}
 
           {order.comment ? (
             <View style={panel}>
@@ -640,6 +835,95 @@ export default function OrderScreen() {
   );
 }
 
+/** − n + for the order edit. */
+function Stepper({ value, onChange }: { value: number; onChange: (n: number) => void }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  return (
+    <View style={[styles.stepper, { backgroundColor: dark ? "#352044" : "#F2F2F7" }]}>
+      <Pressable
+        onPress={() => {
+          tap();
+          onChange(Math.max(1, value - 1));
+        }}
+        disabled={value <= 1}
+        hitSlop={6}
+        accessibilityLabel="Меньше"
+        style={[styles.stepBtn, { opacity: value <= 1 ? 0.35 : 1 }]}
+      >
+        <Ionicons name="remove" size={20} color={c.label} />
+      </Pressable>
+      <Text style={{ minWidth: 28, textAlign: "center", fontSize: 16, fontWeight: "700", color: c.label }}>{value}</Text>
+      <Pressable
+        onPress={() => {
+          tap();
+          onChange(value + 1);
+        }}
+        hitSlop={6}
+        accessibilityLabel="Больше"
+        style={styles.stepBtn}
+      >
+        <Ionicons name="add" size={20} color={VIOLET} />
+      </Pressable>
+    </View>
+  );
+}
+
+/** «Добавлено менеджером» / «Изменено менеджером · было 2 шт.» under a line. */
+function ManagerBadge({ ch }: { ch: LineChange }) {
+  const was: string[] = [];
+  if (ch.oldQuantity != null) was.push(`${ch.oldQuantity} шт.`);
+  if (ch.oldPrice != null) was.push(money(ch.oldPrice));
+  if (ch.oldVariant) was.push(ch.oldVariant);
+  const added = ch.kind === "added";
+  return (
+    <View style={[styles.badge, { backgroundColor: added ? "rgba(31,138,59,0.12)" : "rgba(234,88,12,0.12)" }]}>
+      <Ionicons name={added ? "add-circle-outline" : "create-outline"} size={14} color={added ? "#1f8a3b" : "#C2410C"} />
+      <Text style={[styles.badgeText, { color: added ? "#1f8a3b" : "#C2410C" }]}>
+        {added ? "Добавлено менеджером" : `Изменено менеджером${was.length ? ` · было ${was.join(", ")}` : ""}`}
+      </Text>
+    </View>
+  );
+}
+
+/** «Удалено из заказа»: what the manager (or the customer) took out. */
+function RemovedBlock({ items }: { items: RemovedOrderItem[] }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  return (
+    <View style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+      <Text style={[styles.h, { color: c.label, fontSize: 18 }]}>Удалено из заказа</Text>
+      {items.map((r, i) => {
+        const img = r.imagePath ? imageUrl(r.imagePath, 160) : null;
+        return (
+          <View key={i} style={[styles.item, { paddingVertical: 10 }, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.separator }]}>
+            <View style={[styles.photo, styles.photoSmall, { backgroundColor: dark ? "#fff" : "#F4F4F7", opacity: 0.5 }]}>
+              {img ? <Image source={{ uri: img }} style={{ width: "88%", height: "88%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={22} color="#AEAEB2" />}
+            </View>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={{ fontSize: 15, lineHeight: 20, color: c.secondary, textDecorationLine: "line-through" }}>
+                {r.productName}
+                {r.variantName ? ` · ${r.variantName}` : ""}
+              </Text>
+              {r.quantity != null ? (
+                <Text style={{ fontSize: 13, color: c.secondary }}>
+                  {r.quantity} шт.{r.price != null ? ` × ${money(r.price)}` : ""}
+                </Text>
+              ) : null}
+              <View style={[styles.badge, { backgroundColor: r.by === "staff" ? "rgba(255,59,48,0.1)" : "rgba(118,118,128,0.12)" }]}>
+                <Ionicons name="trash-outline" size={13} color={r.by === "staff" ? "#D70015" : c.secondary} />
+                <Text style={[styles.badgeText, { color: r.by === "staff" ? "#D70015" : c.secondary }]}>
+                  {r.by === "staff" ? "Удалено менеджером" : "Удалено вами"}
+                </Text>
+              </View>
+            </View>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function GradientButton({ title, icon, onPress, loading }: { title: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void; loading?: boolean }) {
   return (
     <Pressable
@@ -672,6 +956,15 @@ const styles = StyleSheet.create({
   h: { fontSize: 21, fontWeight: "700", marginBottom: 4 },
   item: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 12 },
   photo: { width: 92, height: 92, borderRadius: 16, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  photoSmall: { width: 64, height: 64, borderRadius: 12 },
+  editLink: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 4 },
+  badge: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+  badgeText: { fontSize: 12.5, fontWeight: "600", flexShrink: 1 },
+  stepper: { flexDirection: "row", alignItems: "center", borderRadius: 20, paddingHorizontal: 4, height: 38 },
+  stepBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
+  trash: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  restore: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start", paddingVertical: 4 },
+  addRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 50, borderRadius: 16, borderWidth: 1.5, borderStyle: "dashed", marginTop: 10 },
   pricePill: { alignSelf: "flex-start", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
   priceText: { color: VIOLET, fontSize: 16, fontWeight: "600" },
   totalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 2 },

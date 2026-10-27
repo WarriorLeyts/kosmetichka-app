@@ -156,6 +156,7 @@ function AppRoot() {
         <Stack.Screen name="forgot" options={{ title: "Восстановление пароля", headerShown: false }} />
         <Stack.Screen name="loyalty-add" options={{ title: "Добавить карту", headerShown: false }} />
         <Stack.Screen name="waitlist" options={{ title: "Лист ожидания", headerShown: false }} />
+        <Stack.Screen name="order-add" options={{ title: "Добавить в заказ", headerShown: false }} />
         <Stack.Screen name="favorites" options={{ title: "Избранное", headerShown: false }} />
         <Stack.Screen name="edit-profile" options={{ title: "Мои данные", headerShown: false }} />
         <Stack.Screen name="info" options={{ title: "", headerShown: false }} />
