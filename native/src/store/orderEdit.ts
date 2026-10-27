@@ -10,6 +10,9 @@ export type AddedLine = {
   variantImageUrl: string | null;
 };
 
+/** «nothing added» — one shared empty list, so store selectors return the same value every render */
+export const NO_LINES: AddedLine[] = [];
+
 /**
  * The order being changed: products added on the «Добавить товары» screen wait here until the
  * customer taps «Сохранить» on the order (then they go to PUT /api/orders/:id/items).

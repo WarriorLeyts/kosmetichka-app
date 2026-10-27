@@ -9,7 +9,7 @@ import { api, imageUrl } from "@/api";
 import { money, stockLabel } from "@/format";
 import { priceFor, resolveCustomerPriceType } from "@/pricing";
 import { useAuth } from "@/store/auth";
-import { useOrderEdit } from "@/store/orderEdit";
+import { NO_LINES, useOrderEdit } from "@/store/orderEdit";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { Sheet } from "@/components/iosui/Sheet";
 import { ErrorView, tap } from "@/components/ui";
@@ -30,7 +30,7 @@ export default function OrderAddScreen() {
   const insets = useSafeAreaInsets();
   const customer = useAuth((s) => s.customer);
   const priceType = resolveCustomerPriceType(customer);
-  const added = useOrderEdit((s) => (s.orderId === orderId ? s.added : []));
+  const added = useOrderEdit((s) => (s.orderId === orderId ? s.added : NO_LINES));
   const addLine = useOrderEdit((s) => s.add);
 
   const [q, setQ] = useState("");

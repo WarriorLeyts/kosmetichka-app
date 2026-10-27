@@ -18,7 +18,7 @@ import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
 import { useCartStore } from "@/store/cart";
 import { useAuth } from "@/store/auth";
-import { useOrderEdit } from "@/store/orderEdit";
+import { NO_LINES, useOrderEdit } from "@/store/orderEdit";
 import { priceFor, resolveCustomerPriceType } from "@/pricing";
 import { ErrorView, tap } from "@/components/ui";
 import { BackBar } from "@/components/iosui/BrandHeader";
@@ -138,7 +138,7 @@ export default function OrderScreen() {
   const [editing, setEditing] = useState(false);
   const [qty, setQty] = useState<Record<number, number>>({});
   const [removed, setRemoved] = useState<Set<number>>(new Set());
-  const added = useOrderEdit((st) => (st.orderId === orderId ? st.added : []));
+  const added = useOrderEdit((st) => (st.orderId === orderId ? st.added : NO_LINES));
   const editStore = useOrderEdit();
   const customer = useAuth((st) => st.customer);
   const [repeating, setRepeating] = useState(false);
