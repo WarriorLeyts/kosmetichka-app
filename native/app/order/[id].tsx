@@ -18,6 +18,7 @@ import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
 import { useCartStore } from "@/store/cart";
 import { useAuth } from "@/store/auth";
+import { useNotifications } from "@/store/notifications";
 import { NO_LINES, useOrderEdit } from "@/store/orderEdit";
 import { priceFor, resolveCustomerPriceType } from "@/pricing";
 import { ErrorView, tap } from "@/components/ui";
@@ -215,8 +216,8 @@ export default function OrderScreen() {
     loadOrder();
   }, [loadOrder]);
 
-  // while this screen is open and in front: new messages every 7 s, the order (status, items,
-  // manager's changes) every 15 s — no need to reload. Not while the customer is changing the order.
+  // while this screen is open and in front: new messages every 3 s, the order (status, items,
+  // manager's changes) every 12 s — no need to reload. Not while the customer is changing the order.
   const editingRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
@@ -225,11 +226,19 @@ export default function OrderScreen() {
       const t = setInterval(() => {
         if (AppState.currentState !== "active") return;
         loadMessages();
-        if (++n % 2 === 0 && !editingRef.current) loadOrder(true);
-      }, 7500);
+        if (++n % 4 === 0 && !editingRef.current) loadOrder(true);
+      }, 3000);
       return () => clearInterval(t);
     }, [loadMessages, loadOrder])
   );
+
+  // a push arrived while this screen is open (manager wrote / changed the status): reload right away
+  const pushTick = useNotifications((st) => st.pushTick);
+  useEffect(() => {
+    if (pushTick === 0) return;
+    loadMessages();
+    if (!editingRef.current) loadOrder(true);
+  }, [pushTick, loadMessages, loadOrder]);
 
   // new replies: scroll down only if the user is already at the bottom (don't disturb reading)
   useEffect(() => {

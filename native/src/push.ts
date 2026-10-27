@@ -111,6 +111,7 @@ export function listenPush() {
   try {
     Notifications.addNotificationReceivedListener(() => {
       useNotifications.getState().refresh();
+      useNotifications.getState().bump();
     });
     Notifications.addNotificationResponseReceivedListener((r) => {
       useNotifications.getState().refresh();
