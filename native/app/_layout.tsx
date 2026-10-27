@@ -1,4 +1,5 @@
 import "@/webAlert";
+import "@/webIOS";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Animated, AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
