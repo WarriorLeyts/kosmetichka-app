@@ -153,6 +153,7 @@ export default function Home() {
       <View onLayout={(e) => setSceneTop(e.nativeEvent.layout.y)}>
         <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={(headerH || insets.top + 200) + (desktop ? 72 : 0)} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
       </View>
+      <View style={desktop ? { width: "100%", maxWidth: 1240, alignSelf: "center", paddingHorizontal: 12 } : undefined}>
       {tops.length > 0 && <HomeCategories categories={tops} onOpen={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />}
 
       {!customer && (
@@ -205,6 +206,7 @@ export default function Home() {
         <Ionicons name="call-outline" size={18} color={colors.muted} />
         <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
       </Pressable>
+      </View>
     </Animated.ScrollView>
     <Sheet open={sizeOpen} onClose={() => setSizeOpen(false)} title="Размер интерфейса">
       <SheetOptions

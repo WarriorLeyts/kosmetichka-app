@@ -5,11 +5,14 @@ import { iconFor } from "../CategoryDrawer";
 import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import type { Category } from "../../types";
+import { useDesktop } from "../../useDesktop";
 
 /** «Категории товаров» — two-column grid as on the mockup: picture on top, white label with a chevron over its bottom. */
 export function HomeCategories({ categories, onOpen }: { categories: Category[]; onOpen: (guid: string | null) => void }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
+  // computer: four in a row, taller cards
+  const desktop = useDesktop();
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
@@ -31,7 +34,7 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
         {categories.map((cat) => {
           const icon = iconFor(cat.name);
           return (
-            <View key={cat.guid} style={styles.cell}>
+            <View key={cat.guid} style={[styles.cell, desktop && { width: "25%", padding: 8 }]}>
               <Pressable
                 onPress={() => {
                   tap();
@@ -39,7 +42,7 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={cat.name}
-                style={({ pressed }) => [styles.card, { backgroundColor: c.cell, transform: [{ scale: pressed ? 0.98 : 1 }] }, !dark && styles.shadow]}
+                style={({ pressed }) => [styles.card, desktop && { height: 230 }, { backgroundColor: c.cell, transform: [{ scale: pressed ? 0.98 : 1 }] }, !dark && styles.shadow]}
               >
                 <View style={[styles.pic, { backgroundColor: dark ? "#352044" : "#F3ECFA" }]}>
                   {icon ? (
