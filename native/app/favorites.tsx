@@ -40,7 +40,7 @@ export default function Favorites() {
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const { width } = useWindowDimensions();
-  const columns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
+  const columns = width >= 1280 ? 5 : width >= 900 ? 4 : width >= 600 ? 3 : 2;
   const items = useFavorites((s) => s.items);
   const toggle = useFavorites((s) => s.toggle);
   const customer = useAuth((s) => s.customer);
@@ -69,7 +69,7 @@ export default function Favorites() {
         data={items}
         numColumns={columns}
         keyExtractor={(p) => String(p.id)}
-        contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 11, paddingBottom: insets.bottom + 24, flexGrow: 1 }}
+        contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 11, paddingBottom: insets.bottom + 24, flexGrow: 1, width: "100%", maxWidth: 1240, alignSelf: "center" }}
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={
           <View style={{ paddingHorizontal: 5 }}>

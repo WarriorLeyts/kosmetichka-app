@@ -151,7 +151,7 @@ export default function Home() {
 
       {/* new home content: scroll-driven box scene + categories with images */}
       <View onLayout={(e) => setSceneTop(e.nativeEvent.layout.y)}>
-        <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={headerH || insets.top + 200} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
+        <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={(headerH || insets.top + 200) + (desktop ? 72 : 0)} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
       </View>
       {tops.length > 0 && <HomeCategories categories={tops} onOpen={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />}
 

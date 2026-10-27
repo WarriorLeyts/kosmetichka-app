@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   titleRow: { flexDirection: "row", justifyContent: "center", alignItems: "flex-end" },
   h1: { fontSize: 44, lineHeight: 50, fontWeight: "800", letterSpacing: -0.8 },
   sub: { fontSize: 17, lineHeight: 23, marginTop: 8, textAlign: "center", alignSelf: "stretch" },
-  bottom: { paddingHorizontal: 36, paddingTop: 6 },
+  bottom: { paddingHorizontal: 36, paddingTop: 6, width: "100%", maxWidth: 560, alignSelf: "center" },
   cta: { height: 60, borderRadius: 30, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, boxShadow: "0 12px 26px rgba(160,40,230,0.32)" },
   ctaText: { color: "#fff", fontSize: 20, fontWeight: "600" },
   under: { height: 30, alignItems: "center", justifyContent: "center", marginTop: 8 },

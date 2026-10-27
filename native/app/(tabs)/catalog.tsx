@@ -1,3 +1,4 @@
+import { DESKTOP_MAX_CONTENT, useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -65,7 +66,8 @@ export default function Catalog() {
   const insets = useSafeAreaInsets();
   const c = useIOS();
   const { width } = useWindowDimensions();
-  const columns = width >= 900 ? 4 : width >= 600 ? 3 : 2;
+  const desktop = useDesktop();
+  const columns = width >= 1280 ? 5 : width >= 900 ? 4 : width >= 600 ? 3 : 2;
   const bottomSpace = useTabBarSpace();
   const f = useCatalog();
   const customer = useAuth((s) => s.customer);
@@ -295,7 +297,7 @@ export default function Catalog() {
           data={products}
           numColumns={columns}
           keyExtractor={(p) => String(p.id)}
-          contentContainerStyle={{ paddingHorizontal: 11, paddingBottom: bottomSpace }}
+          contentContainerStyle={[{ paddingHorizontal: 11, paddingBottom: bottomSpace }, desktop && { width: "100%", maxWidth: DESKTOP_MAX_CONTENT, alignSelf: "center", paddingHorizontal: 20 }]}
           ListHeaderComponent={header}
           keyboardDismissMode="on-drag"
           renderItem={renderItem}
