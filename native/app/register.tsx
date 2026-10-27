@@ -15,6 +15,7 @@ import { GradientButton, OutlineButton } from "@/components/iosui/Buttons";
 import { AuthBackdrop } from "@/components/iosui/AuthBackdrop";
 import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
+import { RETAIL_ENABLED } from "@/siteMode";
 
 const VIOLET = "#8b1ee6";
 
@@ -153,7 +154,7 @@ export default function Register() {
     setBusy("submit");
     setError("");
     try {
-      const r = await api.register({ ...f, captchaToken: captcha ?? "", smsCode: smsCode.trim(), priceType });
+      const r = await api.register({ ...f, captchaToken: captcha ?? "", smsCode: smsCode.trim(), priceType, ...(RETAIL_ENABLED ? {} : { source: "site" }) });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       if (r.autoLogin) {
         await clearPendingLogout();
@@ -198,7 +199,7 @@ export default function Register() {
 
           <Text style={[styles.h1, { color: c.label }]}>Кто вы?</Text>
           <View style={{ gap: 12 }}>
-            {TYPES.map((t) => (
+            {TYPES.filter((t) => RETAIL_ENABLED || t.value !== "retail").map((t) => (
               <TypeCard
                 key={t.value}
                 t={t}

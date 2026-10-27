@@ -1,0 +1,47 @@
+name: Website build (app for the browser)
+
+# Builds the customer app «Косметичка» for the browser (same code as the phone apps) and publishes
+# it to the release "web-latest" (kosmetichka-web.tar.gz). The site's server downloads and serves it.
+# Input base_url: the path the site serves it under ("/new" while it is a preview, "" at the root).
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Путь на сайте (/new — предпросмотр, пусто — корень)"
+        default: "/new"
+  push:
+    branches: [main]
+    paths: ["native/**", ".github/workflows/web.yml"]
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: native
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Type check
+        run: ../scripts/ci-run.sh npx tsc --noEmit --pretty false
+      - name: Build for the browser
+        env:
+          WEB_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '/new' }}
+        run: ../scripts/ci-run.sh npx expo export --platform web --output-dir web-dist
+      - name: Publish
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -czf kosmetichka-web.tar.gz -C web-dist .
+          ls -la kosmetichka-web.tar.gz
+          gh release view web-latest >/dev/null 2>&1 || gh release create web-latest --prerelease --title "Сайт (приложение для браузера)" --notes "Сборка приложения для браузера."
+          gh release upload web-latest kosmetichka-web.tar.gz --clobber

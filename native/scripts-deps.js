@@ -13,6 +13,8 @@ const WANT = [
   "@react-native-masked-view/masked-view", "expo-blur", "expo-font",
   "react-native-safe-area-context", "react-native-screens", "react-native-webview", "expo-image-picker", "expo-document-picker",
   "expo-notifications",
+  // website build (expo export -p web)
+  "react-dom", "react-native-web", "@expo/metro-runtime",
 ];
 const DEV = ["typescript", "@types/react"];
 

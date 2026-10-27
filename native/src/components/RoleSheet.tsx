@@ -7,6 +7,7 @@ import { iosText, useIOS } from "@/ios";
 import { api } from "@/api";
 import { useAuth } from "@/store/auth";
 import type { RoleInfo, RoleOption } from "@/types";
+import { RETAIL_ENABLED } from "@/siteMode";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -108,7 +109,7 @@ export function RoleSheet({ open, onClose }: { open: boolean; onClose: () => voi
       ) : (
         <>
           <View style={[styles.group, { backgroundColor: c.cell }]}>
-            {info.roleOptions.map((o, i) => (
+            {info.roleOptions.filter((o) => RETAIL_ENABLED || o.value !== "retail" || o.state === "current").map((o, i) => (
               <Pressable
                 key={o.value}
                 onPress={() => pick(o)}

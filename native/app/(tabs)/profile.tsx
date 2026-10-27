@@ -19,6 +19,7 @@ import { NotifySheet } from "@/components/NotifySheet";
 import { useTheme, type ThemePref } from "@/theme";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
+import { RETAIL_ENABLED } from "@/siteMode";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -124,7 +125,7 @@ export default function Profile() {
         ) : null}
 
         {/* loyalty card from MAXMA (by phone); customers without a card see nothing */}
-        {customer && card ? (
+        {!RETAIL_ENABLED ? null : customer && card ? (
           <LoyaltyCardPanel
             card={card}
             width={cardW}

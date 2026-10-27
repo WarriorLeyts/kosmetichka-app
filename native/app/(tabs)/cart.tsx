@@ -20,6 +20,7 @@ import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import type { CartItem } from "@/types";
+import { RETAIL_ENABLED } from "@/siteMode";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -370,7 +371,7 @@ export default function Cart() {
                 }}
               />
             ) : null}
-            {customer && calc?.bonuses ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
+            {customer && calc?.bonuses && RETAIL_ENABLED ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
 
             <View style={[styles.summary, { backgroundColor: pinkSoft }]}>
               <View style={styles.sumRow}>

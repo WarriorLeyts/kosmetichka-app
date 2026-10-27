@@ -4,11 +4,13 @@
  * cookies for the domain natively, so every request below is authenticated
  * after /api/auth/login — exactly like the website.
  */
+import { Platform } from "react-native";
 import type {
   AppNotification, Brand, Category, ChatMessage, Customer, Order, OrdersPage, Product, RoleInfo, Variant,
 } from "./types";
 
-export const BASE_URL = "https://kosmetichka-opt.ru";
+// in the phone apps — the site's address; on the website (this app built for the browser) — the same origin
+export const BASE_URL = Platform.OS === "web" ? "" : "https://kosmetichka-opt.ru";
 
 export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: string; size: number; mime: string };
 
@@ -139,7 +141,7 @@ export const api = {
   },
   register(body: {
     name: string; companyName?: string; phone: string; email: string; password: string;
-    captchaToken: string; smsCode: string; priceType: string;
+    captchaToken: string; smsCode: string; priceType: string; source?: "site";
   }) {
     return request<{ success: boolean; autoLogin: boolean; message: string }>("/api/auth/register", {
       method: "POST",
