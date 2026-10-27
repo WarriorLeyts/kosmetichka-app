@@ -67,17 +67,17 @@ jobs:
         working-directory: native/android
         run: ../../scripts/ci-run.sh ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
       - name: Publish APK
-        # only main goes to the download link; a branch run just checks that the app builds
-        if: github.ref == 'refs/heads/main'
+        # main → the download link; a manual run from another branch → a separate test release
+        if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk kosmetichka-native.apk
-          gh release view native-android-latest >/dev/null 2>&1 || \
-            gh release create native-android-latest --prerelease --title "Нативное приложение — Android" \
-              --notes "Тестовая сборка нативного приложения."
-          gh release upload native-android-latest kosmetichka-native.apk --clobber
-          gh release edit native-android-latest --notes "Нативное приложение, сборка 1.0.${GITHUB_RUN_NUMBER} от $(date -u +'%d.%m.%Y %H:%M') UTC. Скачайте kosmetichka-native.apk на телефон и установите."
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then TAG=native-android-latest; TITLE="Нативное приложение — Android"; else TAG=native-android-test; TITLE="Косметичка — Android (проверка)"; fi
+          gh release view $TAG >/dev/null 2>&1 || \
+            gh release create $TAG --prerelease --title "$TITLE" --notes "Тестовая сборка нативного приложения."
+          gh release upload $TAG kosmetichka-native.apk --clobber
+          gh release edit $TAG --notes "Косметичка, сборка 1.0.${GITHUB_RUN_NUMBER} (${GITHUB_REF_NAME}) от $(date -u +'%d.%m.%Y %H:%M') UTC. Скачайте kosmetichka-native.apk на телефон и установите."
 
   ios:
     # iOS пока не нужен: только вручную с галочкой «Собрать и iOS-версию»
