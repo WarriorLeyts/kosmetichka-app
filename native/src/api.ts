@@ -5,7 +5,7 @@
  * after /api/auth/login — exactly like the website.
  */
 import type {
-  Brand, Category, ChatMessage, Customer, Order, OrdersPage, Product, RoleInfo, Variant,
+  AppNotification, Brand, Category, ChatMessage, Customer, Order, OrdersPage, Product, RoleInfo, Variant,
 } from "./types";
 
 export const BASE_URL = "https://kosmetichka-opt.ru";
@@ -185,6 +185,26 @@ export const api = {
   },
   roleWithdraw(): Promise<RoleInfo> {
     return request("/api/mobile/role", { method: "DELETE" });
+  },
+
+  // ── Notifications («Уведомления», push) ──
+  notifications(before?: number): Promise<{ unread: number; items: AppNotification[]; hasMore: boolean }> {
+    return request(`/api/mobile/notifications${before ? `?before=${before}` : ""}`);
+  },
+  notificationsUnread(): Promise<{ unread: number }> {
+    return request("/api/mobile/notifications?count=1");
+  },
+  notificationsRead(ids?: number[]): Promise<{ unread: number }> {
+    return request("/api/mobile/notifications/read", { method: "POST", body: json(ids ? { ids } : {}) });
+  },
+  pushTokenSave(token: string, platform: string): Promise<{ ok: boolean }> {
+    return request("/api/mobile/push-token", { method: "POST", body: json({ token, platform }) });
+  },
+  pushTokenRemove(token: string): Promise<{ ok: boolean }> {
+    return request("/api/mobile/push-token", { method: "DELETE", body: json({ token }) });
+  },
+  setPushPromo(on: boolean): Promise<{ customer: Customer }> {
+    return request("/api/mobile/profile", { method: "PATCH", body: json({ pushPromo: on }) });
   },
 
   // ── Profile ──

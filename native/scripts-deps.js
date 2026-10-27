@@ -12,6 +12,7 @@ const WANT = [
   "expo-splash-screen", "expo-status-bar", "expo-updates", "expo-web-browser", "react", "react-native",
   "@react-native-masked-view/masked-view", "expo-blur", "expo-font",
   "react-native-safe-area-context", "react-native-screens", "react-native-webview", "expo-image-picker", "expo-document-picker",
+  "expo-notifications",
 ];
 const DEV = ["typescript", "@types/react"];
 

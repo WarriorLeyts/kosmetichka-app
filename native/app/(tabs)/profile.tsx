@@ -15,6 +15,7 @@ import { FavHeart } from "@/components/FavHeart";
 import { EmptyLoyaltyCard, LoyaltyCardPanel } from "@/components/LoyaltyCard";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { RoleSheet } from "@/components/RoleSheet";
+import { NotifySheet } from "@/components/NotifySheet";
 import { useTheme, type ThemePref } from "@/theme";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
@@ -78,6 +79,7 @@ export default function Profile() {
   const setThemePref = useTheme((s) => s.setPref);
   const [themeOpen, setThemeOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
+  const [notifyOpen, setNotifyOpen] = useState(false);
   const favCount = useFavorites((s) => s.items.length);
   const waitCount = useWaitlistStore((s) => s.ids.length);
 
@@ -89,6 +91,7 @@ export default function Profile() {
     ...(customer
       ? [{ icon: "pricetags-outline" as IconName, title: "Тип цен", value: PRICE_LABEL[customer.priceType ?? ""] ?? undefined, onPress: () => setRoleOpen(true) }]
       : []),
+    ...(customer ? [{ icon: "notifications-outline" as IconName, title: "Уведомления", onPress: () => setNotifyOpen(true) }] : []),
     { icon: "cube-outline", title: "Мои заказы", needsAuth: true, onPress: () => (customer ? router.navigate("/orders") : router.push("/login")) },
     { icon: "time-outline", title: "Лист ожидания", needsAuth: true, count: customer ? waitCount : 0, onPress: () => go("/waitlist", true) },
     { icon: "heart-outline", title: "Избранное", fav: true, count: favCount, onPress: () => go("/favorites") },
@@ -204,6 +207,7 @@ export default function Profile() {
         )}
       </ScrollView>
       <RoleSheet open={roleOpen} onClose={() => setRoleOpen(false)} />
+      <NotifySheet open={notifyOpen} onClose={() => setNotifyOpen(false)} />
       <Sheet open={themeOpen} onClose={() => setThemeOpen(false)} title="Оформление">
         <SheetOptions
           options={THEME_OPTIONS}

@@ -67,6 +67,8 @@ jobs:
         working-directory: native/android
         run: ../../scripts/ci-run.sh ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
       - name: Publish APK
+        # only main goes to the download link; a branch run just checks that the app builds
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

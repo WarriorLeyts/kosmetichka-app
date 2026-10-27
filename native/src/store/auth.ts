@@ -8,6 +8,8 @@ import { useFavorites } from "./favorites";
 import { useWaitlistStore } from "./waitlist";
 import { clearOrderStatus } from "../unread";
 import { orderCache } from "../orderCache";
+import { unregisterPush } from "../push";
+import { useNotifications } from "./notifications";
 
 /** id of the account the local data (cart, comment, favourites) belongs to */
 const OWNER_KEY = "kosmetichka-owner";
@@ -164,6 +166,8 @@ export const useAuth = create<AuthState>((set) => ({
 
   logout: async () => {
     ++epoch;
+    await unregisterPush();
+    useNotifications.getState().reset();
     try {
       await api.logout();
       await AsyncStorage.removeItem(LOGOUT_PENDING_KEY).catch(() => {});

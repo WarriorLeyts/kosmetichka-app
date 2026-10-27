@@ -4,26 +4,30 @@ import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { orderStatus } from "../../unread";
 import { useAuth } from "../../store/auth";
+import { useNotifications } from "../../store/notifications";
 import { iosText, useIOS } from "../../ios";
 import { Wordmark } from "../Wordmark";
 import { tap } from "../ui";
 
 /**
  * Top bar used on all tab screens: «КОСМЕТИЧКА» centred (same font and place as on the product page), bell on the right.
- * The bell shows a dot when there are unread manager messages (existing /api/orders/status).
+ * The bell opens «Уведомления»; a dot when there are unread notifications or manager messages.
  */
 export function BrandHeader({ title }: { title?: string }) {
   const c = useIOS();
   const customer = useAuth((s) => s.customer);
-  const [unread, setUnread] = useState(false);
+  const [chatUnread, setChatUnread] = useState(false);
+  const notifUnread = useNotifications((s) => s.unread);
+  const unread = !!customer && (chatUnread || notifUnread > 0);
 
   useFocusEffect(
     useCallback(() => {
       if (!customer) {
-        setUnread(false);
+        setChatUnread(false);
         return;
       }
-      orderStatus().then((r) => setUnread(r.managerMessages.length > 0)).catch(() => {});
+      useNotifications.getState().refresh();
+      orderStatus().then((r) => setChatUnread(r.managerMessages.length > 0)).catch(() => {});
     }, [customer])
   );
 
@@ -37,7 +41,7 @@ export function BrandHeader({ title }: { title?: string }) {
           accessibilityLabel={unread ? "Уведомления: есть новые сообщения" : "Уведомления"}
           onPress={() => {
             tap();
-            router.navigate(customer ? "/orders" : "/login");
+            router.push(customer ? "/notifications" : "/login");
           }}
           style={styles.bell}
         >

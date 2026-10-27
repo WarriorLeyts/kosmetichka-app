@@ -47,7 +47,21 @@ export type Customer = {
   /** request for a wholesale price type: "pending" | "rejected" */
   roleRequest?: string | null;
   roleRequestStatus?: string | null;
+  /** agreed to promo pushes («Акции и новости») */
+  pushPromo?: boolean;
   manager?: string | null;
+};
+
+/** «Уведомления»: order status, manager message, back in stock, bonuses, wholesale request, promo */
+export type AppNotification = {
+  id: number;
+  kind: "order" | "chat" | "restock" | "bonus" | "role" | "promo";
+  title: string;
+  body: string;
+  /** in-app route opened on tap, e.g. "/order/12" */
+  link: string | null;
+  read: boolean;
+  createdAt: string;
 };
 
 /** Price type («роль») the customer can switch to — /api/mobile/role */

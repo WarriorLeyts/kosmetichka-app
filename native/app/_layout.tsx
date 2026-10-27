@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, AppState, Pressable, StyleSheet, Text, View } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
 import { Stack, usePathname, type ErrorBoundaryProps } from "expo-router";
@@ -10,6 +10,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
 import { installCrashReporter, reportError, setCrashScreen } from "@/crash";
+import { listenPush, registerPush } from "@/push";
+import { useNotifications } from "@/store/notifications";
 import { ErrorScreen } from "@/components/ErrorScreen";
 import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
@@ -61,6 +63,33 @@ export default function RootLayout() {
 }
 
 function AppRoot() {
+  // push: listen for taps from the start; register this phone once signed in
+  const customerId = useAuth((s) => s.customer?.id);
+  useEffect(() => {
+    listenPush();
+  }, []);
+  useEffect(() => {
+    if (!customerId) return;
+    // after the launch animation, so the system permission dialog doesn't cover it
+    const t = setTimeout(
+      () =>
+        registerPush({
+          promoAsked: (yes) => {
+            const c = useAuth.getState().customer;
+            if (c && yes) useAuth.getState().setCustomer({ ...c, pushPromo: true });
+          },
+        }),
+      4000
+    );
+    useNotifications.getState().refresh();
+    const sub = AppState.addEventListener("change", (st) => {
+      if (st === "active") useNotifications.getState().refresh();
+    });
+    return () => {
+      clearTimeout(t);
+      sub.remove();
+    };
+  }, [customerId]);
   const pathname = usePathname();
   useEffect(() => {
     setCrashScreen(pathname);

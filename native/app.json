@@ -69,12 +69,21 @@
           "microphonePermission": "Микрофон нужен, чтобы записывать видео для менеджера."
         }
       ],
-      "expo-document-picker"
+      "expo-document-picker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#8b3dff",
+          "defaultChannel": "default"
+        }
+      ],
+      "./plugins/withNoPushEntitlementIOS"
     ],
     "experiments": {
       "typedRoutes": false
     },
-    "runtimeVersion": "2",
+    "runtimeVersion": "3",
     "updates": {
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
