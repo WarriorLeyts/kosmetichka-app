@@ -62,12 +62,14 @@ jobs:
       - name: Publish APK
         env:
           GH_TOKEN: ${{ github.token }}
+        # main → the staff release; any other branch → a separate test release (staff keep the working version)
         run: |
           cp android/app/build/outputs/apk/release/app-release.apk kosmetichka-team.apk
-          gh release view team-android-latest >/dev/null 2>&1 || \
-            gh release create team-android-latest --prerelease --title "Косметичка Team — Android" --notes "Приложение для сотрудников."
-          gh release upload team-android-latest kosmetichka-team.apk --clobber
-          gh release edit team-android-latest --notes "Косметичка Team, сборка 1.0.${GITHUB_RUN_NUMBER} от $(date -u +'%d.%m.%Y %H:%M') UTC. Скачайте kosmetichka-team.apk на телефон и установите."
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then TAG=team-android-latest; TITLE="Косметичка Team — Android"; else TAG=team-android-test; TITLE="Косметичка Team — Android (проверка)"; fi
+          gh release view $TAG >/dev/null 2>&1 || \
+            gh release create $TAG --prerelease --title "$TITLE" --notes "Приложение для сотрудников."
+          gh release upload $TAG kosmetichka-team.apk --clobber
+          gh release edit $TAG --notes "Косметичка Team, сборка 1.0.${GITHUB_RUN_NUMBER} (${GITHUB_REF_NAME}) от $(date -u +'%d.%m.%Y %H:%M') UTC. Скачайте kosmetichka-team.apk на телефон и установите."
 
   ios:
     if: github.event_name == 'workflow_dispatch' && inputs.ios

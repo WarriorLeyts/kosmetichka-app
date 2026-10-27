@@ -19,7 +19,14 @@ import type { CustomerMsg, OrderDetail, OrderItem } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 
 type Tab = "items" | "customer" | "picker" | "history";
-type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null };
+const PROBLEM_LABELS: Record<string, string> = {
+  out_of_stock: "Нет в наличии",
+  expired: "Истёк срок годности",
+  bad_condition: "Плохой вид",
+  insufficient_qty: "Не хватает",
+};
+
+type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null; removed?: boolean };
 
 /** Order card for managers: client, status buttons, picker, items (with picker checks and photos), editing, both chats, history. */
 export default function OrderScreen() {
@@ -34,7 +41,6 @@ export default function OrderScreen() {
   const running = useRef(false);
   const [pickerSheet, setPickerSheet] = useState(false);
   const [edit, setEdit] = useState<Draft[] | null>(null);
-  const [removed, setRemoved] = useState<number[]>([]);
   const [catalog, setCatalog] = useState<null | "order" | "customer" | "picker">(null);
   const { data, error, loading, reload, setData } = useLoad(() => get<OrderDetail>(`/api/team/orders/${orderId}`), [orderId]);
 
@@ -81,9 +87,62 @@ export default function OrderScreen() {
     }
   };
 
+  // MAXMA (promo code / bonuses) didn't sync — try again now, as «Повторить» on the site
+  const retryMaxma = async () => {
+    if (running.current) return;
+    running.current = true;
+    setBusy("maxma");
+    try {
+      const r = await post<{ ok?: boolean }>("/api/admin/maxma/retry", { orderId });
+      Alert.alert(r?.ok ? "Синхронизировано с MAXMA" : "MAXMA снова не ответила", r?.ok ? undefined : "Сайт повторит автоматически");
+      await reload();
+    } catch (e) {
+      Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+    } finally {
+      running.current = false;
+      setBusy("");
+    }
+  };
+
+  // «Сообщить клиенту о проблемах» (as on the site): an intro + a product card with the problem for every line the picker flagged
+  const notifyProblems = () => {
+    if (!o) return;
+    const bad = o.items.filter((i) => i.check?.hasIssues);
+    if (!bad.length) return;
+    Alert.alert("Сообщить клиенту о проблемах?", `В чат клиента уйдут ${bad.length} ${bad.length === 1 ? "позиция" : "позиции"} с описанием проблемы.`, [
+      { text: "Отмена", style: "cancel" },
+      {
+        text: "Отправить",
+        onPress: async () => {
+          if (running.current) return;
+          running.current = true;
+          setBusy("problems");
+          try {
+            const url = `/api/admin/orders/${orderId}/customer-messages`;
+            await post(url, { text: `Здравствуйте! По вашему заказу №${o.id} возникли проблемы с некоторыми позициями:` });
+            for (const it of bad) {
+              const parts = (it.check?.statuses ?? [])
+                .filter((st) => st !== "ok")
+                .map((st) => (st === "insufficient_qty" && it.check?.availableQty != null ? `${PROBLEM_LABELS[st]} (есть ${it.check.availableQty} шт.)` : PROBLEM_LABELS[st] ?? st));
+              const problem = parts.join(", ") + (it.check?.note ? ` — ${it.check.note}` : "");
+              const imagePath = it.photos[0]?.url ?? it.variantImageUrl ?? it.imagePath ?? null;
+              await post(url, { text: JSON.stringify({ _t: "product-problem", id: it.productId, name: it.productName, price: it.price, imagePath, problem }) });
+            }
+            setChatKey((k) => k + 1);
+            Alert.alert("Отправлено клиенту");
+          } catch (e) {
+            Alert.alert("Не отправлено", e instanceof Error ? e.message : "");
+          } finally {
+            running.current = false;
+            setBusy("");
+          }
+        },
+      },
+    ]);
+  };
+
   const startEdit = () => {
     if (!o) return;
-    setRemoved([]);
     setEdit(o.items.map((i) => ({ id: i.id, productId: i.productId, productName: i.productName, barcode: i.barcode, quantity: i.quantity, price: i.price, variantName: i.variantName, variantImageUrl: i.variantImageUrl, imageUrl: i.imageUrl })));
   };
 
@@ -93,10 +152,10 @@ export default function OrderScreen() {
     setBusy("save");
     try {
       const res = await put<{ promoWarning?: string; loyaltyWarning?: string }>(`/api/admin/orders/${orderId}/items`, {
-        items: edit.filter((d) => d.id).map((d) => ({ id: d.id, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
-        removeIds: removed,
+        items: edit.filter((d) => d.id && !d.removed).map((d) => ({ id: d.id, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
+        removeIds: edit.filter((d) => d.id && d.removed).map((d) => d.id as number),
         newItems: edit
-          .filter((d) => !d.id)
+          .filter((d) => !d.id && !d.removed)
           .map((d) => ({ productId: d.productId, productName: d.productName, barcode: d.barcode ?? null, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
       });
       setEdit(null);
@@ -145,7 +204,9 @@ export default function OrderScreen() {
   }, [orderId, me?.id, chatKey]);
 
   const actions = useMemo(() => (o ? STATUS_ACTIONS[o.status] ?? [] : []), [o]);
-  const editTotal = edit?.reduce((s, d) => s + d.quantity * d.price, 0) ?? 0;
+  const editTotal = edit?.filter((d) => !d.removed).reduce((s, d) => s + d.quantity * d.price, 0) ?? 0;
+  const editBefore = o ? o.items.reduce((s, i) => s + i.total, 0) : 0;
+  const patch = (idx: number, p: Partial<Draft>) => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, ...p } : x)));
 
   if (loading && !data) return <Screen title={`Заказ № ${orderId}`}><Loading /></Screen>;
   if (!o) return <Screen title={`Заказ № ${orderId}`}><ErrorState text={error || "Заказ не найден"} onRetry={reload} /></Screen>;
@@ -159,9 +220,15 @@ export default function OrderScreen() {
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
         {o.maxmaStuck ? (
-          <Text style={{ color: "#FF3B30", marginTop: 6, fontWeight: "600" }}>
-            Не синхронизировано с MAXMA{o.maxmaError ? `: ${o.maxmaError}` : ""}. Сайт повторяет попытки сам.
-          </Text>
+          <View style={{ marginTop: 6, gap: 6 }}>
+            <Text style={{ color: "#FF3B30", fontWeight: "600" }}>
+              Не синхронизировано с MAXMA{o.maxmaError ? `: ${o.maxmaError}` : ""}. Сайт повторяет попытки сам.
+            </Text>
+            <Pressable onPress={retryMaxma} disabled={busy === "maxma"} accessibilityRole="button" style={styles.smallBtn}>
+              <Ionicons name="refresh" size={16} color="#FF3B30" />
+              <Text style={{ color: "#FF3B30", fontWeight: "700" }}>{busy === "maxma" ? "Повторяем…" : "Повторить сейчас"}</Text>
+            </Pressable>
+          </View>
         ) : null}
         {o.bonusesApplied ? (
           <Text style={{ color: "#8b3dff", marginTop: 6, fontWeight: "600" }}>Списано бонусов: {money(o.bonusesApplied)}</Text>
@@ -250,53 +317,96 @@ export default function OrderScreen() {
 
           {edit ? (
             <>
-              {edit.map((d, idx) => (
-                <Card key={(d.id ?? "n") + "-" + idx}>
-                  <Text style={{ color: c.label, fontWeight: "600", fontSize: 15.5 }} numberOfLines={2}>
-                    {d.productName}
-                    {d.variantName ? ` · ${d.variantName}` : ""}
-                    {!d.id ? "  (новый)" : ""}
-                  </Text>
-                  <View style={[styles.row, { marginTop: 10 }]}>
-                    <View style={styles.stepper}>
-                      <Pressable onPress={() => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, quantity: Math.max(1, x.quantity - 1) } : x)))} style={styles.stepBtn} accessibilityLabel="Меньше">
-                        <Ionicons name="remove" size={20} color={VIOLET} />
-                      </Pressable>
-                      <TextInput
-                        value={d.quantity ? String(d.quantity) : ""}
-                        onChangeText={(t) => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, quantity: Number(t.replace(/\D/g, "")) || 0 } : x)))}
-                        onBlur={() => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, quantity: Math.max(1, x.quantity) } : x)))}
-                        keyboardType="number-pad"
-                        style={[styles.qty, { color: c.label }]}
-                      />
-                      <Pressable onPress={() => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, quantity: x.quantity + 1 } : x)))} style={styles.stepBtn} accessibilityLabel="Больше">
-                        <Ionicons name="add" size={20} color={VIOLET} />
+              {edit.map((d, idx) => {
+                const img = d.variantImageUrl || d.imageUrl;
+                if (d.removed) {
+                  return (
+                    <Card key={(d.id ?? "n") + "-" + idx} style={{ backgroundColor: dark ? "rgba(220,38,38,0.12)" : "#FEF2F2" }}>
+                      <View style={styles.row}>
+                        <Text style={{ flex: 1, color: "#DC2626", textDecorationLine: "line-through" }} numberOfLines={2}>
+                          {d.productName}
+                        </Text>
+                        <Pressable onPress={() => patch(idx, { removed: false })} hitSlop={8} accessibilityRole="button" style={styles.restore}>
+                          <Text style={{ color: "#DC2626", fontWeight: "700" }}>Вернуть</Text>
+                        </Pressable>
+                      </View>
+                    </Card>
+                  );
+                }
+                return (
+                  <Card key={(d.id ?? "n") + "-" + idx} style={!d.id ? { borderLeftWidth: 4, borderLeftColor: "#22C55E" } : undefined}>
+                    <View style={{ flexDirection: "row", gap: 12 }}>
+                      <View style={[styles.thumb, { width: 56, height: 56 }]}>
+                        {img ? <Image source={{ uri: imageUrl(img, 160) ?? undefined }} style={{ width: "90%", height: "90%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={20} color="#C7C7CC" />}
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ color: c.label, fontWeight: "600", fontSize: 15.5 }} numberOfLines={3}>
+                          {d.productName}
+                        </Text>
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginTop: 4, alignItems: "center" }}>
+                          {!d.id ? (
+                            <View style={[styles.tag, { backgroundColor: "rgba(34,197,94,0.15)" }]}>
+                              <Text style={{ color: "#16A34A", fontWeight: "700", fontSize: 12 }}>Новый</Text>
+                            </View>
+                          ) : null}
+                          {d.variantName ? <Text style={{ color: VIOLET, fontSize: 13 }}>{d.variantName}</Text> : null}
+                          {d.barcode ? <Text style={{ color: c.secondary, fontSize: 12 }}>{d.barcode}</Text> : null}
+                        </View>
+                      </View>
+                      <Pressable onPress={() => patch(idx, { removed: true })} hitSlop={8} accessibilityLabel="Удалить позицию" style={{ paddingTop: 2 }}>
+                        <Ionicons name="trash-outline" size={22} color="#DC2626" />
                       </Pressable>
                     </View>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                      <TextInput
-                        value={String(d.price)}
-                        onChangeText={(t) => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, price: Math.max(0, Number(t.replace(/\D/g, "")) || 0) } : x)))}
-                        keyboardType="number-pad"
-                        style={[styles.price, { color: c.label, borderColor: dark ? "#43295A" : "#E4E2EC" }]}
-                      />
-                      <Text style={{ color: c.secondary }}>₽</Text>
+                    <View style={[styles.row, { marginTop: 10 }]}>
+                      <View style={styles.stepper}>
+                        <Pressable onPress={() => patch(idx, { quantity: Math.max(1, d.quantity - 1) })} style={styles.stepBtn} accessibilityLabel="Меньше">
+                          <Ionicons name="remove" size={20} color={VIOLET} />
+                        </Pressable>
+                        <TextInput
+                          value={d.quantity ? String(d.quantity) : ""}
+                          onChangeText={(t) => patch(idx, { quantity: Number(t.replace(/\D/g, "")) || 0 })}
+                          onBlur={() => patch(idx, { quantity: Math.max(1, d.quantity) })}
+                          keyboardType="number-pad"
+                          style={[styles.qty, { color: c.label }]}
+                        />
+                        <Pressable onPress={() => patch(idx, { quantity: d.quantity + 1 })} style={styles.stepBtn} accessibilityLabel="Больше">
+                          <Ionicons name="add" size={20} color={VIOLET} />
+                        </Pressable>
+                      </View>
+                      <Text style={{ color: c.secondary }}>×</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
+                        <TextInput
+                          value={String(d.price)}
+                          onChangeText={(t) => patch(idx, { price: Math.max(0, Number(t.replace(/\D/g, "")) || 0) })}
+                          keyboardType="number-pad"
+                          style={[styles.price, { color: c.label, borderColor: dark ? "#43295A" : "#E4E2EC" }]}
+                        />
+                        <Text style={{ color: c.secondary }}>₽</Text>
+                      </View>
+                      <Text style={{ color: c.label, fontWeight: "800", fontSize: 15.5, marginLeft: "auto" }}>{money(d.quantity * d.price)}</Text>
                     </View>
-                    <Pressable
-                      onPress={() => {
-                        if (d.id) setRemoved((r) => [...r, d.id!]);
-                        setEdit((e) => e!.filter((_, i) => i !== idx));
-                      }}
-                      hitSlop={8}
-                      accessibilityLabel="Удалить позицию"
-                    >
-                      <Ionicons name="trash-outline" size={22} color="#DC2626" />
-                    </Pressable>
-                  </View>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
               <ActionButton label="Добавить товар" kind="soft" icon="add-circle-outline" onPress={() => setCatalog("order")} />
-              <Text style={[styles.editTotal, { color: c.label }]}>Итого: {money(editTotal)}</Text>
+              <View style={styles.editTotalRow}>
+                <Text style={{ color: c.secondary }}>
+                  {edit.filter((d) => !d.removed).length} поз. · {edit.filter((d) => !d.removed).reduce((n, d) => n + d.quantity, 0)} шт.
+                </Text>
+                <View style={{ alignItems: "flex-end" }}>
+                  {editTotal !== editBefore ? <Text style={{ color: c.secondary, textDecorationLine: "line-through" }}>{money(editBefore)}</Text> : null}
+                  <Text style={[styles.editTotal, { color: c.label }]}>
+                    {money(editTotal)}
+                    {editTotal !== editBefore ? (
+                      <Text style={{ fontSize: 14, color: editTotal < editBefore ? "#16A34A" : "#EA580C" }}>
+                        {"  "}
+                        {editTotal > editBefore ? "+" : "−"}
+                        {money(Math.abs(editTotal - editBefore))}
+                      </Text>
+                    ) : null}
+                  </Text>
+                </View>
+              </View>
               <View style={styles.actions}>
                 <ActionButton label="Отмена" kind="soft" onPress={() => setEdit(null)} />
                 <ActionButton label="Сохранить" kind="primary" loading={busy === "save"} onPress={saveEdit} />
@@ -310,6 +420,9 @@ export default function OrderScreen() {
               ))}
               {o.removedItems?.length ? <RemovedItems items={o.removedItems} /> : null}
               {data!.canEditItems ? <ActionButton label="Изменить состав" kind="soft" icon="create-outline" onPress={startEdit} /> : null}
+              {o.items.some((i) => i.check?.hasIssues) ? (
+                <ActionButton label="Сообщить клиенту о проблемах" kind="danger" icon="megaphone-outline" loading={busy === "problems"} onPress={notifyProblems} />
+              ) : null}
             </>
           )}
         </>
@@ -435,5 +548,9 @@ const styles = StyleSheet.create({
   stepBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(139,61,255,0.1)" },
   qty: { minWidth: 44, textAlign: "center", fontSize: 17, fontWeight: "700" },
   price: { minWidth: 76, borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 6, fontSize: 16, textAlign: "right" },
-  editTotal: { fontSize: 18, fontWeight: "700", textAlign: "right", marginVertical: 12 },
+  editTotal: { fontSize: 20, fontWeight: "800", textAlign: "right" },
+  editTotalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginVertical: 12 },
+  tag: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
+  smallBtn: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,59,48,0.4)", paddingHorizontal: 10, paddingVertical: 6 },
+  restore: { borderRadius: 10, borderWidth: 1, borderColor: "rgba(220,38,38,0.4)", paddingHorizontal: 10, paddingVertical: 5 },
 });
