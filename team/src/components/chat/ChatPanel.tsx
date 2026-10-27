@@ -65,7 +65,7 @@ export function ChatPanel({
   useFocusEffect(
     useCallback(() => {
       refresh();
-      const t = setInterval(refresh, 10_000);
+      const t = setInterval(refresh, 7_000);
       return () => clearInterval(t);
     }, [refresh])
   );

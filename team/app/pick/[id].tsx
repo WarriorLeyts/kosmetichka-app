@@ -64,7 +64,7 @@ export default function Pick() {
   const [photoFor, setPhotoFor] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const { data, error, loading, reload } = useLoad(() => get<PickerOrder>(`/api/team/picker/orders/${orderId}`), [orderId], { refocus: false });
+  const { data, error, loading, reload } = useLoad(() => get<PickerOrder>(`/api/team/picker/orders/${orderId}`), [orderId], { refocus: false, poll: 20_000 });
   const o = data?.order;
 
   // set once per item: a refresh must not wipe unsent marks, quantities and notes (as on the site)

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
+import { useFocusEffect } from "expo-router";
 
 /** offset/page based endless list with a debounced query */
-export function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[]; hasMore: boolean }>, deps: unknown[]) {
+export function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[]; hasMore: boolean }>, deps: unknown[], opts: { poll?: number } = {}) {
   const [items, setItems] = useState<T[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -50,6 +52,31 @@ export function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[];
       setLoadingMore(false);
     }
   }, [fp, hasMore, items.length, loading]);
+
+  // while the list is open: the first page again every `poll` ms — new statuses in place, new rows on top,
+  // pages already scrolled to are kept; a failed refresh changes nothing
+  useFocusEffect(
+    useCallback(() => {
+      if (!opts.poll) return;
+      const t = setInterval(async () => {
+        if (AppState.currentState !== "active" || busy.current) return;
+        const my = seq.current;
+        try {
+          const r = await fp(0);
+          if (my !== seq.current) return;
+          const key = (x: T) => (x as { id?: number }).id;
+          const fresh = new Map(r.items.map((x) => [key(x), x]));
+          setItems((prev) => {
+            const known = new Set(prev.map(key));
+            return [...r.items.filter((x) => !known.has(key(x))), ...prev.map((x) => fresh.get(key(x)) ?? x)];
+          });
+        } catch {
+          /* keep the list */
+        }
+      }, opts.poll);
+      return () => clearInterval(t);
+    }, [fp, opts.poll])
+  );
 
   return { items, hasMore, loading, loadingMore, error, reload, more, setItems };
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, AppState, FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
@@ -96,10 +96,10 @@ export default function Orders() {
 
   const reqId = useRef(0);
   const load = useCallback(
-    async (page: number, mode: "replace" | "append" | "refresh") => {
+    async (page: number, mode: "replace" | "append" | "refresh" | "silent") => {
       const id = ++reqId.current;
       if (mode === "refresh") setRefreshing(true);
-      else setLoading(true);
+      else if (mode !== "silent") setLoading(true);
       setError("");
       try {
         const r = await api.orders(page, status);
@@ -108,6 +108,13 @@ export default function Orders() {
         list.forEach((o) => orderCache.set(o.id, o));
         setData(r);
         setOrders((prev) => {
+          // background refresh: new statuses for the first page, new orders on top, loaded pages kept
+          if (mode === "silent") {
+            const fresh = new Map(list.map((o) => [o.id, o]));
+            const kept = prev.map((o) => fresh.get(o.id) ?? o);
+            const known = new Set(prev.map((o) => o.id));
+            return [...list.filter((o) => !known.has(o.id)), ...kept];
+          }
           if (mode !== "append") return list;
           const seen = new Set(prev.map((o) => o.id));
           return [...prev, ...list.filter((o) => !seen.has(o.id))];
@@ -116,7 +123,7 @@ export default function Orders() {
           .then((s) => setUnread(new Set(s.managerMessages.map((m) => m.orderId))))
           .catch(() => {});
       } catch (e) {
-        if (id === reqId.current) setError(e instanceof Error ? e.message : "Ошибка");
+        if (id === reqId.current && mode !== "silent") setError(e instanceof Error ? e.message : "Ошибка");
       } finally {
         if (id === reqId.current) {
           setLoading(false);
@@ -156,6 +163,17 @@ export default function Orders() {
         return;
       }
       if (customerId && hasData.current) loadRef.current(1, "refresh");
+    }, [customerId])
+  );
+
+  // while the list is open: statuses and new manager messages update by themselves every 20 s
+  useFocusEffect(
+    useCallback(() => {
+      if (!customerId) return;
+      const t = setInterval(() => {
+        if (AppState.currentState === "active" && hasData.current) loadRef.current(1, "silent");
+      }, 20000);
+      return () => clearInterval(t);
     }, [customerId])
   );
 

@@ -161,8 +161,9 @@ export default function OrderScreen() {
     };
   }, []);
 
-  const loadOrder = useCallback(async () => {
-    setError("");
+  // silent: a background refresh — on a network error the screen keeps what it shows
+  const loadOrder = useCallback(async (silent = false) => {
+    if (!silent) setError("");
     if (!Number.isFinite(orderId)) {
       setError("Заказ не найден");
       return;
@@ -175,6 +176,7 @@ export default function OrderScreen() {
       }) }) as Order);
     } catch (e) {
       // not this account's order (or signed out): never keep showing a cached copy
+      if (silent && !(e instanceof ApiError && (e.status === 401 || e.status === 403 || e.status === 404))) return;
       if (e instanceof ApiError && (e.status === 401 || e.status === 403 || e.status === 404)) {
         orderCache.delete(orderId);
         setOrder(null);
@@ -213,15 +215,20 @@ export default function OrderScreen() {
     loadOrder();
   }, [loadOrder]);
 
-  // chat refresh every 15 s only while this screen is open and in front
+  // while this screen is open and in front: new messages every 7 s, the order (status, items,
+  // manager's changes) every 15 s — no need to reload. Not while the customer is changing the order.
+  const editingRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
       loadMessages();
+      let n = 0;
       const t = setInterval(() => {
-        if (AppState.currentState === "active") loadMessages();
-      }, 15000);
+        if (AppState.currentState !== "active") return;
+        loadMessages();
+        if (++n % 2 === 0 && !editingRef.current) loadOrder(true);
+      }, 7500);
       return () => clearInterval(t);
-    }, [loadMessages])
+    }, [loadMessages, loadOrder])
   );
 
   // new replies: scroll down only if the user is already at the bottom (don't disturb reading)
@@ -244,7 +251,7 @@ export default function OrderScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
         <BackBar onBack={goBack} color={c.label} />
-        {error ? <ErrorView message={error} onRetry={loadOrder} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
+        {error ? <ErrorView message={error} onRetry={() => loadOrder()} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
       </View>
     );
   }
@@ -420,6 +427,7 @@ export default function OrderScreen() {
     }
   };
 
+  editingRef.current = editing;
   const startEdit = () => {
     tap();
     setQty(Object.fromEntries(order.items.map((it) => [it.id, it.quantity])));

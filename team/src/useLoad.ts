@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
 
-/** load data for a screen: first load, refresh on return to the screen, pull-to-refresh */
-export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = [], opts: { refocus?: boolean } = { refocus: true }) {
+/**
+ * load data for a screen: first load, refresh on return to the screen, pull-to-refresh;
+ * `poll` — while the screen is open and the app in front, refresh every `poll` ms (statuses, new
+ * messages appear by themselves); `paused` — skip those refreshes (e.g. while the order is edited).
+ */
+export function useLoad<T>(
+  fn: () => Promise<T>,
+  deps: unknown[] = [],
+  opts: { refocus?: boolean; poll?: number; paused?: boolean } = { refocus: true }
+) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -42,6 +51,18 @@ export function useLoad<T>(fn: () => Promise<T>, deps: unknown[] = [], opts: { r
       // coming back to a screen: refresh only if the data is older than 20 s (saves traffic on a slow link)
       if (opts.refocus !== false && Date.now() - loadedAt.current > 20_000) reload();
     }, [reload, opts.refocus])
+  );
+
+  const paused = useRef(false);
+  paused.current = !!opts.paused;
+  useFocusEffect(
+    useCallback(() => {
+      if (!opts.poll) return;
+      const t = setInterval(() => {
+        if (AppState.currentState === "active" && !paused.current) reload();
+      }, opts.poll);
+      return () => clearInterval(t);
+    }, [reload, opts.poll])
   );
 
   return { data, error, loading, reload, setData };

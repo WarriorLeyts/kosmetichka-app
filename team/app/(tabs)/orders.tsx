@@ -35,7 +35,8 @@ export default function Orders() {
       setMeta(r);
       return { items: r.orders, hasMore: r.page < r.totalPages };
     },
-    [status, allDates, q]
+    [status, allDates, q],
+    { poll: 30_000 } // new orders and statuses appear by themselves
   );
 
   const counts = meta?.todayCounts.byStatus ?? [];

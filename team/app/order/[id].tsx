@@ -42,7 +42,8 @@ export default function OrderScreen() {
   const [pickerSheet, setPickerSheet] = useState(false);
   const [edit, setEdit] = useState<Draft[] | null>(null);
   const [catalog, setCatalog] = useState<null | "order" | "customer" | "picker">(null);
-  const { data, error, loading, reload, setData } = useLoad(() => get<OrderDetail>(`/api/team/orders/${orderId}`), [orderId]);
+  // status, items, customer's changes refresh every 15 s while the order is open (not while editing it)
+  const { data, error, loading, reload, setData } = useLoad(() => get<OrderDetail>(`/api/team/orders/${orderId}`), [orderId], { refocus: true, poll: 15_000, paused: edit !== null });
 
   const o = data?.order;
 
