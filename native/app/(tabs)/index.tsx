@@ -100,7 +100,7 @@ export default function Home() {
                 style={[styles.glass, glass]}
                 accessibilityLabel="Размер интерфейса"
               >
-                <Text style={[styles.sizeIcon, { color: iconColor }]}>Aa</Text>
+                <Text maxFontSizeMultiplier={1} style={[styles.sizeIcon, { color: iconColor }]}>Aa</Text>
               </Pressable>
             ) : null}
           </View>

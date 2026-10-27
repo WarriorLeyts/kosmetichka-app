@@ -27,17 +27,17 @@ export function Wordmark({ size = 19, light, style, anchor }: { size?: number; l
   const iCenter = pre + (withI - pre - spacing) / 2;
   return (
     <View style={[styles.wrap, { paddingTop: size * 0.5 }, style]} accessible accessibilityRole="header" accessibilityLabel="Косметичка">
-      <Text style={[t, { color: main }]} numberOfLines={1}>
+      <Text maxFontSizeMultiplier={1} style={[t, { color: main }]} numberOfLines={1}>
         КОСМЕТИЧКА
       </Text>
       {/* invisible measuring copies (same style) */}
       <View style={styles.measure} pointerEvents="none">
-        <Text style={t} onLayout={(e) => setPre(e.nativeEvent.layout.width)}>
+        <Text maxFontSizeMultiplier={1} style={t} onLayout={(e) => setPre(e.nativeEvent.layout.width)}>
           КОСМЕТ
         </Text>
       </View>
       <View style={styles.measure} pointerEvents="none">
-        <Text style={t} onLayout={(e) => setWithI(e.nativeEvent.layout.width)}>
+        <Text maxFontSizeMultiplier={1} style={t} onLayout={(e) => setWithI(e.nativeEvent.layout.width)}>
           КОСМЕТИ
         </Text>
       </View>

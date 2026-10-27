@@ -103,7 +103,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           const badge =
             route.name === "cart" && count > 0 ? (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{count > 99 ? "99+" : count}</Text>
+                <Text maxFontSizeMultiplier={1} style={styles.badgeText}>{count > 99 ? "99+" : count}</Text>
               </View>
             ) : null;
           return (
@@ -118,7 +118,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
               {disabled("fade") ? (
                 <View style={styles.content}>
                   <Ionicons name={focused ? t.active : t.icon} size={25} color={focused ? "#8b3dff" : INACTIVE} />
-                  <Text numberOfLines={1} style={[styles.label, { color: focused ? "#8b3dff" : INACTIVE }]}>
+                  <Text numberOfLines={1} maxFontSizeMultiplier={1.15} style={[styles.label, { color: focused ? "#8b3dff" : INACTIVE }]}>
                     {t.label}
                   </Text>
                 </View>
@@ -129,7 +129,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   <Ionicons name={t.icon} size={25} color={dark ? "#C3AECF" : INACTIVE} />
                   {badge}
                 </View>
-                <Text numberOfLines={1} style={[styles.label, { color: dark ? "#C3AECF" : INACTIVE }]}>
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.15} style={[styles.label, { color: dark ? "#C3AECF" : INACTIVE }]}>
                   {t.label}
                 </Text>
               </Animated.View>
@@ -138,7 +138,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
                   <Ionicons name={t.active} size={25} color="#fff" />
                   {badge}
                 </View>
-                <Text numberOfLines={1} style={[styles.label, { color: "#fff", fontWeight: "700" }]}>
+                <Text numberOfLines={1} maxFontSizeMultiplier={1.15} style={[styles.label, { color: "#fff", fontWeight: "700" }]}>
                   {t.label}
                 </Text>
               </Animated.View>
