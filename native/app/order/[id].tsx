@@ -722,7 +722,8 @@ export default function OrderScreen() {
             </View>
           ) : null}
 
-          {/* actions — existing logic */}
+          {/* actions — existing logic (hidden while the order is being changed) */}
+          {editing ? null : (
           <View style={styles.actions}>
             <GradientButton title="Повторить" icon="refresh" loading={repeating} onPress={repeatOrder} />
             <Pressable
@@ -738,7 +739,8 @@ export default function OrderScreen() {
               <Text style={styles.outlineText}>Накладная</Text>
             </Pressable>
           </View>
-          {order.status === "pending" ? (
+          )}
+          {order.status === "pending" && !editing ? (
             <Pressable onPress={cancel} disabled={busy === "cancel"} style={styles.cancel} accessibilityRole="button">
               {busy === "cancel" ? <ActivityIndicator color="#FF3B30" /> : <Text style={[iosText.body, { color: "#FF3B30" }]}>Отменить заказ</Text>}
             </Pressable>

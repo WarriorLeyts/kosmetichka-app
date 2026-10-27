@@ -98,7 +98,7 @@ export default function OrderAddScreen() {
   return (
     <View style={{ flex: 1, paddingTop: insets.top }}>
       <View style={[styles.wrap, { paddingHorizontal: 16 }]}>
-        <TitleBar title={`Добавить в заказ №${Number.isFinite(orderId) ? orderId : ""}`} onBack={done} />
+        <TitleBar title="Добавить товары" onBack={done} />
         <View style={[styles.search, { backgroundColor: dark ? "#2B193D" : "rgba(118,118,128,0.12)" }]}>
           <Ionicons name="search-outline" size={20} color={c.secondary} />
           <TextInput
