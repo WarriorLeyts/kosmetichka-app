@@ -34,6 +34,30 @@
         } catch (e) {}
       })();
     </script>
+    <!-- iPhone, opened from the home screen (black-translucent status bar): iOS makes the page shorter than
+         the screen by the status bar's height, so an empty strip was left at the bottom. The page is
+         given the whole screen height (in page pixels: ÷ the phone-site scale). -->
+    <script>
+      (function () {
+        try {
+          var n = navigator;
+          var standalone = n.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+          if (!/iPhone|iPod/.test(n.userAgent) || !standalone) return;
+          var k = window.__kosScale || 1;
+          var fit = function () {
+            var portrait = !window.matchMedia || matchMedia("(orientation: portrait)").matches;
+            var h = (portrait ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height)) / k;
+            h = Math.max(h, window.innerHeight || 0);
+            document.documentElement.style.height = h + "px";
+            if (document.body) document.body.style.height = h + "px";
+          };
+          fit();
+          document.addEventListener("DOMContentLoaded", fit);
+          window.addEventListener("resize", fit);
+          window.addEventListener("orientationchange", function () { setTimeout(fit, 300); });
+        } catch (e) {}
+      })();
+    </script>
     <title>%WEB_TITLE%</title>
     <!-- Added to the iPhone / Android home screen: opens as an app, without the browser's address and tool bars -->
     <meta name="apple-mobile-web-app-capable" content="yes" />

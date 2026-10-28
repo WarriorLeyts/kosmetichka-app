@@ -43,6 +43,12 @@ export default function RootLayout() {
   const desktop = useDesktop();
   // re-mount the UI when the theme changes so every screen re-reads the palette
   const mode = useTheme((s) => s.mode);
+  // website: the page under the app (behind the iPhone status bar / home indicator, bounce) in the theme's colour, not white
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.style.backgroundColor = colors.bg;
+    if (document.body) document.body.style.backgroundColor = colors.bg;
+  }, [mode]);
   useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
 
   useEffect(() => {
