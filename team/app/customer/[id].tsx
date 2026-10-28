@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
-import { Alert, Linking, Text, View } from "react-native";
+import { Alert, Linking, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/Screen";
-import { ActionButton, Card, ErrorState, KV, Loading } from "@/components/kit";
+import { ActionButton, Card, Chips, ErrorState, KV, Loading, SectionTitle } from "@/components/kit";
 import { useLoad } from "@/useLoad";
-import { get, post } from "@/api";
+import { get, post, put } from "@/api";
 import { date } from "@/format";
 import { useIOS } from "@/ios";
 import { CustomerBadge } from "@/components/CustomerBadge";
@@ -15,6 +15,7 @@ export default function Customer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useIOS();
   const [busy, setBusy] = useState("");
+  const [form, setForm] = useState<Form | null>(null); // «Изменить данные»
   const running = useRef(false);
   const { data, error, loading, reload } = useLoad(() => get<CustomerDetail>(`/api/team/customers/${id}`), [id]);
   const x = data?.customer;
@@ -114,9 +115,126 @@ export default function Customer() {
             {!x.isApproved ? <ActionButton label="Подтвердить" kind="success" loading={busy === "approve"} onPress={() => act("approve")} /> : null}
             {x.isApproved ? <ActionButton label="Снять подтверждение" kind="danger" loading={busy === "block"} onPress={() => act("block")} /> : null}
           </View>
-          <Text style={{ color: c.secondary, fontSize: 13, textAlign: "center", marginTop: 12 }}>Остальные данные клиента меняются в админке сайта</Text>
+          {form ? (
+            <CustomerForm
+              form={form}
+              setForm={setForm}
+              busy={busy === "save"}
+              onCancel={() => setForm(null)}
+              onSave={async () => {
+                if (running.current) return;
+                running.current = true;
+                setBusy("save");
+                try {
+                  await put(`/api/admin/customers/${id}`, { ...form, isActive: form.isActive === "active", isApproved: form.isApproved === "yes" });
+                  setForm(null);
+                  await reload();
+                } catch (e) {
+                  Alert.alert("Не сохранено", e instanceof Error ? e.message : "");
+                } finally {
+                  running.current = false;
+                  setBusy("");
+                }
+              }}
+            />
+          ) : (
+            <View style={{ marginTop: 8 }}>
+              <ActionButton
+                label="Изменить данные"
+                kind="soft"
+                icon="create-outline"
+                onPress={() =>
+                  setForm({
+                    name: x.name ?? "", companyName: x.companyName ?? "", phone: x.phone ?? "", email: x.email ?? "", inn: x.inn ?? "",
+                    city: x.city ?? "", address: x.address ?? "", manager: x.manager ?? "", oneCId: x.oneCId ?? "",
+                    priceType: x.priceType, wholesaleAccess: x.wholesaleAccess ?? "",
+                    isActive: x.isActive ? "active" : "blocked", isApproved: x.isApproved ? "yes" : "no", password: "",
+                  })
+                }
+              />
+            </View>
+          )}
         </>
       )}
     </Screen>
   );
 }
+
+type Form = {
+  name: string; companyName: string; phone: string; email: string; inn: string; city: string; address: string;
+  manager: string; oneCId: string; priceType: string; wholesaleAccess: string; isActive: "active" | "blocked"; isApproved: "yes" | "no"; password: string;
+};
+
+/** «Изменить данные» — the same fields as the old admin form */
+function CustomerForm({ form, setForm, busy, onCancel, onSave }: { form: Form; setForm: (f: Form) => void; busy: boolean; onCancel: () => void; onSave: () => void }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const set = (p: Partial<Form>) => setForm({ ...form, ...p });
+  const field = (k: keyof Form, label: string, opts: { keyboard?: "phone-pad" | "email-address" | "number-pad"; secure?: boolean; placeholder?: string } = {}) => (
+    <View style={{ marginBottom: 10 }}>
+      <Text style={[fs.label, { color: c.secondary }]}>{label}</Text>
+      <TextInput
+        value={form[k]}
+        onChangeText={(t) => set({ [k]: t } as Partial<Form>)}
+        keyboardType={opts.keyboard}
+        secureTextEntry={opts.secure}
+        placeholder={opts.placeholder}
+        placeholderTextColor={c.tertiary}
+        autoCapitalize={opts.keyboard === "email-address" || opts.secure ? "none" : "sentences"}
+        autoCorrect={false}
+        style={[fs.input, { color: c.label, backgroundColor: dark ? "#2B193D" : "#F8F7FB", borderColor: dark ? "rgba(200,160,255,0.2)" : "#E9E4F5" }]}
+      />
+    </View>
+  );
+  return (
+    <>
+      <SectionTitle>Изменить данные</SectionTitle>
+      <Card>
+        {field("name", "Контактное лицо")}
+        {field("companyName", "Компания")}
+        {field("phone", "Телефон", { keyboard: "phone-pad" })}
+        {field("email", "Email", { keyboard: "email-address" })}
+        {field("inn", "ИНН", { keyboard: "number-pad" })}
+        {field("city", "Город")}
+        {field("address", "Адрес")}
+        <Text style={[fs.label, { color: c.secondary }]}>Тип цен</Text>
+        <Chips
+          items={[
+            { value: "retail", label: "Розница" },
+            { value: "discount", label: "Скидка по карте" },
+            { value: "wholesale", label: "Опт" },
+            { value: "big_wholesale", label: "Крупный опт" },
+          ]}
+          value={form.priceType}
+          onChange={(v) => set({ priceType: v })}
+        />
+        <Text style={[fs.label, { color: c.secondary }]}>Доступ к оптовым ценам</Text>
+        <Chips
+          items={[
+            { value: "", label: "Нет" },
+            { value: "wholesale", label: "Опт" },
+            { value: "big_wholesale", label: "Крупный опт" },
+          ]}
+          value={form.wholesaleAccess}
+          onChange={(v) => set({ wholesaleAccess: v })}
+        />
+        <Text style={[fs.label, { color: c.secondary }]}>Аккаунт</Text>
+        <Chips items={[{ value: "active", label: "Активен" }, { value: "blocked", label: "Заблокирован" }]} value={form.isActive} onChange={(v) => set({ isActive: v })} />
+        <Text style={[fs.label, { color: c.secondary }]}>Подтверждение</Text>
+        <Chips items={[{ value: "yes", label: "Подтверждён" }, { value: "no", label: "Не подтверждён" }]} value={form.isApproved} onChange={(v) => set({ isApproved: v })} />
+        {field("manager", "Менеджер (1С)")}
+        {field("oneCId", "ID в 1С")}
+        {field("password", "Новый пароль", { secure: true, placeholder: "Оставьте пустым, чтобы не менять" })}
+        <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
+          <ActionButton label="Отмена" kind="soft" onPress={onCancel} />
+          <ActionButton label="Сохранить" kind="primary" loading={busy} onPress={onSave} />
+        </View>
+      </Card>
+    </>
+  );
+}
+
+const fs = StyleSheet.create({
+  label: { fontSize: 13, fontWeight: "600", marginBottom: 6, marginLeft: 2 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16 },
+});
