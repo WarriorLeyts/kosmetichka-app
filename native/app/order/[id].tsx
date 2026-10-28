@@ -116,6 +116,7 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
           <Text style={{ color, fontWeight: "700" }}>
             {Number(obj.quantity) || 1} шт.{typeof obj.price === "number" && obj.price > 0 ? ` × ${money(obj.price)}` : ""}
           </Text>
+          {obj.added === true ? <Text style={{ color: "#16A34A", fontWeight: "700" }}>✓ Менеджер добавил в заказ</Text> : null}
         </View>
       );
     }

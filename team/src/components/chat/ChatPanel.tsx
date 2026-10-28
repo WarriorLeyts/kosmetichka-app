@@ -143,13 +143,13 @@ export function ChatPanel({
               {m.mine ? (
                 <LinearGradient colors={GRAD} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.bubble, styles.mine]}>
                   {m.author ? <Text style={[styles.author, { color: "rgba(255,255,255,0.85)" }]}>{m.author}</Text> : null}
-                  <MessageBody text={m.text} color={fg} />
+                  <MessageBody id={typeof m.id === "number" ? m.id : undefined} text={m.text} color={fg} />
                   <Text style={[styles.time, { color: "rgba(255,255,255,0.8)" }]}>{time(m.createdAt)}</Text>
                 </LinearGradient>
               ) : (
                 <View style={[styles.bubble, styles.theirs, { backgroundColor: dark ? "#352044" : "#F2F0F8" }]}>
                   {m.author ? <Text style={[styles.author, { color: "#e82c87" }]}>{m.author}</Text> : null}
-                  <MessageBody text={m.text} color={fg} />
+                  <MessageBody id={typeof m.id === "number" ? m.id : undefined} text={m.text} color={fg} />
                   <Text style={[styles.time, { color: c.secondary }]}>{time(m.createdAt)}</Text>
                 </View>
               )}

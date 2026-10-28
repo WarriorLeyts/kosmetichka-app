@@ -129,7 +129,7 @@ export default function OrderScreen() {
   // «Добавить в заказ» on the customer's product card in the chat (the order changes only during «Сборка»)
   const requestActions = useMemo(
     () => ({
-      inOrder: (r: ProductRequest) => !!o?.items.some((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null)),
+      inOrder: (r: ProductRequest) => o?.items.find((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null))?.quantity ?? 0,
       add: async (r: ProductRequest) => {
         if (!o) return;
         if (o.status !== "assembly") {
@@ -144,10 +144,14 @@ export default function OrderScreen() {
         running.current = true;
         try {
           // the price is set by the site (the customer's price type)
+          // already in the order → that line gets the requested pieces more; otherwise a new line
+          const line = o.items.find((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null));
           await put(`/api/admin/orders/${orderId}/items`, {
-            items: [],
+            items: line ? [{ id: line.id, quantity: line.quantity + r.quantity, price: line.price }] : [],
             removeIds: [],
-            newItems: [{ productId: r.id, productName: r.name, barcode: null, quantity: r.quantity, price: 0, variantName: r.variantName, variantImageUrl: r.variantName && r.imagePath ? imageUrl(r.imagePath) : null }],
+            newItems: line ? [] : [{ productId: r.id, productName: r.name, barcode: null, quantity: r.quantity, price: 0, variantName: r.variantName, variantImageUrl: r.variantName && r.imagePath ? imageUrl(r.imagePath) : null }],
+            // the card in the chat becomes «Добавлено в заказ»
+            requestMessageId: r.messageId,
           });
           await reload();
           setChatKey((k) => k + 1);

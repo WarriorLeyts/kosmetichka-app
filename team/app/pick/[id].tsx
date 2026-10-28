@@ -17,7 +17,6 @@ import { get, imageUrl, post, request } from "@/api";
 import { money } from "@/format";
 import { useIOS } from "@/ios";
 import { CHECK_LABELS } from "@/orderStatus";
-import { useAuth } from "@/store/auth";
 import { clientName, type PickerOrder } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
@@ -55,7 +54,6 @@ export default function Pick() {
   const orderId = Number(id);
   const c = useIOS();
   const dark = c.blurTint === "dark";
-  const me = useAuth((s) => s.user);
   const scrollRef = useRef<ScrollView>(null);
   const ys = useRef<Record<number, number>>({});
   const [items, setItems] = useState<Record<number, State>>({});
@@ -204,10 +202,11 @@ export default function Pick() {
     }
   };
 
+  // the manager collects the order himself → the chat here is the one with the customer (as on the order screen)
   const loadChat = useCallback(async (): Promise<ChatMsg[]> => {
-    const r = await get<{ messages: { id: number; text: string; isFromPicker: boolean; userName: string | null; userId: number | null; createdAt: string }[] }>(`/api/picker/messages/${orderId}`);
-    return r.messages.map((m) => ({ id: m.id, text: m.text, createdAt: m.createdAt, mine: m.userId === me?.id, author: m.userName || (m.isFromPicker ? "Сборщик" : "Менеджер") }));
-  }, [orderId, me?.id]);
+    const r = await get<{ messages: { id: number; text: string; isFromPicker: boolean; userName: string | null; createdAt: string }[] }>(`/api/admin/orders/${orderId}/customer-messages`);
+    return r.messages.map((m) => ({ id: m.id, text: m.text, createdAt: m.createdAt, mine: m.isFromPicker, author: m.isFromPicker ? m.userName || "Менеджер" : "Клиент" }));
+  }, [orderId]);
 
   if (loading && !data) return <Screen title={`Сборка № ${orderId}`}><Loading /></Screen>;
   if (!o) return <Screen title={`Сборка № ${orderId}`}><ErrorState text={error || "Заказ не найден"} onRetry={reload} /></Screen>;
@@ -340,9 +339,9 @@ export default function Pick() {
 
       <ActionButton label={all ? "Отправить проверку" : `Проверено ${checked} из ${o.items.length}`} kind={all ? "primary" : "soft"} loading={submitting} onPress={submit} icon="checkmark-done" />
 
-      <SectionTitle>Чат с менеджером</SectionTitle>
+      <SectionTitle>Чат с клиентом</SectionTitle>
       <Card>
-        <ChatPanel load={loadChat} send={(text) => post(`/api/picker/messages/${orderId}`, { text })} empty="Напишите менеджеру, если что-то не так" />
+        <ChatPanel liveOrderId={orderId} load={loadChat} send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })} empty="Клиент ещё не писал" />
       </Card>
 
       <Scanner

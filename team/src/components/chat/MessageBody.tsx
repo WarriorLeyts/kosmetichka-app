@@ -8,17 +8,17 @@ import { money } from "../../format";
 import { createContext, useContext, useState } from "react";
 
 /** «Добавить товар» cards from the customer: what the order screen can do with them (no provider → no button) */
-export type ProductRequest = { id: number; name: string; variantName: string | null; imagePath: string | null; quantity: number; price: number };
+export type ProductRequest = { messageId: number | null; added: boolean; id: number; name: string; variantName: string | null; imagePath: string | null; quantity: number; price: number };
 export const ProductRequestContext = createContext<{
-  /** already in the order → «В заказе» */
-  inOrder: (r: ProductRequest) => boolean;
+  /** pieces of this product already in the order (0 = not there) */
+  inOrder: (r: ProductRequest) => number;
   add: (r: ProductRequest) => Promise<void>;
 } | null>(null);
 
 function ProductRequestCard({ r, color }: { r: ProductRequest; color: string }) {
   const ctx = useContext(ProductRequestContext);
   const [busy, setBusy] = useState(false);
-  const has = ctx?.inOrder(r) ?? false;
+  const have = ctx?.inOrder(r) ?? 0;
   return (
     <View style={{ width: 230, gap: 4 }}>
       <Text style={{ color, fontSize: 13, opacity: 0.75 }}>🛒 Клиент просит добавить в заказ</Text>
@@ -28,13 +28,14 @@ function ProductRequestCard({ r, color }: { r: ProductRequest; color: string }) 
       <Text style={{ color, fontWeight: "800", fontSize: 15 }}>
         {r.quantity} шт.{r.price > 0 ? <Text style={{ color: "#e82c87" }}>{`  × ${money(r.price)}`}</Text> : null}
       </Text>
-      {ctx ? (
-        has ? (
-          <View style={[styles.reqBtn, { backgroundColor: "rgba(22,163,74,0.14)" }]}>
-            <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
-            <Text style={{ color: "#16A34A", fontWeight: "700" }}>В заказе</Text>
-          </View>
-        ) : (
+      {r.added ? (
+        <View style={[styles.reqBtn, { backgroundColor: "rgba(22,163,74,0.14)" }]}>
+          <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+          <Text style={{ color: "#16A34A", fontWeight: "700" }}>Добавлено в заказ</Text>
+        </View>
+      ) : ctx ? (
+        <>
+          {have > 0 ? <Text style={{ color, fontSize: 13, opacity: 0.75 }}>Уже в заказе: {have} шт. — добавим ещё {r.quantity} шт.</Text> : null}
           <Pressable
             onPress={async () => {
               if (busy) return;
@@ -52,7 +53,7 @@ function ProductRequestCard({ r, color }: { r: ProductRequest; color: string }) 
             <Ionicons name="add-circle-outline" size={18} color="#fff" />
             <Text style={{ color: "#fff", fontWeight: "700" }}>{busy ? "Добавляем…" : "Добавить в заказ"}</Text>
           </Pressable>
-        )
+        </>
       ) : null}
     </View>
   );
@@ -93,7 +94,7 @@ export function messagePreview(text: string): string {
 }
 
 /** chat message: plain text or a JSON card (photo / video / file / product / problem) — same format as the site */
-export function MessageBody({ text, color }: { text: string; color: string }) {
+export function MessageBody({ id, text, color }: { id?: number; text: string; color: string }) {
   try {
     const o = JSON.parse(text);
     // attachment links from other people's messages: our upload paths only (no phishing / foreign hosts)
@@ -136,6 +137,7 @@ export function MessageBody({ text, color }: { text: string; color: string }) {
     if (o?._t === "order-change" && Array.isArray(o.lines)) return <OrderChangeCard data={o} color={color} />;
     if (o?._t === "product-request" && typeof o.name === "string" && Number.isInteger(o.id)) {
       const r: ProductRequest = {
+        messageId: typeof id === "number" && id > 0 ? id : null, added: o.added === true,
         id: o.id, name: o.name, variantName: typeof o.variantName === "string" && o.variantName ? o.variantName : null,
         imagePath: typeof o.imagePath === "string" && o.imagePath ? o.imagePath : null,
         quantity: Math.max(1, Math.floor(Number(o.quantity) || 1)), price: Number(o.price) || 0,
