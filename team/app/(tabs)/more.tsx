@@ -1,9 +1,10 @@
-import { Alert, Linking } from "react-native";
+import { Alert, Linking, Platform } from "react-native";
 import { router } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Row, Section } from "@/components/iosui/List";
 import { ROLE_LABEL, useAuth } from "@/store/auth";
 import { useTheme } from "@/theme";
+import { PushStatusRow } from "@/components/PushStatus";
 
 /** «Ещё»: profile, theme, statistics, staff, 1C exchange, sign out. */
 export default function More() {
@@ -33,6 +34,11 @@ export default function More() {
       <Section header="Оформление">
         <Row icon="moon" iconBg="#5856D6" title="Тёмная тема" toggle={mode === "dark"} onToggle={() => toggle()} chevron={false} />
       </Section>
+      {Platform.OS === "web" ? (
+        <Section header="Настройки">
+          <PushStatusRow />
+        </Section>
+      ) : null}
       <Section>
         <Row
           title="Выйти"

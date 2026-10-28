@@ -17,6 +17,8 @@ import { useReduceMotion } from "@/useReduceMotion";
 import { useDesktop } from "@/useDesktop";
 import { Sidebar } from "@/components/Sidebar";
 import { startLive, stopLive } from "@/live";
+import { startWebPush } from "@/webPush";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 installCrashReporter();
 
@@ -50,6 +52,8 @@ export default function RootLayout() {
   useEffect(() => {
     if (!signedIn) return;
     startLive();
+    // admin website: staff notifications (asks on the first tap; browser only)
+    void startWebPush();
     return () => stopLive();
   }, [signedIn]);
   useEffect(() => {
@@ -86,6 +90,7 @@ export default function RootLayout() {
       </Stack>
       </View>
       </View>
+      {signedIn ? <InstallPrompt /> : null}
       <ThemeFade mode={mode} />
     </SafeAreaProvider>
   );
