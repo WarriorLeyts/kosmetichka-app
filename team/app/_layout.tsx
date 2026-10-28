@@ -1,3 +1,5 @@
+import "@/webAlert";
+import "@/webIOS";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Animated, StyleSheet } from "react-native";
 import { Stack, usePathname, type ErrorBoundaryProps } from "expo-router";

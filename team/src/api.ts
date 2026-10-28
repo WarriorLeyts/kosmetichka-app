@@ -4,7 +4,10 @@
  * /picker pages); iOS and Android keep cookies for the domain natively, so every request below is
  * authenticated after login.
  */
-export const BASE_URL = "https://kosmetichka-opt.ru";
+import { Platform } from "react-native";
+
+/** the app: the site's address; the browser version is served by the site itself → same origin */
+export const BASE_URL = Platform.OS === "web" ? "" : "https://kosmetichka-opt.ru";
 
 export class ApiError extends Error {
   status: number;

@@ -1,0 +1,45 @@
+name: Team for the browser (admin site)
+
+# Builds «Косметичка Team» for the browser — the same app as on the staff phones becomes the admin
+# site — and publishes it to the release "team-web-latest" (kosmetichka-team-web.tar.gz); the
+# site's server downloads it. base_url: the path it is served under ("/team-web" while it is a preview).
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Путь на сайте (/team-web — предпросмотр)"
+        default: "/team-web"
+  push:
+    branches: [main, team-web]
+    paths: ["team/**", ".github/workflows/team-web.yml"]
+
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: team
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: ../scripts/ci-run.sh npm run deps
+      - name: Type check
+        run: ../scripts/ci-run.sh npx tsc --noEmit --pretty false
+      - name: Build for the browser
+        env:
+          WEB_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '/team-web' }}
+        run: ../scripts/ci-run.sh npx expo export --platform web --output-dir web-dist
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tar -czf kosmetichka-team-web.tar.gz -C web-dist .
+          gh release view team-web-latest >/dev/null 2>&1 || gh release create team-web-latest --prerelease --title "Team в браузере (админка)" --notes "Сборка Team для браузера."
+          gh release upload team-web-latest kosmetichka-team-web.tar.gz --clobber

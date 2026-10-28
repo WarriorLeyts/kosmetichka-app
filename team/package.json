@@ -20,7 +20,10 @@
     "expo-document-picker": "*",
     "expo-file-system": "*",
     "expo-sharing": "*",
-    "expo-image-manipulator": "*"
+    "expo-image-manipulator": "*",
+    "react-dom": "19.1.0",
+    "react-native-web": "~0.21.0",
+    "@expo/metro-runtime": "~6.1.2"
   },
   "devDependencies": {}
 }

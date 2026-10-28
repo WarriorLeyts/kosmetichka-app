@@ -1,3 +1,4 @@
+import { Platform } from "react-native";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Text, View } from "react-native";
 import { router } from "expo-router";
@@ -18,7 +19,22 @@ import { clientName, type OrdersPage } from "@/types";
  */
 const EXPORT_DIR = (FileSystem.documentDirectory ?? "") + "1c-export/";
 
+/** browser version: the XML is saved by the browser like any download */
+function downloadInBrowser(xml: string, name: string) {
+  const blob = new Blob([xml], { type: "application/xml" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    URL.revokeObjectURL(a.href);
+    a.remove();
+  }, 1000);
+}
+
 async function latestExport(): Promise<string | null> {
+  if (Platform.OS === "web") return null;
   try {
     const names = (await FileSystem.readDirectoryAsync(EXPORT_DIR)).filter((n) => n.endsWith(".xml")).sort();
     return names.length ? EXPORT_DIR + names[names.length - 1] : null;
@@ -71,6 +87,12 @@ export default function ExportScreen() {
           let uri: string | null = null;
           try {
             const xml = await requestText("/api/admin/orders/export", { method: "POST" });
+            if (Platform.OS === "web") {
+              const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15);
+              downloadInBrowser(xml, `Orders-${stamp}.xml`);
+              reload();
+              return;
+            }
             const old = await latestExport();
             await FileSystem.makeDirectoryAsync(EXPORT_DIR, { intermediates: true }).catch(() => {});
             const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15);
