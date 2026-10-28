@@ -5,6 +5,58 @@ import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { chatFileUrl, imageUrl, safeOpenUrl } from "../../api";
 import { money } from "../../format";
+import { createContext, useContext, useState } from "react";
+
+/** «Добавить товар» cards from the customer: what the order screen can do with them (no provider → no button) */
+export type ProductRequest = { id: number; name: string; variantName: string | null; imagePath: string | null; quantity: number; price: number };
+export const ProductRequestContext = createContext<{
+  /** already in the order → «В заказе» */
+  inOrder: (r: ProductRequest) => boolean;
+  add: (r: ProductRequest) => Promise<void>;
+} | null>(null);
+
+function ProductRequestCard({ r, color }: { r: ProductRequest; color: string }) {
+  const ctx = useContext(ProductRequestContext);
+  const [busy, setBusy] = useState(false);
+  const has = ctx?.inOrder(r) ?? false;
+  return (
+    <View style={{ width: 230, gap: 4 }}>
+      <Text style={{ color, fontSize: 13, opacity: 0.75 }}>🛒 Клиент просит добавить в заказ</Text>
+      {r.imagePath ? <Image source={{ uri: imageUrl(r.imagePath, 320) ?? undefined }} style={styles.product} contentFit="contain" /> : null}
+      <Text style={{ fontWeight: "600", color }}>{r.name}</Text>
+      {r.variantName ? <Text style={{ color: VIOLET }}>{r.variantName}</Text> : null}
+      <Text style={{ color, fontWeight: "800", fontSize: 15 }}>
+        {r.quantity} шт.{r.price > 0 ? <Text style={{ color: "#e82c87" }}>{`  × ${money(r.price)}`}</Text> : null}
+      </Text>
+      {ctx ? (
+        has ? (
+          <View style={[styles.reqBtn, { backgroundColor: "rgba(22,163,74,0.14)" }]}>
+            <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+            <Text style={{ color: "#16A34A", fontWeight: "700" }}>В заказе</Text>
+          </View>
+        ) : (
+          <Pressable
+            onPress={async () => {
+              if (busy) return;
+              setBusy(true);
+              try {
+                await ctx.add(r);
+              } finally {
+                setBusy(false);
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`Добавить в заказ ${r.name}, ${r.quantity} шт.`}
+            style={({ pressed }) => [styles.reqBtn, { backgroundColor: VIOLET, opacity: busy ? 0.6 : pressed ? 0.85 : 1 }]}
+          >
+            <Ionicons name="add-circle-outline" size={18} color="#fff" />
+            <Text style={{ color: "#fff", fontWeight: "700" }}>{busy ? "Добавляем…" : "Добавить в заказ"}</Text>
+          </Pressable>
+        )
+      ) : null}
+    </View>
+  );
+}
 
 const VIOLET = "#8b3dff";
 
@@ -82,6 +134,14 @@ export function MessageBody({ text, color }: { text: string; color: string }) {
       );
     }
     if (o?._t === "order-change" && Array.isArray(o.lines)) return <OrderChangeCard data={o} color={color} />;
+    if (o?._t === "product-request" && typeof o.name === "string" && Number.isInteger(o.id)) {
+      const r: ProductRequest = {
+        id: o.id, name: o.name, variantName: typeof o.variantName === "string" && o.variantName ? o.variantName : null,
+        imagePath: typeof o.imagePath === "string" && o.imagePath ? o.imagePath : null,
+        quantity: Math.max(1, Math.floor(Number(o.quantity) || 1)), price: Number(o.price) || 0,
+      };
+      return <ProductRequestCard r={r} color={color} />;
+    }
     if ((o?._t === "product" || o?._t === "product-problem") && typeof o.name === "string") {
       return (
         <View style={{ width: 210 }}>
@@ -112,4 +172,5 @@ const styles = StyleSheet.create({
   product: { width: 210, height: 120, borderRadius: 10, backgroundColor: "#fff" },
   problem: { marginTop: 6, borderRadius: 8, backgroundColor: "#FFF4E5", paddingHorizontal: 8, paddingVertical: 5 },
   problemText: { color: "#B45309", fontSize: 13, fontWeight: "600" },
+  reqBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 12, paddingVertical: 9, marginTop: 6 },
 });

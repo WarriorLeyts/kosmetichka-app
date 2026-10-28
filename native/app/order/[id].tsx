@@ -103,6 +103,22 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
     }
     // «order changed» card (written by the site for the manager's and the customer's edits)
     if (obj?._t === "order-change" && Array.isArray(obj.lines)) return <OrderChangeCard data={obj} color={color} />;
+    // «Добавить товар»: the customer's request card (written by the site from the product id)
+    if (obj?._t === "product-request" && typeof obj.name === "string") {
+      return (
+        <View style={{ width: 220, gap: 4 }}>
+          <Text style={{ color, fontSize: 13, opacity: 0.75 }}>Прошу добавить в заказ</Text>
+          {typeof obj.imagePath === "string" && imageUrl(obj.imagePath, 320)?.startsWith(BASE_URL + "/") ? (
+            <Image source={{ uri: imageUrl(obj.imagePath, 320) ?? undefined }} style={{ width: 220, height: 130, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" />
+          ) : null}
+          <Text style={{ fontWeight: "600", color }}>{obj.name}</Text>
+          {typeof obj.variantName === "string" && obj.variantName ? <Text style={{ color, opacity: 0.8 }}>{obj.variantName}</Text> : null}
+          <Text style={{ color, fontWeight: "700" }}>
+            {Number(obj.quantity) || 1} шт.{typeof obj.price === "number" && obj.price > 0 ? ` × ${money(obj.price)}` : ""}
+          </Text>
+        </View>
+      );
+    }
     // product cards only from the manager — a customer can't fake them by typing JSON
     if (!fromManager) return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
     if (obj?._t === "product" && typeof obj.name === "string") {
@@ -269,6 +285,8 @@ export default function OrderScreen() {
   }
 
   const s = statusLook(order.status, dark);
+  // «Добавить товар» in the chat: while the order can still change (not once it is «Заказ оформлен»)
+  const canRequest = ["pending", "approved", "assembly", "consultation"].includes(order.status);
   // the order was collected and sent to the customer «На проверку»: «Заказ оформлен» waits for his «Подтвердить заказ»
   const needsConfirm = !!order.needsConfirm && !editing;
 
@@ -321,6 +339,10 @@ export default function OrderScreen() {
 
   const attach = async (how: string) => {
     setAttachOpen(false);
+    if (how === "product") {
+      router.push(`/order-add?order=${orderId}&mode=chat`);
+      return;
+    }
     // let the sheet close before the system picker opens (iOS can't show two at once)
     await new Promise((r) => setTimeout(r, 450));
     try {
@@ -832,6 +854,20 @@ export default function OrderScreen() {
           >
             {uploading ? <ActivityIndicator size="small" color={VIOLET} /> : <Ionicons name="attach" size={26} color={VIOLET} />}
           </Pressable>
+          {canRequest ? (
+            <Pressable
+              onPress={() => {
+                tap();
+                Keyboard.dismiss();
+                router.push(`/order-add?order=${orderId}&mode=chat`);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Добавить товар в заказ"
+              style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Ionicons name="bag-add-outline" size={24} color={VIOLET} />
+            </Pressable>
+          ) : null}
           <TextInput
             value={text}
             onChangeText={setText}
@@ -854,6 +890,7 @@ export default function OrderScreen() {
             { value: "library", label: "Фото или видео из галереи" },
             { value: "camera", label: "Снять фото или видео" },
             { value: "file", label: "Файл (PDF, документ, таблица)" },
+            ...(canRequest ? [{ value: "product", label: "Товар из каталога — добавить в заказ" }] : []),
           ]}
           value=""
           onSelect={attach}

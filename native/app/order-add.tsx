@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert } from "react-native";
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,7 +10,7 @@ import { api, imageUrl } from "@/api";
 import { money, stockLabel } from "@/format";
 import { priceFor, resolveCustomerPriceType } from "@/pricing";
 import { useAuth } from "@/store/auth";
-import { NO_LINES, useOrderEdit } from "@/store/orderEdit";
+import { NO_LINES, useOrderEdit, type AddedLine } from "@/store/orderEdit";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { Sheet } from "@/components/iosui/Sheet";
 import { ErrorView, tap } from "@/components/ui";
@@ -21,17 +22,33 @@ const VIOLET = "#8b3dff";
 /**
  * «Добавить товары» to an order the customer is changing: search the catalogue, «+» puts the product
  * (or one of its variants) into the order's draft; the order screen shows them and saves everything.
+ * mode=chat («Добавить товар» in the order chat): the picked products go to the manager as cards in the
+ * chat — he adds them to the order with one tap.
  */
 export default function OrderAddScreen() {
-  const { order } = useLocalSearchParams<{ order: string }>();
+  const { order, mode } = useLocalSearchParams<{ order: string; mode?: string }>();
+  const chat = mode === "chat";
   const orderId = /^[0-9]+$/.test(String(order ?? "")) ? Number(order) : NaN;
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const customer = useAuth((s) => s.customer);
   const priceType = resolveCustomerPriceType(customer);
-  const added = useOrderEdit((s) => (s.orderId === orderId ? s.added : NO_LINES));
-  const addLine = useOrderEdit((s) => s.add);
+  const draft = useOrderEdit((s) => (s.orderId === orderId ? s.added : NO_LINES));
+  const addToDraft = useOrderEdit((s) => s.add);
+  // chat mode: a separate list, the order's edit draft is not touched
+  const [picked, setPicked] = useState<AddedLine[]>([]);
+  const [sending, setSending] = useState(false);
+  const added = chat ? picked : draft;
+  const addLine = (oid: number, product: Product, quantity: number, variant?: { name: string; imageUrl: string } | null) => {
+    if (!chat) return addToDraft(oid, product, quantity, variant);
+    const key = `${product.id}:${variant?.name ?? ""}`;
+    setPicked((list) =>
+      list.some((l) => l.key === key)
+        ? list.map((l) => (l.key === key ? { ...l, quantity: l.quantity + quantity } : l))
+        : [...list, { key, product, quantity, variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null }]
+    );
+  };
 
   const [q, setQ] = useState("");
   const [items, setItems] = useState<Product[]>([]);
@@ -88,17 +105,32 @@ export default function OrderAddScreen() {
     else addLine(orderId, p, step);
   };
 
-  const done = () => {
-    tap();
+  const back = () => {
     if (router.canGoBack()) router.back();
     else router.replace(`/order/${orderId}`);
+  };
+  const done = async () => {
+    tap();
+    if (!chat || picked.length === 0) return back();
+    if (sending) return;
+    setSending(true);
+    try {
+      // one card per product: the manager adds each with one tap
+      for (const l of picked) await api.requestProduct(orderId, { productId: l.product.id, quantity: l.quantity, variantName: l.variantName });
+      setPicked([]);
+      back();
+    } catch (e) {
+      Alert.alert("Не отправлено", e instanceof Error ? e.message : "Попробуйте ещё раз");
+    } finally {
+      setSending(false);
+    }
   };
   const total = added.reduce((s, l) => s + l.quantity, 0);
 
   return (
     <View style={{ flex: 1, paddingTop: insets.top }}>
       <View style={[styles.wrap, { paddingHorizontal: 16 }]}>
-        <TitleBar title="Добавить товары" onBack={done} />
+        <TitleBar title={chat ? "Добавить товар" : "Добавить товары"} onBack={back} />
         <View style={[styles.search, { backgroundColor: dark ? "#2B193D" : "rgba(118,118,128,0.12)" }]}>
           <Ionicons name="search-outline" size={20} color={c.secondary} />
           <TextInput
@@ -185,7 +217,10 @@ export default function OrderAddScreen() {
         <Pressable onPress={done} accessibilityRole="button" style={[styles.wrap, { paddingHorizontal: 16 }]}>
           <LinearGradient colors={["#8b3dff", "#e82c87"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
             <Ionicons name="checkmark" size={22} color="#fff" />
-            <Text style={styles.ctaText}>{total > 0 ? `Готово · выбрано ${total} шт.` : "Вернуться к заказу"}</Text>
+            {sending ? <ActivityIndicator color="#fff" /> : null}
+            <Text style={styles.ctaText}>
+              {chat ? (total > 0 ? `Отправить менеджеру · ${total} шт.` : "Вернуться в чат") : total > 0 ? `Готово · выбрано ${total} шт.` : "Вернуться к заказу"}
+            </Text>
           </LinearGradient>
         </Pressable>
       </View>

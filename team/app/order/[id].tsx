@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, Chips, ErrorState, KV, Loading, SectionTitle, StatusPill, VIOLET } from "@/components/kit";
 import { ChatPanel, type ChatMsg } from "@/components/chat/ChatPanel";
+import { ProductRequestContext, type ProductRequest } from "@/components/chat/MessageBody";
 import { openUrl } from "@/components/chat/MessageBody";
 import { ProductPicker, type Picked } from "@/components/ProductPicker";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
@@ -116,6 +117,42 @@ export default function OrderScreen() {
     }
   };
 
+
+  // «Добавить в заказ» on the customer's product card in the chat (the order changes only during «Сборка»)
+  const requestActions = useMemo(
+    () => ({
+      inOrder: (r: ProductRequest) => !!o?.items.some((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null)),
+      add: async (r: ProductRequest) => {
+        if (!o) return;
+        if (o.status !== "assembly") {
+          Alert.alert("Сейчас добавить нельзя", o.status === "pending" || o.status === "approved" ? "Состав меняется во время сборки — нажмите «Собрать заказ», потом добавьте товар." : o.status === "consultation" ? "Состав меняется во время сборки — нажмите «Вернуть на сборку», потом добавьте товар." : "Этот заказ уже нельзя изменить.");
+          return;
+        }
+        if (edit) {
+          Alert.alert("Сначала сохраните изменения", "Вы меняете состав заказа — сохраните или отмените, потом добавьте товар из чата.");
+          return;
+        }
+        if (running.current) return;
+        running.current = true;
+        try {
+          // the price is set by the site (the customer's price type)
+          await put(`/api/admin/orders/${orderId}/items`, {
+            items: [],
+            removeIds: [],
+            newItems: [{ productId: r.id, productName: r.name, barcode: null, quantity: r.quantity, price: 0, variantName: r.variantName, variantImageUrl: r.variantName && r.imagePath ? imageUrl(r.imagePath) : null }],
+          });
+          await reload();
+          setChatKey((k) => k + 1);
+        } catch (e) {
+          Alert.alert("Не добавлено", e instanceof Error ? e.message : "");
+        } finally {
+          running.current = false;
+        }
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [o, edit, orderId]
+  );
 
   const startEdit = () => {
     if (!o) return;
@@ -414,13 +451,15 @@ export default function OrderScreen() {
 
       {tab === "customer" ? (
         <Card>
-          <ChatPanel
-            key={"c" + chatKey}
-            load={loadCustomer}
-            send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })}
-            empty="Клиент ещё не писал"
-            extraActions={[{ value: "product", label: "Карточка товара из каталога", run: () => setCatalog("customer") }]}
-          />
+          <ProductRequestContext.Provider value={requestActions}>
+            <ChatPanel
+              key={"c" + chatKey}
+              load={loadCustomer}
+              send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })}
+              empty="Клиент ещё не писал"
+              extraActions={[{ value: "product", label: "Карточка товара из каталога", run: () => setCatalog("customer") }]}
+            />
+          </ProductRequestContext.Provider>
         </Card>
       ) : null}
 
