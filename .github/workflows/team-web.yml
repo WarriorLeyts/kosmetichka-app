@@ -2,13 +2,13 @@ name: Team for the browser (admin site)
 
 # Builds «Косметичка Team» for the browser — the same app as on the staff phones becomes the admin
 # site — and publishes it to the release "team-web-latest" (kosmetichka-team-web.tar.gz); the
-# site's server downloads it. base_url: the path it is served under ("/team-web" while it is a preview).
+# site's server downloads it. base_url: the path it is served under (/admin — the admin site).
 on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: "Путь на сайте (/team-web — предпросмотр)"
-        default: "/team-web"
+        description: "Путь на сайте (/admin — админка)"
+        default: "/admin"
   push:
     branches: [main, team-web]
     paths: ["team/**", ".github/workflows/team-web.yml"]
@@ -34,7 +34,7 @@ jobs:
         run: ../scripts/ci-run.sh npx tsc --noEmit --pretty false
       - name: Build for the browser
         env:
-          WEB_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '/team-web' }}
+          WEB_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '/admin' }}
         run: ../scripts/ci-run.sh npx expo export --platform web --output-dir web-dist
       - name: Publish
         env:
