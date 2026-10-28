@@ -324,6 +324,13 @@ export default function ProductScreen() {
               <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Войдите, чтобы увидеть оптовые цены</Text>
             </Pressable>
           ) : null}
+          {customer?.priceType === "wholesale" ? (
+            // «Опт»: the price depends on the order sum (lib/pricing.ts cartPriceTier)
+            <Text style={{ color: c.secondary, fontSize: 13, marginTop: 8, lineHeight: 18 }}>
+              Опт — при заказе от 5 000 ₽, крупный опт — от 50 000 ₽. Заказ меньше 5 000 ₽ — по скидочной цене
+              {Number(product.discountPrice ?? product.retailPrice ?? 0) > 0 ? ` ${money(Number(product.discountPrice ?? product.retailPrice))}` : ""}.
+            </Text>
+          ) : null}
           <View style={{ marginTop: 10, gap: 3 }}>
             {min > 1 ? <Text style={{ color: VIOLET, fontSize: 14, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}
             {product.article ? <Text style={{ color: c.secondary, fontSize: 13 }}>Арт. {product.article}</Text> : null}

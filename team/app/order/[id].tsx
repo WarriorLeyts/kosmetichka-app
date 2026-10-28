@@ -217,7 +217,7 @@ export default function OrderScreen() {
     if (mode === "order") {
       setEdit((d) => [
         ...(d ?? []),
-        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(priceOf(product.prices, o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null },
+        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null },
       ]);
       return;
     }
@@ -332,6 +332,10 @@ export default function OrderScreen() {
         <KV k="ИНН" v={cust.inn} />
         <KV k="Менеджер 1С" v={cust.manager} />
         <KV k="Тип цен" v={{ retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" }[cust.priceType] ?? cust.priceType} />
+        {cust.priceType === "wholesale" && cust.priceTier ? (
+          // «Опт»: the order's prices go by its sum and are recalculated when the order changes
+          <KV k="Цены заказа" v={{ discount: "Скидочная (меньше 5 000 ₽)", wholesale: "Опт (от 5 000 ₽)", big_wholesale: "Крупный опт (от 50 000 ₽)" }[cust.priceTier] ?? cust.priceTier} />
+        ) : null}
       </Card>
 
       {o.comment ? (
@@ -526,7 +530,7 @@ export default function OrderScreen() {
           {main}
         </>
       )}
-      <ProductPicker open={catalog !== null} title={catalog === "order" ? "Добавить в заказ" : "Отправить товар"} actionLabel={catalog === "order" ? "Добавить" : "Отправить"} priceType={o.customer.priceType} onClose={() => setCatalog(null)} onPick={onPicked} />
+      <ProductPicker open={catalog !== null} title={catalog === "order" ? "Добавить в заказ" : "Отправить товар"} actionLabel={catalog === "order" ? "Добавить" : "Отправить"} priceType={o.customer.priceTier ?? o.customer.priceType} onClose={() => setCatalog(null)} onPick={onPicked} />
     </Screen>
   );
 

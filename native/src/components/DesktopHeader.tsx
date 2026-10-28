@@ -8,7 +8,7 @@ import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
 import { useNotifications } from "@/store/notifications";
 import { useCatalog } from "@/store/catalog";
-import { effectivePriceType, rawCartTotal } from "@/pricing";
+import { cartPriceTier, rawCartTotal } from "@/pricing";
 import { money } from "@/format";
 import { useIOS } from "@/ios";
 import { useTheme } from "@/theme";
@@ -66,7 +66,7 @@ export function DesktopHeader() {
   const [q, setQ] = useState("");
 
   const count = cart.reduce((n, i) => n + i.quantity, 0);
-  const total = rawCartTotal(cart, effectivePriceType(cart, customer));
+  const total = rawCartTotal(cart, cartPriceTier(cart, customer));
 
   const search = () => {
     const s = q.trim();

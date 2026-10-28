@@ -13,7 +13,7 @@ import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
-  amountUntilMinOrder, minOrderFor, effectivePriceType, priceFor, priceTypeLabel, rawCartTotal, type PriceType,
+  cartPriceTier, nextPriceTier, priceFor, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
 } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -26,8 +26,9 @@ import { FitText } from "@/components/FitText";
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
-/** «Скидка», «Опт» or «Кр. опт» as in the catalog cards. */
-function shortLabel(t: PriceType) {
+/** «Скидка», «Опт» or «Кр. опт» as in the catalog cards («Опт» customer under 5 000 ₽ — «Скидочная»). */
+function shortLabel(t: PriceType, wholesaleCustomer = false) {
+  if (t === "discount" && wholesaleCustomer) return "Скидочная";
   return t === "big_wholesale" ? "Кр. опт" : priceTypeLabel(t);
 }
 
@@ -170,11 +171,11 @@ export default function Cart() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer?.id, priceType, cartKey, promoCode, spend]);
 
-  const active = effectivePriceType(items, customer);
+  // «Опт»: the price by the order sum — less than 5 000 ₽ discount, from 5 000 wholesale, from 50 000 big wholesale
+  const active = cartPriceTier(items, customer);
   const total = rawCartTotal(items, active);
-  // опт — заказ от 5 000 ₽, крупный опт — от 50 000 ₽ (цены сразу по типу клиента)
-  const minOrder = minOrderFor(customer);
-  const toMin = amountUntilMinOrder(items, customer);
+  const next = nextPriceTier(items, customer);
+  const wholesaleCustomer = resolveCustomerPriceType(customer) === "wholesale";
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
   const bg = "transparent";
@@ -264,17 +265,23 @@ export default function Cart() {
     }
   };
 
-  // minimum order banner for wholesale / big wholesale
+  // «Опт»: how much more to the next price and what it saves on what is already in the cart
   let banner: { icon: keyof typeof Ionicons.glyphMap; node: ReactNode } | null = null;
-  if (customer && minOrder > 0 && toMin > 0) {
+  if (customer && next && next.need > 0) {
     banner = {
-      icon: "bag-handle",
-      node: (
-        <>
-          Заказ по ценам «{priceTypeLabel(active)}» — от {money(minOrder)}. Добавьте товаров ещё на{" "}
-          <Text style={styles.bannerSum}>{money(toMin)}</Text>
-        </>
-      ),
+      icon: next.type === "big_wholesale" ? "trending-up" : "pricetag",
+      node:
+        next.type === "wholesale" ? (
+          <>
+            Сейчас заказ по скидочной цене. Добавьте товаров ещё на <Text style={styles.bannerSum}>{money(next.need)}</Text> — будет оптовая цена
+            {next.save > 0 ? <>, экономия <Text style={styles.bannerSum}>{money(next.save)}</Text></> : null}
+          </>
+        ) : (
+          <>
+            До крупного опта — ещё <Text style={styles.bannerSum}>{money(next.need)}</Text>
+            {next.save > 0 ? <>, экономия <Text style={styles.bannerSum}>{money(next.save)}</Text></> : null}
+          </>
+        ),
     };
   }
 
@@ -438,7 +445,7 @@ export default function Cart() {
                   {count} {plural(count, "товар", "товара", "товаров")}
                 </Text>
                 <Text style={[iosText.subhead, { color: c.secondary }]}>
-                  Цена: <Text style={{ color: PINK }}>{shortLabel(active)}</Text>
+                  Цена: <Text style={{ color: PINK }}>{shortLabel(active, wholesaleCustomer)}</Text>
                 </Text>
               </View>
               {calc && (calc.promo || (spend && calc.bonuses?.applied)) ? (
@@ -484,14 +491,8 @@ export default function Cart() {
               title={customer ? "Оформить заказ" : "Войти и оформить"}
               icon={customer ? undefined : "log-in-outline"}
               loading={loading}
-              disabled={!!customer && toMin > 0}
               onPress={() => checkout()}
             />
-            {customer && toMin > 0 ? (
-              <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginTop: 8 }]}>
-                Минимальная сумма заказа — {money(minOrder)}
-              </Text>
-            ) : null}
             <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginTop: 10 }]}>
               Заказ попадёт менеджеру на подтверждение. Оплата — после согласования.
             </Text>

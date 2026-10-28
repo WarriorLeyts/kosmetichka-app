@@ -15,8 +15,8 @@ const PINK = "#e82c87";
 const LABELS: Record<string, string> = { retail: "Розница", wholesale: "Опт", big_wholesale: "Крупный опт" };
 const HINTS: Record<string, string> = {
   retail: "Розничные цены, бонусы по карте",
-  wholesale: "Оптовые цены, заказ от 5 000 ₽",
-  big_wholesale: "Цены крупного опта, заказ от 50 000 ₽",
+  wholesale: "Цена по сумме заказа: от 5 000 ₽ — опт, от 50 000 ₽ — крупный опт, меньше — скидочная",
+  big_wholesale: "Цены крупного опта при любой сумме — по согласованию с менеджером",
 };
 
 /**
