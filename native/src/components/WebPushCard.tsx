@@ -6,8 +6,6 @@ import { tap } from "@/components/ui";
 import { disableWebPush, enableWebPush, isIOSDevice, useWebPush, type WebPushState } from "@/webPush";
 
 const VIOLET = "#8b3dff";
-const PINK = "#e82c87";
-const DISMISS_KEY = "webpush-banner-dismissed";
 
 const IOS_HOME = "Чтобы получать уведомления на iPhone, добавьте сайт на экран «Домой»: Поделиться → На экран «Домой», и откройте его оттуда";
 
@@ -84,59 +82,8 @@ export function WebPushCard() {
   );
 }
 
-function dismissed(): boolean {
-  try {
-    return window.localStorage.getItem(DISMISS_KEY) === "1";
-  } catch {
-    return false;
-  }
-}
-
-/** One-time gentle prompt for a signed-in website customer who hasn't decided yet. */
-export function WebPushBanner() {
-  const c = useIOS();
-  const dark = c.blurTint === "dark";
-  const { state, busy, error, run } = useToggle();
-  const [hidden, setHidden] = useState(() => Platform.OS !== "web" || dismissed());
-  if (hidden || (state !== "default" && state !== "ios-home")) return null;
-  const close = () => {
-    tap();
-    try {
-      window.localStorage.setItem(DISMISS_KEY, "1");
-    } catch {
-      /* private mode: hidden until reload */
-    }
-    setHidden(true);
-  };
-  return (
-    <View style={[styles.card, styles.banner, { backgroundColor: c.cell, borderColor: dark ? "rgba(232,44,135,0.35)" : "rgba(232,44,135,0.25)" }, !dark && styles.shadow]}>
-      <View style={styles.row}>
-        <View style={[styles.icon, { backgroundColor: "rgba(232,44,135,0.1)" }]}>
-          <Ionicons name="notifications-outline" size={22} color={PINK} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: c.label, flex: 0 }]}>Узнавайте о заказах сразу</Text>
-          <Text style={[styles.text, { color: c.secondary, marginTop: 2 }]}>
-            {state === "ios-home" ? IOS_HOME : "Включите уведомления — пришлём, когда заказ соберут или менеджер ответит в чате."}
-          </Text>
-        </View>
-        <Pressable onPress={close} hitSlop={10} accessibilityRole="button" accessibilityLabel="Скрыть">
-          <Ionicons name="close" size={20} color={c.secondary} />
-        </Pressable>
-      </View>
-      {state === "default" ? (
-        <Pressable disabled={busy} onPress={() => run(true)} accessibilityRole="button" style={({ pressed }) => [styles.btn, pressed && { opacity: 0.85 }]}>
-          {busy ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Включить</Text>}
-        </Pressable>
-      ) : null}
-      {error ? <Text style={[styles.text, { color: "#FF3B30" }]}>{error}</Text> : null}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   card: { width: "100%", maxWidth: 640, alignSelf: "center", borderRadius: 20, padding: 14, gap: 10 },
-  banner: { borderWidth: 1 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   icon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },

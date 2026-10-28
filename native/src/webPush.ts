@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Platform } from "react-native";
 import { api } from "./api";
+import { onNextTap } from "./webTap";
 
 /**
  * Website only: browser Web Push (Chrome / Android / desktop; iPhone 16.4+ only from the home
@@ -19,6 +20,8 @@ export type WebPushState =
   | "denied";
 
 const OFF_KEY = "webpush-off";
+const AUTO_KEY = "webpush-auto-asked"; // when the automatic prompt last ran (dismissed → again in a week)
+const AUTO_AGAIN_MS = 7 * 24 * 3600 * 1000;
 const isWeb = Platform.OS === "web" && typeof window !== "undefined" && typeof navigator !== "undefined";
 
 const store = {
@@ -45,7 +48,8 @@ export function isIOSDevice(): boolean {
   return /iP(hone|ad|od)/.test(n.userAgent) || (n.platform === "MacIntel" && (n.maxTouchPoints ?? 0) > 1);
 }
 
-function standalone(): boolean {
+/** Opened from the home screen (installed web app). */
+export function standalone(): boolean {
   const n = navigator as Navigator & { standalone?: boolean };
   return n.standalone === true || (typeof matchMedia === "function" && matchMedia("(display-mode: standalone)").matches);
 }
@@ -179,6 +183,36 @@ export async function refreshWebPush(): Promise<void> {
     console.log("[web-push] refresh failed:", e instanceof Error ? e.message : e);
   }
   await checkWebPush();
+}
+
+let disarm: (() => void) | null = null;
+
+/**
+ * Signed-in customer who hasn't decided yet: the first tap anywhere on the page runs enableWebPush()
+ * (the browser asks, then we subscribe). Not after «запретить», not if turned off on this device,
+ * not in an iPhone Safari tab (only the home-screen web app gets push).
+ */
+export async function armAutoWebPush(): Promise<void> {
+  if (disarm || !supported() || (isIOSDevice() && !standalone())) return;
+  if (Notification.permission !== "default" || store.get(OFF_KEY) === "1") return;
+  const asked = Number(store.get(AUTO_KEY) || 0);
+  if (asked && Date.now() - asked < AUTO_AGAIN_MS) return;
+  const key = await getServerKey().catch(() => null);
+  if (!key || disarm) return;
+  disarm = onNextTap(() => {
+    disarm = null;
+    if (Notification.permission !== "default" || store.get(OFF_KEY) === "1") return false;
+    store.set(AUTO_KEY, String(Date.now()));
+    // still inside the tap: requestPermission() is called before the first await
+    enableWebPush().catch((e) => console.log("[web-push] auto enable failed:", e instanceof Error ? e.message : e));
+    return true;
+  });
+}
+
+/** Signed out: no automatic prompt. */
+export function disarmAutoWebPush(): void {
+  disarm?.();
+  disarm = null;
 }
 
 /** Registers the service worker early and forwards its messages (push arrived / notification tapped). */

@@ -13,7 +13,6 @@ import { orderCache } from "@/orderCache";
 import { ErrorView, tap } from "@/components/ui";
 import { LoginRequired } from "@/components/LoginRequired";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
-import { WebPushBanner } from "@/components/WebPushCard";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
@@ -225,9 +224,6 @@ export default function Orders() {
         ListHeaderComponent={
           <View style={{ gap: 12 }}>
             <BrandHeader title="Мои заказы" />
-
-            {/* website only: one-time «включите уведомления» */}
-            <WebPushBanner />
 
             {/* compact stats from the server */}
             {stats && stats.totalOrders > 0 ? (
