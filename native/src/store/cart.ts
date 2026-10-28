@@ -17,6 +17,9 @@ type CartState = {
   repeat: (items: OrderItem[], fresh: Map<number, Product>, variantIds?: Map<string, Variant>) => string[];
   count: () => number;
   quantityOf: (cartKey: string) => number;
+  /** Today's prices / stock for the products in the cart (e.g. added before signing in, when the site
+   * showed only retail prices) — lines keep their quantity and variant. */
+  refreshProducts: (fresh: Map<number, Product>) => void;
 };
 
 /** Keep only what the cart needs — product objects from the API can be large. */
@@ -90,6 +93,13 @@ export const useCartStore = create<CartState>()(
       },
 
       remove: (cartKey) => set({ items: get().items.filter((i) => i.cartKey !== cartKey) }),
+      refreshProducts: (fresh) =>
+        set({
+          items: get().items.map((i) => {
+            const p = fresh.get(i.id);
+            return p ? { ...i, ...slim(p), cartKey: i.cartKey, quantity: i.quantity } : i;
+          }),
+        }),
       clear: () => set({ items: [] }),
 
       repeat: (orderItems, fresh, variantIds) => {

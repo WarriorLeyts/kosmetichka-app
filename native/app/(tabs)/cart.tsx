@@ -19,7 +19,7 @@ import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
-import type { CartItem } from "@/types";
+import type { CartItem, Product } from "@/types";
 import { RETAIL_ENABLED } from "@/siteMode";
 import { FitText } from "@/components/FitText";
 
@@ -83,6 +83,30 @@ export default function Cart() {
   const [address, setAddress] = useState("");
   const [addressErr, setAddressErr] = useState("");
   const items = useCartStore((s) => s.items);
+
+  // prices in the cart are the ones seen when the product was added; refresh them for the signed-in
+  // customer (a product added before signing in has only the retail price — the order would then be
+  // priced differently by the site than the cart shows)
+  const priceKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
+  const refreshedFor = useRef("");
+  useEffect(() => {
+    if (!customer || items.length === 0 || refreshedFor.current === priceKey) return;
+    refreshedFor.current = priceKey;
+    let alive = true;
+    (async () => {
+      const ids = [...new Set(items.map((i) => i.id))].slice(0, 120);
+      const fresh = new Map<number, Product>();
+      for (let k = 0; k < ids.length; k += 6) {
+        const got = await Promise.all(ids.slice(k, k + 6).map((id) => api.product(id).catch(() => null)));
+        got.forEach((p, j) => p && fresh.set(ids[k + j], p));
+      }
+      if (alive && fresh.size) useCartStore.getState().refreshProducts(fresh);
+    })();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceKey, items.length]);
   const setQty = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
