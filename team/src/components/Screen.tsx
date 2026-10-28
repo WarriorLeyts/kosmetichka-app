@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTabBarSpace } from "./TabBar";
 import { TeamHeader } from "./TeamHeader";
 import { TitleBar } from "./iosui/TitleBar";
+import { useDesktop } from "../useDesktop";
 
 /**
  * Standard screen: safe area, the team header (tab screens) or a back title bar (inner screens),
@@ -23,6 +24,7 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
+  const desktop = useDesktop();
   const [refreshing, setRefreshing] = useState(false);
   return (
     // the keyboard must not cover the chat composer and the inputs of the order / assembly screens:
@@ -32,7 +34,7 @@ export function Screen({
         ref={scrollRef}
         keyboardShouldPersistTaps="handled"
         automaticallyAdjustKeyboardInsets
-        contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 16, paddingBottom: tab ? tabSpace + 8 : insets.bottom + 24 }}
+        contentContainerStyle={{ paddingTop: insets.top + (desktop ? 12 : 0), paddingHorizontal: desktop ? 32 : 16, paddingBottom: tab ? tabSpace + 8 : insets.bottom + 24 }}
         refreshControl={
           onRefresh ? (
             <RefreshControl
@@ -52,7 +54,7 @@ export function Screen({
         }
         {...scrollProps}
       >
-        <View style={{ width: "100%", maxWidth: 760, alignSelf: "center" }}>
+        <View style={{ width: "100%", maxWidth: desktop ? 1180 : 760, alignSelf: "center" }}>
           {tab ? <TeamHeader title={title} right={right} /> : title ? <TitleBar title={title} /> : null}
           {children}
         </View>

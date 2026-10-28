@@ -3,10 +3,12 @@ import { TabBar } from "@/components/TabBar";
 import { useAuth } from "@/store/auth";
 import { PageLayout } from "@/components/PageBackdrop";
 import { RoleGuard } from "@/components/RoleGuard";
+import { useDesktop } from "@/useDesktop";
 
 export default function TabLayout() {
   const user = useAuth((s) => s.user);
   const loading = useAuth((s) => s.loading);
+  const desktop = useDesktop();
   if (!user && !loading) return <Redirect href="/login" />;
   return (
     <Tabs
@@ -15,7 +17,7 @@ export default function TabLayout() {
           <RoleGuard route={route.name}>{children}</RoleGuard>
         </PageLayout>
       )}
-      tabBar={(props) => <TabBar {...props} />}
+      tabBar={desktop ? () => null : (props) => <TabBar {...props} />}
       screenOptions={{ headerShown: false, animation: "fade", sceneStyle: { backgroundColor: "transparent" } }}
       initialRouteName={user?.role === "picker" ? "picker" : "index"}
     >

@@ -1,7 +1,7 @@
 import "@/webAlert";
 import "@/webIOS";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Animated, StyleSheet } from "react-native";
+import { Animated, StyleSheet, View } from "react-native";
 import { Stack, usePathname, type ErrorBoundaryProps } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -14,6 +14,8 @@ import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
 import { RoleGuard } from "@/components/RoleGuard";
 import { useReduceMotion } from "@/useReduceMotion";
+import { useDesktop } from "@/useDesktop";
+import { Sidebar } from "@/components/Sidebar";
 
 installCrashReporter();
 
@@ -34,6 +36,8 @@ export default function RootLayout() {
   }, [pathname]);
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
+  const signedIn = useAuth((s) => !!s.user);
+  const desktop = useDesktop();
   // re-mount the UI when the theme changes so every screen re-reads the palette
   const mode = useTheme((s) => s.mode);
   useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
@@ -52,6 +56,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style={colors.statusBar} />
+      {/* computer (browser): the admin site's menu on the left, the screens on the right */}
+      <View style={{ flex: 1, flexDirection: "row", backgroundColor: colors.bg }}>
+      {desktop && signedIn ? <Sidebar key={`sb-${mode}`} /> : null}
+      <View style={{ flex: 1 }}>
       <Stack
         key={mode}
         screenLayout={({ children, route }) => (
@@ -69,6 +77,8 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" options={{ animation: "fade" }} />
       </Stack>
+      </View>
+      </View>
       <ThemeFade mode={mode} />
     </SafeAreaProvider>
   );

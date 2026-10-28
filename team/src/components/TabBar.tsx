@@ -10,6 +10,7 @@ import { useBadges } from "../store/badges";
 import { useAuth, type Role } from "../store/auth";
 import { useIOS } from "../ios";
 import { tap } from "./ui";
+import { useDesktop } from "../useDesktop";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -23,7 +24,8 @@ const TABS: Record<string, { label: string; icon: IconName; active: IconName }> 
 };
 
 export function tabsFor(role?: Role) {
-  return role === "picker" ? ["picker", "more"] : ["index", "orders", "customers", "products", "more"];
+  // phones: the frequent sections; everything else is in «Ещё» (on a computer — the side menu)
+  return role === "picker" ? ["picker", "more"] : ["index", "orders", "picker", "customers", "more"];
 }
 
 /** Brand violet → pink (exact project colors) — buttons, chips */
@@ -37,6 +39,8 @@ const BAR_HEIGHT = 70;
 /** Space a tab screen must leave at the bottom so content scrolls fully above the floating bar. */
 export function useTabBarSpace() {
   const insets = useSafeAreaInsets();
+  const desktop = useDesktop();
+  if (desktop) return 32;
   return BAR_HEIGHT + Math.max(insets.bottom, 10) + 18;
 }
 

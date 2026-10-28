@@ -5,7 +5,7 @@ import { useAuth, type Role } from "../store/auth";
 /** screens a picker may open (route names of the root stack and of the tabs) */
 const PICKER_ROUTES = new Set(["(tabs)", "index", "picker", "more", "pick/[id]", "login", "+not-found"]);
 /** admin-only screens (staff management) */
-const ADMIN_ROUTES = new Set(["users", "user/new", "user/[id]"]);
+const ADMIN_ROUTES = new Set(["users", "user/new", "user/[id]", "push", "app-errors"]);
 /** screens reachable without a session */
 const PUBLIC_ROUTES = new Set(["login", "+not-found"]);
 

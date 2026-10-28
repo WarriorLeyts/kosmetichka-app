@@ -2,6 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Wordmark } from "./Wordmark";
 import { iosText, useIOS } from "../ios";
+import { useDesktop } from "../useDesktop";
 
 /** «КОСМЕТИЧКА» + «TEAM» chip — the same wordmark as the customer app, marked as the staff app */
 export function TeamMark({ size = 19 }: { size?: number }) {
@@ -18,10 +19,12 @@ export function TeamMark({ size = 19 }: { size?: number }) {
 /** top of every tab screen: wordmark centred, large title below */
 export function TeamHeader({ title, right }: { title?: string; right?: React.ReactNode }) {
   const c = useIOS();
+  const desktop = useDesktop();
   return (
     <View>
-      <View style={styles.top}>
-        <TeamMark />
+      {/* computer: the mark is in the side menu */}
+      <View style={[styles.top, desktop && { justifyContent: "flex-end", minHeight: right ? 44 : 8 }]}>
+        {desktop ? null : <TeamMark />}
         {right ? <View style={styles.right}>{right}</View> : null}
       </View>
       {title ? (
