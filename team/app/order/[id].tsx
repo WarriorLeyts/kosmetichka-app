@@ -263,6 +263,7 @@ export default function OrderScreen() {
         <KV k="Телефон" v={cust.phone} onPress={cust.phone ? () => Linking.openURL(`tel:${(cust.phone ?? "").replace(/[^\d+]/g, "")}`).catch(() => {}) : undefined} />
         <KV k="Email" v={cust.email} onPress={cust.email ? () => Linking.openURL(`mailto:${cust.email}`).catch(() => {}) : undefined} />
         <KV k="Город" v={cust.city} />
+        <KV k="Адрес" v={cust.address} />
         <KV k="ИНН" v={cust.inn} />
         <KV k="Менеджер 1С" v={cust.manager} />
         <KV k="Тип цен" v={{ retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" }[cust.priceType] ?? cust.priceType} />

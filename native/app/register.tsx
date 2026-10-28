@@ -26,7 +26,7 @@ const TYPES: { value: string; label: string; desc: string; icon: keyof typeof Io
   { value: "big_wholesale", label: "Крупный опт", desc: "Крупные закупки", icon: "business-outline" },
 ];
 
-type Errors = Partial<Record<"name" | "email" | "password" | "phone" | "smsCode" | "captcha" | "consent", string>>;
+type Errors = Partial<Record<"name" | "address" | "email" | "password" | "phone" | "smsCode" | "captcha" | "consent", string>>;
 
 /** Fades/slides its children in when mounted (dependent fields, hints). */
 function Appear({ children }: { children: ReactNode }) {
@@ -81,7 +81,7 @@ export default function Register() {
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const refresh = useAuth((s) => s.refresh);
-  const [f, setF] = useState({ name: "", companyName: "", phone: "", email: "", password: "" });
+  const [f, setF] = useState({ name: "", companyName: "", address: "", phone: "", email: "", password: "" });
   const [priceType, setPriceType] = useState("wholesale"); // the project's initial state
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
@@ -136,6 +136,8 @@ export default function Register() {
     if (submitting.current) return; // no double submit
     const e: Errors = {};
     if (!f.name.trim()) e.name = "Укажите имя";
+    // wholesale: the shop's address is required (orders are sent there)
+    if (wholesale && f.address.trim().length < 5) e.address = "Укажите адрес магазина";
     if (!f.email.trim()) e.email = "Укажите email";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = "Проверьте email";
     if (f.password.length < 6) e.password = "Пароль должен быть не короче 6 символов";
@@ -154,7 +156,7 @@ export default function Register() {
     setBusy("submit");
     setError("");
     try {
-      const r = await api.register({ ...f, captchaToken: captcha ?? "", smsCode: smsCode.trim(), priceType, ...(RETAIL_ENABLED ? {} : { source: "site" }) });
+      const r = await api.register({ ...f, address: wholesale ? f.address.trim() : undefined, captchaToken: captcha ?? "", smsCode: smsCode.trim(), priceType, ...(RETAIL_ENABLED ? {} : { source: "site" }) });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       if (r.autoLogin) {
         await clearPendingLogout();
@@ -229,6 +231,14 @@ export default function Register() {
             {wholesale ? (
               <Appear>
                 <IOSField label="Компания" placeholder="ООО «Название» или ИП" value={f.companyName} onChangeText={upd("companyName")} />
+                <IOSField
+                  label="Адрес магазина"
+                  placeholder="Город, улица, дом"
+                  value={f.address}
+                  onChangeText={upd("address")}
+                  autoComplete="street-address"
+                  error={errors.address}
+                />
               </Appear>
             ) : null}
             <IOSField

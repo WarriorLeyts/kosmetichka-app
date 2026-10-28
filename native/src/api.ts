@@ -140,7 +140,7 @@ export const api = {
     return request<{ success?: boolean }>("/api/auth/sms/send", { method: "POST", body: json({ phone }) });
   },
   register(body: {
-    name: string; companyName?: string; phone: string; email: string; password: string;
+    name: string; companyName?: string; address?: string; phone: string; email: string; password: string;
     captchaToken: string; smsCode: string; priceType: string; source?: "site";
   }) {
     return request<{ success: boolean; autoLogin: boolean; message: string }>("/api/auth/register", {
@@ -225,7 +225,7 @@ export const api = {
   createOrder(
     items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[],
     comment: string,
-    extra: { promocode?: string; applyBonuses?: number } = {}
+    extra: { promocode?: string; applyBonuses?: number; address?: string } = {}
   ) {
     return request<{ success: boolean; orderId: number; loyaltyWarning?: string }>("/api/orders", {
       method: "POST",
@@ -234,6 +234,7 @@ export const api = {
         comment,
         ...(extra.promocode ? { promocode: extra.promocode } : {}),
         ...(extra.applyBonuses ? { applyBonuses: extra.applyBonuses } : {}),
+        ...(extra.address ? { address: extra.address } : {}),
       }),
     });
   },

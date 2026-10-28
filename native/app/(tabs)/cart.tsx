@@ -77,6 +77,11 @@ export default function Cart() {
   const insets = useSafeAreaInsets();
   const bottomSpace = useTabBarSpace();
   const customer = useAuth((s) => s.customer);
+  // wholesale accounts made before the shop's address was asked at registration give it here (saved to the profile)
+  const needAddress =
+    !!customer && (customer.priceType === "wholesale" || customer.priceType === "big_wholesale") && (customer.address ?? "").trim().length < 5;
+  const [address, setAddress] = useState("");
+  const [addressErr, setAddressErr] = useState("");
   const items = useCartStore((s) => s.items);
   const setQty = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
@@ -179,6 +184,11 @@ export default function Cart() {
       router.push("/login");
       return;
     }
+    if (needAddress && address.trim().length < 5) {
+      setAddressErr("Укажите адрес магазина");
+      setError("Укажите адрес магазина — без него мы не сможем отправить заказ");
+      return;
+    }
     submitting.current = true;
     setLoading(true);
     setError("");
@@ -189,8 +199,9 @@ export default function Cart() {
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim(),
-        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0 }
+        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, address: needAddress ? address.trim() : undefined }
       );
+      if (needAddress) useAuth.getState().refresh(); // the address is in the profile now
       clear();
       setPromoCode(null);
       setSpend(false);
@@ -218,6 +229,7 @@ export default function Cart() {
         ]);
         return;
       }
+      if (e instanceof ApiError && e.code === "address_required") setAddressErr("Укажите адрес магазина");
       setError(e instanceof Error ? e.message : "Не удалось оформить заказ");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       // the login expired on the server: show the signed-out state instead of failing again and again
@@ -351,6 +363,28 @@ export default function Cart() {
               <Ionicons name="trash-outline" size={20} color={c.secondary} />
               <Text style={[iosText.body, { color: c.secondary }]}>Очистить корзину</Text>
             </Pressable>
+
+            {needAddress ? (
+              <>
+                <Text style={[styles.label, { color: c.label }]}>Адрес магазина</Text>
+                <TextInput
+                  value={address}
+                  onChangeText={(t) => {
+                    setAddress(t);
+                    if (addressErr) setAddressErr("");
+                  }}
+                  placeholder="Город, улица, дом — куда отправить заказ"
+                  placeholderTextColor={c.secondary}
+                  multiline
+                  autoComplete="street-address"
+                  accessibilityLabel="Адрес магазина"
+                  style={[styles.comment, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }, addressErr ? { borderWidth: 1.5, borderColor: "#FF3B30" } : null]}
+                />
+                <Text style={[iosText.footnote, { color: addressErr ? "#FF3B30" : c.secondary, marginTop: 6, marginBottom: 6 }]}>
+                  {addressErr || "Нужен, чтобы отправить заказ. Сохранится в профиле — больше спрашивать не будем."}
+                </Text>
+              </>
+            ) : null}
 
             <Text style={[styles.label, { color: c.label }]}>Комментарий к заказу</Text>
             <CommentInput style={[styles.comment, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }]} placeholderColor={c.secondary} />
