@@ -19,6 +19,7 @@ import type { CustomerMsg, OrderDetail, OrderItem } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
 import { useDesktop } from "@/useDesktop";
+import { priceOf } from "@/products";
 
 type Tab = "items" | "customer" | "picker" | "history";
 const PROBLEM_LABELS: Record<string, string> = {
@@ -205,7 +206,7 @@ export default function OrderScreen() {
     if (mode === "order") {
       setEdit((d) => [
         ...(d ?? []),
-        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null },
+        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(priceOf(product.prices, o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null },
       ]);
       return;
     }
@@ -424,15 +425,8 @@ export default function OrderScreen() {
                         </Pressable>
                       </View>
                       <Text style={{ color: c.secondary }}>×</Text>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
-                        <TextInput
-                          value={String(d.price)}
-                          onChangeText={(t) => patch(idx, { price: Math.max(0, Number(t.replace(/\D/g, "")) || 0) })}
-                          keyboardType="number-pad"
-                          style={[styles.price, { color: c.label, borderColor: dark ? "#43295A" : "#E4E2EC" }]}
-                        />
-                        <Text style={{ color: c.secondary }}>₽</Text>
-                      </View>
+                      {/* the price is the catalogue's, by the customer's price type — nobody changes it in an order */}
+                      <Text style={{ color: c.label, fontSize: 15.5, fontWeight: "600" }}>{money(d.price)}</Text>
                       <Text style={{ color: c.label, fontWeight: "800", fontSize: 15.5, marginLeft: "auto" }}>{money(d.quantity * d.price)}</Text>
                     </View>
                   </Card>
@@ -615,7 +609,6 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: "row", alignItems: "center", gap: 4 },
   stepBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(139,61,255,0.1)" },
   qty: { minWidth: 44, textAlign: "center", fontSize: 17, fontWeight: "700" },
-  price: { minWidth: 76, borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 6, fontSize: 16, textAlign: "right" },
   editTotal: { fontSize: 20, fontWeight: "800", textAlign: "right" },
   editTotalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginVertical: 12 },
   tag: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },

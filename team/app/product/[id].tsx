@@ -6,6 +6,8 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImageManipulator from "expo-image-manipulator";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, ErrorState, KV, Loading, SectionTitle, VIOLET } from "@/components/kit";
+import { PRICE_TYPES } from "@/products";
+import { money } from "@/format";
 import { StockLine } from "@/components/StockLine";
 import { afterSheet, pickFile } from "@/components/chat/Attach";
 import { openUrl } from "@/components/chat/MessageBody";
@@ -14,8 +16,10 @@ import { useLoad } from "@/useLoad";
 import { del, get, imageUrl, put, request } from "@/api";
 import { useIOS } from "@/ios";
 
-type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; images: { id: number; path: string }[] };
+type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
 type Variants = { variants: { id: number; imageId: number; imageUrl: string; name: string; sortOrder: number }[]; images: { id: number; path: string; url: string }[] };
+
+const PRICE_NAMES: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
 
 /** Товар: data from 1C, photo (replace / delete — as the site), variant names per photo. */
 export default function ProductScreen() {
@@ -106,6 +110,20 @@ export default function ProductScreen() {
             <KV k="Штрихкод" v={p.barcode} />
             <KV k="Код 1С" v={p.guid} />
           </Card>
+
+          {p.prices?.length ? (
+            <>
+              <SectionTitle>Цены</SectionTitle>
+              <Card>
+                {/* read only: prices come from 1C */}
+                {PRICE_TYPES.map((t) => {
+                  const v = p.prices!.find((x) => x.priceType === t)?.price;
+                  return <KV key={t} k={PRICE_NAMES[t]} v={v && v > 0 ? money(v) : "—"} />;
+                })}
+                <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 6 }}>Цены приходят из 1С</Text>
+              </Card>
+            </>
+          ) : null}
 
           <SectionTitle>Фото</SectionTitle>
           <Card>
