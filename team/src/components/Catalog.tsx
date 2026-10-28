@@ -205,7 +205,7 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
       {scanMsg ? <Text style={styles.scanMsg}>{scanMsg}</Text> : null}
 
       {/* which price the cards show */}
-      <View style={[styles.segment, { backgroundColor: fieldBg }]} accessibilityRole="radiogroup" accessibilityLabel="Цены">
+      <View style={[styles.segment, { backgroundColor: fieldBg }, desktop && styles.segmentWide]} accessibilityRole="radiogroup" accessibilityLabel="Цены">
         {PRICE_TYPES.map((t) => {
           const on = t === priceType;
           return (
@@ -214,7 +214,7 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
               onPress={() => { tap(); onPriceType(t); }}
               accessibilityRole="radio"
               accessibilityState={{ selected: on }}
-              style={[styles.segItem, on && { backgroundColor: dark ? "#4A2D66" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }]}
+              style={[styles.segItem, desktop && { paddingHorizontal: 18 }, on && { backgroundColor: dark ? "#4A2D66" : "#fff", boxShadow: "0 1px 4px rgba(0,0,0,0.1)" }]}
             >
               <Text numberOfLines={1} style={[styles.segText, { color: on ? (dark ? "#fff" : VIOLET) : c.secondary, fontWeight: on ? "700" : "500" }]}>
                 {PRICE_SHORT[t]}
@@ -363,6 +363,8 @@ const styles = StyleSheet.create({
   round: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" },
   scanMsg: { color: "#DC2626", fontSize: 14, fontWeight: "600", marginTop: 8, marginHorizontal: 10 },
   segment: { flexDirection: "row", borderRadius: 19, padding: 3, marginHorizontal: 5, marginTop: 12, gap: 2 },
+  // computer: a compact control, not stretched over 1100 px
+  segmentWide: { alignSelf: "flex-start" },
   segItem: { flexGrow: 1, flexShrink: 1, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
   segText: { fontSize: 13.5 },
   controls: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 5, marginTop: 12, marginBottom: 8 },
