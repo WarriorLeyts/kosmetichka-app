@@ -52,12 +52,13 @@ function FitTextWeb({ minimumFontScale = 0.5, style, onLayout, children, ...rest
       style={[style, { fontSize: size }]}
       onLayout={(e) => {
         onLayout?.(e);
-        // more room (wider window) → start from the full size; less room → just fit again.
-        // (the box getting narrower because the text shrank must not restart — that would loop)
+        // the box getting narrower because the text shrank must not restart from the full size — that would loop
         const w = Math.round(e.nativeEvent.layout.width);
-        if (lastWidth.current && w > lastWidth.current + 1 && size >= base) setTick((t) => t + 1);
-        else if (lastWidth.current && w < lastWidth.current - 1) setCheck((x) => x + 1);
+        const was = lastWidth.current;
         lastWidth.current = w;
+        if (Math.abs(w - was) <= 1) return;
+        if (was && w > was && size < base) setTick((t) => t + 1); // more room → from the full size again
+        else setCheck((x) => x + 1); // first real width / less room → fit
       }}
     >
       {children}
