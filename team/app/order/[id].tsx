@@ -116,42 +116,6 @@ export default function OrderScreen() {
     }
   };
 
-  // «Сообщить клиенту о проблемах» (as on the site): an intro + a product card with the problem for every line the picker flagged
-  const notifyProblems = () => {
-    if (!o) return;
-    const bad = o.items.filter((i) => i.check?.hasIssues);
-    if (!bad.length) return;
-    Alert.alert("Сообщить клиенту о проблемах?", `В чат клиента уйдут ${bad.length} ${bad.length === 1 ? "позиция" : "позиции"} с описанием проблемы.`, [
-      { text: "Отмена", style: "cancel" },
-      {
-        text: "Отправить",
-        onPress: async () => {
-          if (running.current) return;
-          running.current = true;
-          setBusy("problems");
-          try {
-            const url = `/api/admin/orders/${orderId}/customer-messages`;
-            await post(url, { text: `Здравствуйте! По вашему заказу №${o.id} возникли проблемы с некоторыми позициями:` });
-            for (const it of bad) {
-              const parts = (it.check?.statuses ?? [])
-                .filter((st) => st !== "ok")
-                .map((st) => (st === "insufficient_qty" && it.check?.availableQty != null ? `${PROBLEM_LABELS[st]} (есть ${it.check.availableQty} шт.)` : PROBLEM_LABELS[st] ?? st));
-              const problem = parts.join(", ") + (it.check?.note ? ` — ${it.check.note}` : "");
-              const imagePath = it.photos[0]?.url ?? it.variantImageUrl ?? it.imagePath ?? null;
-              await post(url, { text: JSON.stringify({ _t: "product-problem", id: it.productId, name: it.productName, price: it.price, imagePath, problem }) });
-            }
-            setChatKey((k) => k + 1);
-            Alert.alert("Отправлено клиенту");
-          } catch (e) {
-            Alert.alert("Не отправлено", e instanceof Error ? e.message : "");
-          } finally {
-            running.current = false;
-            setBusy("");
-          }
-        },
-      },
-    ]);
-  };
 
   const startEdit = () => {
     if (!o) return;
@@ -440,9 +404,6 @@ export default function OrderScreen() {
                 <Text style={{ color: c.secondary, fontSize: 13, textAlign: "center", marginVertical: 6 }}>
                   {o.status === "consultation" ? "Состав меняется только во время сборки — «Вернуть на сборку»" : "Состав меняется во время сборки — нажмите «Собрать заказ»"}
                 </Text>
-              ) : null}
-              {o.items.some((i) => i.check?.hasIssues) ? (
-                <ActionButton label="Сообщить клиенту о проблемах" kind="danger" icon="megaphone-outline" loading={busy === "problems"} onPress={notifyProblems} />
               ) : null}
             </>
           )}
