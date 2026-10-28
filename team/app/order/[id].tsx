@@ -498,7 +498,7 @@ export default function OrderScreen() {
           {main}
         </>
       )}
-      <ProductPicker open={catalog !== null} title={catalog === "order" ? "Добавить в заказ" : "Отправить товар"} onClose={() => setCatalog(null)} onPick={onPicked} />
+      <ProductPicker open={catalog !== null} title={catalog === "order" ? "Добавить в заказ" : "Отправить товар"} actionLabel={catalog === "order" ? "Добавить" : "Отправить"} priceType={o.customer.priceType} onClose={() => setCatalog(null)} onPick={onPicked} />
     </Screen>
   );
 
