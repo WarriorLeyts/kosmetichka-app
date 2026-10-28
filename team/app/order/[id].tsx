@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +18,7 @@ import { useAuth } from "@/store/auth";
 import type { CustomerMsg, OrderDetail, OrderItem } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
+import { useDesktop } from "@/useDesktop";
 
 type Tab = "items" | "customer" | "picker" | "history";
 const PROBLEM_LABELS: Record<string, string> = {
@@ -36,6 +37,7 @@ export default function OrderScreen() {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const me = useAuth((s) => s.user);
+  const desktop = useDesktop();
   const [tab, setTab] = useState<Tab>("items");
   const [busy, setBusy] = useState("");
   // status / picker / items changes: one request at a time (a state flag is too late for two quick taps)
@@ -242,8 +244,8 @@ export default function OrderScreen() {
   if (!o) return <Screen title={`Заказ № ${orderId}`}><ErrorState text={error || "Заказ не найден"} onRetry={reload} /></Screen>;
   const cust = o.customer;
 
-  return (
-    <Screen title={`Заказ № ${o.id}`} onRefresh={reload}>
+  const side = (
+    <>
       <Card>
         <View style={styles.row}>
           <StatusPill status={o.status} label={o.statusLabel} />
@@ -293,6 +295,11 @@ export default function OrderScreen() {
             ))}
           </View>
         ) : null}
+        {Platform.OS === "web" ? (
+          <View style={{ marginTop: 10 }}>
+            <ActionButton label="Счёт для печати" kind="soft" icon="print-outline" onPress={() => window.open(`/admin/orders/${o.id}/invoice`, "_blank")} />
+          </View>
+        ) : null}
       </Card>
 
       <Card onPress={() => router.push({ pathname: "/customer/[id]", params: { id: String(cust.id) } })}>
@@ -331,6 +338,10 @@ export default function OrderScreen() {
         </View>
       </Card>
 
+    </>
+  );
+  const main = (
+    <>
       <Chips
         items={[
           { value: "items", label: `Состав · ${o.items.length}` },
@@ -509,6 +520,23 @@ export default function OrderScreen() {
         </Card>
       ) : null}
 
+    </>
+  );
+
+  return (
+    <Screen title={`Заказ № ${o.id}`} onRefresh={reload}>
+      {desktop ? (
+        // computer: what the order is made of and the chats on the left, status / customer / picker on the right
+        <View style={styles.cols}>
+          <View style={{ flex: 1, minWidth: 0 }}>{main}</View>
+          <View style={styles.side}>{side}</View>
+        </View>
+      ) : (
+        <>
+          {side}
+          {main}
+        </>
+      )}
       <Sheet open={pickerSheet} onClose={() => setPickerSheet(false)} title="Назначить сборщика">
         <SheetOptions
           options={[...data!.pickers.map((p) => ({ value: String(p.id), label: p.name })), { value: "none", label: "Снять назначение" }]}
@@ -592,5 +620,7 @@ const styles = StyleSheet.create({
   editTotalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginVertical: 12 },
   tag: { borderRadius: 8, paddingHorizontal: 7, paddingVertical: 2 },
   smallBtn: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderRadius: 10, borderWidth: 1, borderColor: "rgba(255,59,48,0.4)", paddingHorizontal: 10, paddingVertical: 6 },
+  cols: { flexDirection: "row", gap: 20, alignItems: "flex-start" },
+  side: { width: 400 },
   restore: { borderRadius: 10, borderWidth: 1, borderColor: "rgba(220,38,38,0.4)", paddingHorizontal: 10, paddingVertical: 5 },
 });

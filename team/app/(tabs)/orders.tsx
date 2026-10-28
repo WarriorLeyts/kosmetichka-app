@@ -1,15 +1,20 @@
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ListScreen } from "@/components/ListScreen";
-import { Card, Chips, Empty, ErrorState, Loading, SearchField, StatusPill } from "@/components/kit";
+import { ActionButton, Card, Chips, Empty, ErrorState, Loading, SearchField, StatusPill, VIOLET } from "@/components/kit";
+import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
+import { useTabBarSpace } from "@/components/TabBar";
 import { usePaged } from "@/usePaged";
-import { get } from "@/api";
+import { get, post } from "@/api";
 import { date, money, time } from "@/format";
 import { useIOS } from "@/ios";
 import { STATUS_LABELS, STATUS_ORDER } from "@/orderStatus";
 import { clientName, type OrderListItem, type OrdersPage } from "@/types";
+
+/** «Изменить статус» for several orders at once (as the site's orders list); the site skips orders the change doesn't fit */
+const BULK_STATUSES = ["assembly", "consultation", "payment", "exported", "cancelled"] as const;
 
 /** Заказы: working day (19:00 → 18:59 like the site) or all dates, status chips, customer search. */
 export default function Orders() {
@@ -19,6 +24,12 @@ export default function Orders() {
   const [allDates, setAllDates] = useState(params.all === "1");
   const [q, setQ] = useState("");
   const [meta, setMeta] = useState<OrdersPage | null>(null);
+  // several orders at once: «Выбрать» → tick orders → «Изменить статус»
+  const [selecting, setSelecting] = useState(false);
+  const [picked, setPicked] = useState<Set<number>>(new Set());
+  const [bulkSheet, setBulkSheet] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const tabSpace = useTabBarSpace();
   useEffect(() => {
     if (params.status !== undefined) setStatus(params.status);
     if (params.all !== undefined) setAllDates(params.all === "1");
@@ -47,10 +58,54 @@ export default function Orders() {
       .filter((x) => !(["exported", "cancelled"].includes(x.value) && !allDates && !x.count)),
   ];
 
+  const toggle = (id: number) =>
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  const stopSelecting = () => {
+    setSelecting(false);
+    setPicked(new Set());
+  };
+  const applyBulk = (to: string) => {
+    setBulkSheet(false);
+    const n = picked.size;
+    Alert.alert("Изменить статус?", `${n} заказ(ов) → «${STATUS_LABELS[to] ?? to}». Заказы, которым этот статус не подходит, останутся как были.`, [
+      { text: "Отмена", style: "cancel" },
+      {
+        text: "Изменить",
+        onPress: async () => {
+          if (bulkBusy) return;
+          setBulkBusy(true);
+          try {
+            const r = await post<{ updated?: number[]; skipped?: number[] }>("/api/admin/orders/bulk-status", { orderIds: [...picked], toStatus: to });
+            const done = r.updated?.length ?? 0;
+            const skipped = r.skipped?.length ?? 0;
+            Alert.alert("Готово", `Изменено: ${done}${skipped ? `, пропущено: ${skipped}` : ""}`);
+            stopSelecting();
+            list.reload();
+          } catch (e) {
+            Alert.alert("Не изменено", e instanceof Error ? e.message : "");
+          } finally {
+            setBulkBusy(false);
+          }
+        },
+      },
+    ]);
+  };
+
   return (
+    <View style={{ flex: 1 }}>
     <ListScreen
       tab
       title="Заказы"
+      right={
+        <Pressable onPress={selecting ? stopSelecting : () => setSelecting(true)} hitSlop={8} accessibilityRole="button" style={styles.selectBtn}>
+          <Text style={{ color: VIOLET, fontWeight: "700", fontSize: 15 }}>{selecting ? "Готово" : "Выбрать"}</Text>
+        </Pressable>
+      }
       data={list.items}
       keyOf={(o) => String(o.id)}
       onRefresh={list.reload}
@@ -73,9 +128,15 @@ export default function Orders() {
       }
       empty={list.loading ? <Loading /> : list.error ? <ErrorState text={list.error} onRetry={list.reload} /> : <Empty icon="document-text-outline" text="Заказов нет" />}
       renderItem={({ item: o }) => (
-        <Card onPress={() => router.push({ pathname: "/order/[id]", params: { id: String(o.id) } })}>
+        <Card
+          onPress={() => (selecting ? toggle(o.id) : router.push({ pathname: "/order/[id]", params: { id: String(o.id) } }))}
+          style={selecting && picked.has(o.id) ? { borderWidth: 2, borderColor: VIOLET } : undefined}
+        >
           <View style={styles.row}>
-            <Text style={[styles.no, { color: c.label }]}>№ {o.id}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              {selecting ? <Ionicons name={picked.has(o.id) ? "checkmark-circle" : "ellipse-outline"} size={24} color={picked.has(o.id) ? VIOLET : c.secondary} /> : null}
+              <Text style={[styles.no, { color: c.label }]}>№ {o.id}</Text>
+            </View>
             <StatusPill status={o.status} label={o.statusLabel} />
           </View>
           <Text style={[styles.client, { color: c.label }]} numberOfLines={1}>
@@ -103,10 +164,25 @@ export default function Orders() {
         </Card>
       )}
     />
+      {selecting ? (
+        <View style={[styles.bulkBar, { bottom: tabSpace - 4, backgroundColor: c.cell }]}>
+          <Text style={{ color: c.label, fontWeight: "700", fontSize: 15 }}>Выбрано: {picked.size}</Text>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <ActionButton label="Все на экране" kind="soft" onPress={() => setPicked(new Set(list.items.map((o) => o.id)))} />
+            <ActionButton label="Изменить статус" kind="primary" loading={bulkBusy} onPress={() => (picked.size ? setBulkSheet(true) : Alert.alert("Выберите заказы"))} />
+          </View>
+        </View>
+      ) : null}
+      <Sheet open={bulkSheet} onClose={() => setBulkSheet(false)} title={`Новый статус · ${picked.size} заказ(ов)`}>
+        <SheetOptions options={BULK_STATUSES.map((v) => ({ value: v as string, label: STATUS_LABELS[v] ?? v }))} value="" onSelect={applyBulk} />
+      </Sheet>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  selectBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: "rgba(139,61,255,0.1)" },
+  bulkBar: { position: "absolute", left: 16, right: 16, alignSelf: "center", maxWidth: 760, flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, padding: 12, borderRadius: 20, boxShadow: "0 8px 30px rgba(31,41,55,0.18)" },
   total: { fontSize: 13, marginBottom: 8, marginLeft: 4 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   no: { fontSize: 17, fontWeight: "700" },
