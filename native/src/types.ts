@@ -151,7 +151,7 @@ export const STATUS_LABELS: Record<string, string> = {
   pending: "Ожидает подтверждения",
   approved: "Подтверждён",
   assembly: "Сборка",
-  consultation: "На консультации",
+  consultation: "На проверке",
   payment: "Заказ оформлен",
   exported: "Выполнен",
   cancelled: "Отменён",

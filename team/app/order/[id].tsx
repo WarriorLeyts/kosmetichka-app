@@ -21,7 +21,7 @@ import { StockLine } from "@/components/StockLine";
 import { useDesktop } from "@/useDesktop";
 import { priceOf } from "@/products";
 
-type Tab = "items" | "customer" | "picker" | "history";
+type Tab = "items" | "customer" | "history";
 const PROBLEM_LABELS: Record<string, string> = {
   out_of_stock: "Нет в наличии",
   expired: "Истёк срок годности",
@@ -31,7 +31,7 @@ const PROBLEM_LABELS: Record<string, string> = {
 
 type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null; removed?: boolean; stock?: number | null };
 
-/** Order card for managers: client, status buttons, picker, items (with picker checks and photos), editing, both chats, history. */
+/** Order card for managers (the manager collects the order himself): client, status buttons, items (with checks and photos), editing during «Сборка», chat with the customer, history. */
 export default function OrderScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const orderId = Number(id);
@@ -43,9 +43,8 @@ export default function OrderScreen() {
   const [busy, setBusy] = useState("");
   // status / picker / items changes: one request at a time (a state flag is too late for two quick taps)
   const running = useRef(false);
-  const [pickerSheet, setPickerSheet] = useState(false);
   const [edit, setEdit] = useState<Draft[] | null>(null);
-  const [catalog, setCatalog] = useState<null | "order" | "customer" | "picker">(null);
+  const [catalog, setCatalog] = useState<null | "order" | "customer">(null);
   // status, items, customer's changes refresh every 15 s while the order is open (not while editing it)
   const { data, error, loading, reload, setData } = useLoad(() => get<OrderDetail>(`/api/team/orders/${orderId}`), [orderId], { refocus: true, poll: 15_000, paused: edit !== null });
 
@@ -98,22 +97,6 @@ export default function OrderScreen() {
         },
       },
     ]);
-  };
-
-  const assign = async (pickerId: number | null) => {
-    setPickerSheet(false);
-    if (running.current) return;
-    running.current = true;
-    setBusy("assign");
-    try {
-      await post(`/api/admin/orders/${orderId}/assign`, { pickerId });
-      await reload();
-    } catch (e) {
-      Alert.alert("Не получилось", e instanceof Error ? e.message : "");
-    } finally {
-      running.current = false;
-      setBusy("");
-    }
   };
 
   // MAXMA (promo code / bonuses) didn't sync — try again now, as «Повторить» on the site
@@ -212,8 +195,7 @@ export default function OrderScreen() {
     }
     const card = JSON.stringify({ _t: "product", id: product.id, name: variant ? `${product.name} (${variant.name})` : product.name, price: product.price, imagePath: product.imagePath });
     try {
-      if (mode === "customer") await post(`/api/admin/orders/${orderId}/customer-messages`, { text: card });
-      else await post(`/api/picker/messages/${orderId}`, { text: card });
+      await post(`/api/admin/orders/${orderId}/customer-messages`, { text: card });
       setChatKey((k) => k + 1);
     } catch (e) {
       Alert.alert("Не отправлено", e instanceof Error ? e.message : "");
@@ -226,15 +208,11 @@ export default function OrderScreen() {
     return r.messages.map((m) => ({ id: m.id, text: m.text, createdAt: m.createdAt, mine: m.isFromPicker, author: m.isFromPicker ? m.userName || "Менеджер" : "Клиент" }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, chatKey]);
-  const loadPicker = useCallback(async (): Promise<ChatMsg[]> => {
-    const r = await get<{ messages: { id: number; text: string; isFromPicker: boolean; userName: string | null; userId: number | null; createdAt: string }[] }>(`/api/picker/messages/${orderId}`);
-    return r.messages.map((m) => ({ id: m.id, text: m.text, createdAt: m.createdAt, mine: m.userId === me?.id, author: m.userName || (m.isFromPicker ? "Сборщик" : "Менеджер") }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, me?.id, chatKey]);
 
-  // «Заказ оформлен» is not offered until the customer confirmed the changes
+  // «Заказ оформлен» is not offered until the customer checked and confirmed the order
+  const waitingCustomer = !!o && (!!o.awaitingConfirmationSince || (o.status === "consultation" && !o.customerConfirmed));
   const actions = useMemo(
-    () => (o ? (STATUS_ACTIONS[o.status] ?? []).filter((a) => !(o.awaitingConfirmationSince && a.to === "payment")) : []),
+    () => (o ? (STATUS_ACTIONS[o.status] ?? []).filter((a) => !(a.to === "payment" && (o.awaitingConfirmationSince || !o.customerConfirmed))) : []),
     [o]
   );
   const editTotal = edit?.filter((d) => !d.removed).reduce((s, d) => s + d.quantity * d.price, 0) ?? 0;
@@ -275,18 +253,25 @@ export default function OrderScreen() {
           Создан {date(o.createdAt)} в {time(o.createdAt)} · {o.items.length} поз.
         </Text>
         {o.oneCExportedAt ? <Text style={{ color: c.secondary, marginTop: 2 }}>Выгружен в 1С {date(o.oneCExportedAt)}</Text> : null}
-        {o.awaitingConfirmationSince ? (
+        {o.status === "assembly" ? (
+          <View style={[styles.note, { backgroundColor: "rgba(59,130,246,0.1)", alignItems: "flex-start" }]}>
+            <Ionicons name="construct-outline" size={18} color="#2563EB" />
+            <Text style={{ color: "#1E40AF", flex: 1 }}>
+              Идёт сборка — сейчас можно менять состав. Когда закончите, нажмите «Отправить клиенту на проверку».
+            </Text>
+          </View>
+        ) : waitingCustomer ? (
           <View style={[styles.note, { backgroundColor: "rgba(234,88,12,0.12)", alignItems: "flex-start" }]}>
             <Ionicons name="time-outline" size={18} color="#EA580C" />
             <Text style={{ color: "#EA580C", fontWeight: "600", flex: 1 }}>
-              Ждём подтверждения клиента — с {date(o.awaitingConfirmationSince)} {time(o.awaitingConfirmationSince)}.{"\n"}
-              <Text style={{ fontWeight: "400" }}>«Заказ оформлен» станет доступен после его подтверждения. Клиенту придёт напоминание через 2 ч и через сутки.</Text>
+              Ждём подтверждения клиента{o.awaitingConfirmationSince ? ` — с ${date(o.awaitingConfirmationSince)} ${time(o.awaitingConfirmationSince)}` : ""}.{"\n"}
+              <Text style={{ fontWeight: "400" }}>Заказ у клиента на проверке. «Заказ оформлен» станет доступен после его подтверждения. Клиенту придёт напоминание через 2 ч и через сутки.</Text>
             </Text>
           </View>
-        ) : o.customerConfirmed && ["pending", "approved", "assembly", "consultation"].includes(o.status) ? (
+        ) : o.status === "consultation" && o.customerConfirmed ? (
           <View style={[styles.note, { backgroundColor: "rgba(22,163,74,0.12)" }]}>
             <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
-            <Text style={{ color: "#16A34A", fontWeight: "600", flex: 1 }}>Клиент подтвердил изменения</Text>
+            <Text style={{ color: "#16A34A", fontWeight: "600", flex: 1 }}>Клиент подтвердил заказ — можно нажать «Заказ оформлен»</Text>
           </View>
         ) : null}
         {actions.length ? (
@@ -326,19 +311,6 @@ export default function OrderScreen() {
         </Card>
       ) : null}
 
-      <Card onPress={() => setPickerSheet(true)}>
-        <View style={styles.row}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-            <Ionicons name="person-circle-outline" size={26} color={VIOLET} />
-            <View>
-              <Text style={[styles.label, { color: c.secondary, marginBottom: 0 }]}>Сборщик</Text>
-              <Text style={{ color: c.label, fontSize: 16, fontWeight: "600" }}>{busy === "assign" ? "Сохраняем…" : o.picker?.name ?? "Не назначен"}</Text>
-            </View>
-          </View>
-          <Text style={{ color: VIOLET, fontWeight: "600" }}>Изменить</Text>
-        </View>
-      </Card>
-
     </>
   );
   const main = (
@@ -347,7 +319,6 @@ export default function OrderScreen() {
         items={[
           { value: "items", label: `Состав · ${o.items.length}` },
           { value: "customer", label: "Чат с клиентом" },
-          { value: "picker", label: "Чат со сборщиком" },
           { value: "history", label: "История" },
         ]}
         value={tab}
@@ -463,7 +434,13 @@ export default function OrderScreen() {
                 <ItemCard key={it.id} it={it} />
               ))}
               {o.removedItems?.length ? <RemovedItems items={o.removedItems} /> : null}
-              {data!.canEditItems ? <ActionButton label="Изменить состав" kind="soft" icon="create-outline" onPress={startEdit} /> : null}
+              {data!.canEditItems ? (
+                <ActionButton label="Изменить состав" kind="soft" icon="create-outline" onPress={startEdit} />
+              ) : ["pending", "approved", "consultation"].includes(o.status) ? (
+                <Text style={{ color: c.secondary, fontSize: 13, textAlign: "center", marginVertical: 6 }}>
+                  {o.status === "consultation" ? "Состав меняется только во время сборки — «Вернуть на сборку»" : "Состав меняется во время сборки — нажмите «Собрать заказ»"}
+                </Text>
+              ) : null}
               {o.items.some((i) => i.check?.hasIssues) ? (
                 <ActionButton label="Сообщить клиенту о проблемах" kind="danger" icon="megaphone-outline" loading={busy === "problems"} onPress={notifyProblems} />
               ) : null}
@@ -480,18 +457,6 @@ export default function OrderScreen() {
             send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })}
             empty="Клиент ещё не писал"
             extraActions={[{ value: "product", label: "Карточка товара из каталога", run: () => setCatalog("customer") }]}
-          />
-        </Card>
-      ) : null}
-
-      {tab === "picker" ? (
-        <Card>
-          <ChatPanel
-            key={"p" + chatKey}
-            load={loadPicker}
-            send={(text) => post(`/api/picker/messages/${orderId}`, { text })}
-            empty="Сообщений со сборщиком нет"
-            extraActions={[{ value: "product", label: "Карточка товара из каталога", run: () => setCatalog("picker") }]}
           />
         </Card>
       ) : null}
@@ -531,13 +496,6 @@ export default function OrderScreen() {
           {main}
         </>
       )}
-      <Sheet open={pickerSheet} onClose={() => setPickerSheet(false)} title="Назначить сборщика">
-        <SheetOptions
-          options={[...data!.pickers.map((p) => ({ value: String(p.id), label: p.name })), { value: "none", label: "Снять назначение" }]}
-          value={o.pickerId ? String(o.pickerId) : ""}
-          onSelect={(v) => assign(v === "none" ? null : Number(v))}
-        />
-      </Sheet>
       <ProductPicker open={catalog !== null} title={catalog === "order" ? "Добавить в заказ" : "Отправить товар"} onClose={() => setCatalog(null)} onPick={onPicked} />
     </Screen>
   );

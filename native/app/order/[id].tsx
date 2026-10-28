@@ -269,7 +269,7 @@ export default function OrderScreen() {
   }
 
   const s = statusLook(order.status, dark);
-  // the manager changed the order: «Заказ оформлен» waits for the customer's «Подтвердить»
+  // the order was collected and sent to the customer «На проверку»: «Заказ оформлен» waits for his «Подтвердить заказ»
   const needsConfirm = !!order.needsConfirm && !editing;
 
   const send = async (msg: string, key?: string) => {
@@ -536,11 +536,10 @@ export default function OrderScreen() {
               <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
                 <Ionicons name="alert-circle-outline" size={20} color="#c2410c" />
                 <Text style={[iosText.subhead, { color: c.label, flex: 1 }]}>
-                  Менеджер изменил заказ — изменения отмечены ниже. Проверьте и подтвердите: без этого заказ не будет оформлен.
-                  {order.editable ? " Если что-то не так — нажмите «Изменить» или напишите в чат." : " Если что-то не так — напишите в чат."}
+                  Заказ собран — проверьте его. Всё, что менеджер добавил, изменил или удалил, отмечено у товаров ниже. Подтвердите заказ: без этого он не будет оформлен. Если что-то не так — напишите менеджеру в чат.
                 </Text>
               </View>
-              <GradientButton title="Подтвердить изменения" icon="checkmark-done" loading={busy === "confirm"} onPress={confirm} />
+              <GradientButton title="Подтвердить заказ" icon="checkmark-done" loading={busy === "confirm"} onPress={confirm} />
             </View>
           ) : null}
 

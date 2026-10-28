@@ -3,7 +3,7 @@ export const STATUS_LABELS: Record<string, string> = {
   pending: "Ожидание",
   approved: "Подтверждён",
   assembly: "Сборка",
-  consultation: "Консультация",
+  consultation: "На проверке",
   payment: "Заказ оформлен",
   exported: "Выгружен в 1С",
   cancelled: "Отменён",
@@ -20,18 +20,18 @@ export const STATUS_ACTIONS: Record<string, { label: string; to: string; kind: "
   ],
   approved: [
     { label: "Собрать заказ", to: "assembly", kind: "primary" },
-    { label: "Заказ оформлен", to: "payment", kind: "success" },
     { label: "Отменить", to: "cancelled", kind: "danger" },
   ],
+  // only here the manager changes the order; then the customer checks and confirms it
   assembly: [
-    { label: "Продолжить сборку", to: "pick", kind: "primary" },
-    { label: "На консультацию", to: "consultation", kind: "soft" },
-    { label: "Заказ оформлен", to: "payment", kind: "success" },
+    { label: "Продолжить сборку", to: "pick", kind: "soft" },
+    { label: "Отправить клиенту на проверку", to: "consultation", kind: "primary" },
     { label: "Отменить", to: "cancelled", kind: "danger" },
   ],
+  // «Заказ оформлен» appears once the customer confirmed (filtered on the order screen)
   consultation: [
     { label: "Вернуть на сборку", to: "assembly", kind: "soft" },
-    { label: "Подтвердить: заказ оформлен", to: "payment", kind: "success" },
+    { label: "Заказ оформлен", to: "payment", kind: "success" },
     { label: "Отменить", to: "cancelled", kind: "danger" },
   ],
   payment: [{ label: "Отменить", to: "cancelled", kind: "danger" }],

@@ -25,7 +25,7 @@ const FILTERS: { key: string; label: string }[] = [
   { key: "", label: "Все" },
   { key: "pending", label: "Ожидают" },
   { key: "assembly", label: "Сборка" },
-  { key: "consultation", label: "Консультация" },
+  { key: "consultation", label: "На проверке" },
   { key: "payment", label: "Заказ оформлен" },
   { key: "exported", label: "Выполнены" },
   { key: "cancelled", label: "Отменены" },
@@ -67,7 +67,7 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
       {needsConfirm ? (
         <View style={[styles.note, { backgroundColor: dark ? "rgba(255,149,0,0.15)" : "#fff7ed" }]}>
           <Ionicons name="alert-circle-outline" size={17} color="#c2410c" />
-          <Text style={{ color: "#c2410c", fontSize: 14, flex: 1 }}>Менеджер изменил заказ. Проверьте и подтвердите изменения</Text>
+          <Text style={{ color: "#c2410c", fontSize: 14, flex: 1 }}>Заказ собран — проверьте и подтвердите его</Text>
         </View>
       ) : null}
       {confirmed ? (
