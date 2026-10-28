@@ -6,6 +6,7 @@ import { ListScreen } from "@/components/ListScreen";
 import { ActionButton, Card, Chips, Empty, ErrorState, Loading, SearchField, StatusPill, VIOLET } from "@/components/kit";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { useTabBarSpace } from "@/components/TabBar";
+import { useDesktop } from "@/useDesktop";
 import { usePaged } from "@/usePaged";
 import { get, post } from "@/api";
 import { date, money, time } from "@/format";
@@ -30,6 +31,7 @@ export default function Orders() {
   const [bulkSheet, setBulkSheet] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const tabSpace = useTabBarSpace();
+  const desktop = useDesktop();
   useEffect(() => {
     if (params.status !== undefined) setStatus(params.status);
     if (params.all !== undefined) setAllDates(params.all === "1");
@@ -102,8 +104,13 @@ export default function Orders() {
       tab
       title="Заказы"
       right={
-        <Pressable onPress={selecting ? stopSelecting : () => setSelecting(true)} hitSlop={8} accessibilityRole="button" style={styles.selectBtn}>
-          <Text style={{ color: VIOLET, fontWeight: "700", fontSize: 15 }}>{selecting ? "Готово" : "Выбрать"}</Text>
+        <Pressable onPress={selecting ? stopSelecting : () => setSelecting(true)} hitSlop={8} accessibilityRole="button" style={[styles.selectBtn, !desktop && styles.selectIcon]}>
+          {desktop ? (
+            <Text style={{ color: VIOLET, fontWeight: "700", fontSize: 15 }}>{selecting ? "Готово" : "Выбрать"}</Text>
+          ) : (
+            // phone: the header has the logo in the middle — an icon fits beside it
+            <Ionicons name={selecting ? "close" : "checkmark-done-outline"} size={22} color={VIOLET} accessibilityLabel={selecting ? "Готово" : "Выбрать заказы"} />
+          )}
         </Pressable>
       }
       data={list.items}
@@ -182,12 +189,13 @@ export default function Orders() {
 
 const styles = StyleSheet.create({
   selectBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: "rgba(139,61,255,0.1)" },
+  selectIcon: { width: 40, height: 40, paddingHorizontal: 0, paddingVertical: 0, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   bulkBar: { position: "absolute", left: 16, right: 16, alignSelf: "center", maxWidth: 760, flexDirection: "row", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 10, padding: 12, borderRadius: 20, boxShadow: "0 8px 30px rgba(31,41,55,0.18)" },
   total: { fontSize: 13, marginBottom: 8, marginLeft: 4 },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   no: { fontSize: 17, fontWeight: "700" },
   client: { fontSize: 15.5, fontWeight: "500", marginVertical: 6 },
-  sum: { color: "#e82c87", fontWeight: "700", fontSize: 16 },
+  sum: { color: "#e82c87", fontWeight: "700", fontSize: 16, flexShrink: 0 },
   issue: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, alignSelf: "flex-start", backgroundColor: "#FFF4E5", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   issueText: { color: "#B45309", fontSize: 12.5, fontWeight: "600" },
 });
