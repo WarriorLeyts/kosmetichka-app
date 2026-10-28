@@ -1,5 +1,5 @@
 import { memo, useRef, useState } from "react";
-import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -26,6 +26,12 @@ type Props = {
   isFavorite: boolean;
   onAdd: (p: Product) => void;
   onFavorite: (p: Product) => void;
+  /** «Добавить товар» to an order: the button picks the product (onAdd) instead of the cart */
+  pickMode?: boolean;
+  picked?: number;
+  /** variants are being checked */
+  picking?: boolean;
+  onPickStep?: (p: Product, dir: 1 | -1) => void;
 };
 
 // price columns: 1st pink, 2nd violet, 3rd dark (brand colors from the project)
@@ -38,7 +44,7 @@ const STOCK = {
 };
 
 /** Product card for the iOS-style catalog grid (fixed-height blocks keep rows aligned). */
-function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite }: Props) {
+function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite, pickMode, picked = 0, picking, onPickStep }: Props) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const img = imageUrl(product.images?.[0]?.path, 480);
@@ -115,13 +121,15 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       </View>
 
       <View style={{ flex: 1 }} />
-      {inCart > 0 && !out ? (
+      {pickMode && picked > 0 ? (
+        <PickRow product={product} qty={picked} out={out} dark={dark} label={c.label} onStep={onPickStep} />
+      ) : !pickMode && inCart > 0 && !out ? (
         <QtyRow product={product} qty={inCart} dark={dark} label={c.label} />
       ) : (
         <Pressable
-          disabled={out}
+          disabled={out || picking}
           accessibilityRole="button"
-          accessibilityLabel={out ? "Нет в наличии" : "Добавить в корзину"}
+          accessibilityLabel={out ? "Нет в наличии" : pickMode ? `Добавить ${product.name}` : "Добавить в корзину"}
           onPress={() => {
             tap();
             onAdd(product);
@@ -134,9 +142,13 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
             end={{ x: 1, y: 0 }}
             style={[styles.button, !out && { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
           >
-            <Ionicons name="cart-outline" size={18} color="#fff" />
+            {picking ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Ionicons name={pickMode && !out ? "add" : "cart-outline"} size={pickMode && !out ? 20 : 18} color="#fff" />
+            )}
             <Text numberOfLines={1} style={styles.buttonText}>
-              {out ? "Нет в наличии" : "В корзину"}
+              {out ? "Нет в наличии" : pickMode ? "Добавить" : "В корзину"}
             </Text>
           </LinearGradient>
         </Pressable>
@@ -147,17 +159,65 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
 
 /** «− n +» and «В корзине», as on the site: change the quantity right in the card. */
 function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; dark: boolean; label: string }) {
-  const [w, setW] = useState(0);
   const key = String(product.id);
   const min = Math.max(1, product.minOrderQty ?? 1);
   const cap = typeof product.stock === "number" && product.stock > 0 ? product.stock : Infinity;
-  const atCap = qty >= cap;
   const set = (n: number) => {
     tap();
     // below the minimum order the line is removed, like «−» at 1 on the site
     useCartStore.getState().setQuantity(key, n < min ? 0 : Math.min(n, cap));
   };
-  // narrow cards (small phones): the cart button keeps only its icon
+  return (
+    <Stepper
+      qty={qty}
+      dark={dark}
+      label={label}
+      atCap={qty >= cap}
+      minusLabel={qty <= min ? "Убрать из корзины" : "Уменьшить количество"}
+      onMinus={() => set(qty - 1)}
+      onPlus={() => set(qty + 1)}
+      side={{
+        label: "В корзине",
+        icon: "cart",
+        a11y: "В корзине, перейти в корзину",
+        onPress: () => {
+          tap();
+          router.navigate("/cart");
+        },
+      }}
+    />
+  );
+}
+
+/** The same row on «Добавить товар»: changes the picked quantity, never the cart. */
+function PickRow({ product, qty, out, dark, label, onStep }: { product: Product; qty: number; out: boolean; dark: boolean; label: string; onStep?: (p: Product, dir: 1 | -1) => void }) {
+  const min = Math.max(1, product.minOrderQty ?? 1);
+  const cap = typeof product.stock === "number" && product.stock > 0 ? product.stock : Infinity;
+  return (
+    <Stepper
+      qty={qty}
+      dark={dark}
+      label={label}
+      atCap={out || qty + min > cap}
+      minusLabel={qty <= min ? "Убрать из выбранных" : "Уменьшить количество"}
+      onMinus={() => {
+        tap();
+        onStep?.(product, -1);
+      }}
+      onPlus={() => {
+        tap();
+        onStep?.(product, 1);
+      }}
+      side={{ label: "Выбрано", icon: "checkmark", a11y: `Выбрано ${qty} шт.` }}
+    />
+  );
+}
+
+type Side = { label: string; icon: keyof typeof Ionicons.glyphMap; a11y: string; onPress?: () => void };
+
+function Stepper({ qty, dark, label, atCap, minusLabel, onMinus, onPlus, side }: { qty: number; dark: boolean; label: string; atCap: boolean; minusLabel: string; onMinus: () => void; onPlus: () => void; side: Side }) {
+  const [w, setW] = useState(0);
+  // narrow cards (small phones): the side button keeps only its icon
   const compact = w > 0 && w < 156;
   return (
     <View style={styles.qtyRow} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
@@ -170,8 +230,8 @@ function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; 
         <Pressable
           hitSlop={4}
           accessibilityRole="button"
-          accessibilityLabel={qty <= min ? "Убрать из корзины" : "Уменьшить количество"}
-          onPress={() => set(qty - 1)}
+          accessibilityLabel={minusLabel}
+          onPress={onMinus}
           style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.5 }]}
         >
           <Ionicons name="remove" size={18} color={label} />
@@ -184,19 +244,17 @@ function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; 
           disabled={atCap}
           accessibilityRole="button"
           accessibilityLabel="Увеличить количество"
-          onPress={() => set(qty + 1)}
+          onPress={onPlus}
           style={({ pressed }) => [styles.stepBtn, { opacity: atCap ? 0.3 : pressed ? 0.5 : 1 }]}
         >
           <Ionicons name="add" size={18} color={label} />
         </Pressable>
       </View>
       <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="В корзине, перейти в корзину"
-        onPress={() => {
-          tap();
-          router.navigate("/cart");
-        }}
+        disabled={!side.onPress}
+        accessibilityRole={side.onPress ? "button" : "text"}
+        accessibilityLabel={side.a11y}
+        onPress={side.onPress}
         style={({ pressed }) => [{ flex: 1, opacity: pressed ? 0.88 : 1 }]}
       >
         <LinearGradient
@@ -206,10 +264,10 @@ function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; 
           style={[styles.button, styles.inCartBtn, { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
         >
           {compact ? (
-            <Ionicons name="cart" size={19} color="#fff" />
+            <Ionicons name={side.icon} size={19} color="#fff" />
           ) : (
             <FitText minimumFontScale={0.9} style={[styles.buttonText, { fontSize: 13 }]}>
-              В корзине
+              {side.label}
             </FitText>
           )}
         </LinearGradient>

@@ -1,10 +1,10 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, themed, useTheme } from "@/theme";
-import { SORT_LABELS, useCatalog, type Quick, type Sort } from "@/store/catalog";
+import { SORT_LABELS, catalogStoreByName, type Quick, type Sort } from "@/store/catalog";
 import { Button, tap } from "@/components/ui";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 
@@ -16,7 +16,9 @@ const QUICK: { key: Quick; label: string }[] = [
 
 export default function Filters() {
   const insets = useSafeAreaInsets();
-  const s = useCatalog();
+  // ?store=pick: the filters of «Добавить товар», not of the «Каталог» tab
+  const { store } = useLocalSearchParams<{ store?: string }>();
+  const s = catalogStoreByName(store)();
   const [sort, setSort] = useState<Sort>(s.sort);
   const [onlyStock, setOnlyStock] = useState(s.onlyStock);
   const [quick, setQuick] = useState<Quick[]>(s.quick);

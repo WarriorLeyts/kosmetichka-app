@@ -96,7 +96,7 @@ export type CatalogPage = { products: Product[]; total: number; page: number; ha
 
 export const api = {
   // ── Catalog ──
-  catalog(q: CatalogQuery): Promise<CatalogPage> {
+  catalog(q: CatalogQuery, signal?: AbortSignal): Promise<CatalogPage> {
     const p = new URLSearchParams();
     p.set("page", String(q.page ?? 1));
     if (q.search) p.set("search", q.search);
@@ -108,7 +108,7 @@ export const api = {
     q.nameAny?.forEach((x) => p.append("nameAny", x));
     // cards don't show the description — the server leaves it out (≈65% of the page)
     p.set("lite", "1");
-    return request(`/api/catalog/products?${p.toString()}`);
+    return request(`/api/catalog/products?${p.toString()}`, signal ? { signal } : {});
   },
   catalogMeta(): Promise<{ categories: Category[]; brands: Brand[] }> {
     return request("/api/mobile/catalog-meta");

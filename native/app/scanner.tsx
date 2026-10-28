@@ -3,12 +3,12 @@ import { themed } from "@/theme";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Linking } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { api } from "@/api";
-import { useCatalog } from "@/store/catalog";
+import { catalogStoreByName } from "@/store/catalog";
 import { Button } from "@/components/ui";
 
 export default function Scanner() {
@@ -18,6 +18,9 @@ export default function Scanner() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const handled = useRef(false);
+  // ?store=pick: scanning on «Добавить товар» searches there, the product is added from its card
+  const { store } = useLocalSearchParams<{ store?: string }>();
+  const pick = store === "pick";
 
   const onCode = async (code: string) => {
     if (handled.current) return;
@@ -26,7 +29,7 @@ export default function Scanner() {
     try {
       const r = await api.catalog({ page: 1, search: code });
       if (r.products.length > 0) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      if (r.products.length === 1) {
+      if (r.products.length === 1 && !pick) {
         router.replace(`/product/${r.products[0].id}`);
         return;
       }
@@ -39,10 +42,11 @@ export default function Scanner() {
         }, 2500);
         return;
       }
-      useCatalog.getState().reset();
-      useCatalog.getState().set({ search: code });
+      const cat = catalogStoreByName(store);
+      cat.getState().reset();
+      cat.getState().set({ search: code });
       router.back();
-      router.navigate("/catalog");
+      if (!pick) router.navigate("/catalog");
     } catch {
       setMessage("Нет связи с сервером");
       setBusy(false);
