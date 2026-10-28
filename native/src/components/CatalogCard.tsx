@@ -101,7 +101,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
         {rows.map((r, i) => (
           <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
-            <FitText minimumFontScale={0.75} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? "#6B5A7B" }]}>
+            <FitText minimumFontScale={0.55} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? "#6B5A7B" }]}>
               {r.label}
             </FitText>
             <FitText
