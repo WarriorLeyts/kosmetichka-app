@@ -204,7 +204,11 @@ export default function OrderScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId, me?.id, chatKey]);
 
-  const actions = useMemo(() => (o ? STATUS_ACTIONS[o.status] ?? [] : []), [o]);
+  // «Заказ оформлен» is not offered until the customer confirmed the changes
+  const actions = useMemo(
+    () => (o ? (STATUS_ACTIONS[o.status] ?? []).filter((a) => !(o.awaitingConfirmationSince && a.to === "payment")) : []),
+    [o]
+  );
   const editTotal = edit?.filter((d) => !d.removed).reduce((s, d) => s + d.quantity * d.price, 0) ?? 0;
   const editBefore = o ? o.items.reduce((s, i) => s + i.total, 0) : 0;
   const patch = (idx: number, p: Partial<Draft>) => setEdit((e) => e!.map((x, i) => (i === idx ? { ...x, ...p } : x)));
@@ -243,10 +247,18 @@ export default function OrderScreen() {
           Создан {date(o.createdAt)} в {time(o.createdAt)} · {o.items.length} поз.
         </Text>
         {o.oneCExportedAt ? <Text style={{ color: c.secondary, marginTop: 2 }}>Выгружен в 1С {date(o.oneCExportedAt)}</Text> : null}
-        {o.status === "consultation" ? (
-          <View style={[styles.note, { backgroundColor: o.customerConfirmed ? "rgba(22,163,74,0.12)" : "rgba(234,88,12,0.12)" }]}>
-            <Ionicons name={o.customerConfirmed ? "checkmark-circle" : "time-outline"} size={18} color={o.customerConfirmed ? "#16A34A" : "#EA580C"} />
-            <Text style={{ color: o.customerConfirmed ? "#16A34A" : "#EA580C", fontWeight: "600", flex: 1 }}>{o.customerConfirmed ? "Клиент подтвердил изменения" : "Ждём подтверждения клиента"}</Text>
+        {o.awaitingConfirmationSince ? (
+          <View style={[styles.note, { backgroundColor: "rgba(234,88,12,0.12)", alignItems: "flex-start" }]}>
+            <Ionicons name="time-outline" size={18} color="#EA580C" />
+            <Text style={{ color: "#EA580C", fontWeight: "600", flex: 1 }}>
+              Ждём подтверждения клиента — с {date(o.awaitingConfirmationSince)} {time(o.awaitingConfirmationSince)}.{"\n"}
+              <Text style={{ fontWeight: "400" }}>«Заказ оформлен» станет доступен после его подтверждения. Клиенту придёт напоминание через 2 ч и через сутки.</Text>
+            </Text>
+          </View>
+        ) : o.customerConfirmed && ["pending", "approved", "assembly", "consultation"].includes(o.status) ? (
+          <View style={[styles.note, { backgroundColor: "rgba(22,163,74,0.12)" }]}>
+            <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+            <Text style={{ color: "#16A34A", fontWeight: "600", flex: 1 }}>Клиент подтвердил изменения</Text>
           </View>
         ) : null}
         {actions.length ? (

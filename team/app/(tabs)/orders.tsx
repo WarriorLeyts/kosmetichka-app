@@ -94,6 +94,12 @@ export default function Orders() {
               <Text style={styles.issueText}>Есть проблемы при сборке</Text>
             </View>
           ) : null}
+          {o.awaitingConfirmation ? (
+            <View style={styles.issue}>
+              <Ionicons name="time-outline" size={14} color="#B45309" />
+              <Text style={styles.issueText}>Ждём подтверждения клиента</Text>
+            </View>
+          ) : null}
         </Card>
       )}
     />

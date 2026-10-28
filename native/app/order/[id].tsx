@@ -266,7 +266,8 @@ export default function OrderScreen() {
   }
 
   const s = statusLook(order.status, dark);
-  const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
+  // the manager changed the order: «Заказ оформлен» waits for the customer's «Подтвердить»
+  const needsConfirm = !!order.needsConfirm && !editing;
 
   const send = async (msg: string, key?: string) => {
     const t = msg.trim();
@@ -426,7 +427,7 @@ export default function OrderScreen() {
     setBusy("confirm");
     try {
       await api.confirmOrder(order.id);
-      setOrder({ ...order, customerConfirmed: true });
+      setOrder({ ...order, customerConfirmed: true, needsConfirm: false });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     } catch (e) {
       Alert.alert("Ошибка", e instanceof Error ? e.message : "Не удалось подтвердить");
@@ -530,10 +531,13 @@ export default function OrderScreen() {
           {needsConfirm ? (
             <View style={[panel, { gap: 10 }]}>
               <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
-                <Ionicons name="information-circle-outline" size={20} color={VIOLET} />
-                <Text style={[iosText.subhead, { color: c.label, flex: 1 }]}>Менеджер изменил заказ после консультации. Проверьте состав и подтвердите.</Text>
+                <Ionicons name="alert-circle-outline" size={20} color="#c2410c" />
+                <Text style={[iosText.subhead, { color: c.label, flex: 1 }]}>
+                  Менеджер изменил заказ — изменения отмечены ниже. Проверьте и подтвердите: без этого заказ не будет оформлен.
+                  {order.editable ? " Если что-то не так — нажмите «Изменить» или напишите в чат." : " Если что-то не так — напишите в чат."}
+                </Text>
               </View>
-              <GradientButton title="Подтвердить заказ" icon="checkmark-done" loading={busy === "confirm"} onPress={confirm} />
+              <GradientButton title="Подтвердить изменения" icon="checkmark-done" loading={busy === "confirm"} onPress={confirm} />
             </View>
           ) : null}
 
@@ -548,6 +552,9 @@ export default function OrderScreen() {
                 </Pressable>
               ) : null}
             </View>
+            {!editing && !order.editable && order.editBlockedReason ? (
+              <Text style={[iosText.footnote, { color: c.secondary, marginBottom: 4 }]}>{order.editBlockedReason}</Text>
+            ) : null}
             {editing ? (
               <Text style={[iosText.footnote, { color: c.secondary, marginBottom: 4 }]}>
                 Измените количество, уберите лишнее или добавьте товары. Менеджер увидит изменения.

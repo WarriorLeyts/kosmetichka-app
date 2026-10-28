@@ -14,6 +14,8 @@ export type Dashboard = {
 export type OrderListItem = {
   id: number; status: string; statusLabel: string; total: number; createdAt: string;
   pickerId: number | null; customer: CustomerShort; itemsCount: number; checkedCount: number; hasIssues: boolean;
+  /** staff changed the order, the customer hasn't confirmed yet */
+  awaitingConfirmation?: boolean;
 };
 export type OrdersPage = Paging & {
   orders: OrderListItem[];
@@ -44,6 +46,8 @@ export type StaffMsg = { id: number; text: string; isFromPicker: boolean; userId
 export type OrderDetail = {
   order: {
     id: number; status: string; statusLabel: string; total: number; comment: string | null; customerConfirmed: boolean;
+    /** staff changed the items, waiting for the customer's «Подтвердить» since (ISO) — «Заказ оформлен» is blocked */
+    awaitingConfirmationSince?: string | null;
     /** MAXMA promo code and its discount (₽); total is after the discount */
     promoCode?: string | null; discount?: number;
     bonusesApplied?: number; bonusesCollected?: number;

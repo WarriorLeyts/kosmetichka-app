@@ -129,6 +129,10 @@ export type Order = {
   items: OrderItem[];
   /** order detail: the customer may still change it (quantities, remove, add) — until it is «Заказ оформлен» (payment) */
   editable?: boolean;
+  /** why the customer can't change it now («Заказ собирается…») */
+  editBlockedReason?: string | null;
+  /** the manager changed the order and waits for «Подтвердить» — until then it can't be «Заказ оформлен» */
+  needsConfirm?: boolean;
   removedItems?: RemovedOrderItem[];
 };
 

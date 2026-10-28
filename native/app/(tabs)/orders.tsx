@@ -36,8 +36,8 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const s = statusLook(order.status, dark);
-  const needsConfirm = order.status === "consultation" && !order.customerConfirmed;
-  const confirmed = order.status === "consultation" && order.customerConfirmed;
+  const needsConfirm = !!order.needsConfirm;
+  const confirmed = !needsConfirm && order.status === "consultation" && order.customerConfirmed;
   return (
     <Pressable
       onPress={() => {
