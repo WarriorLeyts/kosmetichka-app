@@ -143,6 +143,21 @@ export default function OrderScreen() {
           });
           await reload();
           setChatKey((k) => k + 1);
+          // the customer sees «Добавлено менеджером» and confirms the order — offer to send it to him now
+          Alert.alert("Товар добавлен", "Отправить заказ клиенту на подтверждение? Он увидит, что добавлено, и нажмёт «Подтвердить заказ».", [
+            { text: "Позже", style: "cancel" },
+            {
+              text: "Отправить",
+              onPress: async () => {
+                try {
+                  await post(`/api/admin/orders/${orderId}/status`, { status: "consultation" });
+                  await reload();
+                } catch (e) {
+                  Alert.alert("Не отправлено", e instanceof Error ? e.message : "");
+                }
+              },
+            },
+          ]);
         } catch (e) {
           Alert.alert("Не добавлено", e instanceof Error ? e.message : "");
         } finally {
