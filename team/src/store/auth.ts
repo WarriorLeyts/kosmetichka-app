@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import { persistStorage } from "./storage";
 import { get, post, setOnUnauthorized } from "../api";
 import { useBadges } from "./badges";
+import { stopWebPush } from "../webPush";
 
 export type Role = "admin" | "manager" | "picker";
 export type Staff = { id: number; name: string | null; login: string; role: Role; roleLabel?: string };
@@ -65,6 +66,8 @@ export const useAuth = create<AuthState>()(
         // sign out locally right away (works offline too); the cookie is dropped on the server
         set({ user: null });
         clearAccountState();
+        // this browser stops getting the account's notifications (web only)
+        void stopWebPush();
         await dropServerSession();
       },
       refresh: async () => {
@@ -99,6 +102,7 @@ setOnUnauthorized(() => {
   if (useAuth.getState().user) {
     useAuth.setState({ user: null });
     clearAccountState();
+    void stopWebPush();
     // /api/team/me answers 401 for a deleted account while the cookie still works elsewhere
     dropServerSession();
   }

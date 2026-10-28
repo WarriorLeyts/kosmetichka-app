@@ -16,7 +16,9 @@ export type OrderListItem = {
   pickerId: number | null; customer: CustomerShort; itemsCount: number; checkedCount: number; hasIssues: boolean;
   /** staff changed the order, the customer hasn't confirmed yet */
   awaitingConfirmation?: boolean;
-};
+} & ChatMarks;
+/** newest customer / staff message in the order's customer chat («Новое сообщение» marks) */
+export type ChatMarks = { lastCustomerMessageId?: number | null; lastCustomerMessageAt?: string | null; lastStaffMessageId?: number | null };
 export type OrdersPage = Paging & {
   orders: OrderListItem[];
   filters: { date: string; businessToday: string; customer: string; status: string };
@@ -50,6 +52,7 @@ export type OrderDetail = {
     id: number; status: string; statusLabel: string; total: number; comment: string | null; customerConfirmed: boolean;
     /** staff changed the items, waiting for the customer's «Подтвердить» since (ISO) — «Заказ оформлен» is blocked */
     awaitingConfirmationSince?: string | null;
+    lastCustomerMessageId?: number | null; lastCustomerMessageAt?: string | null; lastStaffMessageId?: number | null;
     /** MAXMA promo code and its discount (₽); total is after the discount */
     promoCode?: string | null; discount?: number;
     bonusesApplied?: number; bonusesCollected?: number;

@@ -6,6 +6,7 @@ import { useAuth, ROLE_LABEL, type Role } from "../store/auth";
 import { useBadges } from "../store/badges";
 import { useTheme } from "../theme";
 import { useIOS } from "../ios";
+import { PushStatusLine } from "./PushStatus";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 type Item = { href: string; label: string; icon: IconName; roles: Role[]; badge?: string; match?: (p: string) => boolean; external?: boolean };
@@ -111,6 +112,7 @@ export function Sidebar() {
       <View style={[styles.footer, { borderTopColor: c.separator }]}>
         <Text style={[styles.user, { color: c.label }]} numberOfLines={1}>{user.name || user.login}</Text>
         <Text style={{ color: c.secondary, fontSize: 12.5 }}>{ROLE_LABEL[user.role]}</Text>
+        <PushStatusLine />
         <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
           <Pressable onPress={toggleTheme} accessibilityRole="button" accessibilityLabel={mode === "dark" ? "Светлая тема" : "Тёмная тема"} style={[styles.small, { borderColor: c.separator }]}>
             <Ionicons name={mode === "dark" ? "sunny-outline" : "moon-outline"} size={18} color={c.label} />

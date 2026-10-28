@@ -38,7 +38,7 @@ export function StatusPill({ status, label }: { status: string; label?: string }
 }
 
 /** horizontal filter chips */
-export function Chips<T extends string>({ items, value, onChange }: { items: { value: T; label: string; count?: number }[]; value: T; onChange: (v: T) => void }) {
+export function Chips<T extends string>({ items, value, onChange }: { items: { value: T; label: string; count?: number; dot?: boolean }[]; value: T; onChange: (v: T) => void }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   return (
@@ -59,6 +59,7 @@ export function Chips<T extends string>({ items, value, onChange }: { items: { v
               {it.label}
               {it.count != null ? <Text style={{ opacity: 0.7 }}>{`  ${it.count}`}</Text> : null}
             </Text>
+            {it.dot ? <View style={[styles.chipDot, { borderColor: on ? "#fff" : "#e82c87" }]} accessibilityLabel="Новое сообщение" /> : null}
           </Pressable>
         );
       })}
@@ -149,7 +150,8 @@ const styles = StyleSheet.create({
   shadow: { boxShadow: "0 6px 22px rgba(80,40,140,0.07)" },
   pill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: "flex-start" },
   pillText: { fontSize: 12.5, fontWeight: "700" },
-  chip: { height: 36, borderRadius: 18, paddingHorizontal: 14, alignItems: "center", justifyContent: "center", borderWidth: 1 },
+  chip: { height: 36, borderRadius: 18, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", borderWidth: 1 },
+  chipDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#e82c87", marginLeft: 7, borderWidth: 1.5 },
   chipText: { fontSize: 14, fontWeight: "600" },
   center: { alignItems: "center", paddingVertical: 40, paddingHorizontal: 24 },
   centerText: { fontSize: 16, textAlign: "center", marginTop: 10, lineHeight: 22 },

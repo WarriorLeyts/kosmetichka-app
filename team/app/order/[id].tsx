@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
@@ -16,6 +16,7 @@ import { date, money, time } from "@/format";
 import { useIOS } from "@/ios";
 import { CHECK_LABELS, STATUS_ACTIONS, STATUS_LABELS } from "@/orderStatus";
 import { useAuth } from "@/store/auth";
+import { useChatSeen, useUnread } from "@/store/chatSeen";
 import type { CustomerMsg, OrderDetail, OrderItem } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
@@ -50,6 +51,13 @@ export default function OrderScreen() {
   const { data, error, loading, reload, setData } = useLoad(() => get<OrderDetail>(`/api/team/orders/${orderId}`), [orderId], { refocus: true, poll: 15_000, paused: edit !== null, live: (id) => id === orderId });
 
   const o = data?.order;
+  // «Чат с клиентом» shows a dot until the customer's newest message has been seen on this device
+  const chatUnread = useUnread(orderId, o);
+  const markSeen = useChatSeen((s) => s.markSeen);
+  const lastCustomerMsg = o?.lastCustomerMessageId ?? null;
+  useEffect(() => {
+    if (tab === "customer" && lastCustomerMsg) markSeen(orderId, lastCustomerMsg);
+  }, [tab, lastCustomerMsg, orderId, markSeen]);
 
   const changeStatus = (to: string, label: string) => {
     // «Продолжить сборку» — just the picker's screen; «Собрать заказ» — to assembly, then the picker's screen
@@ -336,7 +344,7 @@ export default function OrderScreen() {
       <Chips
         items={[
           { value: "items", label: `Состав · ${o.items.length}` },
-          { value: "customer", label: "Чат с клиентом" },
+          { value: "customer", label: "Чат с клиентом", dot: chatUnread && tab !== "customer" },
           { value: "history", label: "История" },
         ]}
         value={tab}

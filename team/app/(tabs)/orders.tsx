@@ -13,6 +13,7 @@ import { date, money, time } from "@/format";
 import { useIOS } from "@/ios";
 import { STATUS_LABELS, STATUS_ORDER } from "@/orderStatus";
 import { clientName, type OrderListItem, type OrdersPage } from "@/types";
+import { isUnread, useChatSeen } from "@/store/chatSeen";
 
 /** «Изменить статус» for several orders at once (as the site's orders list); the site skips orders the change doesn't fit */
 const BULK_STATUSES = ["assembly", "consultation", "payment", "exported", "cancelled"] as const;
@@ -31,6 +32,7 @@ export default function Orders() {
   const [bulkSheet, setBulkSheet] = useState(false);
   const [bulkBusy, setBulkBusy] = useState(false);
   const tabSpace = useTabBarSpace();
+  const seen = useChatSeen();
   const desktop = useDesktop();
   useEffect(() => {
     if (params.status !== undefined) setStatus(params.status);
@@ -156,6 +158,12 @@ export default function Orders() {
             </Text>
             <Text style={styles.sum}>{money(o.total)}</Text>
           </View>
+          {isUnread(seen, o.id, o) ? (
+            <View style={[styles.issue, styles.msg]}>
+              <Ionicons name="chatbubble-ellipses" size={14} color="#C2185B" />
+              <Text style={[styles.issueText, { color: "#C2185B" }]}>Новое сообщение</Text>
+            </View>
+          ) : null}
           {o.hasIssues ? (
             <View style={styles.issue}>
               <Ionicons name="warning" size={14} color="#B45309" />
@@ -197,5 +205,6 @@ const styles = StyleSheet.create({
   client: { fontSize: 15.5, fontWeight: "500", marginVertical: 6 },
   sum: { color: "#e82c87", fontWeight: "700", fontSize: 16, flexShrink: 0 },
   issue: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, alignSelf: "flex-start", backgroundColor: "#FFF4E5", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  msg: { backgroundColor: "#FDE7F1" },
   issueText: { color: "#B45309", fontSize: 12.5, fontWeight: "600" },
 });
