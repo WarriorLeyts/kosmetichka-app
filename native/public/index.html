@@ -17,6 +17,20 @@
           var m = document.querySelector('meta[name="viewport"]');
           m.setAttribute("content", "width=device-width, initial-scale=" + k + ", shrink-to-fit=no, viewport-fit=cover");
           window.__kosScale = k;
+          // react-native-web sizes the app by visualViewport.width * scale (the screen width); report
+          // the page scale relative to ours so it gets the wider layout width
+          var vv = window.visualViewport;
+          if (vv) {
+            var w = {
+              addEventListener: vv.addEventListener.bind(vv),
+              removeEventListener: vv.removeEventListener.bind(vv),
+            };
+            ["width", "height", "offsetLeft", "offsetTop", "pageLeft", "pageTop"].forEach(function (n) {
+              Object.defineProperty(w, n, { get: function () { return vv[n]; } });
+            });
+            Object.defineProperty(w, "scale", { get: function () { return vv.scale / k; } });
+            Object.defineProperty(window, "visualViewport", { configurable: true, get: function () { return w; } });
+          }
         } catch (e) {}
       })();
     </script>
