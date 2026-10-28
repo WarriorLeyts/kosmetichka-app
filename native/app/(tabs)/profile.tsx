@@ -223,7 +223,7 @@ export default function Profile() {
   );
 }
 
-const PRICE_LABEL: Record<string, string> = { retail: "Розница", discount: "Скидка", wholesale: "Опт", big_wholesale: "Крупный опт" };
+const PRICE_LABEL: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
 const THEME_LABEL: Record<ThemePref, string> = { system: "Как в телефоне", light: "Светлая", dark: "Тёмная" };
 const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
   { value: "system", label: "Как в телефоне" },

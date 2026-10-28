@@ -283,7 +283,7 @@ export default function OrderScreen() {
         <KV k="Город" v={cust.city} />
         <KV k="ИНН" v={cust.inn} />
         <KV k="Менеджер 1С" v={cust.manager} />
-        <KV k="Тип цен" v={{ retail: "Розница", discount: "Скидка", wholesale: "Опт", big_wholesale: "Крупный опт" }[cust.priceType] ?? cust.priceType} />
+        <KV k="Тип цен" v={{ retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" }[cust.priceType] ?? cust.priceType} />
       </Card>
 
       {o.comment ? (

@@ -7,7 +7,7 @@ export type Sort = NonNullable<CatalogQuery["sort"]>;
 export type Quick = "new" | "sale" | "gift";
 
 export const SORT_LABELS: Record<Sort, string> = {
-  popularity: "Недавно обновлённые",
+  popularity: "Популярные",
   price_asc: "Сначала дешевле",
   price_desc: "Сначала дороже",
   name: "По названию",

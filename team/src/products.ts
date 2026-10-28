@@ -30,4 +30,4 @@ export async function searchProducts(q: string, categoryGuid: string, offset: nu
   return { items: r.products, hasMore: r.hasMore };
 }
 
-export const PRICE_LABELS: Record<string, string> = { retail: "Розница", discount: "Скидка", wholesale: "Опт", big_wholesale: "Кр. опт" };
+export const PRICE_LABELS: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Кр. опт" };

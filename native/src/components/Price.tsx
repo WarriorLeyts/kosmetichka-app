@@ -19,7 +19,7 @@ export function priceRows(product: Product, customer: Customer | null, active: P
   } else {
     // retail customers (and guests) see the retail and the discount price
     rows.push({ label: "Розница", value: n(product.retailPrice), active: active === "retail" });
-    rows.push({ label: "Скидка", value: n(product.discountPrice ?? product.retailPrice), active: active !== "retail" });
+    rows.push({ label: "Скидка по карте", value: n(product.discountPrice ?? product.retailPrice), active: active !== "retail" });
   }
   return rows;
 }
