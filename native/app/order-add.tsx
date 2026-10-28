@@ -167,15 +167,9 @@ export default function OrderAddScreen() {
                 tap();
                 addLine(orderId, p, step, { name: v.name, imageUrl: v.imageUrl });
               };
-              return (
-                <Pressable
-                  key={v.id}
-                  onPress={n > 0 ? undefined : plus}
-                  disabled={n > 0}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Добавить ${v.name}`}
-                  style={[styles.variant, { backgroundColor: dark ? "#2B193D" : "#F6F3FB" }]}
-                >
+              const rowStyle = [styles.variant, { backgroundColor: dark ? "#2B193D" : "#F6F3FB" }];
+              const body = (
+                <>
                   <Image source={{ uri: imageUrl(v.imageUrl, 160) ?? undefined }} style={styles.variantImg} contentFit="cover" />
                   <Text style={{ flex: 1, color: c.label, fontSize: 15 }} numberOfLines={2}>{v.name}</Text>
                   {n > 0 ? (
@@ -199,6 +193,14 @@ export default function OrderAddScreen() {
                   ) : (
                     <Ionicons name="add-circle" size={28} color={VIOLET} />
                   )}
+                </>
+              );
+              // picked: the row holds its own − / + buttons
+              return n > 0 ? (
+                <View key={v.id} style={rowStyle}>{body}</View>
+              ) : (
+                <Pressable key={v.id} onPress={plus} accessibilityRole="button" accessibilityLabel={`Добавить ${v.name}`} style={rowStyle}>
+                  {body}
                 </Pressable>
               );
             })}
