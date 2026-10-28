@@ -53,7 +53,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   // the tabs of this role (pickers: assembly + more; managers and admin: everything else)
   const role = useAuth((s) => s.user?.role);
   const allowed = tabsFor(role);
-  const routes = state.routes.filter((r) => TABS[r.name] && allowed.includes(r.name));
+  // in the order of tabsFor (Главная, Заказы, Сборка, Клиенты, Ещё), not the order the screens are declared in
+  const routes = state.routes.filter((r) => TABS[r.name] && allowed.includes(r.name)).sort((a, b) => allowed.indexOf(a.name) - allowed.indexOf(b.name));
   const activeIdx = Math.max(0, routes.findIndex((r) => r.key === state.routes[state.index]?.key));
   const pos = useRef(new Animated.Value(activeIdx)).current;
   // bar width from the screen size (measuring it with onLayout + state looped the layout on RN 0.88 and froze taps)
