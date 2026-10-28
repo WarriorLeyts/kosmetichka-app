@@ -13,16 +13,18 @@ export const STATUS_ORDER = ["pending", "approved", "assembly", "consultation", 
 
 /** buttons on the order card, as on the site */
 export const STATUS_ACTIONS: Record<string, { label: string; to: string; kind: "primary" | "soft" | "danger" | "success" }[]> = {
+  // «Собрать заказ»: to assembly and straight to the picker's screen (one button, as on the site)
   pending: [
-    { label: "Передать на сборку", to: "assembly", kind: "primary" },
+    { label: "Собрать заказ", to: "assembly", kind: "primary" },
     { label: "Отменить заказ", to: "cancelled", kind: "danger" },
   ],
   approved: [
-    { label: "Передать на сборку", to: "assembly", kind: "primary" },
+    { label: "Собрать заказ", to: "assembly", kind: "primary" },
     { label: "Заказ оформлен", to: "payment", kind: "success" },
     { label: "Отменить", to: "cancelled", kind: "danger" },
   ],
   assembly: [
+    { label: "Продолжить сборку", to: "pick", kind: "primary" },
     { label: "На консультацию", to: "consultation", kind: "soft" },
     { label: "Заказ оформлен", to: "payment", kind: "success" },
     { label: "Отменить", to: "cancelled", kind: "danger" },

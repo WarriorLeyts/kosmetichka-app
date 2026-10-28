@@ -13,6 +13,7 @@ import * as WebBrowser from "expo-web-browser";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
+import { OrderChangeCard } from "@/components/OrderChangeCard";
 import { api, ApiError, BASE_URL, imageUrl } from "@/api";
 import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
@@ -100,6 +101,8 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
         </Pressable>
       );
     }
+    // «order changed» card (written by the site for the manager's and the customer's edits)
+    if (obj?._t === "order-change" && Array.isArray(obj.lines)) return <OrderChangeCard data={obj} color={color} />;
     // product cards only from the manager — a customer can't fake them by typing JSON
     if (!fromManager) return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
     if (obj?._t === "product" && typeof obj.name === "string") {

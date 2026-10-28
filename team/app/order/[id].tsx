@@ -49,6 +49,30 @@ export default function OrderScreen() {
   const o = data?.order;
 
   const changeStatus = (to: string, label: string) => {
+    // «Продолжить сборку» — just the picker's screen; «Собрать заказ» — to assembly, then the picker's screen
+    if (to === "pick") {
+      router.push({ pathname: "/pick/[id]", params: { id: String(orderId) } });
+      return;
+    }
+    const collect = to === "assembly" && (o?.status === "pending" || o?.status === "approved");
+    if (collect) {
+      (async () => {
+        if (running.current) return;
+        running.current = true;
+        setBusy(to);
+        try {
+          await post(`/api/admin/orders/${orderId}/status`, { status: "assembly" });
+          await reload();
+          router.push({ pathname: "/pick/[id]", params: { id: String(orderId) } });
+        } catch (e) {
+          Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+        } finally {
+          running.current = false;
+          setBusy("");
+        }
+      })();
+      return;
+    }
     Alert.alert(`${label}?`, `Заказ № ${orderId} → «${STATUS_LABELS[to] ?? to}». Клиенту придёт письмо.`, [
       { text: "Отмена", style: "cancel" },
       {

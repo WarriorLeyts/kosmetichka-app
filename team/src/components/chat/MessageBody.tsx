@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
+import { OrderChangeCard } from "./OrderChangeCard";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
@@ -34,6 +35,7 @@ export function messagePreview(text: string): string {
     if (o?._t === "file") return `📎 ${o.name ?? "Файл"}`;
     if (o?._t === "product") return `📦 ${o.name ?? "Товар"}`;
     if (o?._t === "product-problem") return `⚠️ ${o.name ?? "Проблема с товаром"}`;
+    if (o?._t === "order-change") return `✏️ ${o.title ?? "Заказ изменён"}`;
   } catch {}
   return text;
 }
@@ -79,6 +81,7 @@ export function MessageBody({ text, color }: { text: string; color: string }) {
         </Pressable>
       );
     }
+    if (o?._t === "order-change" && Array.isArray(o.lines)) return <OrderChangeCard data={o} color={color} />;
     if ((o?._t === "product" || o?._t === "product-problem") && typeof o.name === "string") {
       return (
         <View style={{ width: 210 }}>
