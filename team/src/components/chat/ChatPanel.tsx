@@ -11,6 +11,7 @@ import { tap } from "../ui";
 import { Sheet, SheetOptions } from "../iosui/Sheet";
 import { MessageBody } from "./MessageBody";
 import { ATTACH_OPTIONS, afterSheet, pickFile, prepareForUpload, type AttachHow } from "./Attach";
+import { onLiveHint } from "../../live";
 
 const VIOLET = "#8b3dff";
 const GRAD = ["#8b3dff", "#b832e0", "#e82c87"] as const;
@@ -22,8 +23,10 @@ export type ChatMsg = { id: number | string; text: string; createdAt: string; mi
  * Polls every 10 s while the screen is open.
  */
 export function ChatPanel({
-  load, send, empty, extraActions,
+  load, send, empty, extraActions, liveOrderId,
 }: {
+  /** reload at once when the site says this order changed (a new message) */
+  liveOrderId?: number;
   load: () => Promise<ChatMsg[]>;
   send: (text: string) => Promise<unknown>;
   empty?: string;
@@ -66,8 +69,12 @@ export function ChatPanel({
     useCallback(() => {
       refresh();
       const t = setInterval(refresh, 3_000);
-      return () => clearInterval(t);
-    }, [refresh])
+      const off = liveOrderId ? onLiveHint((h) => h.t === "order" && h.id === liveOrderId && refresh()) : () => {};
+      return () => {
+        clearInterval(t);
+        off();
+      };
+    }, [refresh, liveOrderId])
   );
 
   const sendingRef = useRef(false);

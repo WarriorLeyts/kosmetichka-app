@@ -16,6 +16,7 @@ import { RoleGuard } from "@/components/RoleGuard";
 import { useReduceMotion } from "@/useReduceMotion";
 import { useDesktop } from "@/useDesktop";
 import { Sidebar } from "@/components/Sidebar";
+import { startLive, stopLive } from "@/live";
 
 installCrashReporter();
 
@@ -45,6 +46,12 @@ export default function RootLayout() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+  // live hints from the site while signed in (orders change → open screens reload at once)
+  useEffect(() => {
+    if (!signedIn) return;
+    startLive();
+    return () => stopLive();
+  }, [signedIn]);
   useEffect(() => {
     if (!loading) SplashScreen.hideAsync().catch(() => {});
   }, [loading]);

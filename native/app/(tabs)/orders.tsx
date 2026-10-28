@@ -8,6 +8,7 @@ import { api } from "@/api";
 import { orderStatus } from "@/unread";
 import { dateLong, money } from "@/format";
 import { useAuth } from "@/store/auth";
+import { useNotifications } from "@/store/notifications";
 import { orderCache } from "@/orderCache";
 import { ErrorView, tap } from "@/components/ui";
 import { LoginRequired } from "@/components/LoginRequired";
@@ -167,6 +168,12 @@ export default function Orders() {
       if (customerId && hasData.current) loadRef.current(1, "refresh");
     }, [customerId])
   );
+
+  // an order changed (live hint or a push): statuses / manager messages in the list at once
+  const pushTick = useNotifications((st) => st.pushTick);
+  useEffect(() => {
+    if (pushTick > 0 && customerId && hasData.current) loadRef.current(1, "silent");
+  }, [pushTick, customerId]);
 
   // while the list is open: statuses and new manager messages update by themselves every 20 s
   useFocusEffect(

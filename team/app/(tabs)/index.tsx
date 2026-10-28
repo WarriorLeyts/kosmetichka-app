@@ -28,7 +28,7 @@ function Dashboard() {
     // orders waiting for a manager → number on the «Заказы» tab
     setBadge("orders", d.active.byStatus.find((s) => s.status === "pending")?.count ?? 0);
     return d;
-  }, []);
+  }, [], { refocus: true, live: true });
 
   return (
     <Screen tab title="Сводка" onRefresh={reload}>

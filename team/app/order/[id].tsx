@@ -47,7 +47,7 @@ export default function OrderScreen() {
   const [edit, setEdit] = useState<Draft[] | null>(null);
   const [catalog, setCatalog] = useState<null | "order" | "customer">(null);
   // status, items, customer's changes refresh every 15 s while the order is open (not while editing it)
-  const { data, error, loading, reload, setData } = useLoad(() => get<OrderDetail>(`/api/team/orders/${orderId}`), [orderId], { refocus: true, poll: 15_000, paused: edit !== null });
+  const { data, error, loading, reload, setData } = useLoad(() => get<OrderDetail>(`/api/team/orders/${orderId}`), [orderId], { refocus: true, poll: 15_000, paused: edit !== null, live: (id) => id === orderId });
 
   const o = data?.order;
 
@@ -454,6 +454,7 @@ export default function OrderScreen() {
           <ProductRequestContext.Provider value={requestActions}>
             <ChatPanel
               key={"c" + chatKey}
+              liveOrderId={orderId}
               load={loadCustomer}
               send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })}
               empty="Клиент ещё не писал"

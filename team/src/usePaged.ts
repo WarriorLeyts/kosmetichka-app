@@ -1,9 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { onLiveHint } from "./live";
 
 /** offset/page based endless list with a debounced query */
-export function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[]; hasMore: boolean }>, deps: unknown[], opts: { poll?: number } = {}) {
+export function usePaged<T>(
+  fetchPage: (offset: number) => Promise<{ items: T[]; hasMore: boolean }>,
+  deps: unknown[],
+  /** poll: refresh the first page every N ms; live: also at once when the site says an order changed */
+  opts: { poll?: number; live?: boolean } = {}
+) {
   const [items, setItems] = useState<T[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -55,27 +61,49 @@ export function usePaged<T>(fetchPage: (offset: number) => Promise<{ items: T[];
 
   // while the list is open: the first page again every `poll` ms — new statuses in place, new rows on top,
   // pages already scrolled to are kept; a failed refresh changes nothing
+  // the first page again — new statuses in place, new rows on top, pages already scrolled to are kept;
+  // a failed refresh changes nothing
+  const refreshFirst = useCallback(async () => {
+    if (busy.current) return;
+    const my = seq.current;
+    try {
+      const r = await fp(0);
+      if (my !== seq.current) return;
+      const key = (x: T) => (x as { id?: number }).id;
+      const fresh = new Map(r.items.map((x) => [key(x), x]));
+      setItems((prev) => {
+        const known = new Set(prev.map(key));
+        return [...r.items.filter((x) => !known.has(key(x))), ...prev.map((x) => fresh.get(key(x)) ?? x)];
+      });
+    } catch {
+      /* keep the list */
+    }
+  }, [fp]);
+
   useFocusEffect(
     useCallback(() => {
       if (!opts.poll) return;
-      const t = setInterval(async () => {
-        if (AppState.currentState !== "active" || busy.current) return;
-        const my = seq.current;
-        try {
-          const r = await fp(0);
-          if (my !== seq.current) return;
-          const key = (x: T) => (x as { id?: number }).id;
-          const fresh = new Map(r.items.map((x) => [key(x), x]));
-          setItems((prev) => {
-            const known = new Set(prev.map(key));
-            return [...r.items.filter((x) => !known.has(key(x))), ...prev.map((x) => fresh.get(key(x)) ?? x)];
-          });
-        } catch {
-          /* keep the list */
-        }
+      const t = setInterval(() => {
+        if (AppState.currentState === "active") refreshFirst();
       }, opts.poll);
       return () => clearInterval(t);
-    }, [fp, opts.poll])
+    }, [refreshFirst, opts.poll])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!opts.live) return;
+      let t: ReturnType<typeof setTimeout> | null = null;
+      const off = onLiveHint((h) => {
+        if (h.t !== "order") return;
+        if (t) clearTimeout(t);
+        t = setTimeout(() => refreshFirst(), 150);
+      });
+      return () => {
+        off();
+        if (t) clearTimeout(t);
+      };
+    }, [refreshFirst, opts.live])
   );
 
   return { items, hasMore, loading, loadingMore, error, reload, more, setItems };

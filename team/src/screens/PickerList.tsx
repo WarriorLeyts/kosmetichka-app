@@ -25,7 +25,7 @@ export function PickerList({ tab }: { tab: boolean }) {
     const r = await get<{ currentUserId: number; orders: PickerOrderRow[] }>("/api/team/picker/orders");
     setBadge("picker", r.orders.filter((o) => o.isMine && !o.allChecked).length);
     return r;
-  }, [], { refocus: true, poll: 30_000 });
+  }, [], { refocus: true, poll: 30_000, live: true });
 
   return (
     <Screen tab={tab} title="Сборка" onRefresh={reload}>
