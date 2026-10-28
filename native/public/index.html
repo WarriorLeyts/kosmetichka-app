@@ -5,15 +5,15 @@
     <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
     <!-- viewport-fit=cover: the app draws under the iPhone status bar and home indicator itself (safe areas) -->
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
-    <!-- Website on a phone: draw the whole page ~12% smaller. initial-scale < 1 with width=device-width
-         makes the browser widen the layout viewport to device-width / 0.88 (Chrome and Safari), so the
+    <!-- Website on a phone: draw the whole page ~20% smaller. initial-scale < 1 with width=device-width
+         makes the browser widen the layout viewport to device-width / 0.8 (Chrome and Safari), so the
          page fills the screen at any orientation. Tablets and computers (shorter side >= 600) unchanged.
          src/webIOS.ts and src/webScale.ts read window.__kosScale. "?fullscale" skips it (for comparing). -->
     <script>
       (function () {
         try {
           if (Math.min(screen.width, screen.height) >= 600 || /[?&]fullscale\b/.test(location.search)) return;
-          var k = 0.88;
+          var k = 0.8;
           var m = document.querySelector('meta[name="viewport"]');
           m.setAttribute("content", "width=device-width, initial-scale=" + k + ", shrink-to-fit=no, viewport-fit=cover");
           window.__kosScale = k;
