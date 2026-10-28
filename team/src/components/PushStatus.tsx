@@ -22,8 +22,6 @@ const HOW: Partial<Record<PushState, string>> = {
   off: "Уведомления пока не настроены на сервере.",
 };
 
-const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-
 function explainOrEnable(state: PushState) {
   if (state === "ask" && enableWebPushFromTap()) return;
   Alert.alert("Как включить уведомления", HOW[state] ?? "Нажмите ещё раз и разрешите уведомления в окне браузера.");
@@ -37,8 +35,8 @@ export function PushStatusRow() {
     <Row
       icon="notifications"
       iconBg={on ? "#34C759" : "#8E8E93"}
-      title="Уведомления на этом устройстве"
-      subtitle={on ? "Включены: новые заказы и сообщения клиентов" : state === "checking" ? "…" : `${cap(VALUE[state])} · как включить`}
+      title="Уведомления"
+      subtitle={`На этом устройстве: ${VALUE[state]}${on || state === "checking" ? "" : " · как включить"}`}
       chevron={!on}
       onPress={on || state === "checking" ? undefined : () => explainOrEnable(state)}
     />
