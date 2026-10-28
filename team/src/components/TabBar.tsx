@@ -55,7 +55,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const allowed = tabsFor(role);
   // in the order of tabsFor (Главная, Заказы, Сборка, Клиенты, Ещё), not the order the screens are declared in
   const routes = state.routes.filter((r) => TABS[r.name] && allowed.includes(r.name)).sort((a, b) => allowed.indexOf(a.name) - allowed.indexOf(b.name));
-  const activeIdx = Math.max(0, routes.findIndex((r) => r.key === state.routes[state.index]?.key));
+  // a section that is not a phone tab (Товары) lives under «Ещё» — that tab is lit
+  const found = routes.findIndex((r) => r.key === state.routes[state.index]?.key);
+  const activeIdx = Math.max(0, found >= 0 ? found : routes.findIndex((r) => r.name === "more"));
   const pos = useRef(new Animated.Value(activeIdx)).current;
   // bar width from the screen size (measuring it with onLayout + state looped the layout on RN 0.88 and froze taps)
   const { width: screenW } = useWindowDimensions();
