@@ -27,6 +27,7 @@ import { useAddToCart } from "@/useAddToCart";
 import type { Product, Variant } from "@/types";
 import { FavHeart } from "@/components/FavHeart";
 import { takeSeed } from "@/productSeed";
+import { FitText } from "@/components/FitText";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -312,9 +313,9 @@ export default function ProductScreen() {
                 <Text numberOfLines={1} style={{ fontSize: 13, color: PRICE_COLORS[i] ?? "#6B5A7B" }}>
                   {r.label}
                 </Text>
-                <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6} style={{ fontSize: 22, fontWeight: "700", color: PRICE_COLORS[i] ?? "#2A1A3A" }}>
+                <FitText minimumFontScale={0.6} style={{ fontSize: 22, fontWeight: "700", color: PRICE_COLORS[i] ?? "#2A1A3A" }}>
                   {money(r.value)}
-                </Text>
+                </FitText>
               </View>
             ))}
           </View>
@@ -686,9 +687,9 @@ function GradientButton({
     >
       <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
         {loading ? <ActivityIndicator color="#fff" /> : icon ? <Ionicons name={icon} size={22} color="#fff" /> : null}
-        <Text style={styles.ctaText} numberOfLines={1} adjustsFontSizeToFit>
+        <FitText style={styles.ctaText}>
           {title}
-        </Text>
+        </FitText>
       </LinearGradient>
     </Pressable>
   );

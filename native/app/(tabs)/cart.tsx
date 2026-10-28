@@ -21,6 +21,7 @@ import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import type { CartItem } from "@/types";
 import { RETAIL_ENABLED } from "@/siteMode";
+import { FitText } from "@/components/FitText";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -277,9 +278,9 @@ export default function Cart() {
           <Text style={[styles.unit, { color: c.secondary }]}>
             {money(price)} × {item.quantity}
           </Text>
-          <Text style={styles.sum} numberOfLines={1} adjustsFontSizeToFit>
+          <FitText style={styles.sum}>
             {money(price * item.quantity)}
-          </Text>
+          </FitText>
           <View style={styles.stepRow}>
             <View style={[styles.stepper, { backgroundColor: soft }]}>
               <Pressable onPress={minus} hitSlop={6} accessibilityLabel="Уменьшить количество" style={styles.stepBtn}>
@@ -404,9 +405,9 @@ export default function Cart() {
               ) : null}
               <View style={[styles.sumRow, { marginTop: 4 }]}>
                 <Text style={[styles.totalLabel, { color: c.label }]}>Итого</Text>
-                <Text style={styles.total} numberOfLines={1} adjustsFontSizeToFit>
+                <FitText style={styles.total}>
                   {money(calc && (calc.promo || (spend && calc.bonuses?.applied)) ? calc.total : total)}
-                </Text>
+                </FitText>
               </View>
             </View>
 

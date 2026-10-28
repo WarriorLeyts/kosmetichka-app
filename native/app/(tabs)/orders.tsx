@@ -16,6 +16,7 @@ import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
 import type { Order, OrdersPage } from "@/types";
+import { FitText } from "@/components/FitText";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -226,9 +227,9 @@ export default function Orders() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[iosText.subhead, { color: c.secondary }]}>Заказов</Text>
-                    <Text style={[styles.statValue, { color: c.label }]} numberOfLines={1} adjustsFontSizeToFit>
+                    <FitText style={[styles.statValue, { color: c.label }]}>
                       {stats.totalOrders}
-                    </Text>
+                    </FitText>
                   </View>
                 </View>
                 <View style={[styles.statSep, { backgroundColor: c.separator }]} />
@@ -238,9 +239,9 @@ export default function Orders() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[iosText.subhead, { color: c.secondary }]}>Сумма</Text>
-                    <Text style={[styles.statValue, { color: c.label }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
+                    <FitText style={[styles.statValue, { color: c.label }]} minimumFontScale={0.6}>
                       {money(stats.totalSum)}
-                    </Text>
+                    </FitText>
                   </View>
                 </View>
               </View>

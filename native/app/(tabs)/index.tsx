@@ -23,6 +23,7 @@ import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { UI_SIZES, uiScale } from "@/uiScale";
 import type { Product } from "@/types";
+import { FitText } from "@/components/FitText";
 
 const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "new", label: "Новинки", icon: "sparkles-outline" },
@@ -115,9 +116,9 @@ export default function Home() {
           </View>
         </View>
         )}
-        <Text style={[styles.subtitle, { color: dark ? "#E3D3F2" : "#7A6A9A" }, desktop && { fontSize: 22, marginTop: 18 }]} numberOfLines={1} adjustsFontSizeToFit>
+        <FitText style={[styles.subtitle, { color: dark ? "#E3D3F2" : "#7A6A9A" }, desktop && { fontSize: 22, marginTop: 18 }]}>
           Сеть магазинов косметики и парфюмерии
-        </Text>
+        </FitText>
 
         {desktop ? null : (
         <View style={styles.searchRow}>

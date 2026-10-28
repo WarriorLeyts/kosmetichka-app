@@ -16,6 +16,7 @@ import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
 import { FavHeart } from "./FavHeart";
 import { useCartStore } from "../store/cart";
+import { FitText } from "./FitText";
 
 type Props = {
   product: Product;
@@ -100,17 +101,15 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
         {rows.map((r, i) => (
           <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? "#6B5A7B" }]}>
+            <FitText minimumFontScale={0.75} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? "#6B5A7B" }]}>
               {r.label}
-            </Text>
-            <Text
-              numberOfLines={1}
-              adjustsFontSizeToFit
+            </FitText>
+            <FitText
               minimumFontScale={0.6}
               style={[styles.priceValue, { color: PRICE_COLORS[i] ?? "#2A1A3A", fontSize: rows.length >= 3 ? 16 : 19 }]}
             >
               {money(r.value)}
-            </Text>
+            </FitText>
           </View>
         ))}
       </View>
@@ -177,9 +176,9 @@ function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; 
         >
           <Ionicons name="remove" size={18} color={label} />
         </Pressable>
-        <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={[styles.qty, { color: label }]}>
+        <FitText minimumFontScale={0.7} style={[styles.qty, { color: label }]}>
           {qty}
-        </Text>
+        </FitText>
         <Pressable
           hitSlop={4}
           disabled={atCap}
@@ -209,9 +208,9 @@ function QtyRow({ product, qty, dark, label }: { product: Product; qty: number; 
           {compact ? (
             <Ionicons name="cart" size={19} color="#fff" />
           ) : (
-            <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.9} style={[styles.buttonText, { fontSize: 13 }]}>
+            <FitText minimumFontScale={0.9} style={[styles.buttonText, { fontSize: 13 }]}>
               В корзине
-            </Text>
+            </FitText>
           )}
         </LinearGradient>
       </Pressable>

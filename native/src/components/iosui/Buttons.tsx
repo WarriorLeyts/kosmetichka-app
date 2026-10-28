@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { tap } from "../ui";
 import { useReduceMotion } from "../../useReduceMotion";
+import { FitText } from "../FitText";
 
 const GRAD = ["#8b1ee6", "#c21ad0", "#f0388f"] as const; // violet → magenta → pink, as on the mockups
 
@@ -70,9 +71,9 @@ export function OutlineButton({
     >
       <Animated.View style={[styles.outline, { transform: [{ scale: p.s }], opacity: disabled ? 0.5 : 1 }]}>
         {loading ? <ActivityIndicator color="#8b1ee6" /> : null}
-        <Text style={styles.outlineText} numberOfLines={1} adjustsFontSizeToFit>
+        <FitText style={styles.outlineText}>
           {title}
-        </Text>
+        </FitText>
         {children}
       </Animated.View>
     </Pressable>

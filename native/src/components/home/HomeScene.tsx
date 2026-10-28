@@ -8,6 +8,7 @@ import { useReduceMotion } from "../../useReduceMotion";
 import { GradientText } from "../GradientText";
 import { tap } from "../ui";
 import { useIOS } from "../../ios";
+import { FitText } from "../FitText";
 
 /*
  * Home scene assembled from layers: the same box (flat → open → closed, one colour, our white
@@ -141,9 +142,9 @@ export function HomeScene({
                   {t.b}
                 </GradientText>
               </View>
-              <Text style={[styles.sub, { color: dark ? "#C3AECF" : "#5b5d78" }]} numberOfLines={1} adjustsFontSizeToFit>
+              <FitText style={[styles.sub, { color: dark ? "#C3AECF" : "#5b5d78" }]}>
                 {t.sub}
-              </Text>
+              </FitText>
             </Animated.View>
           ))}
         </View>
