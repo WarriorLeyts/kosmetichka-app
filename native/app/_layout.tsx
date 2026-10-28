@@ -1,7 +1,7 @@
 import "@/webAlert";
 import "@/webIOS";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Animated, AppState, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, AppState, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
 import { Stack, usePathname, type ErrorBoundaryProps } from "expo-router";
@@ -20,6 +20,7 @@ import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
 import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { DesktopHeader } from "@/components/DesktopHeader";
+import { InstallPrompt } from "@/components/InstallPrompt";
 import { useDesktop } from "@/useDesktop";
 
 installCrashReporter();
@@ -174,6 +175,8 @@ function AppRoot() {
       </Stack>
       <ThemeFade mode={mode} />
       {inExpoGo || desktop ? null : <AnimatedSplash onReady={onSplashReady} />}
+      {/* website on a phone: «установите приложение» */}
+      {Platform.OS === "web" ? <InstallPrompt /> : null}
     </SafeAreaProvider>
   );
 }

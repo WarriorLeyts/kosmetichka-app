@@ -1,16 +1,19 @@
-import { disableWebPush, listenWebPush, refreshWebPush } from "./webPush";
+import { armAutoWebPush, disableWebPush, disarmAutoWebPush, listenWebPush, refreshWebPush } from "./webPush";
 import { useNotifications } from "./store/notifications";
 
 /**
- * Website version of src/push.ts: browser Web Push (src/webPush.ts). Turning it on needs a tap
- * («Уведомления» card), so registerPush only refreshes an already allowed subscription.
+ * Website version of src/push.ts: browser Web Push (src/webPush.ts). The browser asks only from a
+ * tap, so registerPush refreshes an already allowed subscription and, if not decided yet, asks on
+ * the customer's first tap anywhere (or the «Включить» button on the «Уведомления» card).
  */
 export async function registerPush(_opts: { promoAsked?: (yes: boolean) => void } = {}) {
   await refreshWebPush().catch(() => {});
+  await armAutoWebPush().catch(() => {});
 }
 
 /** On logout: this browser stops getting the account's notifications (re-subscribed silently on the next sign-in). */
 export async function unregisterPush() {
+  disarmAutoWebPush();
   await disableWebPush(false).catch(() => {});
 }
 
