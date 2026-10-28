@@ -169,6 +169,8 @@ function AppRoot() {
         <Stack.Screen name="favorites" options={{ title: "Избранное", headerShown: false }} />
         <Stack.Screen name="edit-profile" options={{ title: "Мои данные", headerShown: false }} />
         <Stack.Screen name="info" options={{ title: "", headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ title: "Уведомления", headerShown: false }} />
+        <Stack.Screen name="delete-account" options={{ title: "Удалить аккаунт", headerShown: false }} />
       </Stack>
       <ThemeFade mode={mode} />
       {inExpoGo || desktop ? null : <AnimatedSplash onReady={onSplashReady} />}
