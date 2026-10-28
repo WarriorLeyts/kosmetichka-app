@@ -407,7 +407,8 @@ const styles = StyleSheet.create({
   typeChipText: { fontSize: 15, fontWeight: "500" },
   title: { paddingHorizontal: 5, marginTop: 14, marginBottom: 12 },
   search: { flexDirection: "row", alignItems: "center", gap: 9, height: 52, borderRadius: 26, paddingLeft: 5, paddingRight: 5, marginHorizontal: 5 },
-  searchInput: { flex: 1, fontSize: 17, height: "100%" },
+  // minWidth 0: on the web the input would otherwise push the scanner button off the field
+  searchInput: { flex: 1, minWidth: 0, fontSize: 17, height: "100%" },
   scan: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" },
   controls: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 5, marginTop: 14, marginBottom: 8 },
   count: { flex: 1, fontSize: 15 },
