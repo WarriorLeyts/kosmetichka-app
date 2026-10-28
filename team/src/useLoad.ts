@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
+import { onLiveHint } from "./live";
 
 /**
  * load data for a screen: first load, refresh on return to the screen, pull-to-refresh;
@@ -10,7 +11,13 @@ import { useFocusEffect } from "expo-router";
 export function useLoad<T>(
   fn: () => Promise<T>,
   deps: unknown[] = [],
-  opts: { refocus?: boolean; poll?: number; paused?: boolean } = { refocus: true }
+  opts: {
+    refocus?: boolean;
+    poll?: number;
+    paused?: boolean;
+    /** reload at once when the site says an order changed (all orders, or only the ones this returns true for) */
+    live?: boolean | ((orderId: number) => boolean);
+  } = { refocus: true }
 ) {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState("");
@@ -63,6 +70,27 @@ export function useLoad<T>(
       }, opts.poll);
       return () => clearInterval(t);
     }, [reload, opts.poll])
+  );
+
+  const liveRef = useRef(opts.live);
+  liveRef.current = opts.live;
+  useFocusEffect(
+    useCallback(() => {
+      if (!liveRef.current) return;
+      let t: ReturnType<typeof setTimeout> | null = null;
+      const off = onLiveHint((h) => {
+        const want = liveRef.current;
+        if (h.t !== "order" || !want || paused.current) return;
+        if (typeof want === "function" && !want(h.id)) return;
+        // several hints in a row → one reload
+        if (t) clearTimeout(t);
+        t = setTimeout(() => reload(), 120);
+      });
+      return () => {
+        off();
+        if (t) clearTimeout(t);
+      };
+    }, [reload])
   );
 
   return { data, error, loading, reload, setData };

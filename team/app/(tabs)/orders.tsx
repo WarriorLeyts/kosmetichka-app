@@ -49,7 +49,7 @@ export default function Orders() {
       return { items: r.orders, hasMore: r.page < r.totalPages };
     },
     [status, allDates, q],
-    { poll: 30_000 } // new orders and statuses appear by themselves
+    { poll: 30_000, live: true } // new orders and statuses appear by themselves (at once with live hints)
   );
 
   const counts = meta?.todayCounts.byStatus ?? [];

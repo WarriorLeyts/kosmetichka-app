@@ -11,6 +11,7 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
+import { onLiveHint, startLive, stopLive } from "@/live";
 import { installCrashReporter, reportError, setCrashScreen } from "@/crash";
 import { listenPush, registerPush } from "@/push";
 import { useNotifications } from "@/store/notifications";
@@ -86,12 +87,20 @@ function AppRoot() {
       4000
     );
     useNotifications.getState().refresh();
+    // live hints: an order changed → the open order / list reloads at once; a new notification → the bell
+    startLive();
+    const offLive = onLiveHint((h) => {
+      if (h.t === "order") useNotifications.getState().bump();
+      if (h.t === "notify") useNotifications.getState().refresh();
+    });
     const sub = AppState.addEventListener("change", (st) => {
       if (st === "active") useNotifications.getState().refresh();
     });
     return () => {
       clearTimeout(t);
       sub.remove();
+      offLive();
+      stopLive();
     };
   }, [customerId]);
   const pathname = usePathname();
