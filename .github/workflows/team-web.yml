@@ -42,7 +42,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kosmetichka-team-web
-          path: web-dist
+          path: team/web-dist
           retention-days: 7
       - name: Publish
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/team-web'
