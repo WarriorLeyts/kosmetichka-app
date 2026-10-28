@@ -205,6 +205,16 @@ export const api = {
   pushTokenRemove(token: string): Promise<{ ok: boolean }> {
     return request("/api/mobile/push-token", { method: "DELETE", body: json({ token }) });
   },
+  /** Website only: browser Web Push (VAPID public key; enabled=false when the server has no keys). */
+  webPushKey(): Promise<{ enabled: boolean; publicKey?: string }> {
+    return request("/api/web-push/key");
+  },
+  webPushSubscribe(sub: PushSubscriptionJSON): Promise<{ ok: boolean }> {
+    return request("/api/web-push/subscribe", { method: "POST", body: json(sub) });
+  },
+  webPushUnsubscribe(endpoint: string): Promise<{ ok: boolean }> {
+    return request("/api/web-push/unsubscribe", { method: "POST", body: json({ endpoint }) });
+  },
   setPushPromo(on: boolean): Promise<{ customer: Customer }> {
     return request("/api/mobile/profile", { method: "PATCH", body: json({ pushPromo: on }) });
   },

@@ -6,6 +6,7 @@ import { iosText, useIOS } from "@/ios";
 import { api } from "@/api";
 import { useAuth } from "@/store/auth";
 import { registerPush } from "@/push";
+import { WebPushCard } from "@/components/WebPushCard";
 
 /** Profile → «Уведомления»: promo consent and whether the phone allows push. */
 export function NotifySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -70,9 +71,16 @@ export function NotifySheet({ open, onClose }: { open: boolean; onClose: () => v
         <Text style={[iosText.footnote, styles.note, { color: c.secondary }]}>
           {Platform.OS === "ios"
             ? "На iPhone уведомления видны в приложении — по колокольчику вверху экрана."
-            : "Уведомления приходят на телефон и сохраняются в приложении — по колокольчику вверху экрана."}
+            : Platform.OS === "web"
+              ? "Все уведомления сохраняются на сайте — по колокольчику вверху экрана."
+              : "Уведомления приходят на телефон и сохраняются в приложении — по колокольчику вверху экрана."}
         </Text>
       )}
+      {Platform.OS === "web" ? (
+        <View style={{ marginHorizontal: 16, marginTop: 14 }}>
+          <WebPushCard />
+        </View>
+      ) : null}
     </Sheet>
   );
 }

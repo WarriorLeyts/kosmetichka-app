@@ -6,6 +6,7 @@ import { api } from "@/api";
 import { useNotifications } from "@/store/notifications";
 import { openNotificationLink } from "@/push";
 import { ErrorView, tap } from "@/components/ui";
+import { WebPushCard } from "@/components/WebPushCard";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { useIOS } from "@/ios";
 import type { AppNotification } from "@/types";
@@ -104,6 +105,10 @@ export default function NotificationsScreen() {
           <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "500" }}>Прочитать все</Text>
         </Pressable>
       ) : null}
+      {/* website only: browser push for this device */}
+      <View style={{ marginBottom: 10 }}>
+        <WebPushCard />
+      </View>
     </View>
   );
 
