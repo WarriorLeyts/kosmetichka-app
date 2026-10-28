@@ -36,7 +36,7 @@ export function PushStatusRow() {
       icon="notifications"
       iconBg={on ? "#34C759" : "#8E8E93"}
       title="Уведомления"
-      subtitle={`На этом устройстве: ${VALUE[state]}${on || state === "checking" ? "" : " · как включить"}`}
+      subtitle={on ? "Включены на этом устройстве" : state === "checking" ? "…" : `${VALUE[state] === "недоступны" ? "Недоступны" : "Выключены"} · как включить`}
       chevron={!on}
       onPress={on || state === "checking" ? undefined : () => explainOrEnable(state)}
     />
@@ -57,7 +57,7 @@ export function PushStatusLine() {
       style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 }}
     >
       <Ionicons name={on ? "notifications" : "notifications-off-outline"} size={15} color={on ? "#34C759" : c.secondary} />
-      <Text style={{ color: c.secondary, fontSize: 12.5, flexShrink: 1 }} numberOfLines={1}>
+      <Text style={{ color: c.secondary, fontSize: 12.5, flexShrink: 1 }} numberOfLines={2}>
         Уведомления: {VALUE[state]}
         {on ? "" : " · как включить"}
       </Text>
