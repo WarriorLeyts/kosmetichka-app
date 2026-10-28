@@ -4,7 +4,7 @@ export const STATUS_LABELS: Record<string, string> = {
   approved: "Подтверждён",
   assembly: "Сборка",
   consultation: "Консультация",
-  payment: "К оплате",
+  payment: "Заказ оформлен",
   exported: "Выгружен в 1С",
   cancelled: "Отменён",
 };
@@ -19,17 +19,17 @@ export const STATUS_ACTIONS: Record<string, { label: string; to: string; kind: "
   ],
   approved: [
     { label: "Передать на сборку", to: "assembly", kind: "primary" },
-    { label: "К оплате", to: "payment", kind: "success" },
+    { label: "Заказ оформлен", to: "payment", kind: "success" },
     { label: "Отменить", to: "cancelled", kind: "danger" },
   ],
   assembly: [
     { label: "На консультацию", to: "consultation", kind: "soft" },
-    { label: "К оплате", to: "payment", kind: "success" },
+    { label: "Заказ оформлен", to: "payment", kind: "success" },
     { label: "Отменить", to: "cancelled", kind: "danger" },
   ],
   consultation: [
     { label: "Вернуть на сборку", to: "assembly", kind: "soft" },
-    { label: "Подтвердить к оплате", to: "payment", kind: "success" },
+    { label: "Подтвердить: заказ оформлен", to: "payment", kind: "success" },
     { label: "Отменить", to: "cancelled", kind: "danger" },
   ],
   payment: [{ label: "Отменить", to: "cancelled", kind: "danger" }],

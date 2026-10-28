@@ -26,7 +26,7 @@ const FILTERS: { key: string; label: string }[] = [
   { key: "pending", label: "Ожидают" },
   { key: "assembly", label: "Сборка" },
   { key: "consultation", label: "Консультация" },
-  { key: "payment", label: "К оплате" },
+  { key: "payment", label: "Заказ оформлен" },
   { key: "exported", label: "Выполнены" },
   { key: "cancelled", label: "Отменены" },
 ];

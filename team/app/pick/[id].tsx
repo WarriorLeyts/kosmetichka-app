@@ -192,7 +192,7 @@ export default function Pick() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       Alert.alert(
         "Проверка отправлена",
-        r.partial ? r.message ?? "Сохранено" : r.newStatus === "payment" ? "Всё в порядке — заказ передан к оплате." : "Есть проблемы — заказ ушёл менеджеру на консультацию.",
+        r.partial ? r.message ?? "Сохранено" : r.newStatus === "payment" ? "Всё в порядке — заказ оформлен." : "Есть проблемы — заказ ушёл менеджеру на консультацию.",
         [{ text: "OK", onPress: () => router.back() }]
       );
     } catch (e) {

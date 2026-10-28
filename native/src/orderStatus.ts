@@ -13,7 +13,7 @@ const ICONS: Record<string, IconName> = {
   approved: "checkmark-circle-outline",
   assembly: "cube-outline",
   consultation: "chatbubble-ellipses-outline",
-  payment: "card-outline",
+  payment: "checkmark-done-circle-outline",
   exported: "sparkles-outline",
   cancelled: "close-circle-outline",
 };

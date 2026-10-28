@@ -33,7 +33,7 @@ async function shareFile(uri: string) {
   } else Alert.alert("Готово", "Заказы выгружены, файл сохранён в приложении.");
 }
 
-/** Выгрузка в 1С (as /admin/orders/export): orders «Подтверждён» and «К оплате» → Orders.xml, they become «Выгружен в 1С». */
+/** Выгрузка в 1С (as /admin/orders/export): orders «Подтверждён» and «Заказ оформлен» → Orders.xml, they become «Выгружен в 1С». */
 export default function ExportScreen() {
   const c = useIOS();
   const [busy, setBusy] = useState(false);

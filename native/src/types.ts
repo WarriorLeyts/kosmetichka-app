@@ -127,7 +127,7 @@ export type Order = {
   bonusesApplied?: number;
   bonusesCollected?: number;
   items: OrderItem[];
-  /** order detail: the customer may still change it (quantities, remove, add) — until it waits for payment */
+  /** order detail: the customer may still change it (quantities, remove, add) — until it is «Заказ оформлен» (payment) */
   editable?: boolean;
   removedItems?: RemovedOrderItem[];
 };
@@ -148,7 +148,7 @@ export const STATUS_LABELS: Record<string, string> = {
   approved: "Подтверждён",
   assembly: "Сборка",
   consultation: "На консультации",
-  payment: "К оплате",
+  payment: "Заказ оформлен",
   exported: "Выполнен",
   cancelled: "Отменён",
 };
@@ -170,7 +170,7 @@ export const STATUS_ICONS: Record<string, string> = {
   approved: "✅",
   assembly: "📦",
   consultation: "💬",
-  payment: "💳",
+  payment: "✅",
   exported: "🎉",
   cancelled: "❌",
 };
