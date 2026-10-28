@@ -52,7 +52,7 @@ export default function Products() {
               {[p.article && `Арт. ${p.article}`, p.barcode].filter(Boolean).join(" · ") || "—"}
             </Text>
             <View style={styles.bottom}>
-              <Text style={[styles.stock, { color: (p.stock ?? 0) > 0 ? "#16A34A" : "#DC2626" }]}>{(p.stock ?? 0) > 0 ? `В наличии: ${p.stock}` : "Нет в наличии"}</Text>
+              <Text style={[styles.stock, { color: (p.stock ?? 0) > 0 ? "#16A34A" : "#DC2626" }]}>{(p.stock ?? 0) > 0 ? `Остаток: ${p.stock} шт.` : "Нет в наличии"}</Text>
               {p.price > 0 ? <Text style={styles.price}>{money(p.price)}</Text> : null}
             </View>
             {p.hasVariants ? <Text style={[styles.meta, { color: "#8b3dff" }]}>Есть варианты</Text> : null}

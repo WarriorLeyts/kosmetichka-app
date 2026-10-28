@@ -17,6 +17,7 @@ import { CHECK_LABELS, STATUS_ACTIONS, STATUS_LABELS } from "@/orderStatus";
 import { useAuth } from "@/store/auth";
 import type { CustomerMsg, OrderDetail, OrderItem } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
+import { StockLine } from "@/components/StockLine";
 
 type Tab = "items" | "customer" | "picker" | "history";
 const PROBLEM_LABELS: Record<string, string> = {
@@ -26,7 +27,7 @@ const PROBLEM_LABELS: Record<string, string> = {
   insufficient_qty: "Не хватает",
 };
 
-type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null; removed?: boolean };
+type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null; removed?: boolean; stock?: number | null };
 
 /** Order card for managers: client, status buttons, picker, items (with picker checks and photos), editing, both chats, history. */
 export default function OrderScreen() {
@@ -144,7 +145,7 @@ export default function OrderScreen() {
 
   const startEdit = () => {
     if (!o) return;
-    setEdit(o.items.map((i) => ({ id: i.id, productId: i.productId, productName: i.productName, barcode: i.barcode, quantity: i.quantity, price: i.price, variantName: i.variantName, variantImageUrl: i.variantImageUrl, imageUrl: i.imageUrl })));
+    setEdit(o.items.map((i) => ({ id: i.id, productId: i.productId, productName: i.productName, barcode: i.barcode, quantity: i.quantity, price: i.price, variantName: i.variantName, variantImageUrl: i.variantImageUrl, imageUrl: i.imageUrl, stock: i.stock })));
   };
 
   const saveEdit = async () => {
@@ -178,7 +179,7 @@ export default function OrderScreen() {
     if (mode === "order") {
       setEdit((d) => [
         ...(d ?? []),
-        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath) },
+        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null },
       ]);
       return;
     }
@@ -365,6 +366,7 @@ export default function OrderScreen() {
                           {d.variantName ? <Text style={{ color: VIOLET, fontSize: 13 }}>{d.variantName}</Text> : null}
                           {d.barcode ? <Text style={{ color: c.secondary, fontSize: 12 }}>{d.barcode}</Text> : null}
                         </View>
+                        <StockLine stock={d.stock} need={d.quantity} />
                       </View>
                       <Pressable onPress={() => patch(idx, { removed: true })} hitSlop={8} accessibilityLabel="Удалить позицию" style={{ paddingTop: 2 }}>
                         <Ionicons name="trash-outline" size={22} color="#DC2626" />
@@ -512,6 +514,7 @@ export default function OrderScreen() {
               </Text>
               <Text style={{ color: c.label, fontWeight: "700" }}>{money(it.total)}</Text>
             </View>
+            <StockLine stock={it.stock} need={it.quantity} />
             {it.customerChange ? <ChangePill ch={it.customerChange} who="customer" /> : null}
             {it.staffChange ? <ChangePill ch={it.staffChange} who="staff" /> : null}
           </View>

@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImageManipulator from "expo-image-manipulator";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, ErrorState, KV, Loading, SectionTitle, VIOLET } from "@/components/kit";
+import { StockLine } from "@/components/StockLine";
 import { afterSheet, pickFile } from "@/components/chat/Attach";
 import { openUrl } from "@/components/chat/MessageBody";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
@@ -13,7 +14,7 @@ import { useLoad } from "@/useLoad";
 import { del, get, imageUrl, put, request } from "@/api";
 import { useIOS } from "@/ios";
 
-type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; images: { id: number; path: string }[] };
+type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; images: { id: number; path: string }[] };
 type Variants = { variants: { id: number; imageId: number; imageUrl: string; name: string; sortOrder: number }[]; images: { id: number; path: string; url: string }[] };
 
 /** Товар: data from 1C, photo (replace / delete — as the site), variant names per photo. */
@@ -100,6 +101,7 @@ export default function ProductScreen() {
           <Card>
             <Text style={{ color: c.label, fontSize: 18, fontWeight: "700", lineHeight: 24 }}>{p.name}</Text>
             <View style={{ height: 6 }} />
+            <StockLine stock={p.stock ?? null} big />
             <KV k="Артикул" v={p.article} />
             <KV k="Штрихкод" v={p.barcode} />
             <KV k="Код 1С" v={p.guid} />

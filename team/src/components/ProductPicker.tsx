@@ -104,7 +104,7 @@ export function ProductPicker({ open, title, onClose, onPick }: { open: boolean;
                     {p.name}
                   </Text>
                   <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>
-                    {(p.stock ?? 0) > 0 ? `В наличии: ${p.stock}` : "Нет в наличии"}
+                    {(p.stock ?? 0) > 0 ? `Остаток: ${p.stock} шт.` : "Нет в наличии"}
                     {p.hasVariants ? " · варианты" : ""}
                   </Text>
                 </View>

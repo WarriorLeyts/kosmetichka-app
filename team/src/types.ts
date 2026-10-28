@@ -30,6 +30,8 @@ export type ItemCheck = {
 export type OrderItem = {
   id: number; productId: number; productName: string; barcode: string | null; quantity: number; price: number; total: number;
   variantName: string | null; variantImageUrl: string | null; imagePath: string | null; imageUrl: string | null;
+  /** current stock in the shop */
+  stock?: number | null;
   check: ItemCheck | null; photos: { id: number; url: string; createdAt: string }[];
   /** what the customer / staff did to this line (null — nothing) */
   customerChange?: LineChange | null;
@@ -121,6 +123,7 @@ export type PickerOrder = {
     items: {
       id: number; productId: number; productName: string; barcode: string | null; quantity: number; price: number; total: number;
       variantName: string | null; variantImageUrl: string | null; imageUrl: string | null;
+      stock?: number | null;
       check: null | { status: string; statuses: string[]; availableQty: number | null; note: string | null; pickerId: number | null; checkedAt: string };
       photos: { id: number; url: string; createdAt: string }[];
       customerChange?: LineChange | null;
