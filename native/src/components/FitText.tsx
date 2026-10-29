@@ -39,8 +39,19 @@ function FitTextWeb({ minimumFontScale = 0.5, style, onLayout, children, ...rest
     const el = ref.current;
     if (!el) return;
     const min = base * minimumFontScale;
-    if (el.scrollWidth > el.clientWidth + 1 && size > min + 0.25) {
-      setSize(Math.max(min, Math.floor(size * (el.clientWidth / el.scrollWidth) * 4) / 4));
+    // scrollWidth / clientWidth are whole pixels: a text 0.4 px too wide «fits» by them but is cut with «…»,
+    // so the text's real width is measured (a range over it) against the box's
+    const box = el.getBoundingClientRect().width;
+    let text = el.scrollWidth;
+    try {
+      const r = document.createRange();
+      r.selectNodeContents(el);
+      text = Math.max(r.getBoundingClientRect().width, el.scrollWidth > el.clientWidth ? el.scrollWidth : 0);
+    } catch {
+      /* old browser: whole pixels */
+    }
+    if (box > 0 && text > box + 0.1 && size > min + 0.25) {
+      setSize(Math.max(min, Math.floor(size * (box / text) * 0.98 * 4) / 4));
     }
   }, [size, base, minimumFontScale, text, tick, check]);
 
