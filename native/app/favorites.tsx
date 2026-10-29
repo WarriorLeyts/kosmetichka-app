@@ -99,6 +99,7 @@ export default function Favorites() {
                 activePrice={active}
                 inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
                 isFavorite
+                cartStepper={false}
                 onAdd={addToCart}
                 onFavorite={startLeaving}
               />
