@@ -10,22 +10,25 @@ import { useIOS } from "@/ios";
 import type { CustomerRow, CustomersPage } from "@/types";
 import { CustomerBadge } from "@/components/CustomerBadge";
 
-/** Клиенты: search, status filter (all / approved / waiting / blocked) as on the site. */
+/** Клиенты: search, status filter (all / approved / waiting / blocked) as on the site, price type filter. */
 export default function Customers() {
   const c = useIOS();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("");
+  // price type: Розница (with the discount card) / Опт / Крупный опт
+  const [type, setType] = useState("");
   const [total, setTotal] = useState<number | null>(null);
   const list = usePaged<CustomerRow>(
     async (offset) => {
       const p = new URLSearchParams({ page: String(Math.floor(offset / 50) + 1) });
       if (q.trim()) p.set("q", q.trim());
       if (status) p.set("status", status);
+      if (type) p.set("type", type);
       const r = await get<CustomersPage>(`/api/team/customers?${p}`);
       setTotal(r.totalCount);
       return { items: r.customers, hasMore: r.page < r.totalPages };
     },
-    [q, status]
+    [q, status, type]
   );
   return (
     <ListScreen
@@ -49,6 +52,16 @@ export default function Customers() {
             ]}
             value={status}
             onChange={setStatus}
+          />
+          <Chips
+            items={[
+              { value: "", label: "Все типы" },
+              { value: "retail", label: "Розница" },
+              { value: "wholesale", label: "Опт" },
+              { value: "big_wholesale", label: "Крупный опт" },
+            ]}
+            value={type}
+            onChange={setType}
           />
           {total != null ? <Text style={{ color: c.secondary, fontSize: 13, marginBottom: 8, marginLeft: 4 }}>Найдено: {total}</Text> : null}
         </>
