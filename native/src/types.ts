@@ -118,6 +118,9 @@ export type Order = {
   status: string;
   total: number;
   comment?: string | null;
+  /** «pickup» — Заберу в магазине, «delivery» — to deliveryAddress (may be empty); null — old orders */
+  deliveryType?: "pickup" | "delivery" | null;
+  deliveryAddress?: string | null;
   createdAt: string;
   customerConfirmed?: boolean;
   /** MAXMA promo code used for the order and its discount (₽); total is already after it */

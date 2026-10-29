@@ -49,7 +49,7 @@ export type RemovedItem = {
 export type StaffMsg = { id: number; text: string; isFromPicker: boolean; userId: number | null; userName: string | null; userRole?: string | null; createdAt: string };
 export type OrderDetail = {
   order: {
-    id: number; status: string; statusLabel: string; total: number; comment: string | null; customerConfirmed: boolean;
+    id: number; status: string; statusLabel: string; total: number; comment: string | null; deliveryType?: "pickup" | "delivery" | null; deliveryAddress?: string | null; customerConfirmed: boolean;
     /** staff changed the items, waiting for the customer's «Подтвердить» since (ISO) — «Заказ оформлен» is blocked */
     awaitingConfirmationSince?: string | null;
     lastCustomerMessageId?: number | null; lastCustomerMessageAt?: string | null; lastStaffMessageId?: number | null;

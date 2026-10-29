@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -22,6 +22,7 @@ import { tap } from "@/components/ui";
 import type { CartItem, Product } from "@/types";
 import { RETAIL_ENABLED } from "@/siteMode";
 import { FitText } from "@/components/FitText";
+import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -78,11 +79,14 @@ export default function Cart() {
   const insets = useSafeAreaInsets();
   const bottomSpace = useTabBarSpace();
   const customer = useAuth((s) => s.customer);
-  // wholesale accounts made before the shop's address was asked at registration give it here (saved to the profile)
-  const needAddress =
-    !!customer && (customer.priceType === "wholesale" || customer.priceType === "big_wholesale") && (customer.address ?? "").trim().length < 5;
+  // «Заберу в магазине» (the address field hides) or delivery to an address — not required, the manager calls
+  const [pickup, setPickup] = useState(false);
   const [address, setAddress] = useState("");
-  const [addressErr, setAddressErr] = useState("");
+  const addressTouched = useRef(false);
+  useEffect(() => {
+    // the profile address as the default, until the customer types his own
+    if (!addressTouched.current) setAddress(customer?.address ?? "");
+  }, [customer?.address]);
   const items = useCartStore((s) => s.items);
 
   // prices in the cart are the ones seen when the product was added; refresh them for the signed-in
@@ -209,11 +213,6 @@ export default function Cart() {
       router.push("/login");
       return;
     }
-    if (needAddress && address.trim().length < 5) {
-      setAddressErr("Укажите адрес магазина");
-      setError("Укажите адрес магазина — без него мы не сможем отправить заказ");
-      return;
-    }
     submitting.current = true;
     setLoading(true);
     setError("");
@@ -224,9 +223,8 @@ export default function Cart() {
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim(),
-        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, address: needAddress ? address.trim() : undefined }
+        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, pickup, address: pickup ? undefined : address.trim() || undefined }
       );
-      if (needAddress) useAuth.getState().refresh(); // the address is in the profile now
       clear();
       setPromoCode(null);
       setSpend(false);
@@ -254,7 +252,6 @@ export default function Cart() {
         ]);
         return;
       }
-      if (e instanceof ApiError && e.code === "address_required") setAddressErr("Укажите адрес магазина");
       setError(e instanceof Error ? e.message : "Не удалось оформить заказ");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       // the login expired on the server: show the signed-out state instead of failing again and again
@@ -395,25 +392,44 @@ export default function Cart() {
               <Text style={[iosText.body, { color: c.secondary }]}>Очистить корзину</Text>
             </Pressable>
 
-            {needAddress ? (
+            {/* how the order is received: «Заберу в магазине» or an address for the delivery */}
+            <View style={[styles.pickup, { backgroundColor: dark ? "#2B193D" : "#EEEEF3" }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[iosText.body, { color: c.label, fontWeight: "600" }]}>Заберу в магазине</Text>
+                <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`} hitSlop={6}>
+                  <Text style={{ color: VIOLET, fontSize: 14, marginTop: 3, textDecorationLine: "underline" }}>
+                    <Ionicons name="location-outline" size={14} color={VIOLET} /> {SHOP_ADDRESS}
+                  </Text>
+                </Pressable>
+              </View>
+              <Switch
+                value={pickup}
+                onValueChange={(v) => {
+                  tap();
+                  setPickup(v);
+                }}
+                trackColor={{ true: VIOLET, false: dark ? "#4A3560" : "#D1D1D6" }}
+                thumbColor="#fff"
+                {...({ activeThumbColor: "#fff" } as object)}
+                accessibilityLabel="Заберу в магазине"
+              />
+            </View>
+            {!pickup ? (
               <>
-                <Text style={[styles.label, { color: c.label }]}>Адрес магазина</Text>
+                <Text style={[styles.label, { color: c.label }]}>Адрес для доставки</Text>
                 <TextInput
                   value={address}
                   onChangeText={(t) => {
+                    addressTouched.current = true;
                     setAddress(t);
-                    if (addressErr) setAddressErr("");
                   }}
-                  placeholder="Город, улица, дом — куда отправить заказ"
+                  placeholder="Город, улица, дом"
                   placeholderTextColor={c.secondary}
                   multiline
                   autoComplete="street-address"
-                  accessibilityLabel="Адрес магазина"
-                  style={[styles.comment, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }, addressErr ? { borderWidth: 1.5, borderColor: "#FF3B30" } : null]}
+                  accessibilityLabel="Адрес для доставки"
+                  style={[styles.comment, { backgroundColor: dark ? "#2B193D" : "#EEEEF3", color: c.label }]}
                 />
-                <Text style={[iosText.footnote, { color: addressErr ? "#FF3B30" : c.secondary, marginTop: 6, marginBottom: 6 }]}>
-                  {addressErr || "Нужен, чтобы отправить заказ. Сохранится в профиле — больше спрашивать не будем."}
-                </Text>
               </>
             ) : null}
 
@@ -531,6 +547,7 @@ const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   card: { borderRadius: 22 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
+  pickup: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12, marginTop: 14 },
   banner: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 20, padding: 12, marginBottom: 12 },
   bannerIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   bannerText: { flex: 1, fontSize: 16, lineHeight: 22 },

@@ -77,7 +77,7 @@ export default function Customers() {
           </View>
           {x.companyName && x.name ? <Text style={{ color: c.secondary, marginTop: 2 }}>{x.name}</Text> : null}
           <Text style={{ color: c.secondary, marginTop: 4 }} numberOfLines={1}>
-            {[x.phone, x.city, x.priceTypeLabel].filter(Boolean).join(" · ")}
+            {[x.phone, x.priceTypeLabel].filter(Boolean).join(" · ")}
           </Text>
           {x.roleRequestStatus === "pending" && x.roleRequest ? (
             <Text style={{ color: "#B45309", fontWeight: "700", marginTop: 4 }}>Заявка: {ROLE_LABELS[x.roleRequest] ?? x.roleRequest}</Text>

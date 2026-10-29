@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, Chips, ErrorState, KV, Loading, SectionTitle, StatusPill, VIOLET } from "@/components/kit";
 import { ChatPanel, type ChatMsg } from "@/components/chat/ChatPanel";
+import { PhoneKV } from "@/components/PhoneKV";
 import { ProductRequestContext, type ProductRequest } from "@/components/chat/MessageBody";
 import { openUrl } from "@/components/chat/MessageBody";
 import { ProductPicker, type Picked } from "@/components/ProductPicker";
@@ -324,9 +325,8 @@ export default function OrderScreen() {
           <Ionicons name="chevron-forward" size={18} color={c.chevron} />
         </View>
         {cust.companyName && cust.name ? <Text style={{ color: c.secondary }}>{cust.name}</Text> : null}
-        <KV k="Телефон" v={cust.phone} onPress={cust.phone ? () => Linking.openURL(`tel:${(cust.phone ?? "").replace(/[^\d+]/g, "")}`).catch(() => {}) : undefined} />
+        <PhoneKV phone={cust.phone} />
         <KV k="Email" v={cust.email} onPress={cust.email ? () => Linking.openURL(`mailto:${cust.email}`).catch(() => {}) : undefined} />
-        <KV k="Город" v={cust.city} />
         {/* where to send the order — shown even when empty, so a missing address is seen at once */}
         <KV k="Адрес" v={cust.address?.trim() ? cust.address : "не указан"} />
         <KV k="ИНН" v={cust.inn} />
@@ -337,6 +337,18 @@ export default function OrderScreen() {
           <KV k="Цены заказа" v={{ discount: "Скидочная (меньше 5 000 ₽)", wholesale: "Опт (от 5 000 ₽)", big_wholesale: "Крупный опт (от 50 000 ₽)" }[cust.priceTier] ?? cust.priceTier} />
         ) : null}
       </Card>
+
+      {o.deliveryType ? (
+        <Card>
+          <Text style={[styles.label, { color: c.secondary }]}>Получение</Text>
+          <Text style={{ color: c.label, fontSize: 16, lineHeight: 22, fontWeight: "600" }}>
+            {o.deliveryType === "pickup" ? "Заберёт в магазине" : "Доставка"}
+          </Text>
+          {o.deliveryType === "delivery" ? (
+            <Text style={{ color: o.deliveryAddress ? c.label : "#B45309", fontSize: 15, lineHeight: 21, marginTop: 2 }}>{o.deliveryAddress || "Адрес не указан — уточните у клиента"}</Text>
+          ) : null}
+        </Card>
+      ) : null}
 
       {o.comment ? (
         <Card>

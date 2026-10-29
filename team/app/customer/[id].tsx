@@ -9,6 +9,7 @@ import { date } from "@/format";
 import { useIOS } from "@/ios";
 import { CustomerBadge } from "@/components/CustomerBadge";
 import type { CustomerDetail } from "@/types";
+import { PhoneKV } from "@/components/PhoneKV";
 
 /** Customer card: contacts, 1C data, price type; approve / return to «waiting» (as the site's buttons). */
 export default function Customer() {
@@ -87,10 +88,9 @@ export default function Customer() {
             <View style={{ height: 8 }} />
             <KV k="Контактное лицо" v={x.name} />
             <KV k="Компания" v={x.companyName} />
-            <KV k="Телефон" v={x.phone} onPress={x.phone ? () => Linking.openURL(`tel:${(x.phone ?? "").replace(/[^\d+]/g, "")}`).catch(() => {}) : undefined} />
+            <PhoneKV phone={x.phone} />
             <KV k="Email" v={x.email} onPress={x.email ? () => Linking.openURL(`mailto:${x.email}`).catch(() => {}) : undefined} />
             <KV k="ИНН" v={x.inn} />
-            <KV k="Город" v={x.city} />
             <KV k="Адрес" v={x.address} />
             <KV k="Тип цен" v={x.priceTypeLabel} />
             <KV k="Доступ к опту" v={x.wholesaleAccess === "big_wholesale" ? "Крупный опт" : x.wholesaleAccess === "wholesale" ? "Опт" : "Нет"} />
@@ -146,7 +146,7 @@ export default function Customer() {
                 onPress={() =>
                   setForm({
                     name: x.name ?? "", companyName: x.companyName ?? "", phone: x.phone ?? "", email: x.email ?? "", inn: x.inn ?? "",
-                    city: x.city ?? "", address: x.address ?? "", manager: x.manager ?? "", oneCId: x.oneCId ?? "",
+                    address: x.address ?? "", manager: x.manager ?? "", oneCId: x.oneCId ?? "",
                     priceType: x.priceType, wholesaleAccess: x.wholesaleAccess ?? "",
                     isActive: x.isActive ? "active" : "blocked", isApproved: x.isApproved ? "yes" : "no", password: "",
                   })
@@ -161,7 +161,7 @@ export default function Customer() {
 }
 
 type Form = {
-  name: string; companyName: string; phone: string; email: string; inn: string; city: string; address: string;
+  name: string; companyName: string; phone: string; email: string; inn: string; address: string;
   manager: string; oneCId: string; priceType: string; wholesaleAccess: string; isActive: "active" | "blocked"; isApproved: "yes" | "no"; password: string;
 };
 
@@ -195,7 +195,6 @@ function CustomerForm({ form, setForm, busy, onCancel, onSave }: { form: Form; s
         {field("phone", "Телефон", { keyboard: "phone-pad" })}
         {field("email", "Email", { keyboard: "email-address" })}
         {field("inn", "ИНН", { keyboard: "number-pad" })}
-        {field("city", "Город")}
         {field("address", "Адрес")}
         <Text style={[fs.label, { color: c.secondary }]}>Тип цен</Text>
         <Chips

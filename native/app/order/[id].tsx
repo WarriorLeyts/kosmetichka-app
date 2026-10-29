@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import {
-  ActivityIndicator, Alert, AppState, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
+  ActivityIndicator, Alert, AppState, Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   type NativeScrollEvent, type NativeSyntheticEvent,
 } from "react-native";
 import { Image } from "expo-image";
+import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -566,6 +567,14 @@ export default function OrderScreen() {
             </View>
           ) : null}
 
+          {/* the manager collects the order: he calls about the payment and the delivery */}
+          {!needsConfirm && (order.status === "assembly" || order.status === "consultation" || order.status === "payment") ? (
+            <View style={[panel, { flexDirection: "row", gap: 10, alignItems: "flex-start" }]}>
+              <Ionicons name="call-outline" size={20} color={VIOLET} />
+              <Text style={[iosText.subhead, { color: c.label, flex: 1 }]}>Менеджер свяжется с вами, чтобы договориться об оплате и доставке.</Text>
+            </View>
+          ) : null}
+
           {/* items */}
           <View style={panel}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
@@ -763,6 +772,19 @@ export default function OrderScreen() {
 
           {/* lines taken out of the order — by the manager or by the customer */}
           {!editing && order.removedItems && order.removedItems.length > 0 ? <RemovedBlock items={order.removedItems} /> : null}
+
+          {order.deliveryType ? (
+            <View style={panel}>
+              <Text style={[iosText.footnote, { color: c.secondary }]}>{order.deliveryType === "pickup" ? "Заберу в магазине" : "Доставка"}</Text>
+              {order.deliveryType === "pickup" ? (
+                <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`}>
+                  <Text style={{ color: VIOLET, fontSize: 16, marginTop: 4, textDecorationLine: "underline" }}>{SHOP_ADDRESS}</Text>
+                </Pressable>
+              ) : (
+                <Text style={{ color: c.label, fontSize: 16, marginTop: 4 }}>{order.deliveryAddress || "Адрес уточнит менеджер"}</Text>
+              )}
+            </View>
+          ) : null}
 
           {order.comment ? (
             <View style={panel}>

@@ -20,7 +20,6 @@ const FIELDS: { key: keyof Customer & string; label: string; placeholder: string
   { key: "companyName", label: "Компания", placeholder: "ООО «Название»" },
   { key: "phone", label: "Телефон", placeholder: "+7 900 000 00 00", keyboard: "phone-pad" },
   { key: "email", label: "Email", placeholder: "mail@example.com", keyboard: "email-address" },
-  { key: "city", label: "Город", placeholder: "Москва" },
   { key: "address", label: "Адрес доставки", placeholder: "ул. Пушкина, д. 1" },
 ];
 
