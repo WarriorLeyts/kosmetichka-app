@@ -59,6 +59,8 @@ type AuthState = {
   customer: Customer | null;
   loading: boolean;
   refresh: () => Promise<void>;
+  /** the account's data again (price type, address…) — e.g. a manager changed it on the site */
+  reloadCustomer: () => Promise<void>;
   login: (login: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setCustomer: (c: Customer | null) => void;
@@ -110,7 +112,7 @@ function retryWhenActive() {
   }, 15000);
 }
 
-export const useAuth = create<AuthState>((set) => ({
+export const useAuth = create<AuthState>((set, get) => ({
   customer: null,
   loading: true,
 
@@ -147,6 +149,20 @@ export const useAuth = create<AuthState>((set) => ({
       set({ loading: false });
       // no network on start: the login cookie is still valid — try again when the app comes back
       if (e instanceof ApiError && e.status === 0) retryWhenActive();
+    }
+  },
+
+  reloadCustomer: async () => {
+    const my = epoch;
+    const was = get().customer;
+    if (!was) return;
+    try {
+      const value = await whoAmI();
+      if (my !== epoch || !value || value.id !== was.id) return;
+      set({ customer: value });
+      saveCustomer(value);
+    } catch {
+      /* offline: keep what we have */
     }
   },
 

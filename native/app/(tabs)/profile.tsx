@@ -51,6 +51,12 @@ export default function Profile() {
   // «Добавить карту» only once the site's MAXMA connection is set up
   const [canLink, setCanLink] = useState(false);
   const customerId = customer?.id;
+  // the price type / data may have been changed by a manager meanwhile
+  useFocusEffect(
+    useCallback(() => {
+      if (customerId) useAuth.getState().reloadCustomer();
+    }, [customerId])
+  );
   useFocusEffect(
     useCallback(() => {
       if (!customerId) {
