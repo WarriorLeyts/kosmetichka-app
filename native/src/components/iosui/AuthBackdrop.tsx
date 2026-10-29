@@ -6,7 +6,7 @@ export function AuthBackdrop() {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   return (
-    <View style={[{ pointerEvents: "none" }, StyleSheet.absoluteFill]}>
+    <View style={[{ pointerEvents: "none", overflow: "hidden" }, StyleSheet.absoluteFill]} /* the blobs stick out — no sideways scroll on the site */>
       <View style={[styles.blob, dark && { backgroundColor: "rgba(239,65,154,0.14)" }]} />
       {dark ? <View style={styles.blobViolet} /> : null}
     </View>
