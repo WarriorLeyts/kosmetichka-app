@@ -506,8 +506,12 @@ export default function Cart() {
             <GradientButton
               title={customer ? "Оформить заказ" : "Войти и оформить"}
               icon={customer ? undefined : "log-in-outline"}
-              loading={loading}
-              onPress={() => checkout()}
+              loading={loading || (calcBusy && (!!promoCode || spend))}
+              onPress={() => {
+                // the promo code / bonuses are still being calculated — the order would go without them
+                if (calcBusy && (promoCode || spend)) return;
+                checkout();
+              }}
             />
             <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginTop: 10 }]}>
               Заказ попадёт менеджеру на подтверждение. Оплата — после согласования.

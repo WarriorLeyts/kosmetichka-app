@@ -15,6 +15,7 @@ import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
 import { useAddToCart } from "@/useAddToCart";
 import type { Product } from "@/types";
+import { api } from "@/api";
 import { FavHeart } from "@/components/FavHeart";
 
 /** Card wrapper that fades out before the product leaves the list. */
@@ -48,6 +49,28 @@ export default function Favorites() {
   const addToCart = useAddToCart();
   const active = effectivePriceType(cart, customer);
   const [leaving, setLeaving] = useState<Set<number>>(new Set());
+
+  // signed in: today's prices / stock of the favourites (saved copies may be a guest's or old)
+  const priceKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
+  useEffect(() => {
+    if (!customer || items.length === 0) return;
+    let alive = true;
+    (async () => {
+      const ids = [...new Set(items.map((i) => i.id))].slice(0, 120);
+      const fresh = new Map<number, Product>();
+      for (let k = 0; k < ids.length; k += 6) {
+        const got = await Promise.all(ids.slice(k, k + 6).map((id) => api.product(id).catch(() => null)));
+        got.forEach((p, j) => p && fresh.set(ids[k + j], p));
+        if (!alive) return;
+      }
+      if (alive && fresh.size) useFavorites.getState().refreshProducts(fresh);
+    })();
+    return () => {
+      alive = false;
+    };
+    // once per screen open / account (not on every favourite toggle)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceKey]);
 
   const startLeaving = useCallback((p: Product) => setLeaving((s) => new Set(s).add(p.id)), []);
   const remove = (p: Product) => {

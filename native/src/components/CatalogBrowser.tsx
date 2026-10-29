@@ -179,6 +179,15 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
     load(1, "replace");
   }, [f.version, needMeta, load]);
 
+  // signed in / out / another price type: the list again (a guest's list has no wholesale prices)
+  const accountKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
+  const seenAccount = useRef(accountKey);
+  useEffect(() => {
+    if (seenAccount.current === accountKey) return;
+    seenAccount.current = accountKey;
+    if (!needMeta) load(1, "refresh");
+  }, [accountKey, needMeta, load]);
+
   const active = effectivePriceType(cart, customer);
   // lookups built once per change instead of scanning arrays for every card
   const inCartMap = useMemo(() => new Map(cart.map((x) => [x.cartKey, x.quantity])), [cart]);

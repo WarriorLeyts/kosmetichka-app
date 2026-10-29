@@ -7,6 +7,18 @@
 import { Platform } from "react-native";
 
 /** the app: the site's address; the browser version is served by the site itself → same origin */
+/**
+ * A picked photo / file for FormData. Phones: React Native's {uri, name, type}. Browser: FormData can't
+ * take that object (it would send the text «[object Object]»), so the file is read into a real File.
+ */
+export async function formFile(uri: string, name: string, type: string): Promise<Blob> {
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(uri)).blob();
+    return typeof File !== "undefined" ? new File([blob], name, { type: blob.type || type }) : blob;
+  }
+  return { uri, name, type } as unknown as Blob;
+}
+
 export const BASE_URL = Platform.OS === "web" ? "" : "https://kosmetichka-opt.ru";
 
 export class ApiError extends Error {
@@ -101,7 +113,9 @@ export function chatFileUrl(url: unknown): string | null {
 
 /** https only (no cleartext http, no custom schemes) for anything opened in the in-app browser */
 export function safeOpenUrl(path?: string | null): string | null {
-  const u = imageUrl(path);
+  let u = imageUrl(path);
+  // the admin site: our own paths are relative ("/api/1c/…") — the page's https origin in front
+  if (u && u.startsWith("/") && !u.startsWith("//") && Platform.OS === "web" && typeof location !== "undefined") u = location.origin + u;
   return u && u.startsWith("https://") ? u : null;
 }
 
@@ -110,7 +124,7 @@ export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: st
 /** photo / video / file for chats (site endpoint /api/uploads/chat accepts staff cookies) */
 export async function uploadChat(file: { uri: string; name: string; mime: string }): Promise<ChatUpload> {
   const form = new FormData();
-  form.append("file", { uri: file.uri, name: file.name, type: file.mime } as unknown as Blob);
+  form.append("file", await formFile(file.uri, file.name, file.mime), file.name);
   // until the site's attachments update is live the server answers only { url } (photos)
   const data = await request<Partial<ChatUpload> & { url: string }>("/api/uploads/chat", { method: "POST", body: form });
   return { url: data.url, kind: data.kind ?? "img", name: data.name ?? file.name, size: data.size ?? 0, mime: data.mime ?? file.mime };

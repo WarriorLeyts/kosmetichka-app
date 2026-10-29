@@ -222,7 +222,9 @@ export default function OrderScreen() {
       ]);
       return;
     }
-    const card = JSON.stringify({ _t: "product", id: product.id, name: variant ? `${product.name} (${variant.name})` : product.name, price: product.price, imagePath: product.imagePath });
+    // the price this customer would pay (his type / the order's prices), not the catalogue's retail one
+    const price = Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price);
+    const card = JSON.stringify({ _t: "product", id: product.id, name: variant ? `${product.name} (${variant.name})` : product.name, price, imagePath: product.imagePath });
     try {
       await post(`/api/admin/orders/${orderId}/customer-messages`, { text: card });
       setChatKey((k) => k + 1);
@@ -303,7 +305,13 @@ export default function OrderScreen() {
             <Text style={{ color: "#16A34A", fontWeight: "600", flex: 1 }}>Клиент подтвердил заказ — можно нажать «Заказ оформлен»</Text>
           </View>
         ) : null}
-        {actions.length ? (
+        {actions.length && edit ? (
+          // unsaved changes of the items: the status can't move until they are saved or cancelled
+          <View style={[styles.note, { backgroundColor: "rgba(245,158,11,0.14)" }]}>
+            <Ionicons name="create-outline" size={18} color="#B45309" />
+            <Text style={{ color: "#B45309", fontWeight: "600", flex: 1 }}>Сохраните или отмените изменения состава — потом смените статус</Text>
+          </View>
+        ) : actions.length ? (
           <View style={styles.actions}>
             {actions.map((a) => (
               <ActionButton key={a.to} label={a.label} kind={a.kind} loading={busy === a.to} onPress={() => changeStatus(a.to, a.label)} />

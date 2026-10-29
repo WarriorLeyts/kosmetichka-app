@@ -10,6 +10,18 @@ import type {
 } from "./types";
 
 // in the phone apps — the site's address; on the website (this app built for the browser) — the same origin
+/**
+ * A picked photo / file for FormData. Phones: React Native's {uri, name, type}. Browser: FormData can't
+ * take that object (it would send the text «[object Object]»), so the file is read into a real File.
+ */
+export async function formFile(uri: string, name: string, type: string): Promise<Blob> {
+  if (Platform.OS === "web") {
+    const blob = await (await fetch(uri)).blob();
+    return typeof File !== "undefined" ? new File([blob], name, { type: blob.type || type }) : blob;
+  }
+  return { uri, name, type } as unknown as Blob;
+}
+
 export const BASE_URL = Platform.OS === "web" ? "" : "https://kosmetichka-opt.ru";
 
 export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: string; size: number; mime: string };
@@ -300,7 +312,7 @@ export const api = {
   /** photo / video / file for the manager chat (site endpoint /api/uploads/chat, same cookie login) */
   async uploadChat(file: { uri: string; name: string; mime: string }): Promise<ChatUpload> {
     const form = new FormData();
-    form.append("file", { uri: file.uri, name: file.name, type: file.mime } as unknown as Blob);
+    form.append("file", await formFile(file.uri, file.name, file.mime), file.name);
     let res: Response;
     try {
       res = await fetch(BASE_URL + "/api/uploads/chat", { method: "POST", body: form, credentials: "include", headers: { Accept: "application/json" } });

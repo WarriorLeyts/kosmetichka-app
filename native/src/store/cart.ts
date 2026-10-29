@@ -40,6 +40,12 @@ function slim(p: Product): Product {
   };
 }
 
+/** fresh product data, but a price the card doesn't have (a guest's catalogue hides wholesale) keeps the known one */
+function withPrices(fresh: Product, known: Product): Product {
+  const keep = (k: "retailPrice" | "discountPrice" | "wholesalePrice" | "bigWholesalePrice") => (Number(fresh[k] ?? 0) > 0 ? fresh[k] : known[k]);
+  return { ...fresh, retailPrice: keep("retailPrice"), discountPrice: keep("discountPrice"), wholesalePrice: keep("wholesalePrice"), bigWholesalePrice: keep("bigWholesalePrice") };
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -56,7 +62,7 @@ export const useCartStore = create<CartState>()(
         const existing = items.find((i) => i.cartKey === key);
         if (existing) {
           // refresh prices/stock from the latest product data, never above the stock
-          set({ items: items.map((i) => (i.cartKey === key ? { ...i, ...slim(product), quantity: Math.min(cap, i.quantity + step) } : i)) });
+          set({ items: items.map((i) => (i.cartKey === key ? { ...i, ...withPrices(slim(product), i), quantity: Math.min(cap, i.quantity + step) } : i)) });
         } else {
           set({ items: [...items, { ...slim(product), cartKey: key, quantity: Math.min(cap, Math.max(min, step)) }] });
         }

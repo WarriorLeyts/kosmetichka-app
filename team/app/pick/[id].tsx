@@ -13,7 +13,7 @@ import { afterSheet, pickFile } from "@/components/chat/Attach";
 import { Scanner } from "@/components/Scanner";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { useLoad } from "@/useLoad";
-import { get, imageUrl, post, request } from "@/api";
+import { formFile, get, imageUrl, post, request } from "@/api";
 import { money } from "@/format";
 import { useIOS } from "@/ios";
 import { CHECK_LABELS } from "@/orderStatus";
@@ -23,7 +23,7 @@ import { StockLine } from "@/components/StockLine";
 
 type Code = "ok" | "out_of_stock" | "expired" | "bad_condition" | "insufficient_qty";
 const CODES: Code[] = ["ok", "out_of_stock", "expired", "bad_condition", "insufficient_qty"];
-type State = { statuses: Code[]; statusQtys: Partial<Record<Code, string>>; availableQty: string; factQty: string; note: string; photos: string[]; uploading: boolean };
+type State = { statuses: Code[]; statusQtys: Partial<Record<Code, string>>; availableQty: string; factQty: string; note: string; photos: string[]; uploading: boolean; /** the line's quantity the marks were made for */ planned?: number };
 
 function qtysFrom(raw: string | null | undefined): Partial<Record<Code, string>> {
   if (!raw) return {};
@@ -72,9 +72,14 @@ export default function Pick() {
     setItems((prev) => {
     const s: Record<number, State> = { ...prev };
     for (const it of o.items) {
+      // keep local work (but take photos uploaded meanwhile) — unless the line's quantity changed meanwhile
+      // (the manager edited it / added from the chat): then the marks were for another quantity → check again
+      if (prev[it.id] && (prev[it.id].planned ?? it.quantity) === it.quantity) {
+        s[it.id] = { ...prev[it.id], planned: it.quantity, photos: Array.from(new Set([...prev[it.id].photos, ...it.photos.map((p) => p.url)])) };
+        continue;
+      }
       if (prev[it.id]) {
-        // keep local work, but take photos uploaded meanwhile
-        s[it.id] = { ...prev[it.id], photos: Array.from(new Set([...prev[it.id].photos, ...it.photos.map((p) => p.url)])) };
+        s[it.id] = { statuses: [], statusQtys: {}, availableQty: "", factQty: "", note: prev[it.id].note, photos: Array.from(new Set([...prev[it.id].photos, ...it.photos.map((p) => p.url)])), uploading: false, planned: it.quantity };
         continue;
       }
       s[it.id] = {
@@ -85,6 +90,7 @@ export default function Pick() {
         note: it.check?.note ?? "",
         photos: it.photos.map((p) => p.url),
         uploading: false,
+        planned: it.quantity,
       };
     }
     return s;
@@ -146,7 +152,8 @@ export default function Pick() {
       // JPEG of a sensible size (iPhone photos can be HEIC and 10+ MB)
       const jpg = await ImageManipulator.manipulateAsync(f.uri, [{ resize: { width: 1600 } }], { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG });
       const form = new FormData();
-      form.append("file", { uri: jpg.uri, name: `item-${itemId}-${Date.now()}.jpg`, type: "image/jpeg" } as unknown as Blob);
+      const name = `item-${itemId}-${Date.now()}.jpg`;
+      form.append("file", await formFile(jpg.uri, name, "image/jpeg"), name);
       form.append("orderItemId", String(itemId));
       const r = await request<{ photo: { url: string } }>("/api/picker/photos", { method: "POST", body: form });
       upd(itemId, (s) => ({ ...s, photos: [...s.photos, r.photo.url], uploading: false }));
@@ -163,6 +170,16 @@ export default function Pick() {
     if (!o || submittingRef.current) return;
     if (!all) {
       Alert.alert("Проверены не все позиции", `Отмечено ${checked} из ${o.items.length}.`);
+      return;
+    }
+    // «Не хватает» needs the number that is there — without it the full quantity would stay in the order
+    const noFact = o.items.find((i) => {
+      const s = items[i.id];
+      return s?.statuses.includes("insufficient_qty") && !(Number(s.availableQty) >= 0 && s.availableQty.trim() !== "");
+    });
+    if (noFact) {
+      setHl(noFact.id);
+      Alert.alert("Укажите, сколько есть", `«${noFact.productName}»: отмечено «Не хватает» — впишите, сколько штук есть в наличии.`);
       return;
     }
     // two quick taps would send the check twice (the second one fails: the order already left assembly)

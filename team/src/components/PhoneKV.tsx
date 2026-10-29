@@ -4,7 +4,9 @@ import { KV } from "./kit";
 
 /** 8 900 123-45-67 / +7 (900) … / 9001234567 → 79001234567 (for wa.me); null when it isn't a phone */
 export function waNumber(phone: string | null | undefined): string | null {
-  let d = (phone ?? "").replace(/\D/g, "");
+  // «доб. 12» / «ext 12» is not part of the number
+  let d = (phone ?? "").split(/доб|ext|#|,/i)[0].replace(/\D/g, "");
+  if (d.length > 11 && /^[78]/.test(d)) d = d.slice(0, 11);
   if (d.length === 11 && d.startsWith("8")) d = "7" + d.slice(1);
   if (d.length === 10) d = "7" + d;
   return d.length >= 10 && d.length <= 15 ? d : null;
@@ -14,7 +16,7 @@ export function waNumber(phone: string | null | undefined): string | null {
 export function PhoneKV({ phone }: { phone: string | null | undefined }) {
   if (!phone?.trim()) return null;
   const wa = waNumber(phone);
-  const tel = phone.replace(/[^\d+]/g, "");
+  const tel = phone.split(/доб|ext|#|,/i)[0].replace(/[^\d+]/g, "");
   return (
     <View>
       <KV k="Телефон" v={phone} onPress={() => Linking.openURL(`tel:${tel}`).catch(() => {})} />

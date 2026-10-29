@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ListScreen } from "@/components/ListScreen";
@@ -18,14 +18,19 @@ export default function Customers() {
   // price type: Розница (with the discount card) / Опт / Крупный опт
   const [type, setType] = useState("");
   const [total, setTotal] = useState<number | null>(null);
+  // «Найдено» only from the answer for the current search / filters (a slower old one must not overwrite it)
+  const filterKey = `${q}|${status}|${type}`;
+  const latest = useRef(filterKey);
+  latest.current = filterKey;
   const list = usePaged<CustomerRow>(
     async (offset) => {
+      const mine = filterKey;
       const p = new URLSearchParams({ page: String(Math.floor(offset / 50) + 1) });
       if (q.trim()) p.set("q", q.trim());
       if (status) p.set("status", status);
       if (type) p.set("type", type);
       const r = await get<CustomersPage>(`/api/team/customers?${p}`);
-      setTotal(r.totalCount);
+      if (latest.current === mine) setTotal(r.totalCount);
       return { items: r.customers, hasMore: r.page < r.totalPages };
     },
     [q, status, type]

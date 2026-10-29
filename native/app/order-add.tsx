@@ -106,8 +106,11 @@ export default function OrderAddScreen() {
     setSending(true);
     try {
       // one card per product: the manager adds each with one tap
-      for (const l of picked) await api.requestProduct(orderId, { productId: l.product.id, quantity: l.quantity, variantName: l.variantName });
-      setPicked([]);
+      // each card that went out leaves the list, so «Готово» again after an error doesn't send it twice
+      for (const l of picked) {
+        await api.requestProduct(orderId, { productId: l.product.id, quantity: l.quantity, variantName: l.variantName });
+        setPicked((cur) => cur.filter((x) => x.key !== l.key));
+      }
       back();
     } catch (e) {
       Alert.alert("Не отправлено", e instanceof Error ? e.message : "Попробуйте ещё раз");
