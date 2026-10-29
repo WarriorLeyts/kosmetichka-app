@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
-import { effectivePriceType } from "@/pricing";
+import { catalogActive } from "@/components/Price";
 import { CatalogCard } from "@/components/CatalogCard";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { VIOLET_PINK } from "@/components/TabBar";
@@ -46,7 +46,7 @@ export default function Favorites() {
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const addToCart = useAddToCart();
-  const active = effectivePriceType(cart, customer);
+  const active = catalogActive(cart, customer);
   const [leaving, setLeaving] = useState<Set<number>>(new Set());
 
   const startLeaving = useCallback((p: Product) => setLeaving((s) => new Set(s).add(p.id)), []);

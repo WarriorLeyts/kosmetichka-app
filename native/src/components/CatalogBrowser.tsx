@@ -10,7 +10,7 @@ import { SORT_LABELS, useCatalogStore, type Sort } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
-import { effectivePriceType } from "@/pricing";
+import { catalogActive } from "@/components/Price";
 import { iosText, useIOS } from "@/ios";
 import { CatalogCard } from "@/components/CatalogCard";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -179,7 +179,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
     load(1, "replace");
   }, [f.version, needMeta, load]);
 
-  const active = effectivePriceType(cart, customer);
+  const active = catalogActive(cart, customer);
   // lookups built once per change instead of scanning arrays for every card
   const inCartMap = useMemo(() => new Map(cart.map((x) => [x.cartKey, x.quantity])), [cart]);
   const favSet = useMemo(() => new Set(favorites.map((x) => x.id)), [favorites]);

@@ -13,7 +13,7 @@ import { topCategories, useCatalog, type Quick } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
-import { effectivePriceType } from "@/pricing";
+import { catalogActive } from "@/components/Price";
 import { ProductCard } from "@/components/ProductCard";
 import { tap } from "@/components/ui";
 import { useAddToCart } from "@/useAddToCart";
@@ -56,7 +56,7 @@ export default function Home() {
     api.catalog({ page: 1, quick: ["new"], onlyStock: true }).then((r) => setFresh(r.products.slice(0, 12))).catch(() => {});
   }, [loadMeta]);
 
-  const active = effectivePriceType(cart, customer);
+  const active = catalogActive(cart, customer);
   const dark = mode === "dark";
   const iconColor = dark ? "#E7D9FF" : BRAND_VIOLET;
   const glass = dark ? styles.glassDark : styles.glassLight;
