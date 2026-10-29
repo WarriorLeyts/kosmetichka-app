@@ -310,12 +310,13 @@ export default function ProductScreen() {
           <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#FDF2F8" }]}>
             {rows.map((r, i) => (
               <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
-                <Text numberOfLines={1} style={{ fontSize: 13, color: PRICE_COLORS[i] ?? "#6B5A7B" }}>
+                <Text numberOfLines={1} style={{ fontSize: 13, color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B" }}>
                   {r.label}
                 </Text>
-                <FitText minimumFontScale={0.6} style={{ fontSize: 22, fontWeight: "700", color: PRICE_COLORS[i] ?? "#2A1A3A" }}>
+                <FitText minimumFontScale={0.6} style={{ fontSize: rows.length >= 3 ? 19 : 22, fontWeight: "700", color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A" }}>
                   {money(r.value)}
                 </FitText>
+                {r.hint ? <Text numberOfLines={1} style={{ fontSize: 11, color: "#8A7A9B", marginTop: 1 }}>{r.hint}</Text> : null}
               </View>
             ))}
           </View>
@@ -323,13 +324,6 @@ export default function ProductScreen() {
             <Pressable onPress={() => router.push("/login")} hitSlop={6} style={{ marginTop: 10 }}>
               <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Войдите, чтобы увидеть оптовые цены</Text>
             </Pressable>
-          ) : null}
-          {customer?.priceType === "wholesale" ? (
-            // «Опт»: the price depends on the order sum (lib/pricing.ts cartPriceTier)
-            <Text style={{ color: c.secondary, fontSize: 13, marginTop: 8, lineHeight: 18 }}>
-              Опт — при заказе от 5 000 ₽, крупный опт — от 50 000 ₽. Заказ меньше 5 000 ₽ — по скидочной цене
-              {Number(product.discountPrice ?? product.retailPrice ?? 0) > 0 ? ` ${money(Number(product.discountPrice ?? product.retailPrice))}` : ""}.
-            </Text>
           ) : null}
           <View style={{ marginTop: 10, gap: 3 }}>
             {min > 1 ? <Text style={{ color: VIOLET, fontSize: 14, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}

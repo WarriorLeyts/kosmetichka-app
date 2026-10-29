@@ -109,12 +109,12 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
         {rows.map((r, i) => (
           <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
-            <FitText minimumFontScale={0.55} style={[styles.priceLabel, { color: PRICE_COLORS[i] ?? "#6B5A7B" }]}>
+            <FitText minimumFontScale={0.55} style={[styles.priceLabel, { color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B" }]}>
               {r.label}
             </FitText>
             <FitText
               minimumFontScale={0.6}
-              style={[styles.priceValue, { color: PRICE_COLORS[i] ?? "#2A1A3A", fontSize: rows.length >= 3 ? 16 : 19 }]}
+              style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: rows.length >= 3 ? 16 : 19 }]}
             >
               {money(r.value)}
             </FitText>
