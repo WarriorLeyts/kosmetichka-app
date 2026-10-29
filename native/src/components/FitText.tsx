@@ -39,16 +39,23 @@ function FitTextWeb({ minimumFontScale = 0.5, style, onLayout, children, ...rest
     const el = ref.current;
     if (!el) return;
     const min = base * minimumFontScale;
-    // scrollWidth / clientWidth are whole pixels: a text 0.4 px too wide «fits» by them but is cut with «…»,
-    // so the text's real width is measured (a range over it) against the box's
+    // the text's natural width, measured off-screen in the same font: scrollWidth is whole pixels and a range
+    // over an «…»-cut text gives the cut width, so a text 0.4 px too wide looked like it fitted
     const box = el.getBoundingClientRect().width;
-    let text = el.scrollWidth;
+    let text = el.scrollWidth > el.clientWidth ? el.scrollWidth : 0;
     try {
-      const r = document.createRange();
-      r.selectNodeContents(el);
-      text = Math.max(r.getBoundingClientRect().width, el.scrollWidth > el.clientWidth ? el.scrollWidth : 0);
+      const cs = getComputedStyle(el);
+      const probe = document.createElement("span");
+      probe.textContent = el.textContent ?? "";
+      probe.style.cssText = "position:absolute;visibility:hidden;white-space:pre;left:-9999px;top:0";
+      probe.style.font = cs.font;
+      probe.style.letterSpacing = cs.letterSpacing;
+      probe.style.fontVariantNumeric = cs.fontVariantNumeric;
+      document.body.appendChild(probe);
+      text = Math.max(text, probe.getBoundingClientRect().width);
+      probe.remove();
     } catch {
-      /* old browser: whole pixels */
+      /* whole pixels then */
     }
     if (box > 0 && text > box + 0.1 && size > min + 0.25) {
       setSize(Math.max(min, Math.floor(size * (box / text) * 0.98 * 4) / 4));
