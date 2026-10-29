@@ -32,6 +32,8 @@ type Props = {
   /** variants are being checked */
   picking?: boolean;
   onPickStep?: (p: Product, dir: 1 | -1) => void;
+  /** false («Избранное»): no «− n +» of the cart quantity — the card only adds to the cart / shows «В корзине · N шт.» */
+  cartStepper?: boolean;
 };
 
 // price columns: 1st pink, 2nd violet, 3rd dark (brand colors from the project)
@@ -44,7 +46,7 @@ const STOCK = {
 };
 
 /** Product card for the iOS-style catalog grid (fixed-height blocks keep rows aligned). */
-function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite, pickMode, picked = 0, picking, onPickStep }: Props) {
+function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite, pickMode, picked = 0, picking, onPickStep, cartStepper = true }: Props) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const img = imageUrl(product.images?.[0]?.path, 480);
@@ -123,8 +125,26 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       <View style={{ flex: 1 }} />
       {pickMode && picked > 0 ? (
         <PickRow product={product} qty={picked} out={out} dark={dark} label={c.label} onStep={onPickStep} />
-      ) : !pickMode && inCart > 0 && !out ? (
+      ) : !pickMode && inCart > 0 && !out && cartStepper ? (
         <QtyRow product={product} qty={inCart} dark={dark} label={c.label} />
+      ) : !pickMode && inCart > 0 && !out ? (
+        // «Избранное»: the cart quantity is changed in the cart, not here
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`В корзине ${inCart} шт., перейти в корзину`}
+          onPress={() => {
+            tap();
+            router.navigate("/cart");
+          }}
+          style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}
+        >
+          <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.button, { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}>
+            <Ionicons name="cart" size={18} color="#fff" />
+            <Text numberOfLines={1} style={styles.buttonText}>
+              В корзине · {inCart} шт.
+            </Text>
+          </LinearGradient>
+        </Pressable>
       ) : (
         <Pressable
           disabled={out || picking}
