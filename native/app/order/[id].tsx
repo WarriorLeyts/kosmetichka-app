@@ -569,10 +569,16 @@ export default function OrderScreen() {
 
           {/* the manager collects the order: he calls about the payment and the delivery */}
           {!needsConfirm && (order.status === "assembly" || order.status === "consultation" || order.status === "payment") ? (
-            <View style={[panel, { flexDirection: "row", gap: 10, alignItems: "flex-start" }]}>
-              <Ionicons name="call-outline" size={20} color={VIOLET} />
-              <Text style={[iosText.subhead, { color: c.label, flex: 1 }]}>Менеджер свяжется с вами, чтобы договориться об оплате и доставке.</Text>
-            </View>
+            // a bright card: the customer must not miss it
+            <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.contactCard}>
+              <View style={styles.contactIcon}>
+                <Ionicons name="call" size={26} color={VIOLET} />
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={styles.contactTitle}>Менеджер свяжется с вами</Text>
+                <Text style={styles.contactText}>Договоримся об оплате и доставке. Держите телефон рядом.</Text>
+              </View>
+            </LinearGradient>
           ) : null}
 
           {/* items */}
@@ -1035,6 +1041,10 @@ function GradientButton({ title, icon, onPress, loading }: { title: string; icon
 }
 
 const styles = StyleSheet.create({
+  contactCard: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 22, padding: 18, marginTop: 14, boxShadow: "0 8px 22px rgba(139,61,255,0.35)" },
+  contactIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
+  contactTitle: { color: "#fff", fontSize: 19, fontWeight: "800" },
+  contactText: { color: "rgba(255,255,255,0.95)", fontSize: 16, lineHeight: 21, fontWeight: "500" },
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   headRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 8 },
