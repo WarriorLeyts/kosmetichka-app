@@ -95,8 +95,9 @@ export default function Cart() {
   const priceKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
   const refreshedFor = useRef("");
   useEffect(() => {
+    // signed out: the next sign-in refreshes again (the cart may have got a guest's prices meanwhile)
+    if (!customer) refreshedFor.current = "";
     if (!customer || items.length === 0 || refreshedFor.current === priceKey) return;
-    refreshedFor.current = priceKey;
     let alive = true;
     (async () => {
       const ids = [...new Set(items.map((i) => i.id))].slice(0, 120);
@@ -105,7 +106,9 @@ export default function Cart() {
         const got = await Promise.all(ids.slice(k, k + 6).map((id) => api.product(id).catch(() => null)));
         got.forEach((p, j) => p && fresh.set(ids[k + j], p));
       }
-      if (alive && fresh.size) useCartStore.getState().refreshProducts(fresh);
+      if (!alive) return; // a change of the cart meanwhile: the effect runs again
+      if (fresh.size) useCartStore.getState().refreshProducts(fresh);
+      refreshedFor.current = priceKey;
     })();
     return () => {
       alive = false;
@@ -223,7 +226,7 @@ export default function Cart() {
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim(),
-        { promocode: calc?.promo?.code ?? undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, pickup, address: pickup ? undefined : address.trim() || undefined }
+        { promocode: promoCode && calc?.promo?.code === promoCode ? promoCode : undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, pickup, address: pickup ? undefined : address.trim() || undefined }
       );
       clear();
       setPromoCode(null);

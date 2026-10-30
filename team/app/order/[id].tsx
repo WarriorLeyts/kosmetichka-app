@@ -193,7 +193,14 @@ export default function OrderScreen() {
     setBusy("save");
     try {
       const res = await put<{ promoWarning?: string; loyaltyWarning?: string }>(`/api/admin/orders/${orderId}/items`, {
-        items: edit.filter((d) => d.id && !d.removed).map((d) => ({ id: d.id, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
+        // only the lines changed here: a line someone else changed meanwhile (e.g. «Добавить в заказ» from the chat) keeps that
+        items: edit
+          .filter((d) => {
+            if (!d.id || d.removed) return false;
+            const was = o.items.find((i) => i.id === d.id);
+            return !was || was.quantity !== d.quantity || (was.variantName ?? null) !== (d.variantName ?? null);
+          })
+          .map((d) => ({ id: d.id, quantity: Math.max(1, d.quantity), price: d.price, variantName: d.variantName, variantImageUrl: d.variantImageUrl })),
         removeIds: edit.filter((d) => d.id && d.removed).map((d) => d.id as number),
         newItems: edit
           .filter((d) => !d.id && !d.removed)

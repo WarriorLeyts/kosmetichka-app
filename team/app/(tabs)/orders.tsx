@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,14 +40,19 @@ export default function Orders() {
     if (params.customer !== undefined) setQ(params.customer);
   }, [params.status, params.all, params.customer]);
 
+  // the counters only from the answer for the current filters (a slower old one must not overwrite them)
+  const filterKey = `${status}|${allDates}|${q}`;
+  const latest = useRef(filterKey);
+  latest.current = filterKey;
   const list = usePaged<OrderListItem>(
     async (offset) => {
+      const mine = filterKey;
       const p = new URLSearchParams({ page: String(Math.floor(offset / 50) + 1) });
       if (allDates) p.set("date", "");
       if (status) p.set("status", status);
       if (q.trim()) p.set("customer", q.trim());
       const r = await get<OrdersPage>(`/api/team/orders?${p}`);
-      setMeta(r);
+      if (latest.current === mine) setMeta(r);
       return { items: r.orders, hasMore: r.page < r.totalPages };
     },
     [status, allDates, q],

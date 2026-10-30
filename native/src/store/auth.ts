@@ -195,6 +195,8 @@ export const useAuth = create<AuthState>((set, get) => ({
     clearLocalAccountData();
     saveCustomer(null);
     await AsyncStorage.removeItem(OWNER_KEY).catch(() => {});
+    // a refresh started while the server logout was running must not bring the account back
+    ++epoch;
     set({ customer: null, loading: false });
   },
 

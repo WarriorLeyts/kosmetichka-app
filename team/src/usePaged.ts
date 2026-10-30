@@ -49,7 +49,12 @@ export function usePaged<T>(
     try {
       const r = await fp(items.length);
       if (my !== seq.current) return;
-      setItems((p) => [...p, ...r.items]);
+      // new rows added on top meanwhile shift the pages: rows already shown are not added twice
+      setItems((p) => {
+        const key = (x: T) => (x as { id?: number }).id;
+        const have = new Set(p.map(key));
+        return [...p, ...r.items.filter((x) => key(x) === undefined || !have.has(key(x)))];
+      });
       setHasMore(r.hasMore);
     } catch {
       /* keep the list; the user can scroll again */

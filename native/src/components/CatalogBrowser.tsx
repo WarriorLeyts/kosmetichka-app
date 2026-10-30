@@ -180,13 +180,20 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   }, [f.version, needMeta, load]);
 
   // signed in / out / another price type: the list again (a guest's list has no wholesale prices)
+  // (only once the account is known: the start of the app sets the saved account — not a change)
+  const authLoading = useAuth((s) => s.loading);
   const accountKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
-  const seenAccount = useRef(accountKey);
+  const seenAccount = useRef<string | null>(authLoading ? null : accountKey);
   useEffect(() => {
+    if (authLoading) return;
+    if (seenAccount.current === null) {
+      seenAccount.current = accountKey;
+      return;
+    }
     if (seenAccount.current === accountKey) return;
     seenAccount.current = accountKey;
     if (!needMeta) load(1, "refresh");
-  }, [accountKey, needMeta, load]);
+  }, [accountKey, authLoading, needMeta, load]);
 
   const active = effectivePriceType(cart, customer);
   // lookups built once per change instead of scanning arrays for every card
@@ -368,7 +375,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           removeClippedSubviews={Platform.OS === "android"}
           onEndReachedThreshold={1.2}
           onEndReached={() => {
-            if (!loading && !busy && hasMore && products.length > 0) load(page + 1, "append");
+            // not during a refresh (after login): the next page would cancel the list being reloaded
+            if (!loading && !refreshing && !busy && hasMore && products.length > 0) load(page + 1, "append");
           }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor="#8b3dff" />}
           ListEmptyComponent={

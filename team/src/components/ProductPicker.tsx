@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FlatList, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Alert, FlatList, Modal, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -57,10 +57,12 @@ export function ProductPicker({
         try {
           list = (await get<{ variants: Variant[] }>(`/api/admin/products/${row.id}/variants`)).variants ?? [];
         } catch {
-          list = [];
-        } finally {
+          // unknown whether it has shades / sizes: not added without the choice, not remembered as «none»
           setBusyId(null);
+          Alert.alert("Не получилось загрузить варианты", "Проверьте интернет и нажмите на товар ещё раз.");
+          return;
         }
+        setBusyId(null);
         cache.current.set(row.id, list);
       }
       if (list.length === 0) onPick({ product: row, variant: null });
