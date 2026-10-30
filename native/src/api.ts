@@ -22,6 +22,8 @@ export async function formFile(uri: string, name: string, type: string): Promise
   return { uri, name, type } as unknown as Blob;
 }
 
+const ordersInFlight = new Map<string, { at: number; pending: boolean; promise: Promise<OrdersPage> }>();
+
 export const BASE_URL = Platform.OS === "web" ? "" : "https://kosmetichka-opt.ru";
 
 export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: string; size: number; mime: string };
@@ -276,7 +278,21 @@ export const api = {
     const p = new URLSearchParams();
     p.set("page", String(page));
     if (status) p.set("status", status);
-    return request(`/api/mobile/orders?${p.toString()}`);
+    const url = `/api/mobile/orders?${p.toString()}`;
+    // the same list asked again while it is loading / within a second → the same answer (no request storm)
+    const now = Date.now();
+    const known = ordersInFlight.get(url);
+    if (known && (known.pending || now - known.at < 1000)) return known.promise;
+    const entry = { at: now, pending: true, promise: request<OrdersPage>(url) };
+    entry.promise.then(
+      () => {
+        entry.pending = false;
+        entry.at = Date.now();
+      },
+      () => ordersInFlight.delete(url)
+    );
+    ordersInFlight.set(url, entry);
+    return entry.promise;
   },
   order(id: number | string): Promise<Order> {
     return request(`/api/mobile/orders/${seg(id)}`);
