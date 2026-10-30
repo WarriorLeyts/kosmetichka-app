@@ -13,7 +13,7 @@ import { money, plural } from "@/format";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
-  cartPriceTier, nextPriceTier, priceFor, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
+  cartPriceTier, priceFor, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
 } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -23,6 +23,7 @@ import type { CartItem, Product } from "@/types";
 import { RETAIL_ENABLED } from "@/siteMode";
 import { FitText } from "@/components/FitText";
 import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
+import { TierProgress } from "@/components/TierProgress";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -181,7 +182,6 @@ export default function Cart() {
   // «Опт»: the price by the order sum — less than 5 000 ₽ discount, from 5 000 wholesale, from 50 000 big wholesale
   const active = cartPriceTier(items, customer);
   const total = rawCartTotal(items, active);
-  const next = nextPriceTier(items, customer);
   const wholesaleCustomer = resolveCustomerPriceType(customer) === "wholesale";
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
@@ -264,26 +264,6 @@ export default function Cart() {
       setLoading(false);
     }
   };
-
-  // «Опт»: how much more to the next price and what it saves on what is already in the cart
-  let banner: { icon: keyof typeof Ionicons.glyphMap; node: ReactNode } | null = null;
-  if (customer && next && next.need > 0) {
-    banner = {
-      icon: next.type === "big_wholesale" ? "trending-up" : "pricetag",
-      node:
-        next.type === "wholesale" ? (
-          <>
-            Сейчас заказ по скидочной цене. Добавьте товаров ещё на <Text style={styles.bannerSum}>{money(next.need)}</Text> — будет оптовая цена
-            {next.save > 0 ? <>, экономия <Text style={styles.bannerSum}>{money(next.save)}</Text></> : null}
-          </>
-        ) : (
-          <>
-            До крупного опта — ещё <Text style={styles.bannerSum}>{money(next.need)}</Text>
-            {next.save > 0 ? <>, экономия <Text style={styles.bannerSum}>{money(next.save)}</Text></> : null}
-          </>
-        ),
-    };
-  }
 
   const renderItem = ({ item }: { item: CartItem }) => {
     const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
@@ -369,14 +349,6 @@ export default function Cart() {
         ListHeaderComponent={
           <View style={styles.wrap}>
             <BrandHeader title="Корзина" />
-            {banner ? (
-              <View style={[styles.banner, { backgroundColor: pinkSoft }]}>
-                <View style={[styles.bannerIcon, { backgroundColor: c.cell }]}>
-                  <Ionicons name={banner.icon} size={24} color={VIOLET} />
-                </View>
-                <Text style={[styles.bannerText, { color: c.label }]}>{banner.node}</Text>
-              </View>
-            ) : null}
           </View>
         }
         ListFooterComponent={
@@ -457,6 +429,9 @@ export default function Cart() {
               />
             ) : null}
             {customer && calc?.bonuses && RETAIL_ENABLED ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
+
+            {/* «Опт»: the price by the order sum — how much more to the next price, right above «Оформить заказ» */}
+            <TierProgress items={items} customer={customer} dark={dark} />
 
             <View style={[styles.summary, { backgroundColor: pinkSoft }]}>
               <View style={styles.sumRow}>
@@ -555,10 +530,6 @@ const styles = StyleSheet.create({
   card: { borderRadius: 22 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   pickup: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12, marginTop: 14 },
-  banner: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 20, padding: 12, marginBottom: 12 },
-  bannerIcon: { width: 48, height: 48, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  bannerText: { flex: 1, fontSize: 16, lineHeight: 22 },
-  bannerSum: { color: VIOLET, fontWeight: "700" },
   item: { flexDirection: "row", gap: 14, padding: 14, marginBottom: 12 },
   photo: { width: 112, height: 132, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   brand: { fontSize: 13, letterSpacing: 0.3, marginBottom: 3 },
