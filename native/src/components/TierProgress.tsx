@@ -7,12 +7,9 @@ import { FitText } from "./FitText";
 const VIOLET = "#8b3dff";
 const GREEN = "#16A34A";
 
-/** PREVIEW ONLY: «?v=b» shows variant B (steps above the bar). */
-const STEPS = typeof location !== "undefined" && /[?&]v=b\b/.test(location.search);
-
 /**
- * «Опт» customers, above «Оформить заказ»: the price goes by the order sum. One short line (how much more
- * to the next price), a bar to the threshold, the saving below. Reached → green.
+ * «Опт» customers, above «Оформить заказ»: the price goes by the order sum. Steps «Скидка → Опт → Кр. опт»
+ * (where the customer is), one short line (how much more to the next price), a bar, the saving below. Reached → green.
  */
 export function TierProgress({ items, customer, dark }: { items: { quantity: number }[]; customer: { priceType?: string | null } | null; dark: boolean }) {
   if (!customer || resolveCustomerPriceType(customer) !== "wholesale" || items.length === 0) return null;
@@ -37,7 +34,7 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
 
   return (
     <View style={[styles.card, { backgroundColor: bg }]} accessibilityRole="summary">
-      {STEPS ? <Steps tier={tier} dark={dark} /> : null}
+      <Steps tier={tier} dark={dark} />
 
       {reached ? (
         <View style={styles.row}>
@@ -71,7 +68,7 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
   );
 }
 
-/** Variant B: «Скидка → Опт → Крупный опт», the current step highlighted. */
+/** «Скидка → Опт → Крупный опт», the current step highlighted, the passed ones ticked. */
 function Steps({ tier, dark }: { tier: PriceType; dark: boolean }) {
   const steps: { t: PriceType; name: string; from: string }[] = [
     { t: "discount", name: "Скидка", from: "до 5 000 ₽" },
