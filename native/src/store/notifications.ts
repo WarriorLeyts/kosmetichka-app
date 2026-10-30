@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { api } from "../api";
+import { api, forgetCalm } from "../api";
 
 /** Unread count for the bell dot; refreshed on screen focus, on app resume and when a push arrives. */
 type NotifState = {
@@ -13,11 +13,28 @@ type NotifState = {
 };
 
 let seq = 0;
+let lastBump = 0;
+let trailing: ReturnType<typeof setTimeout> | null = null;
 
 export const useNotifications = create<NotifState>((set) => ({
   unread: 0,
   pushTick: 0,
-  bump: () => set((st) => ({ pushTick: st.pushTick + 1 })),
+  // many hints at once → one reload a second at most (the open screens reload on each tick)
+  bump: () => {
+    const now = Date.now();
+    if (now - lastBump >= 1000) {
+      lastBump = now;
+      forgetCalm();
+      set((st) => ({ pushTick: st.pushTick + 1 }));
+    } else if (!trailing) {
+      trailing = setTimeout(() => {
+        trailing = null;
+        lastBump = Date.now();
+        forgetCalm();
+        set((st) => ({ pushTick: st.pushTick + 1 }));
+      }, 1000 - (now - lastBump));
+    }
+  },
   refresh: async () => {
     const my = ++seq;
     try {

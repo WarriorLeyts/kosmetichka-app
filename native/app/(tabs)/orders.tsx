@@ -18,6 +18,8 @@ import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
 import type { Order, OrdersPage } from "@/types";
 import { FitText } from "@/components/FitText";
+import { stormWatch } from "@/stormWatch";
+import { useTheme } from "@/theme";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -149,6 +151,8 @@ export default function Orders() {
   }, [customerId]);
 
   useEffect(() => {
+    // a loop that mounts this screen again and again is reported (see src/stormWatch.ts)
+    stormWatch("orders-mount", () => ({ customerId, status, pushTick: useNotifications.getState().pushTick, mode: useTheme.getState().mode }));
     if (customerId) load(1, "replace");
   }, [customerId, load]);
 

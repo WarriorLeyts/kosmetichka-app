@@ -22,7 +22,34 @@ export async function formFile(uri: string, name: string, type: string): Promise
   return { uri, name, type } as unknown as Blob;
 }
 
-const ordersInFlight = new Map<string, { at: number; pending: boolean; promise: Promise<OrdersPage> }>();
+/**
+ * Orders / one order / its chat: the same GET asked again while it is still loading, or within a second
+ * after, gets the same answer — whatever on the page asks again and again, at most one request a second
+ * goes to the site (a stuck screen once sent dozens a second and loaded the server).
+ */
+const calm = new Map<string, { at: number; pending: boolean; promise: Promise<unknown> }>();
+/** the site said an order changed: the next reads go to the site */
+export function forgetCalm() {
+  calm.clear();
+}
+function calmGet<T>(url: string): Promise<T> {
+  const now = Date.now();
+  const known = calm.get(url);
+  if (known && (known.pending || now - known.at < 1000)) return known.promise as Promise<T>;
+  const entry = { at: now, pending: true, promise: request<T>(url) as Promise<unknown> };
+  entry.promise.then(
+    () => {
+      entry.pending = false;
+      entry.at = Date.now();
+    },
+    () => {
+      if (calm.get(url) === entry) calm.delete(url);
+    }
+  );
+  calm.set(url, entry);
+  if (calm.size > 200) for (const [k, v] of calm) if (!v.pending && now - v.at > 5000) calm.delete(k);
+  return entry.promise as Promise<T>;
+}
 
 export const BASE_URL = Platform.OS === "web" ? "" : "https://kosmetichka-opt.ru";
 
@@ -40,6 +67,8 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // anything sent to the site (a message, a confirmation…) → the next reads are fresh
+  if (init.method && init.method !== "GET") calm.clear();
   let res: Response;
   try {
     res = await fetch(BASE_URL + path, {
@@ -278,24 +307,10 @@ export const api = {
     const p = new URLSearchParams();
     p.set("page", String(page));
     if (status) p.set("status", status);
-    const url = `/api/mobile/orders?${p.toString()}`;
-    // the same list asked again while it is loading / within a second → the same answer (no request storm)
-    const now = Date.now();
-    const known = ordersInFlight.get(url);
-    if (known && (known.pending || now - known.at < 1000)) return known.promise;
-    const entry = { at: now, pending: true, promise: request<OrdersPage>(url) };
-    entry.promise.then(
-      () => {
-        entry.pending = false;
-        entry.at = Date.now();
-      },
-      () => ordersInFlight.delete(url)
-    );
-    ordersInFlight.set(url, entry);
-    return entry.promise;
+    return calmGet<OrdersPage>(`/api/mobile/orders?${p.toString()}`);
   },
   order(id: number | string): Promise<Order> {
-    return request(`/api/mobile/orders/${seg(id)}`);
+    return calmGet<Order>(`/api/mobile/orders/${seg(id)}`);
   },
   /** customer changes the order: quantities, removed lines, added products (prices are set by the site) */
   editOrder(
@@ -323,7 +338,7 @@ export const api = {
     return request("/api/orders/status");
   },
   messages(orderId: number): Promise<{ messages: ChatMessage[] }> {
-    return request(`/api/orders/${seg(orderId)}/messages`);
+    return calmGet<{ messages: ChatMessage[] }>(`/api/orders/${seg(orderId)}/messages`);
   },
   /** photo / video / file for the manager chat (site endpoint /api/uploads/chat, same cookie login) */
   async uploadChat(file: { uri: string; name: string; mime: string }): Promise<ChatUpload> {

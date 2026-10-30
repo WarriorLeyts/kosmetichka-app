@@ -21,6 +21,7 @@ import { PageLayout } from "@/components/PageBackdrop";
 import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { DesktopHeader } from "@/components/DesktopHeader";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { stormWatch } from "@/stormWatch";
 import { useDesktop } from "@/useDesktop";
 
 installCrashReporter();
@@ -125,6 +126,14 @@ function AppRoot() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+  // the whole app mounting again and again (a loop) is reported with the theme / size (src/stormWatch.ts)
+  useEffect(() => {
+    stormWatch("root-mount", () => ({ mode: useTheme.getState().mode, desktop }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    stormWatch("theme-change", () => ({ mode }));
+  }, [mode]);
 
   // the system splash goes once the account is known and the launch animation has its first frame
   const [splashReady, setSplashReady] = useState(false);

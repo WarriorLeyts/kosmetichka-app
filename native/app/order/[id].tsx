@@ -5,6 +5,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
+import { stormWatch } from "@/stormWatch";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -256,6 +257,7 @@ export default function OrderScreen() {
   // a push arrived while this screen is open (manager wrote / changed the status): reload right away
   const pushTick = useNotifications((st) => st.pushTick);
   useEffect(() => {
+    stormWatch("order-reload", () => ({ orderId, pushTick }));
     if (pushTick === 0) return;
     loadMessages();
     if (!editingRef.current) loadOrder(true);
