@@ -23,6 +23,7 @@ import { DesktopHeader } from "@/components/DesktopHeader";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { stormWatch } from "@/stormWatch";
 import { useDesktop } from "@/useDesktop";
+import { titleForPath, usePageTitle } from "@/pageTitle";
 
 installCrashReporter();
 
@@ -106,6 +107,7 @@ function AppRoot() {
     };
   }, [customerId]);
   const pathname = usePathname();
+  usePageTitle(titleForPath(pathname));
   useEffect(() => {
     setCrashScreen(pathname);
   }, [pathname]);

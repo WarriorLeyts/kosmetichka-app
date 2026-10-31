@@ -28,6 +28,8 @@ import type { Product, Variant } from "@/types";
 import { FavHeart } from "@/components/FavHeart";
 import { takeSeed } from "@/productSeed";
 import { FitText } from "@/components/FitText";
+import { SafeImage } from "@/components/SafeImage";
+import { productTitle, usePageTitle } from "@/pageTitle";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -73,6 +75,7 @@ export default function ProductScreen() {
   const addToCart = useAddToCart();
 
   const [product, setProduct] = useState<Product | null>(() => takeSeed(id));
+  usePageTitle(productTitle(product?.name));
   const [variants, setVariants] = useState<Variant[]>([]);
   const [variantQty, setVariantQty] = useState<Record<number, number>>({});
   const [related, setRelated] = useState<Product[]>([]);
@@ -274,13 +277,14 @@ export default function ProductScreen() {
         onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / S))}
         renderItem={({ item, index }) => (
           <View style={{ width: S, height: S, alignItems: "center", justifyContent: "center" }}>
-            <Image
-              source={{ uri: item }}
+            <SafeImage
+              uri={item}
               placeholder={previews[index] ? { uri: previews[index]! } : undefined}
               placeholderContentFit="contain"
               style={{ width: S, height: S }}
               contentFit="contain"
               transition={150}
+              iconSize={56}
             />
           </View>
         )}

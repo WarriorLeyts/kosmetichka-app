@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -79,6 +79,8 @@ export default function Cart() {
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const bottomSpace = useTabBarSpace();
+  const listRef = useRef<FlatList<CartItem>>(null);
+  const [showJump, setShowJump] = useState(false);
   const customer = useAuth((s) => s.customer);
   // «Заберу в магазине» (the address field hides) or delivery to an address — not required, the manager calls
   const [pickup, setPickup] = useState(false);
@@ -345,9 +347,19 @@ export default function Cart() {
     );
   };
 
+  // a long cart: «Оформить заказ» is far below — a small bar above the tab bar takes the customer there
+  const onListScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+    const far = contentSize.height - (contentOffset.y + layoutMeasurement.height) > 520;
+    if (far !== showJump) setShowJump(far);
+  };
+
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
       <FlatList
+        ref={listRef}
+        onScroll={onListScroll}
+        scrollEventThrottle={100}
         data={items}
         keyExtractor={(i) => i.cartKey}
         renderItem={renderItem}
@@ -506,6 +518,22 @@ export default function Cart() {
           </View>
         }
       />
+      {showJump ? (
+        <Pressable
+          onPress={() => {
+            tap();
+            listRef.current?.scrollToEnd({ animated: true });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`К оформлению, итого ${money(total)}`}
+          style={[styles.jump, { bottom: bottomSpace + 6 }]}
+        >
+          <LinearGradient colors={[VIOLET, "#b832e0", PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.jumpInner}>
+            <Text style={styles.jumpText}>К оформлению · {money(total)}</Text>
+            <Ionicons name="arrow-down" size={18} color="#fff" />
+          </LinearGradient>
+        </Pressable>
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -553,6 +581,9 @@ const styles = StyleSheet.create({
   qty: { fontSize: 17, fontWeight: "600" },
   plus: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(139,61,255,0.35)" },
   stockHint: { fontSize: 12, marginTop: 6 },
+  jump: { position: "absolute", alignSelf: "center", borderRadius: 22, overflow: "hidden", boxShadow: "0 6px 18px rgba(120,40,200,0.35)" },
+  jumpInner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 18, height: 44 },
+  jumpText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   remove: { position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   clear: { flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start", paddingVertical: 10, paddingHorizontal: 4 },
   label: { fontSize: 16, fontWeight: "600", marginTop: 10, marginBottom: 8 },

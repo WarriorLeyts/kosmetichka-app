@@ -30,6 +30,7 @@ import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
 import { markChatSeen } from "@/unread";
+import { orderTitle, usePageTitle } from "@/pageTitle";
 import type { ChatMessage, LineChange, Order, Product, RemovedOrderItem, Variant } from "@/types";
 
 const VIOLET = "#8b3dff";
@@ -150,6 +151,7 @@ export default function OrderScreen() {
   const insets = useSafeAreaInsets();
   const repeat = useCartStore((s) => s.repeat);
   const [order, setOrder] = useState<Order | null>(orderCache.get(orderId) ?? null);
+  usePageTitle(orderTitle(order?.id));
   const [error, setError] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState(true);

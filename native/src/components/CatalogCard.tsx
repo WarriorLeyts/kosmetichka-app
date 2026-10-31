@@ -1,6 +1,5 @@
 import { memo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +16,7 @@ import type { Customer, Product } from "../types";
 import { FavHeart } from "./FavHeart";
 import { useCartStore } from "../store/cart";
 import { FitText } from "./FitText";
+import { SafeImage } from "./SafeImage";
 
 type Props = {
   product: Product;
@@ -69,7 +69,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
     >
       <View style={styles.photo}>
         {img ? (
-          <Image source={{ uri: img }} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} />
+          <SafeImage uri={img} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} />
         ) : (
           <Ionicons name="image-outline" size={34} color="#C7C7CC" />
         )}

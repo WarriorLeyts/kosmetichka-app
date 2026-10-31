@@ -1,6 +1,5 @@
 import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { Image } from "expo-image";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_GRADIENT } from "./GradientText";
@@ -14,6 +13,7 @@ import { tap } from "./ui";
 import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
 import { FavHeart } from "./FavHeart";
+import { SafeImage } from "./SafeImage";
 
 type Props = {
   product: Product;
@@ -40,7 +40,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
     >
       <View style={styles.imageWrap}>
         {img ? (
-          <Image source={{ uri: img }} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} />
+          <SafeImage uri={img} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} iconColor={colors.faint} />
         ) : (
           <Ionicons name="image-outline" size={34} color={colors.faint} />
         )}
