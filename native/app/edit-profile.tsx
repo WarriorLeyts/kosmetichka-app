@@ -90,9 +90,10 @@ export default function EditProfile() {
     );
   }
 
+  // functional updates: browser autofill changes several fields in one go (see register.tsx)
   const upd = (k: string) => (v: string) => {
-    setForm({ ...form, [k]: v });
-    if (errors[k]) setErrors({ ...errors, [k]: undefined });
+    setForm((prev) => (prev ? { ...prev, [k]: v } : prev));
+    setErrors((prev) => (prev[k] ? { ...prev, [k]: undefined } : prev));
   };
 
   const save = async () => {

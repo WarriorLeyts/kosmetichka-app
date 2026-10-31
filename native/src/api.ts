@@ -166,6 +166,10 @@ export const api = {
   homeStats(): Promise<{ totalProducts: number; totalBrands: number; totalCategories: number }> {
     return request("/api/mobile/home");
   },
+  /** several products as they are now, in one request (the cart); missing ones are no longer sold */
+  productsByIds(ids: number[]): Promise<{ products: Product[] }> {
+    return request(`/api/catalog/products?lite=1&ids=${ids.map((n) => Math.trunc(n)).join(",")}`);
+  },
   product(id: number | string): Promise<Product> {
     return request(`/api/products/${seg(id)}`);
   },

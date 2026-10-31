@@ -19,7 +19,8 @@ type CartState = {
   quantityOf: (cartKey: string) => number;
   /** Today's prices / stock for the products in the cart (e.g. added before signing in, when the site
    * showed only retail prices) — lines keep their quantity and variant. */
-  refreshProducts: (fresh: Map<number, Product>) => void;
+  /** `checked` — ids that were asked for: the ones missing from `fresh` are marked as no longer sold */
+  refreshProducts: (fresh: Map<number, Product>, checked?: Set<number>) => void;
 };
 
 /** Keep only what the cart needs — product objects from the API can be large. */
@@ -99,11 +100,16 @@ export const useCartStore = create<CartState>()(
       },
 
       remove: (cartKey) => set({ items: get().items.filter((i) => i.cartKey !== cartKey) }),
-      refreshProducts: (fresh) =>
+      refreshProducts: (fresh, checked) =>
         set({
           items: get().items.map((i) => {
             const p = fresh.get(i.id);
-            return p ? { ...i, ...slim(p), cartKey: i.cartKey, quantity: i.quantity } : i;
+            // asked about but not found: the product was removed from the catalogue
+            if (!p) return checked?.has(i.id) ? { ...i, gone: true } : i;
+            // today's stock: never more in the cart than the shop has (0 = out of stock, shown on the line)
+            const stock = typeof p.stock === "number" ? p.stock : null;
+            const quantity = stock !== null && stock > 0 ? Math.min(i.quantity, stock) : i.quantity;
+            return { ...i, ...withPrices(slim(p), i), cartKey: i.cartKey, quantity, gone: false };
           }),
         }),
       clear: () => set({ items: [] }),
@@ -159,3 +165,11 @@ export const useCartStore = create<CartState>()(
     }
   )
 );
+
+// Website, several tabs open: each tab kept its own copy of the cart and the last one to change it
+// overwrote the others. A change made in another tab (the browser's `storage` event) is taken here too.
+if (typeof window !== "undefined" && typeof window.addEventListener === "function" && typeof document !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "kosmetichka-cart") void useCartStore.persist.rehydrate();
+  });
+}

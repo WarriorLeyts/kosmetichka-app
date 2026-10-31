@@ -382,23 +382,15 @@ export default function OrderScreen() {
     setRepeating(true);
     try {
       const ids = [...new Set(order.items.map((i) => i.productId))];
-      const fresh = new Map<number, Product>();
-      let failed = 0;
-      await Promise.all(
-        ids.map((pid) =>
-          api
-            .product(pid)
-            .then((p) => {
-              fresh.set(pid, p);
-            })
-            .catch((e) => {
-              // 404 = product removed; other errors = network problem
-              if (!(e instanceof ApiError && e.status === 404)) failed++;
-            })
-        )
-      );
-      if (failed > 0 && fresh.size === 0) {
-        Alert.alert("Нет связи", "Не удалось получить актуальные цены. Попробуйте ещё раз.");
+      // one request for all products: either the answer is complete (a product missing from it is no
+      // longer sold) or there is no answer at all — a network failure was shown as «нет в наличии»
+      let fresh: Map<number, Product>;
+      try {
+        const parts: Product[] = [];
+        for (let k = 0; k < ids.length; k += 100) parts.push(...(await api.productsByIds(ids.slice(k, k + 100))).products);
+        fresh = new Map(parts.map((p) => [p.id, p]));
+      } catch {
+        Alert.alert("Нет связи", "Не удалось получить актуальные цены и наличие. Проверьте интернет и попробуйте ещё раз.");
         return;
       }
       const variantIds = new Map<string, Variant>();

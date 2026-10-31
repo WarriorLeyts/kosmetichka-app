@@ -102,9 +102,11 @@ export default function Register() {
   }, [cooldown]);
 
   // entered values are kept when the customer type changes (one shared form state)
+  // functional updates: browser autofill changes several fields in one go — with `{ ...f }` each
+  // change started from the same old form and the last one wiped the others
   const upd = (k: keyof typeof f) => (v: string) => {
-    setF({ ...f, [k]: v });
-    if (errors[k as keyof Errors]) setErrors({ ...errors, [k]: undefined });
+    setF((prev) => ({ ...prev, [k]: v }));
+    setErrors((prev) => (prev[k as keyof Errors] ? { ...prev, [k]: undefined } : prev));
   };
   const wholesale = priceType === "wholesale" || priceType === "big_wholesale";
 

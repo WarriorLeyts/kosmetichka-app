@@ -96,19 +96,17 @@ export default function Cart() {
   const priceKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
   const refreshedFor = useRef("");
   useEffect(() => {
-    // signed out: the next sign-in refreshes again (the cart may have got a guest's prices meanwhile)
-    if (!customer) refreshedFor.current = "";
-    if (!customer || items.length === 0 || refreshedFor.current === priceKey) return;
+    // also for guests: a product removed from the catalogue or out of stock shows up before checkout
+    // (a guest's answer has no wholesale prices — the cart keeps the ones it knows)
+    if (items.length === 0 || refreshedFor.current === priceKey) return;
     let alive = true;
     (async () => {
       const ids = [...new Set(items.map((i) => i.id))].slice(0, 120);
-      const fresh = new Map<number, Product>();
-      for (let k = 0; k < ids.length; k += 6) {
-        const got = await Promise.all(ids.slice(k, k + 6).map((id) => api.product(id).catch(() => null)));
-        got.forEach((p, j) => p && fresh.set(ids[k + j], p));
-      }
-      if (!alive) return; // a change of the cart meanwhile: the effect runs again
-      if (fresh.size) useCartStore.getState().refreshProducts(fresh);
+      // one request for the whole cart (it was one request per line — 120 for a big cart)
+      const got = await api.productsByIds(ids).catch(() => null);
+      if (!alive || !got) return; // a change of the cart meanwhile: the effect runs again; offline: next time
+      const fresh = new Map<number, Product>(got.products.map((p) => [p.id, p]));
+      useCartStore.getState().refreshProducts(fresh, new Set(ids));
       refreshedFor.current = priceKey;
     })();
     return () => {
@@ -223,6 +221,11 @@ export default function Cart() {
       // the latest cart from the store (not this render's copy), whole positive quantities only
       const lines = useCartStore.getState().items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0);
       if (lines.length === 0) return;
+      const blocked = lines.filter((i) => i.gone || i.stock === 0);
+      if (blocked.length) {
+        setError(`Нельзя заказать: ${blocked.map((i) => i.name).slice(0, 3).join(", ")}${blocked.length > 3 ? "…" : ""}. Удалите эти товары из корзины.`);
+        return;
+      }
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim(),
@@ -271,6 +274,8 @@ export default function Cart() {
     const min = Math.max(1, item.minOrderQty ?? 1);
     const stock = typeof item.stock === "number" && item.stock > 0 ? item.stock : null;
     const atMax = stock !== null && item.quantity >= stock;
+    // can't be ordered: removed from the catalogue, or none left
+    const unavailable = item.gone ? "Товар больше не продаётся — удалите его из корзины" : item.stock === 0 ? "Нет в наличии — удалите или дождитесь поступления" : null;
     const minus = () => {
       tap();
       const n = item.quantity - 1;
@@ -319,7 +324,11 @@ export default function Cart() {
               </Pressable>
             </View>
           </View>
-          {atMax ? <Text style={[styles.stockHint, { color: c.secondary }]}>В наличии {stock} шт.</Text> : null}
+          {unavailable ? (
+            <Text style={[styles.stockHint, { color: "#E5484D", fontWeight: "600" }]}>{unavailable}</Text>
+          ) : atMax ? (
+            <Text style={[styles.stockHint, { color: c.secondary }]}>В наличии {stock} шт.</Text>
+          ) : null}
         </View>
         <Pressable
           hitSlop={10}

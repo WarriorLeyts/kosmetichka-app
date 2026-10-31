@@ -30,6 +30,8 @@ export type CartItem = Product & {
   variantId?: number;
   variantName?: string | null;
   variantImageUrl?: string | null;
+  /** the product is no longer in the catalogue (the cart's last check didn't find it) */
+  gone?: boolean;
 };
 
 export type Customer = {

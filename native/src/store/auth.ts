@@ -142,6 +142,15 @@ export const useAuth = create<AuthState>((set, get) => ({
       if (my !== epoch) return; // logged in / out meanwhile — that state is newer
       if (value) await claimLocalData(value.id);
       if (my !== epoch) return;
+      // the login ended on the site (expired, password changed): the screens must not keep showing
+      // that account's orders, chats and notifications. Cart and favourites stay until another
+      // account signs in (claimLocalData) — the same person usually just signs in again.
+      if (!value && get().customer) {
+        orderCache.clear();
+        clearOrderStatus();
+        useWaitlistStore.getState().reset();
+        useNotifications.getState().reset();
+      }
       set({ customer: value, loading: false });
       saveCustomer(value);
       if (value) useWaitlistStore.getState().load();

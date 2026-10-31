@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View } from "react-native";
+import { CaptchaFailed } from "./CaptchaFailed";
 
 /** The site's public Yandex SmartCaptcha key (the same one the website uses). */
 export const SMARTCAPTCHA_KEY = "ysc1_zPBcrJYGrC7s0G9CVZLokJ1ekpa0sKcqvAZoqBjObd8ec5f9";
@@ -35,8 +36,12 @@ export function Captcha({ onToken, onExpired }: { onToken: (token: string) => vo
     cb.current = { onToken, onExpired };
   });
 
+  // the check didn't load (no internet, blocked by the browser): say so instead of an empty space
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let alive = true;
+    setFailed(false);
     loadScript()
       .then(() => {
         const el = box.current as unknown as HTMLElement | null;
@@ -50,11 +55,20 @@ export function Captcha({ onToken, onExpired }: { onToken: (token: string) => vo
           "expired-callback": () => cb.current.onExpired?.(),
         });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (alive) setFailed(true);
+      });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [attempt]);
 
-  return <View ref={box} style={{ minHeight: 102, marginBottom: 14 }} />;
+  // the box stays mounted, so «Повторить» can render the check into it again
+  return (
+    <>
+      {failed ? <CaptchaFailed onRetry={() => setAttempt((n) => n + 1)} /> : null}
+      <View ref={box} style={failed ? { display: "none" } : { minHeight: 102, marginBottom: 14 }} />
+    </>
+  );
 }
+

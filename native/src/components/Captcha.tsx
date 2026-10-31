@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { colors } from "../theme";
+import { CaptchaFailed } from "./CaptchaFailed";
 
 /** The site's public Yandex SmartCaptcha key (the same one the website uses). */
 export const SMARTCAPTCHA_KEY = "ysc1_zPBcrJYGrC7s0G9CVZLokJ1ekpa0sKcqvAZoqBjObd8ec5f9";
@@ -29,6 +30,28 @@ const ALLOWED = /^https:\/\/(kosmetichka-opt\.ru|smartcaptcha\.yandexcloud\.net)
  */
 export function Captcha({ onToken, onExpired }: { onToken: (token: string) => void; onExpired?: () => void }) {
   const [ready, setReady] = useState(false);
+  // the check didn't load (no internet, Yandex unreachable): say so and offer to try again
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  // the Yandex script never answered (it says «ready» once the check is drawn) → failed
+  const answered = useRef(false);
+  useEffect(() => {
+    answered.current = false;
+    const t = setTimeout(() => {
+      if (!answered.current) setFailed(true);
+    }, 15000);
+    return () => clearTimeout(t);
+  }, [attempt]);
+  if (failed)
+    return (
+      <CaptchaFailed
+        onRetry={() => {
+          setFailed(false);
+          setReady(false);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
   return (
     <View style={{ height: 110, borderRadius: 14, overflow: "hidden", marginBottom: 14 }}>
       {!ready && (
@@ -37,6 +60,8 @@ export function Captcha({ onToken, onExpired }: { onToken: (token: string) => vo
         </View>
       )}
       <WebView
+        key={attempt}
+        onError={() => setFailed(true)}
         originWhitelist={["*"]}
         source={{ html, baseUrl: "https://kosmetichka-opt.ru" }}
         style={{ backgroundColor: "transparent" }}
@@ -50,9 +75,13 @@ export function Captcha({ onToken, onExpired }: { onToken: (token: string) => vo
         onMessage={(e) => {
           try {
             const m = JSON.parse(e.nativeEvent.data);
-            if (m.t === "ready") setReady(true);
+            if (m.t === "ready") {
+              answered.current = true;
+              setReady(true);
+            }
             if (m.t === "token" && m.token) onToken(m.token);
             if (m.t === "expired") onExpired?.();
+            if (m.t === "error") setFailed(true);
           } catch {
             /* ignore */
           }
