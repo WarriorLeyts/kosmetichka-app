@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { onLiveHint } from "./live";
+import { lastWriteAt } from "./api";
 
 /**
  * load data for a screen: first load, refresh on return to the screen, pull-to-refresh;
@@ -55,8 +56,9 @@ export function useLoad<T>(
         first.current = false;
         return;
       }
-      // coming back to a screen: refresh only if the data is older than 20 s (saves traffic on a slow link)
-      if (opts.refocus !== false && Date.now() - loadedAt.current > 20_000) reload();
+      // coming back to a screen: refresh if the data is older than 20 s (saves traffic on a slow link)
+      // or something was changed meanwhile (e.g. a customer edited on the next screen)
+      if (opts.refocus !== false && (Date.now() - loadedAt.current > 20_000 || lastWriteAt() > loadedAt.current)) reload();
     }, [reload, opts.refocus])
   );
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { onLiveHint } from "./live";
+import { lastWriteAt } from "./api";
 
 /** offset/page based endless list with a debounced query */
 export function usePaged<T>(
@@ -20,12 +21,14 @@ export function usePaged<T>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fp = useCallback(fetchPage, deps);
 
+  const loadedAt = useRef(0);
   const reload = useCallback(async () => {
     const my = ++seq.current;
     setError("");
     try {
       const r = await fp(0);
       if (my !== seq.current) return;
+      loadedAt.current = Date.now();
       setItems(r.items);
       setHasMore(r.hasMore);
     } catch (e) {
@@ -84,6 +87,21 @@ export function usePaged<T>(
       /* keep the list */
     }
   }, [fp]);
+
+  // back on the list after changing something (a customer, a product, an order): the rows shown are stale
+  const first = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (first.current) {
+        first.current = false;
+        return;
+      }
+      if (lastWriteAt() > loadedAt.current) {
+        loadedAt.current = Date.now();
+        refreshFirst();
+      }
+    }, [refreshFirst])
+  );
 
   useFocusEffect(
     useCallback(() => {

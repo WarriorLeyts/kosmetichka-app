@@ -117,7 +117,7 @@ export function SectionTitle({ children }: { children: ReactNode }) {
 }
 
 /** small coloured action button */
-export function ActionButton({ label, kind = "primary", onPress, loading, icon }: { label: string; kind?: "primary" | "soft" | "danger" | "success"; onPress: () => void; loading?: boolean; icon?: keyof typeof Ionicons.glyphMap }) {
+export function ActionButton({ label, kind = "primary", onPress, loading, icon, disabled }: { label: string; kind?: "primary" | "soft" | "danger" | "success"; onPress: () => void; loading?: boolean; icon?: keyof typeof Ionicons.glyphMap; disabled?: boolean }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const look = {
@@ -129,11 +129,12 @@ export function ActionButton({ label, kind = "primary", onPress, loading, icon }
   return (
     <Pressable
       onPress={() => {
-        if (loading) return;
+        if (loading || disabled) return;
         tap();
         onPress();
       }}
-      style={({ pressed }) => [styles.action, { backgroundColor: look.bg, opacity: pressed ? 0.85 : 1 }]}
+      accessibilityState={{ disabled: !!disabled, busy: !!loading }}
+      style={({ pressed }) => [styles.action, { backgroundColor: look.bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 }]}
     >
       {loading ? <ActivityIndicator color={look.fg} /> : (
         <>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "@/components/Screen";
@@ -182,6 +182,31 @@ export default function OrderScreen() {
     [o, edit, orderId]
   );
 
+  // leaving the screen with unsaved changes to the items: ask first (they were lost silently)
+  const navigation = useNavigation();
+  const editRef = useRef(edit);
+  editRef.current = edit;
+  useEffect(
+    () =>
+      navigation.addListener("beforeRemove", (e) => {
+        const d = editRef.current;
+        if (!d || !o) return;
+        const changed =
+          d.some((x) => !x.id || x.removed) ||
+          d.some((x) => {
+            const was = o.items.find((i) => i.id === x.id);
+            return !was || was.quantity !== x.quantity || (was.variantName ?? null) !== (x.variantName ?? null);
+          });
+        if (!changed) return;
+        e.preventDefault();
+        Alert.alert("Выйти без сохранения?", "Изменения состава заказа не сохранены.", [
+          { text: "Остаться", style: "cancel" },
+          { text: "Выйти", style: "destructive", onPress: () => navigation.dispatch(e.data.action) },
+        ]);
+      }),
+    [navigation, o]
+  );
+
   const startEdit = () => {
     if (!o) return;
     setEdit(o.items.map((i) => ({ id: i.id, productId: i.productId, productName: i.productName, barcode: i.barcode, quantity: i.quantity, price: i.price, variantName: i.variantName, variantImageUrl: i.variantImageUrl, imageUrl: i.imageUrl, stock: i.stock })));
@@ -223,6 +248,12 @@ export default function OrderScreen() {
     const mode = catalog;
     setCatalog(null);
     if (mode === "order") {
+      // the same product (and variant) already in the list → one more piece in that line, not a second line
+      const same = (x: Draft) => !x.removed && x.productId === product.id && (x.variantName ?? null) === (variant?.name ?? null);
+      if (edit?.some(same)) {
+        setEdit((d) => d!.map((x) => (same(x) ? { ...x, quantity: x.quantity + 1 } : x)));
+        return;
+      }
       setEdit((d) => [
         ...(d ?? []),
         { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null },

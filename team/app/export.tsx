@@ -15,8 +15,9 @@ import { clientName, type OrdersPage } from "@/types";
 /**
  * Exported files are kept in the app's documents (not the cache): after the export the orders are
  * «Выгружен в 1С» and the same XML can't be downloaded again, so a closed share sheet must not lose it.
- * Only the latest file is kept.
+ * The last KEEP_FILES files are kept (a new export must not replace a file nobody has sent yet).
  */
+const KEEP_FILES = 10;
 const EXPORT_DIR = (FileSystem.documentDirectory ?? "") + "1c-export/";
 
 /** browser version: the XML is saved by the browser like any download */
@@ -93,13 +94,13 @@ export default function ExportScreen() {
               reload();
               return;
             }
-            const old = await latestExport();
             await FileSystem.makeDirectoryAsync(EXPORT_DIR, { intermediates: true }).catch(() => {});
             const stamp = new Date().toISOString().replace(/[-:]/g, "").replace("T", "-").slice(0, 15);
             const target = `${EXPORT_DIR}Orders-${stamp}.xml`;
             await FileSystem.writeAsStringAsync(target, xml);
             uri = target;
-            if (old && old !== uri) FileSystem.deleteAsync(old, { idempotent: true }).catch(() => {});
+            const names = (await FileSystem.readDirectoryAsync(EXPORT_DIR).catch(() => [] as string[])).filter((n) => n.endsWith(".xml")).sort();
+            for (const n of names.slice(0, Math.max(0, names.length - KEEP_FILES))) FileSystem.deleteAsync(EXPORT_DIR + n, { idempotent: true }).catch(() => {});
             setLastFile(uri);
           } catch (e) {
             Alert.alert("Не выгружено", e instanceof Error ? e.message : "");
@@ -121,7 +122,7 @@ export default function ExportScreen() {
             <Text style={{ color: c.label, fontSize: 17, fontWeight: "700" }}>В очереди: {data.length}</Text>
             <Text style={{ color: c.secondary, marginTop: 4 }}>На сумму {money(sum)}</Text>
             <View style={{ marginTop: 14 }}>
-              <ActionButton label="Выгрузить и получить файл" icon="cloud-upload-outline" loading={busy} onPress={run} />
+              <ActionButton label={data.length ? "Выгрузить и получить файл" : "Нечего выгружать"} icon="cloud-upload-outline" loading={busy} disabled={data.length === 0} onPress={run} />
             </View>
             {lastFile ? (
               <View style={{ marginTop: 10 }}>

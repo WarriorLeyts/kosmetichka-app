@@ -16,7 +16,9 @@ import { clientName, type OrderListItem, type OrdersPage } from "@/types";
 import { isUnread, useChatSeen } from "@/store/chatSeen";
 
 /** «Изменить статус» for several orders at once (as the site's orders list); the site skips orders the change doesn't fit */
-const BULK_STATUSES = ["assembly", "consultation", "payment", "exported", "cancelled"] as const;
+/** «Выгружен в 1С» is not here: it is set only by the real export (Ещё → Выгрузка в 1С), otherwise the
+ * orders would leave the export queue without ever reaching 1C. */
+const BULK_STATUSES = ["assembly", "consultation", "payment", "cancelled"] as const;
 
 /** Заказы: working day (19:00 → 18:59 like the site) or all dates, status chips, customer search. */
 export default function Orders() {

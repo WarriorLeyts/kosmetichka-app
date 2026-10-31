@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImageManipulator from "expo-image-manipulator";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, ErrorState, Loading, SectionTitle, VIOLET } from "@/components/kit";
@@ -66,9 +67,37 @@ export default function Pick() {
   const { data, error, loading, reload } = useLoad(() => get<PickerOrder>(`/api/team/picker/orders/${orderId}`), [orderId], { refocus: false, poll: 20_000 });
   const o = data?.order;
 
+  // Marks not sent yet are kept on this device: closing the app or the screen mid-assembly no longer
+  // loses them. Dropped once the check is sent.
+  const draftKey = `team-pick-draft-${orderId}`;
+  const draft = useRef<Record<number, State> | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem(draftKey)
+      .then((raw) => {
+        try {
+          draft.current = raw ? JSON.parse(raw) : null;
+        } catch {
+          draft.current = null;
+        }
+      })
+      .catch(() => {})
+      .finally(() => setDraftReady(true));
+  }, [draftKey]);
+  const sent = useRef(false);
+  useEffect(() => {
+    if (!draftReady || sent.current || Object.keys(items).length === 0) return;
+    const t = setTimeout(() => {
+      const keep: Record<number, State> = {};
+      for (const [k, v] of Object.entries(items)) keep[Number(k)] = { ...v, uploading: false };
+      AsyncStorage.setItem(draftKey, JSON.stringify(keep)).catch(() => {});
+    }, 400);
+    return () => clearTimeout(t);
+  }, [items, draftReady, draftKey]);
+
   // set once per item: a refresh must not wipe unsent marks, quantities and notes (as on the site)
   useEffect(() => {
-    if (!o) return;
+    if (!o || !draftReady) return;
     setItems((prev) => {
     const s: Record<number, State> = { ...prev };
     for (const it of o.items) {
@@ -80,6 +109,12 @@ export default function Pick() {
       }
       if (prev[it.id]) {
         s[it.id] = { statuses: [], statusQtys: {}, availableQty: "", factQty: "", note: prev[it.id].note, photos: Array.from(new Set([...prev[it.id].photos, ...it.photos.map((p) => p.url)])), uploading: false, planned: it.quantity };
+        continue;
+      }
+      // marks saved on this device for the same quantity (the app was closed mid-assembly)
+      const saved = draft.current?.[it.id];
+      if (saved && saved.planned === it.quantity) {
+        s[it.id] = { ...saved, uploading: false, photos: Array.from(new Set([...(saved.photos ?? []), ...it.photos.map((p) => p.url)])) };
         continue;
       }
       s[it.id] = {
@@ -95,7 +130,7 @@ export default function Pick() {
     }
     return s;
     });
-  }, [o]);
+  }, [o, draftReady]);
 
   const upd = (itemId: number, f: (s: State) => State) => setItems((p) => ({ ...p, [itemId]: f(p[itemId]) }));
 
@@ -205,6 +240,9 @@ export default function Pick() {
           };
         }),
       });
+      // the site has the marks now
+      sent.current = true;
+      AsyncStorage.removeItem(draftKey).catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       Alert.alert(
         "Проверка отправлена",

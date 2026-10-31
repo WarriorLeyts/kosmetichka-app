@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Alert, StyleSheet, Text, TextInput, View } from "react-native";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, Chips, Empty, ErrorState, Loading, SectionTitle } from "@/components/kit";
@@ -26,6 +26,8 @@ export default function Push() {
   const [audience, setAudience] = useState("all");
   const [article, setArticle] = useState("");
   const [busy, setBusy] = useState(false);
+  // one broadcast at a time: a second tap on «Отправить» (or the confirm) must not send it twice
+  const sending = useRef(false);
 
   if (role !== "admin") {
     return (
@@ -38,6 +40,7 @@ export default function Push() {
   const input = [styles.input, { color: c.label, backgroundColor: dark ? "#2B193D" : "#F2F2F7" }];
 
   const send = () => {
+    if (sending.current) return;
     if (!title.trim() || !body.trim()) {
       Alert.alert("Заполните заголовок и текст");
       return;
@@ -48,6 +51,8 @@ export default function Push() {
       {
         text: "Отправить",
         onPress: async () => {
+          if (sending.current) return;
+          sending.current = true;
           setBusy(true);
           try {
             const r = await post<{ recipients: number; devices: number }>("/api/team/push", { title, body, audience, article: article.trim() || undefined });
@@ -59,6 +64,7 @@ export default function Push() {
           } catch (e) {
             Alert.alert("Не отправлено", e instanceof Error ? e.message : "Ошибка");
           } finally {
+            sending.current = false;
             setBusy(false);
           }
         },

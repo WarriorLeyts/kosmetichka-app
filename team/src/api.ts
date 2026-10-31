@@ -34,6 +34,12 @@ export function setOnUnauthorized(f: () => void) {
   onUnauthorized = f;
 }
 
+/** when the app last changed something on the site: lists opened before that reload on return */
+let lastWrite = 0;
+export function lastWriteAt() {
+  return lastWrite;
+}
+
 export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   let res: Response;
   try {
@@ -59,6 +65,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   // session ended (the login token lives 7 days) → back to the sign-in screen
   if (res.status === 401 && !path.startsWith("/api/admin/login")) onUnauthorized?.();
   if (!res.ok) throw new ApiError(data?.error || `Ошибка сервера (${res.status})`, res.status);
+  if (init.method && init.method !== "GET") lastWrite = Date.now();
   return data as T;
 }
 
