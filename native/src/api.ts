@@ -66,6 +66,12 @@ export class ApiError extends Error {
   }
 }
 
+let onUnauthorized: ((path: string) => void) | null = null;
+/** Called when the site answers 401 (the login expired or was ended): src/store/auth.ts signs out. */
+export function setOnUnauthorized(f: (path: string) => void) {
+  onUnauthorized = f;
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   // anything sent to the site (a message, a confirmation…) → the next reads are fresh
   if (init.method && init.method !== "GET") calm.clear();
@@ -90,6 +96,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   } catch {
     data = null;
   }
+  if (res.status === 401) onUnauthorized?.(path);
   if (!res.ok) {
     // only a string can be shown in <Text> — anything else would crash the screen that renders it
     const msg = typeof data?.error === "string" && data.error ? data.error : `Ошибка сервера (${res.status})`;
@@ -172,6 +179,10 @@ export const api = {
       method: "POST",
       body: json({ email: login, password }),
     });
+  },
+  /** a 10-minute link to the order's invoice (the in-app browser has no login cookie) */
+  invoiceLink(orderId: number): Promise<{ url: string }> {
+    return request(`/api/orders/${seg(orderId)}/invoice-link`, { method: "POST" });
   },
   me(): Promise<{ customer: Customer | null }> {
     return request("/api/auth/me");

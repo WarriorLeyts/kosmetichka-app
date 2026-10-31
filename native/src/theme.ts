@@ -3,7 +3,7 @@
  * theme, its values are replaced and the app re-mounts (see app/_layout.tsx),
  * so every screen — including styles made with `themed()` — picks up the new colors.
  */
-import { Appearance, StyleSheet } from "react-native";
+import { Appearance, AppState, StyleSheet } from "react-native";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { persistStorage } from "./store/storage";
@@ -159,12 +159,26 @@ export const useTheme = create<ThemeState>()(
   )
 );
 
-// the phone switched between light and dark: follow it while the customer hasn't picked a theme
-Appearance.addChangeListener(({ colorScheme }) => {
+// The phone switched between light and dark (e.g. automatically at sunset): follow it while the
+// customer hasn't picked a theme. A theme switch re-mounts the whole app (app/_layout.tsx), which
+// would wipe a half-typed message or form — so while the app is on screen the switch waits until
+// the customer leaves the app and comes back.
+let pendingSystem: ThemeMode | null = null;
+function followSystem(mode: ThemeMode) {
   const st = useTheme.getState();
-  if (st.pref !== "system") return;
-  const mode: ThemeMode = colorScheme === "dark" ? "dark" : "light";
-  if (mode === st.mode) return;
+  if (st.pref !== "system" || mode === st.mode) return;
   applyTheme(mode);
   useTheme.setState({ mode });
+}
+Appearance.addChangeListener(({ colorScheme }) => {
+  const mode: ThemeMode = colorScheme === "dark" ? "dark" : "light";
+  if (AppState.currentState === "active") pendingSystem = mode;
+  else followSystem(mode);
+});
+AppState.addEventListener("change", (state) => {
+  if (state === "active") return;
+  if (!pendingSystem) return;
+  const mode = pendingSystem;
+  pendingSystem = null;
+  followSystem(mode);
 });

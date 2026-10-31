@@ -29,7 +29,7 @@ import { BackBar } from "@/components/iosui/BrandHeader";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
-import { clearOrderStatus } from "@/unread";
+import { markChatSeen } from "@/unread";
 import type { ChatMessage, LineChange, Order, Product, RemovedOrderItem, Variant } from "@/types";
 
 const VIOLET = "#8b3dff";
@@ -223,7 +223,9 @@ export default function OrderScreen() {
       );
       // messages already sent are now in the server list
       setPending((p) => (p.some((x) => x.sent) ? p.filter((x) => !x.sent) : p));
-      clearOrderStatus(); // messages were read — refresh the bell next time
+      // the manager's messages are now on screen — the dot on the order and the bell go out
+      const lastFromManager = list.reduce<string | null>((a, m) => (m.isFromManager && (!a || Date.parse(m.createdAt) > Date.parse(a)) ? m.createdAt : a), null);
+      if (lastFromManager) markChatSeen(orderId, lastFromManager);
       setChatError(false);
       return true;
     } catch {
@@ -238,18 +240,18 @@ export default function OrderScreen() {
     loadOrder();
   }, [loadOrder]);
 
-  // while this screen is open and in front: new messages every 3 s, the order (status, items,
-  // manager's changes) every 12 s — no need to reload. Not while the customer is changing the order.
+  // New messages and order changes come at once through live updates (pushTick below). This timer is
+  // only a safety net for a dropped connection: every 20 s, not every 3 s (200 open chats were ~67
+  // useless requests a second). Not while the customer is changing the order.
   const editingRef = useRef(false);
   useFocusEffect(
     useCallback(() => {
       loadMessages();
-      let n = 0;
       const t = setInterval(() => {
         if (AppState.currentState !== "active") return;
         loadMessages();
-        if (++n % 4 === 0 && !editingRef.current) loadOrder(true);
-      }, 3000);
+        if (!editingRef.current) loadOrder(true);
+      }, 20_000);
       return () => clearInterval(t);
     }, [loadMessages, loadOrder])
   );
@@ -806,9 +808,20 @@ export default function OrderScreen() {
           <View style={styles.actions}>
             <GradientButton title="Повторить" icon="refresh" loading={repeating} onPress={repeatOrder} />
             <Pressable
-              onPress={() => {
+              onPress={async () => {
                 tap();
-                WebBrowser.openBrowserAsync(`${BASE_URL}/orders/${order.id}/invoice`);
+                // website: the same browser with the login cookie. Phones: the in-app browser doesn't
+                // have it, so the site gives a 10-minute link that works on its own.
+                if (Platform.OS === "web") {
+                  WebBrowser.openBrowserAsync(`${BASE_URL}/orders/${order.id}/invoice`);
+                  return;
+                }
+                try {
+                  const { url } = await api.invoiceLink(order.id);
+                  WebBrowser.openBrowserAsync(BASE_URL + url);
+                } catch (e) {
+                  Alert.alert("Накладная не открылась", e instanceof Error ? e.message : "Попробуйте ещё раз");
+                }
               }}
               accessibilityRole="button"
               accessibilityLabel="Накладная"

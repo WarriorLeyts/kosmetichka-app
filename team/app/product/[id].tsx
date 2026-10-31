@@ -13,7 +13,7 @@ import { afterSheet, pickFile } from "@/components/chat/Attach";
 import { openUrl } from "@/components/chat/MessageBody";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { useLoad } from "@/useLoad";
-import { del, get, imageUrl, put, request } from "@/api";
+import { del, formFile, get, imageUrl, put, request } from "@/api";
 import { useIOS } from "@/ios";
 
 type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
@@ -53,7 +53,7 @@ export default function ProductScreen() {
       // the site accepts jpeg/png/webp — convert (HEIC from iPhone) and shrink
       const jpg = await ImageManipulator.manipulateAsync(f.uri, [{ resize: { width: 1600 } }], { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG });
       const form = new FormData();
-      form.append("image", { uri: jpg.uri, name: `product-${id}.jpg`, type: "image/jpeg" } as unknown as Blob);
+      form.append("image", await formFile(jpg.uri, `product-${id}.jpg`, "image/jpeg"), `product-${id}.jpg`);
       await request(`/api/admin/products/${id}/images`, { method: "POST", body: form });
       await reload();
     } catch (e) {

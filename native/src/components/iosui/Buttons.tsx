@@ -5,6 +5,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { tap } from "../ui";
 import { useReduceMotion } from "../../useReduceMotion";
 import { FitText } from "../FitText";
+import { useTheme } from "../../theme";
 
 const GRAD = ["#8b1ee6", "#c21ad0", "#f0388f"] as const; // violet → magenta → pink, as on the mockups
 
@@ -54,6 +55,7 @@ export function OutlineButton({
   title, onPress, loading, disabled, style, children,
 }: { title: string; onPress: () => void; loading?: boolean; disabled?: boolean; style?: ViewStyle; children?: ReactNode }) {
   const p = usePressScale();
+  const dark = useTheme((st) => st.mode) === "dark";
   const off = disabled || loading;
   return (
     <Pressable
@@ -69,9 +71,9 @@ export function OutlineButton({
       accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       style={style}
     >
-      <Animated.View style={[styles.outline, { transform: [{ scale: p.s }], opacity: disabled ? 0.5 : 1 }]}>
-        {loading ? <ActivityIndicator color="#8b1ee6" /> : null}
-        <FitText style={styles.outlineText}>
+      <Animated.View style={[styles.outline, dark && styles.outlineDark, { transform: [{ scale: p.s }], opacity: disabled ? 0.5 : 1 }]}>
+        {loading ? <ActivityIndicator color={dark ? "#D9BBFF" : "#8b1ee6"} /> : null}
+        <FitText style={[styles.outlineText, dark && styles.outlineTextDark]}>
           {title}
         </FitText>
         {children}
@@ -85,4 +87,7 @@ const styles = StyleSheet.create({
   gradText: { color: "#fff", fontSize: 18, fontWeight: "700", flexShrink: 1 },
   outline: { minHeight: 52, borderRadius: 16, borderWidth: 1.5, borderColor: "#8b1ee6", backgroundColor: "rgba(194,26,208,0.06)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 14 },
   outlineText: { color: "#7a12d4", fontSize: 17, fontWeight: "700", flexShrink: 1 },
+  // dark theme: the light-theme violet had a contrast of 2.2 on the plum cards
+  outlineDark: { borderColor: "#B57CFF", backgroundColor: "rgba(181,124,255,0.10)" },
+  outlineTextDark: { color: "#D9BBFF" },
 });

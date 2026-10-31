@@ -129,7 +129,7 @@ export default function Login() {
             ) : null}
             <GradientButton title={loading ? "Входим…" : "Войти"} loading={loading} onPress={submit} style={{ marginTop: 4 }} />
             <Pressable onPress={() => router.push("/forgot")} hitSlop={8} style={styles.forgot} accessibilityRole="link">
-              {({ pressed }) => <Text style={[styles.forgotText, pressed && { opacity: 0.6 }]}>Забыли пароль?</Text>}
+              {({ pressed }) => <Text style={[styles.forgotText, dark && { color: LINK_DARK }, pressed && { opacity: 0.6 }]}>Забыли пароль?</Text>}
             </Pressable>
           </View>
 
@@ -142,6 +142,9 @@ export default function Login() {
     </KeyboardAvoidingView>
   );
 }
+
+/** links on the dark plum cards: the light-theme violet #7a12d4 there had a contrast of 2.2 */
+const LINK_DARK = "#D9BBFF";
 
 const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 520, alignSelf: "center" },

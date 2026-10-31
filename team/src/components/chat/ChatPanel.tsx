@@ -68,7 +68,8 @@ export function ChatPanel({
   useFocusEffect(
     useCallback(() => {
       refresh();
-      const t = setInterval(refresh, 3_000);
+      // new messages arrive through live updates at once; the timer only covers a dropped connection
+      const t = setInterval(refresh, 20_000);
       const off = liveOrderId ? onLiveHint((h) => h.t === "order" && h.id === liveOrderId && refresh()) : () => {};
       return () => {
         clearInterval(t);

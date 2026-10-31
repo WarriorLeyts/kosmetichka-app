@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { api, ApiError } from "../api";
+import { router } from "expo-router";
+import { api, ApiError, setOnUnauthorized } from "../api";
 import type { Customer } from "../types";
 import { useCartStore } from "./cart";
 import { useFavorites } from "./favorites";
@@ -205,3 +206,27 @@ export const useAuth = create<AuthState>((set, get) => ({
     saveCustomer(customer);
   },
 }));
+
+/**
+ * The site said «не авторизован» while the app thinks someone is signed in: the login expired
+ * (it lives 7 days) or was ended. Ask the site who we are; if nobody — show the sign-in screen
+ * instead of leaving empty screens and errors. At most once every 10 s.
+ */
+let lastUnauthorized = 0;
+setOnUnauthorized((path) => {
+  if (path.startsWith("/api/auth/")) return; // login / me / logout answer for themselves
+  const was = useAuth.getState().customer;
+  if (!was) return; // a guest: 401 is expected
+  const now = Date.now();
+  if (now - lastUnauthorized < 10_000) return;
+  lastUnauthorized = now;
+  void useAuth
+    .getState()
+    .refresh()
+    .then(() => {
+      if (useAuth.getState().customer) return; // still signed in — the 401 was about something else
+      saveCustomer(null);
+      useNotifications.getState().reset();
+      router.push("/login");
+    });
+});

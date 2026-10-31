@@ -293,8 +293,8 @@ export default function OrderScreen() {
         {o.oneCExportedAt ? <Text style={{ color: c.secondary, marginTop: 2 }}>Выгружен в 1С {date(o.oneCExportedAt)}</Text> : null}
         {o.status === "assembly" ? (
           <View style={[styles.note, { backgroundColor: "rgba(59,130,246,0.1)", alignItems: "flex-start" }]}>
-            <Ionicons name="construct-outline" size={18} color="#2563EB" />
-            <Text style={{ color: "#1E40AF", flex: 1 }}>
+            <Ionicons name="construct-outline" size={18} color={dark ? "#93C5FD" : "#2563EB"} />
+            <Text style={{ color: dark ? "#BFDBFE" : "#1E40AF", flex: 1 }}>
               Идёт сборка — сейчас можно менять состав. Когда закончите, нажмите «Отправить клиенту на проверку».
             </Text>
           </View>
