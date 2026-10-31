@@ -81,6 +81,7 @@ export default function Cart() {
   const bottomSpace = useTabBarSpace();
   const listRef = useRef<FlatList<CartItem>>(null);
   const [showJump, setShowJump] = useState(false);
+  const geo = useRef({ y: 0, h: 0, content: 0 });
   const customer = useAuth((s) => s.customer);
   // «Заберу в магазине» (the address field hides) or delivery to an address — not required, the manager calls
   const [pickup, setPickup] = useState(false);
@@ -348,10 +349,16 @@ export default function Cart() {
   };
 
   // a long cart: «Оформить заказ» is far below — a small bar above the tab bar takes the customer there
+  // (checked on scroll and when the list's size changes — a long cart shows the bar before any scroll)
+  const checkJump = () => {
+    const g = geo.current;
+    const far = g.h > 0 && g.content - (g.y + g.h) > 520;
+    setShowJump((was) => (was === far ? was : far));
+  };
   const onListScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-    const far = contentSize.height - (contentOffset.y + layoutMeasurement.height) > 520;
-    if (far !== showJump) setShowJump(far);
+    geo.current = { y: contentOffset.y, h: layoutMeasurement.height, content: contentSize.height };
+    checkJump();
   };
 
   return (
@@ -360,6 +367,14 @@ export default function Cart() {
         ref={listRef}
         onScroll={onListScroll}
         scrollEventThrottle={100}
+        onLayout={(e) => {
+          geo.current.h = e.nativeEvent.layout.height;
+          checkJump();
+        }}
+        onContentSizeChange={(_w, h) => {
+          geo.current.content = h;
+          checkJump();
+        }}
         data={items}
         keyExtractor={(i) => i.cartKey}
         renderItem={renderItem}
