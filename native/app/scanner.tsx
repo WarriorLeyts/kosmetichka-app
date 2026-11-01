@@ -88,10 +88,10 @@ export default function Scanner() {
         onBarcodeScanned={busy ? undefined : ({ data }) => onCode(String(data))}
       />
       <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
-        <Pressable onPress={() => router.back()} style={styles.round} hitSlop={10}>
+        <Pressable onPress={() => router.back()} style={styles.round} hitSlop={10} accessibilityRole="button" accessibilityLabel="Закрыть сканер">
           <Ionicons name="close" size={24} color="#fff" />
         </Pressable>
-        <Pressable onPress={() => setTorch(!torch)} style={styles.round} hitSlop={10}>
+        <Pressable onPress={() => setTorch(!torch)} style={styles.round} hitSlop={10} accessibilityRole="button" accessibilityLabel={torch ? "Выключить фонарик" : "Включить фонарик"}>
           <Ionicons name={torch ? "flash" : "flash-outline"} size={22} color="#fff" />
         </Pressable>
       </View>

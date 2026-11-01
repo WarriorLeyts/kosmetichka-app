@@ -36,6 +36,8 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
         seedProduct(product);
         router.push(`/product/${product.id}`);
       }}
+      accessibilityRole="button"
+      accessibilityLabel={product.name}
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]}
     >
       <View style={styles.imageWrap}>

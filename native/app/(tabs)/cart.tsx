@@ -277,6 +277,8 @@ export default function Cart() {
     const min = Math.max(1, item.minOrderQty ?? 1);
     const stock = typeof item.stock === "number" && item.stock > 0 ? item.stock : null;
     const atMax = stock !== null && item.quantity >= stock;
+    // a guest's stock is only a label value (10 = «мало», 9999 = «больше 10»): no exact number shown
+    const showStock = atMax && !!customer;
     // can't be ordered: removed from the catalogue, or none left
     const unavailable = item.gone ? "Товар больше не продаётся — удалите его из корзины" : item.stock === 0 ? "Нет в наличии — удалите или дождитесь поступления" : null;
     const minus = () => {
@@ -329,7 +331,7 @@ export default function Cart() {
           </View>
           {unavailable ? (
             <Text style={[styles.stockHint, { color: "#E5484D", fontWeight: "600" }]}>{unavailable}</Text>
-          ) : atMax ? (
+          ) : showStock ? (
             <Text style={[styles.stockHint, { color: c.secondary }]}>В наличии {stock} шт.</Text>
           ) : null}
         </View>

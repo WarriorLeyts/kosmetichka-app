@@ -54,7 +54,9 @@ export function Screen({
         }
         {...scrollProps}
       >
-        <View style={{ width: "100%", maxWidth: desktop ? 1180 : 760, alignSelf: "center" }}>
+        {/* computer: lists use the width; a single customer / order / product reads better narrower
+            (label and value were 1 100 px apart) */}
+        <View style={{ width: "100%", maxWidth: desktop ? (tab ? 1180 : 880) : 760, alignSelf: "center" }}>
           {tab ? <TeamHeader title={title} right={right} /> : title ? <TitleBar title={title} /> : null}
           {children}
         </View>

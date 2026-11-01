@@ -60,6 +60,15 @@
         flex: 1;
       }
     </style>
+    <style id="focus-ring">
+      /* keyboard users see where they are (a click doesn't draw it: :focus-visible) */
+      [tabindex]:focus-visible, a:focus-visible, button:focus-visible, [role="button"]:focus-visible,
+      [role="link"]:focus-visible, [role="tab"]:focus-visible, [role="switch"]:focus-visible, [role="checkbox"]:focus-visible {
+        outline: 2px solid #b57cff !important;
+        outline-offset: 2px;
+        border-radius: 12px;
+      }
+    </style>
   </head>
 
   <body>

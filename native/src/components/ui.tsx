@@ -136,6 +136,8 @@ export function Stepper({ value, onChange, min = 0, step = 1 }: { value: number;
           tap();
           onChange(value - step < min ? 0 : value - step);
         }}
+        accessibilityRole="button"
+        accessibilityLabel={value - step < Math.max(min, 1) ? "Удалить" : "Уменьшить количество"}
         style={styles.stepBtn}
       >
         <Ionicons name={value - step < Math.max(min, 1) ? "trash-outline" : "remove"} size={18} color={colors.violet} />
@@ -147,6 +149,8 @@ export function Stepper({ value, onChange, min = 0, step = 1 }: { value: number;
           tap();
           onChange(value + step);
         }}
+        accessibilityRole="button"
+        accessibilityLabel="Увеличить количество"
         style={styles.stepBtn}
       >
         <Ionicons name="add" size={18} color={colors.violet} />

@@ -305,7 +305,7 @@ export default function Pick() {
           <View key={it.id} onLayout={(e) => (ys.current[it.id] = e.nativeEvent.layout.y)}>
             <Card style={hl === it.id ? { borderWidth: 2, borderColor: VIOLET } : s.statuses.length ? { borderWidth: 1.5, borderColor: s.statuses.includes("ok") ? "rgba(22,163,74,0.5)" : "rgba(234,88,12,0.5)" } : undefined}>
               <View style={{ flexDirection: "row", gap: 12 }}>
-                <Pressable onPress={() => img && openUrl(img)} style={styles.thumb}>
+                <Pressable onPress={() => img && openUrl(img)} style={styles.thumb} accessibilityRole="imagebutton" accessibilityLabel={`Фото: ${it.productName}`}>
                   {img ? <Image source={{ uri: imageUrl(img, 320) ?? undefined }} style={{ width: "92%", height: "92%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={24} color="#C7C7CC" />}
                 </Pressable>
                 <View style={{ flex: 1 }}>

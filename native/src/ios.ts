@@ -10,7 +10,7 @@ export const iosLight = {
   cell: "#FFFFFF", // secondarySystemGroupedBackground
   cellPressed: "#D1D1D6",
   label: "#000000",
-  secondary: "rgba(60,60,67,0.6)", // secondaryLabel
+  secondary: "rgba(60,60,67,0.75)", // secondaryLabel, a bit darker than iOS (0.6 = contrast 3.3–3.4, now ≥ 4.8)
   tertiary: "rgba(60,60,67,0.3)",
   separator: "rgba(60,60,67,0.29)",
   chevron: "#C4C4C7",
