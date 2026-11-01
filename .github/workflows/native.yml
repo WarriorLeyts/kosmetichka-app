@@ -3,7 +3,7 @@ name: Native app
 # Полноценное нативное приложение (React Native / Expo) из папки native/.
 # Android: собирает APK и выкладывает в релиз "native-android-latest".
 # iOS: без секретов Apple — проверочная сборка под симулятор; с секретами — TestFlight
-#      (список секретов — в начале .github/workflows/ios.yml).
+#      (секреты: APPLE_TEAM_ID, APPSTORE_API_KEY_ID, APPSTORE_API_ISSUER_ID, APPSTORE_API_KEY_P8).
 
 on:
   push:
