@@ -6,6 +6,10 @@ name: Lockfiles (update)
 
 on:
   workflow_dispatch:
+  # also when this file changes on a branch (a dispatch needs the workflow on main first)
+  push:
+    branches-ignore: [main]
+    paths: [".github/workflows/lockfiles.yml"]
 
 jobs:
   lock:
