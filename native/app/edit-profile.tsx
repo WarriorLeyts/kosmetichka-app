@@ -25,9 +25,17 @@ const FIELDS: { key: keyof Customer & string; label: string; placeholder: string
 
 type Errors = Partial<Record<string, string>>;
 
+/** the same number in any format: 8 900 …, +7 900 …, 900 … */
+function phoneDigits(v: string): string {
+  const d = v.replace(/\D/g, "");
+  if (d.length === 11 && (d.startsWith("7") || d.startsWith("8"))) return d.slice(1);
+  return d;
+}
+
 /** Server messages (same rules as the site) → the field they belong to. */
 function fieldOf(message: string): string | null {
   const m = message.toLowerCase();
+  if (m.includes("sms") || m.includes("код")) return "smsCode";
   if (m.includes("email")) return "email";
   if (m.includes("текущий пароль")) return "currentPassword";
   if (m.includes("не совпадают")) return "passwordConfirm";
@@ -49,14 +57,24 @@ export default function EditProfile() {
   const [msg, setMsg] = useState<{ tone: "error" | "success"; text: string } | null>(null);
   const msgAnim = useRef(new Animated.Value(0)).current;
   const savingRef = useRef(false);
+  // a new phone is confirmed with an SMS code sent to it (the phone is also a login)
+  const [origPhone, setOrigPhone] = useState("");
+  const [smsLeft, setSmsLeft] = useState(0);
+  const [smsBusy, setSmsBusy] = useState(false);
+  useEffect(() => {
+    if (smsLeft <= 0) return;
+    const t = setTimeout(() => setSmsLeft((n) => n - 1), 1000);
+    return () => clearTimeout(t);
+  }, [smsLeft]);
 
   const load = async () => {
     setLoadError("");
     try {
       const { customer } = await api.profile();
-      const f: Record<string, string> = { currentPassword: "", password: "", passwordConfirm: "" };
+      const f: Record<string, string> = { currentPassword: "", password: "", passwordConfirm: "", smsCode: "" };
       for (const x of FIELDS) f[x.key] = String(customer[x.key] ?? "");
       setForm(f);
+      setOrigPhone(phoneDigits(f.phone));
       setInn(customer.inn ?? null);
     } catch (e) {
       setLoadError(e instanceof Error ? e.message : "Ошибка");
@@ -90,6 +108,23 @@ export default function EditProfile() {
     );
   }
 
+  const phoneChanged = phoneDigits(form.phone).length >= 10 && phoneDigits(form.phone) !== origPhone;
+
+  const sendCode = async () => {
+    if (smsBusy || smsLeft > 0) return;
+    setSmsBusy(true);
+    try {
+      await api.sendSms(form.phone);
+      setSmsLeft(60);
+      setErrors((prev) => ({ ...prev, smsCode: undefined }));
+      setMsg({ tone: "success", text: "Код отправлен на новый номер" });
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, smsCode: err instanceof Error ? err.message : "Не удалось отправить SMS" }));
+    } finally {
+      setSmsBusy(false);
+    }
+  };
+
   // functional updates: browser autofill changes several fields in one go (see register.tsx)
   const upd = (k: string) => (v: string) => {
     setForm((prev) => (prev ? { ...prev, [k]: v } : prev));
@@ -105,6 +140,7 @@ export default function EditProfile() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "Проверьте email";
     const digits = form.phone.replace(/\D/g, "");
     if (form.phone.trim() && digits.length < 10) e.phone = "Проверьте номер телефона";
+    else if (phoneChanged && !form.smsCode.trim()) e.smsCode = "Получите код и введите его из SMS";
     if (form.password.trim()) {
       if (!form.currentPassword.trim()) e.currentPassword = "Введите текущий пароль для смены пароля";
       if (form.password.length < 6) e.password = "Пароль должен быть не короче 6 символов";
@@ -125,9 +161,12 @@ export default function EditProfile() {
       const phone = d.length === 11 && d.startsWith("7") ? "8" + d.slice(1) : d.length === 10 ? "8" + d : d;
       const clean: Record<string, string> = { ...form, phone, email: form.email.trim().toLowerCase(), name: form.name.trim() };
       const body = clean.password.trim() ? clean : { ...clean, currentPassword: "", password: "", passwordConfirm: "" };
+      if (!phoneChanged) delete body.smsCode;
       const { customer } = await api.saveProfile(body);
       setCustomer(customer);
-      setForm({ ...clean, currentPassword: "", password: "", passwordConfirm: "" });
+      setForm({ ...clean, currentPassword: "", password: "", passwordConfirm: "", smsCode: "" });
+      setOrigPhone(phoneDigits(clean.phone));
+      setSmsLeft(0);
       setMsg({ tone: "success", text: "Данные сохранены" });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     } catch (err) {
@@ -173,17 +212,43 @@ export default function EditProfile() {
 
           <View style={panel}>
             {FIELDS.map((f) => (
-              <IOSField
-                key={f.key}
-                label={f.label}
-                placeholder={f.placeholder}
-                value={form[f.key]}
-                onChangeText={upd(f.key)}
-                keyboardType={f.keyboard}
-                autoCapitalize={f.keyboard ? "none" : "sentences"}
-                multiline={f.key === "address"}
-                error={errors[f.key]}
-              />
+              <View key={f.key}>
+                <IOSField
+                  label={f.label}
+                  placeholder={f.placeholder}
+                  value={form[f.key]}
+                  onChangeText={upd(f.key)}
+                  keyboardType={f.keyboard}
+                  autoCapitalize={f.keyboard ? "none" : "sentences"}
+                  multiline={f.key === "address"}
+                  error={errors[f.key]}
+                />
+                {f.key === "phone" && phoneChanged ? (
+                  <View style={{ marginTop: -4, marginBottom: 8 }}>
+                    <Text style={{ color: c.secondary, fontSize: 14, marginBottom: 8 }}>
+                      Новый номер нужно подтвердить: на него придёт код из SMS.
+                    </Text>
+                    <Pressable
+                      onPress={sendCode}
+                      disabled={smsBusy || smsLeft > 0}
+                      accessibilityRole="button"
+                      style={({ pressed }) => [styles.codeBtn, { opacity: smsBusy || smsLeft > 0 ? 0.5 : pressed ? 0.8 : 1 }]}
+                    >
+                      {smsBusy ? <ActivityIndicator color="#fff" /> : <Text style={styles.codeBtnText}>{smsLeft > 0 ? `Отправить ещё раз через ${smsLeft} с` : "Получить код"}</Text>}
+                    </Pressable>
+                    <IOSField
+                      label="Код из SMS"
+                      placeholder="6 цифр"
+                      value={form.smsCode}
+                      onChangeText={upd("smsCode")}
+                      keyboardType="number-pad"
+                      autoComplete="sms-otp"
+                      autoCapitalize="none"
+                      error={errors.smsCode}
+                    />
+                  </View>
+                ) : null}
+              </View>
             ))}
             {inn ? <Text style={{ color: c.secondary, fontSize: 13, marginTop: -4 }}>ИНН: {inn} (изменение через менеджера)</Text> : null}
           </View>
@@ -256,6 +321,8 @@ export default function EditProfile() {
 }
 
 const styles = StyleSheet.create({
+  codeBtn: { height: 44, borderRadius: 12, backgroundColor: "#8b3dff", alignItems: "center", justifyContent: "center", marginBottom: 10 },
+  codeBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   panel: { borderRadius: 22, padding: 16, paddingBottom: 4, marginTop: 10 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
