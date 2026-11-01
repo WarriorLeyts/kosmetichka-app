@@ -1,0 +1,41 @@
+name: Lockfiles (update)
+
+# Run manually after changing dependencies: resolves native/ and team/ the same way the builds do
+# (npm run deps — versions pinned to the Expo SDK) and gives package.json + package-lock.json as an
+# artifact to commit. The builds then install exactly the locked versions (npm ci).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app: [native, team]
+    defaults:
+      run:
+        working-directory: ${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Resolve dependencies
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund --legacy-peer-deps
+          node scripts-deps.js
+          npm install --no-audit --no-fund --legacy-peer-deps
+          node -e '
+            const p = require("./package.json"); const fs = require("fs");
+            for (const k of ["dependencies", "devDependencies"]) for (const [n, v] of Object.entries(p[k] || {}))
+              if (v === "*" || v === "latest") p[k][n] = "~" + require(n + "/package.json").version;
+            fs.writeFileSync("package.json", JSON.stringify(p, null, 2) + "\n");'
+          npm install --no-audit --no-fund --legacy-peer-deps --package-lock-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lock-${{ matrix.app }}
+          path: |
+            ${{ matrix.app }}/package.json
+            ${{ matrix.app }}/package-lock.json
