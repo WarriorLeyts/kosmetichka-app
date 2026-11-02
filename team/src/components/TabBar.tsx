@@ -7,6 +7,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useBadges } from "../store/badges";
+import { ordersBadge, useOrderNews } from "../orderNews";
 import { useAuth, type Role } from "../store/auth";
 import { useIOS } from "../ios";
 import { tap } from "./ui";
@@ -52,6 +53,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const badges = useBadges((s) => s.counts);
   // the tabs of this role (pickers: assembly + more; managers and admin: everything else)
   const role = useAuth((s) => s.user?.role);
+  useOrderNews(role === "admin" || role === "manager");
   const allowed = tabsFor(role);
   // in the order of tabsFor (Главная, Заказы, Сборка, Клиенты, Ещё), not the order the screens are declared in
   const routes = state.routes.filter((r) => TABS[r.name] && allowed.includes(r.name)).sort((a, b) => allowed.indexOf(a.name) - allowed.indexOf(b.name));
@@ -116,10 +118,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           // active look fades in as the capsule arrives
           const on = pos.interpolate({ inputRange: [i - 1, i, i + 1], outputRange: [0, 1, 0], extrapolate: "clamp" });
           const off = pos.interpolate({ inputRange: [i - 1, i, i + 1], outputRange: [1, 0, 1], extrapolate: "clamp" });
+          const n = route.name === "orders" ? ordersBadge(badges) : badges[route.name] ?? 0;
           const badge =
-            (badges[route.name] ?? 0) > 0 ? (
+            n > 0 ? (
               <View style={styles.badge}>
-                <Text style={styles.badgeText}>{badges[route.name] > 99 ? "99+" : badges[route.name]}</Text>
+                <Text style={styles.badgeText}>{n > 99 ? "99+" : n}</Text>
               </View>
             ) : null;
           return (

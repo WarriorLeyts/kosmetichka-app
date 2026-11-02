@@ -4,6 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { TeamMark } from "./TeamHeader";
 import { useAuth, ROLE_LABEL, type Role } from "../store/auth";
 import { useBadges } from "../store/badges";
+import { ordersBadge, useOrderNews } from "../orderNews";
 import { useTheme } from "../theme";
 import { useIOS } from "../ios";
 import { PushStatusLine } from "./PushStatus";
@@ -52,6 +53,8 @@ export function Sidebar() {
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
   const badges = useBadges((s) => s.counts);
+  const sideRole = useAuth((s) => s.user?.role);
+  useOrderNews(sideRole === "admin" || sideRole === "manager");
   const mode = useTheme((s) => s.mode);
   const toggleTheme = useTheme((s) => s.toggle);
   if (!user) return null;
@@ -79,7 +82,7 @@ export function Sidebar() {
               {sec.title ? <Text style={[styles.section, { color: c.secondary }]}>{sec.title}</Text> : null}
               {items.map((it) => {
                 const on = it.match ? it.match(path) : path === it.href || path.startsWith(it.href + "/");
-                const n = it.badge ? badges[it.badge] ?? 0 : 0;
+                const n = it.badge === "orders" ? ordersBadge(badges) : it.badge ? badges[it.badge] ?? 0 : 0;
                 return (
                   <Pressable
                     key={it.href}

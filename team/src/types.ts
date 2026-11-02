@@ -16,6 +16,8 @@ export type OrderListItem = {
   pickerId: number | null; customer: CustomerShort; itemsCount: number; checkedCount: number; hasIssues: boolean;
   /** staff changed the order, the customer hasn't confirmed yet */
   awaitingConfirmation?: boolean;
+  /** the customer confirmed the checked order («На проверке») */
+  customerConfirmed?: boolean;
 } & ChatMarks;
 /** newest customer / staff message in the order's customer chat («Новое сообщение» marks) */
 export type ChatMarks = { lastCustomerMessageId?: number | null; lastCustomerMessageAt?: string | null; lastStaffMessageId?: number | null };

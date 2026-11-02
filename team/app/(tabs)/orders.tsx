@@ -177,7 +177,12 @@ export default function Orders() {
               <Text style={styles.issueText}>Есть проблемы при сборке</Text>
             </View>
           ) : null}
-          {o.awaitingConfirmation ? (
+          {o.status === "consultation" && o.customerConfirmed && !o.awaitingConfirmation ? (
+            <View style={[styles.issue, styles.ok]}>
+              <Ionicons name="checkmark-circle" size={14} color="#15803D" />
+              <Text style={[styles.issueText, { color: "#15803D" }]}>Клиент подтвердил заказ</Text>
+            </View>
+          ) : o.awaitingConfirmation || o.status === "consultation" ? (
             <View style={styles.issue}>
               <Ionicons name="time-outline" size={14} color="#B45309" />
               <Text style={styles.issueText}>Ждём подтверждения клиента</Text>
@@ -213,5 +218,6 @@ const styles = StyleSheet.create({
   sum: { color: "#e82c87", fontWeight: "700", fontSize: 16, flexShrink: 0 },
   issue: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, alignSelf: "flex-start", backgroundColor: "#FFF4E5", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   msg: { backgroundColor: "#FDE7F1" },
+  ok: { backgroundColor: "#E7F6EC" },
   issueText: { color: "#B45309", fontSize: 12.5, fontWeight: "600" },
 });
