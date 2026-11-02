@@ -23,6 +23,7 @@ import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
 import { useDesktop } from "@/useDesktop";
 import { priceOf } from "@/products";
+import { openInvoicePdf, shareInvoice } from "@/invoiceShare";
 
 type Tab = "items" | "customer" | "history";
 const PROBLEM_LABELS: Record<string, string> = {
@@ -356,11 +357,32 @@ export default function OrderScreen() {
             ))}
           </View>
         ) : null}
-        {Platform.OS === "web" ? (
-          <View style={{ marginTop: 10 }}>
-            <ActionButton label="Счёт для печати" kind="soft" icon="print-outline" onPress={() => window.open(`/admin/orders/${o.id}/invoice`, "_blank")} />
-          </View>
-        ) : null}
+        {/* invoice: PDF to open / send (phones: the file into the share sheet) */}
+        <View style={[styles.actions, { marginTop: 10 }]}>
+          {Platform.OS === "web" ? (
+            <>
+              <ActionButton label="Счёт PDF" kind="soft" icon="document-outline" onPress={() => void openInvoicePdf(o.id)} />
+              <ActionButton label="Счёт для печати" kind="soft" icon="print-outline" onPress={() => window.open(`/admin/orders/${o.id}/invoice`, "_blank")} />
+            </>
+          ) : null}
+          <ActionButton
+            label="Поделиться счётом"
+            kind="soft"
+            icon="share-outline"
+            loading={busy === "invoice"}
+            onPress={async () => {
+              setBusy("invoice");
+              try {
+                const note = await shareInvoice(o.id);
+                if (note) Alert.alert("Счёт", note);
+              } catch (e) {
+                Alert.alert("Счёт не отправлен", e instanceof Error ? e.message : "Попробуйте ещё раз");
+              } finally {
+                setBusy("");
+              }
+            }}
+          />
+        </View>
       </Card>
 
       <Card onPress={() => router.push({ pathname: "/customer/[id]", params: { id: String(cust.id) } })}>

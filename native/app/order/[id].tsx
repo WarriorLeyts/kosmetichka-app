@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import {
   ActivityIndicator, Alert, AppState, Keyboard, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
   type NativeScrollEvent, type NativeSyntheticEvent,
+  Share,
 } from "react-native";
 import { Image } from "expo-image";
 import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
@@ -808,25 +809,30 @@ export default function OrderScreen() {
             <Pressable
               onPress={async () => {
                 tap();
-                // website: the same browser with the login cookie. Phones: the in-app browser doesn't
-                // have it, so the site gives a 10-minute link that works on its own.
+                // the invoice as a PDF. Website: the same browser with the login cookie. Phones: the site gives
+                // a 7-day link that works on its own — to open, or to send (WhatsApp, Telegram, mail…)
                 if (Platform.OS === "web") {
-                  WebBrowser.openBrowserAsync(`${BASE_URL}/orders/${order.id}/invoice`);
+                  WebBrowser.openBrowserAsync(`${BASE_URL}/api/orders/${order.id}/invoice-pdf`);
                   return;
                 }
                 try {
-                  const { url } = await api.invoiceLink(order.id);
-                  WebBrowser.openBrowserAsync(BASE_URL + url);
+                  const r = await api.invoiceLink(order.id);
+                  const link = BASE_URL + (r.pdf ?? r.url);
+                  Alert.alert(`Счёт №${order.id}`, "PDF-файл со списком товаров и суммой", [
+                    { text: "Открыть", onPress: () => void WebBrowser.openBrowserAsync(link) },
+                    { text: "Поделиться", onPress: () => void Share.share(Platform.OS === "ios" ? { url: link } : { message: `Счёт №${order.id}: ${link}` }) },
+                    { text: "Отмена", style: "cancel" },
+                  ]);
                 } catch (e) {
-                  Alert.alert("Накладная не открылась", e instanceof Error ? e.message : "Попробуйте ещё раз");
+                  Alert.alert("Счёт не открылся", e instanceof Error ? e.message : "Попробуйте ещё раз");
                 }
               }}
               accessibilityRole="button"
-              accessibilityLabel="Накладная"
+              accessibilityLabel="Счёт"
               style={({ pressed }) => [styles.outline, { backgroundColor: c.cell, opacity: pressed ? 0.8 : 1 }]}
             >
               <Ionicons name="document-text-outline" size={22} color={VIOLET} />
-              <Text style={styles.outlineText}>Накладная</Text>
+              <Text style={styles.outlineText}>Счёт</Text>
             </Pressable>
           </View>
           )}

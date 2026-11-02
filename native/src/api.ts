@@ -224,8 +224,8 @@ export const api = {
       body: json({ email: login, password }),
     });
   },
-  /** a 10-minute link to the order's invoice (the in-app browser has no login cookie) */
-  invoiceLink(orderId: number): Promise<{ url: string }> {
+  /** a 7-day link to the order's invoice — `url` the page, `pdf` the PDF (works without the login cookie, can be shared) */
+  invoiceLink(orderId: number): Promise<{ url: string; pdf?: string }> {
     return request(`/api/orders/${seg(orderId)}/invoice-link`, { method: "POST" });
   },
   me(): Promise<{ customer: Customer | null }> {
