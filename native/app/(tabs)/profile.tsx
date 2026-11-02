@@ -51,6 +51,7 @@ export default function Profile() {
   // «Добавить карту» only once the site's MAXMA connection is set up
   const [canLink, setCanLink] = useState(false);
   const customerId = customer?.id;
+  const wholesale = customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale";
   // the price type / data may have been changed by a manager meanwhile
   useFocusEffect(
     useCallback(() => {
@@ -130,8 +131,9 @@ export default function Profile() {
           </Text>
         ) : null}
 
-        {/* loyalty card from MAXMA (by phone); customers without a card see nothing */}
-        {!RETAIL_ENABLED ? null : customer && card ? (
+        {/* loyalty card from MAXMA (by phone); customers without a card see nothing.
+            Wholesale prices give no bonuses, so a wholesale customer sees no card (it shows after a switch to retail). */}
+        {!RETAIL_ENABLED || wholesale ? null : customer && card ? (
           <LoyaltyCardPanel
             card={card}
             width={cardW}
