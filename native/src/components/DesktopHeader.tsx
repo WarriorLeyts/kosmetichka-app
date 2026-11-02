@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { Wordmark } from "@/components/Wordmark";
+import { useOrderUpdates } from "@/unread";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
@@ -62,6 +63,7 @@ export function DesktopHeader() {
   const cart = useCartStore((s) => s.items);
   const favCount = useFavorites((s) => s.items.length);
   const unread = useNotifications((s) => s.unread);
+  const orderNews = useOrderUpdates(!!customer);
   const toggleTheme = useTheme((s) => s.toggle);
   const [q, setQ] = useState("");
 
@@ -93,6 +95,11 @@ export function DesktopHeader() {
                 style={({ hovered }: Hover) => [styles.navItem, on && { backgroundColor: "rgba(139,61,255,0.12)" }, hovered && !on && { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "rgba(139,61,255,0.06)" }]}
               >
                 <Text style={[styles.navText, { color: on ? VIOLET : c.label, fontWeight: on ? "700" : "500" }]}>{n.label}</Text>
+                {n.href === "/orders" && orderNews > 0 ? (
+                  <View style={[styles.badge, { top: 2, right: -4 }]}>
+                    <Text style={styles.badgeText}>{orderNews > 99 ? "99+" : orderNews}</Text>
+                  </View>
+                ) : null}
               </Pressable>
             );
           })}

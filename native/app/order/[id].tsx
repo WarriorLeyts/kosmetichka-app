@@ -29,7 +29,7 @@ import { BackBar } from "@/components/iosui/BrandHeader";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
-import { markChatSeen } from "@/unread";
+import { markChatSeen, markStatusSeen } from "@/unread";
 import { orderTitle, usePageTitle } from "@/pageTitle";
 import type { ChatMessage, LineChange, Order, Product, RemovedOrderItem, Variant } from "@/types";
 
@@ -151,6 +151,10 @@ export default function OrderScreen() {
   const insets = useSafeAreaInsets();
   const repeat = useCartStore((s) => s.repeat);
   const [order, setOrder] = useState<Order | null>(orderCache.get(orderId) ?? null);
+  // the stage on screen is seen: the dot on the order and the «Заказы» badge go out
+  useEffect(() => {
+    if (order?.status) void markStatusSeen(orderId, order.status);
+  }, [orderId, order?.status]);
   usePageTitle(orderTitle(order?.id));
   const [error, setError] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);

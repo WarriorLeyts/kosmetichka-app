@@ -7,6 +7,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useCartStore } from "../store/cart";
+import { useAuth } from "../store/auth";
+import { useOrderUpdates } from "../unread";
 import { useIOS } from "../ios";
 import { useDesktop } from "../useDesktop";
 import { tap } from "./ui";
@@ -44,6 +46,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const count = useCartStore((s) => s.items.reduce((n, i) => n + i.quantity, 0));
+  // orders with a new manager message or a changed stage
+  const signedIn = useAuth((s) => !!s.customer);
+  const orderNews = useOrderUpdates(signedIn);
   const routes = state.routes.filter((r) => TABS[r.name]);
   const activeIdx = Math.max(0, routes.findIndex((r) => r.key === state.routes[state.index]?.key));
   const pos = useRef(new Animated.Value(activeIdx)).current;
@@ -104,10 +109,11 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
           // active look fades in as the capsule arrives
           const on = pos.interpolate({ inputRange: [i - 1, i, i + 1], outputRange: [0, 1, 0], extrapolate: "clamp" });
           const off = pos.interpolate({ inputRange: [i - 1, i, i + 1], outputRange: [1, 0, 1], extrapolate: "clamp" });
+          const n = route.name === "cart" ? count : route.name === "orders" ? orderNews : 0;
           const badge =
-            route.name === "cart" && count > 0 ? (
+            n > 0 ? (
               <View style={styles.badge}>
-                <Text maxFontSizeMultiplier={1} style={styles.badgeText}>{count > 99 ? "99+" : count}</Text>
+                <Text maxFontSizeMultiplier={1} style={styles.badgeText}>{n > 99 ? "99+" : n}</Text>
               </View>
             ) : null;
           return (

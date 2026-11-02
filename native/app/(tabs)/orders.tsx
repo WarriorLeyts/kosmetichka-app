@@ -36,7 +36,9 @@ const FILTERS: { key: string; label: string }[] = [
 ];
 
 /** One order card: status icon, number, date, status pill, total, chevron — the whole card opens the order. */
-function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
+/** message: a manager message not read yet; stage: the order's stage changed since it was last opened */
+function OrderCard({ order, message, stage }: { order: Order; message: boolean; stage: boolean }) {
+  const unread = message || stage;
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const s = statusLook(order.status, dark);
@@ -49,7 +51,7 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
         router.push(`/order/${order.id}`);
       }}
       accessibilityRole="button"
-      accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${money(order.total)}${unread ? ", новое сообщение" : ""}`}
+      accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${money(order.total)}${message ? ", новое сообщение" : ""}${stage ? ", статус изменился" : ""}`}
       style={({ pressed }) => [styles.card, { backgroundColor: pressed ? c.cellPressed : c.cell }, !dark && styles.shadow]}
     >
       <View style={styles.cardRow}>
@@ -68,6 +70,18 @@ function OrderCard({ order, unread }: { order: Order; unread: boolean }) {
         </View>
         <Ionicons name="chevron-forward" size={20} color={c.chevron} />
       </View>
+      {message ? (
+        <View style={[styles.note, { backgroundColor: dark ? "rgba(232,44,135,0.16)" : "#fdf2f8" }]}>
+          <Ionicons name="chatbubble-ellipses-outline" size={17} color={PINK} />
+          <Text style={{ color: PINK, fontSize: 14, fontWeight: "600", flex: 1 }}>Новое сообщение</Text>
+        </View>
+      ) : null}
+      {stage ? (
+        <View style={[styles.note, { backgroundColor: dark ? "rgba(139,61,255,0.18)" : "#f5f3ff" }]}>
+          <Ionicons name="refresh-circle-outline" size={17} color={dark ? "#c4a8ff" : "#6d28d9"} />
+          <Text style={{ color: dark ? "#c4a8ff" : "#6d28d9", fontSize: 14, fontWeight: "600", flex: 1 }}>Статус заказа изменился</Text>
+        </View>
+      ) : null}
       {needsConfirm ? (
         <View style={[styles.note, { backgroundColor: dark ? "rgba(255,149,0,0.15)" : "#fff7ed" }]}>
           <Ionicons name="alert-circle-outline" size={17} color="#c2410c" />
@@ -97,6 +111,7 @@ export default function Orders() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [unread, setUnread] = useState<Set<number>>(new Set());
+  const [stageNews, setStageNews] = useState<Set<number>>(new Set());
 
   const reqId = useRef(0);
   const load = useCallback(
@@ -124,7 +139,10 @@ export default function Orders() {
           return [...prev, ...list.filter((o) => !seen.has(o.id))];
         });
         orderStatus(true)
-          .then((s) => setUnread(new Set(s.managerMessages.map((m) => m.orderId))))
+          .then((s) => {
+            setUnread(new Set(s.managerMessages.map((m) => m.orderId)));
+            setStageNews(new Set(s.statusChanged ?? []));
+          })
           .catch(() => {});
       } catch (e) {
         if (id === reqId.current && mode !== "silent") setError(e instanceof Error ? e.message : "Ошибка");
@@ -145,6 +163,7 @@ export default function Orders() {
     setOrders([]);
     setData(null);
     setUnread(new Set());
+    setStageNews(new Set());
     setError("");
     setLoading(false);
     setRefreshing(false);
@@ -312,7 +331,7 @@ export default function Orders() {
           )
         }
         ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={VIOLET} /> : null}
-        renderItem={({ item }) => <OrderCard order={item} unread={unread.has(item.id)} />}
+        renderItem={({ item }) => <OrderCard order={item} message={unread.has(item.id)} stage={stageNews.has(item.id)} />}
       />
     </View>
   );
