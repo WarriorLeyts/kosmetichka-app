@@ -1,0 +1,59 @@
+name: Expo push key (FCM V1)
+
+# Attaches the Firebase service-account key that is already uploaded to the Expo account
+# (FCM V1) to the Android app of an Expo project — what the expo.dev wizard does, but
+# without asking for a keystore (apps here are built on GitHub, not on EAS).
+# Prints only ids/e-mails, never key contents. Needs the EXPO_TOKEN secret.
+
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths: [".github/workflows/expo-fcm.yml"]
+
+jobs:
+  bind:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN || secrets.APP }}
+    steps:
+      - name: Bind key
+        run: |
+          cat > bind.mjs <<'EOF'
+          const gql = async (query, variables = {}) => {
+            const r = await fetch("https://api.expo.dev/graphql", {
+              method: "POST",
+              headers: { "content-type": "application/json", authorization: `Bearer ${process.env.EXPO_TOKEN}` },
+              body: JSON.stringify({ query, variables }),
+            });
+            const j = await r.json();
+            if (j.errors) throw new Error(JSON.stringify(j.errors));
+            return j.data;
+          };
+          const APPS = [
+            ["@doshaeww/kosmetichka", "ru.kosmetichkaopt.app", false],
+            ["@doshaeww/kosmetichka-team", "ru.kosmetichkaopt.team", true],
+          ];
+          for (const [fullName, pkg, fix] of APPS) {
+            const d = await gql(`query($n:String!,$p:String!){ app { byFullName(fullName:$n) { id
+              ownerAccount { id name googleServiceAccountKeys { id clientEmail projectIdentifier } }
+              androidAppCredentials(filter:{applicationIdentifier:$p}) { id applicationIdentifier
+                googleServiceAccountKeyForFcmV1 { id clientEmail } } } } }`, { n: fullName, p: pkg });
+            const app = d.app.byFullName;
+            const keys = app.ownerAccount.googleServiceAccountKeys;
+            console.log(fullName, "account", app.ownerAccount.name, "keys:", keys.map((k) => `${k.id} ${k.clientEmail}`).join("; ") || "none");
+            const creds = app.androidAppCredentials[0];
+            console.log(fullName, pkg, "credentials:", creds ? `${creds.id} fcmV1=${creds.googleServiceAccountKeyForFcmV1?.clientEmail ?? "none"}` : "none");
+            if (!fix || creds?.googleServiceAccountKeyForFcmV1) continue;
+            const key = keys.find((k) => k.projectIdentifier === "kosmetichka-acfcc");
+            if (!key) throw new Error("no kosmetichka-acfcc key on the account");
+            if (creds) {
+              await gql(`mutation($id:ID!,$k:ID!){ androidAppCredentials { setGoogleServiceAccountKeyForFcmV1(id:$id, googleServiceAccountKeyId:$k) { id } } }`, { id: creds.id, k: key.id });
+            } else {
+              await gql(`mutation($a:ID!,$p:String!,$k:ID!){ androidAppCredentials { createAndroidAppCredentials(appId:$a, applicationIdentifier:$p,
+                androidAppCredentialsInput:{ googleServiceAccountKeyForFcmV1Id:$k }) { id } } }`, { a: app.id, p: pkg, k: key.id });
+            }
+            console.log(fullName, "→ FCM V1 key attached:", key.clientEmail);
+          }
+          EOF
+          node bind.mjs
