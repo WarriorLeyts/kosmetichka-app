@@ -72,12 +72,48 @@ export function setOnUnauthorized(f: (path: string) => void) {
   onUnauthorized = f;
 }
 
+/** a read the server hasn't answered in this time is dropped: the screen shows the error with «Повторить» */
+const READ_TIMEOUT_MS = 15_000;
+const TIMEOUT_MESSAGE = "Сервер не ответил за 15 секунд. Проверьте интернет и нажмите «Повторить».";
+
+/**
+ * fetch + read the body; GET only gets the timeout — a sent order / message / upload must never be
+ * cut off half-way (it may already be saved on the server). The caller's own signal still works.
+ */
+async function fetchText(url: string, init: RequestInit): Promise<{ res: Response; text: string }> {
+  const read = !init.method || init.method === "GET";
+  if (!read) {
+    const res = await fetch(url, init);
+    return { res, text: await res.text() };
+  }
+  const ctl = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    ctl.abort();
+  }, READ_TIMEOUT_MS);
+  const outer = init.signal;
+  const onOuter = () => ctl.abort();
+  if (outer) outer.aborted ? ctl.abort() : outer.addEventListener("abort", onOuter);
+  try {
+    const res = await fetch(url, { ...init, signal: ctl.signal });
+    return { res, text: await res.text() };
+  } catch (e) {
+    if (timedOut) throw new ApiError(TIMEOUT_MESSAGE, 0);
+    throw e;
+  } finally {
+    clearTimeout(timer);
+    outer?.removeEventListener("abort", onOuter);
+  }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   // anything sent to the site (a message, a confirmation…) → the next reads are fresh
   if (init.method && init.method !== "GET") calm.clear();
   let res: Response;
+  let text: string;
   try {
-    res = await fetch(BASE_URL + path, {
+    ({ res, text } = await fetchText(BASE_URL + path, {
       credentials: "include",
       ...init,
       headers: {
@@ -85,11 +121,11 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
         ...(init.body ? { "Content-Type": "application/json" } : {}),
         ...(init.headers || {}),
       },
-    });
-  } catch {
+    }));
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
     throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
   }
-  const text = await res.text();
   let data: any = null;
   try {
     data = text ? JSON.parse(text) : null;

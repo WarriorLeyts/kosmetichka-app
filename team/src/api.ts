@@ -40,10 +40,48 @@ export function lastWriteAt() {
   return lastWrite;
 }
 
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  let res: Response;
+/** a read the server hasn't answered in this time is dropped: the screen shows the error with «Повторить» */
+const READ_TIMEOUT_MS = 15_000;
+const TIMEOUT_MESSAGE = "Сервер не ответил за 15 секунд. Проверьте интернет и нажмите «Повторить».";
+
+/**
+ * fetch + read the body; GET only gets the timeout — a sent order / message / upload must never be
+ * cut off half-way (it may already be saved on the server). The caller's own signal still works.
+ */
+async function fetchText(url: string, init: RequestInit): Promise<{ res: Response; text: string }> {
+  const read = !init.method || init.method === "GET";
+  if (!read) {
+    const res = await fetch(url, init);
+    return { res, text: await res.text() };
+  }
+  const ctl = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    ctl.abort();
+  }, READ_TIMEOUT_MS);
+  const outer = init.signal;
+  const onOuter = () => ctl.abort();
+  if (outer) outer.aborted ? ctl.abort() : outer.addEventListener("abort", onOuter);
   try {
-    res = await fetch(BASE_URL + path, {
+    const res = await fetch(url, { ...init, signal: ctl.signal });
+    return { res, text: await res.text() };
+  } catch (e) {
+    if (timedOut) throw new ApiError(TIMEOUT_MESSAGE, 0);
+    throw e;
+  } finally {
+    clearTimeout(timer);
+    outer?.removeEventListener("abort", onOuter);
+  }
+}
+
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  // a change on the server → reads after it never reuse one started before it
+  if (init.method && init.method !== "GET") inFlight.clear();
+  let res: Response;
+  let text: string;
+  try {
+    ({ res, text } = await fetchText(BASE_URL + path, {
       credentials: "include",
       ...init,
       headers: {
@@ -51,11 +89,11 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
         ...(init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
         ...(init.headers || {}),
       },
-    });
-  } catch {
+    }));
+  } catch (e) {
+    if (e instanceof ApiError) throw e;
     throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
   }
-  const text = await res.text();
   let data: any = null;
   try {
     data = text ? JSON.parse(text) : null;
@@ -90,7 +128,15 @@ export async function requestText(path: string, init: RequestInit = {}): Promise
 }
 
 export const json = (body: unknown) => JSON.stringify(body);
-export const get = <T,>(path: string) => request<T>(path);
+/** the same read asked for again while it is still on its way (several screens / effects at once) → one request */
+const inFlight = new Map<string, Promise<unknown>>();
+export const get = <T,>(path: string): Promise<T> => {
+  const known = inFlight.get(path);
+  if (known) return known as Promise<T>;
+  const p = request<T>(path).finally(() => inFlight.delete(path));
+  inFlight.set(path, p);
+  return p;
+};
 export const post = <T,>(path: string, body?: unknown) => request<T>(path, { method: "POST", body: body === undefined ? undefined : json(body) });
 export const put = <T,>(path: string, body?: unknown) => request<T>(path, { method: "PUT", body: json(body) });
 export const patch = <T,>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body: json(body) });
