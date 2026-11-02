@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { api } from "./api";
+import { onLiveHint } from "./live";
 
 /** + statusChanged: orders whose stage changed since the customer last saw it (this device) */
 type Status = Awaited<ReturnType<typeof api.orderStatus>> & { statusChanged?: number[] };
@@ -137,9 +138,20 @@ export function useOrderUpdates(enabled: boolean): number {
     tick();
     const t = setInterval(tick, 30_000);
     const sub = AppState.addEventListener("change", (a) => a === "active" && tick());
+    // «your order changed» from the site (manager message, new stage) → the badge updates at once
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const offLive = onLiveHint((h) => {
+      if (h.t !== "order" || soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        orderStatus(true).catch(() => {});
+      }, 800);
+    });
     return () => {
       listeners.delete(setS);
       clearInterval(t);
+      if (soon) clearTimeout(soon);
+      offLive();
       sub.remove();
     };
   }, [enabled]);

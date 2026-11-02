@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { AppState } from "react-native";
 import { get } from "./api";
+import { onLiveHint } from "./live";
 import { useBadges } from "./store/badges";
 import { isUnread, useChatSeen } from "./store/chatSeen";
 import type { ChatMarks } from "./types";
@@ -37,12 +38,23 @@ export function useOrderNews(enabled: boolean) {
     };
     tick();
     const t = setInterval(tick, 30_000);
+    // «order N changed» from the site (a message, a confirmation, a new order) → recount at once
+    let soon: ReturnType<typeof setTimeout> | null = null;
+    const offLive = onLiveHint((h) => {
+      if (h.t !== "order" || soon) return;
+      soon = setTimeout(() => {
+        soon = null;
+        tick();
+      }, 800);
+    });
     const sub = AppState.addEventListener("change", (a) => a === "active" && tick());
     // opening a chat clears its order from the count at once
     const unsub = useChatSeen.subscribe(() => last && count(last));
     return () => {
       alive = false;
       clearInterval(t);
+      if (soon) clearTimeout(soon);
+      offLive();
       sub.remove();
       unsub();
     };
