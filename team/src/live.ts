@@ -1,5 +1,5 @@
 import { AppState, Platform } from "react-native";
-import { BASE_URL } from "./api";
+import { BASE_URL, forgetReads } from "./api";
 
 /**
  * Live hints from the site (GET /api/team/live, Server-Sent Events): «order N changed» (new order, status, items, chat).
@@ -17,7 +17,15 @@ export function onLiveHint(fn: Listener): () => void {
     listeners.delete(fn);
   };
 }
+let lastOrderHint = 0;
+/** when the site last said «an order changed» — a screen that was hidden then reloads when shown */
+export function lastLiveHintAt() {
+  return lastOrderHint;
+}
 function emit(h: LiveHint) {
+  if (h.t === "order") lastOrderHint = Date.now();
+  // a reload this hint causes must see the change — never the answer of a request already on its way
+  if (h.t === "order") forgetReads();
   for (const fn of [...listeners]) {
     try {
       fn(h);

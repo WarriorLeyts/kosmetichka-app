@@ -1,5 +1,5 @@
 import { AppState, Platform } from "react-native";
-import { BASE_URL } from "./api";
+import { BASE_URL, forgetReads } from "./api";
 
 /**
  * Live hints from the site (GET /api/live, Server-Sent Events): «order N changed» / «new notification».
@@ -18,6 +18,8 @@ export function onLiveHint(fn: Listener): () => void {
   };
 }
 function emit(h: LiveHint) {
+  // a reload this hint causes must see the change — never a shared answer from just before it
+  if (h.t === "order") forgetReads();
   for (const fn of [...listeners]) {
     try {
       fn(h);

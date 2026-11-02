@@ -28,6 +28,10 @@ export async function formFile(uri: string, name: string, type: string): Promise
  * goes to the site (a stuck screen once sent dozens a second and loaded the server).
  */
 const calm = new Map<string, { at: number; pending: boolean; promise: Promise<unknown> }>();
+/** something changed on the site (live hint): the next reads go to the server, not to a shared answer */
+export function forgetReads() {
+  calm.clear();
+}
 /** the site said an order changed: the next reads go to the site */
 export function forgetCalm() {
   calm.clear();

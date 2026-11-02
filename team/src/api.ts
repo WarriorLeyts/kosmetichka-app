@@ -130,6 +130,10 @@ export async function requestText(path: string, init: RequestInit = {}): Promise
 export const json = (body: unknown) => JSON.stringify(body);
 /** the same read asked for again while it is still on its way (several screens / effects at once) → one request */
 const inFlight = new Map<string, Promise<unknown>>();
+/** something changed on the site (live hint): reads from now on must not reuse one started before it */
+export function forgetReads() {
+  inFlight.clear();
+}
 export const get = <T,>(path: string): Promise<T> => {
   const known = inFlight.get(path);
   if (known) return known as Promise<T>;

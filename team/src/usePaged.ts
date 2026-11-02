@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AppState } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { onLiveHint } from "./live";
+import { lastLiveHintAt, onLiveHint } from "./live";
 import { lastWriteAt } from "./api";
 
 /** offset/page based endless list with a debounced query */
@@ -96,11 +96,12 @@ export function usePaged<T>(
         first.current = false;
         return;
       }
-      if (lastWriteAt() > loadedAt.current) {
+      // something was changed here, or the site reported a change while this list was hidden
+      if (lastWriteAt() > loadedAt.current || (opts.live && lastLiveHintAt() > loadedAt.current)) {
         loadedAt.current = Date.now();
         refreshFirst();
       }
-    }, [refreshFirst])
+    }, [refreshFirst, opts.live])
   );
 
   useFocusEffect(
