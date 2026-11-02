@@ -4,6 +4,7 @@ import { persistStorage } from "./storage";
 import { get, post, setOnUnauthorized } from "../api";
 import { useBadges } from "./badges";
 import { stopWebPush } from "../webPush";
+import { unregisterPhonePush } from "../phonePush";
 
 export type Role = "admin" | "manager" | "picker";
 export type Staff = { id: number; name: string | null; login: string; role: Role; roleLabel?: string };
@@ -68,6 +69,8 @@ export const useAuth = create<AuthState>()(
         clearAccountState();
         // this browser stops getting the account's notifications (web only)
         void stopWebPush();
+        // …and this phone (Android app) — before the session ends, or the site refuses the request
+        await Promise.race([unregisterPhonePush(), new Promise((r) => setTimeout(r, 3000))]);
         await dropServerSession();
       },
       refresh: async () => {

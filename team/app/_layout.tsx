@@ -18,6 +18,7 @@ import { useDesktop } from "@/useDesktop";
 import { Sidebar } from "@/components/Sidebar";
 import { startLive, stopLive } from "@/live";
 import { startWebPush } from "@/webPush";
+import { listenPhonePush, registerPhonePush } from "@/phonePush";
 import { InstallPrompt } from "@/components/InstallPrompt";
 
 installCrashReporter();
@@ -60,6 +61,9 @@ export default function RootLayout() {
     startLive();
     // admin website: staff notifications (asks on the first tap; browser only)
     void startWebPush();
+    // Android app: push notifications (new orders, customers' messages)
+    void registerPhonePush();
+    listenPhonePush();
     return () => stopLive();
   }, [signedIn]);
   useEffect(() => {

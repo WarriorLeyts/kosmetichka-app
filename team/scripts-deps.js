@@ -11,7 +11,7 @@ const WANT = [
   "expo-constants", "expo-haptics", "expo-image", "expo-linear-gradient", "expo-linking", "expo-router",
   "expo-splash-screen", "expo-status-bar", "expo-web-browser", "react", "react-native",
   "@react-native-masked-view/masked-view", "expo-blur", "expo-font",
-  "react-native-safe-area-context", "react-native-screens", "expo-image-picker", "expo-document-picker", "expo-file-system", "expo-sharing", "expo-image-manipulator",
+  "react-native-safe-area-context", "react-native-screens", "expo-image-picker", "expo-document-picker", "expo-file-system", "expo-sharing", "expo-image-manipulator", "expo-notifications",
   // the browser version (the admin site is this app built for the web)
   "react-dom", "react-native-web", "@expo/metro-runtime",
 ];
