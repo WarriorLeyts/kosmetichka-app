@@ -77,7 +77,11 @@
       "typedRoutes": false
     },
     "extra": {
-      "router": {}
-    }
+      "router": {},
+      "eas": {
+        "projectId": "69978522-0b83-47ad-aec4-6ada307759ce"
+      }
+    },
+    "owner": "doshaeww"
   }
 }
