@@ -10,11 +10,14 @@ import { useIOS } from "@/ios";
 import { CustomerBadge } from "@/components/CustomerBadge";
 import type { CustomerDetail } from "@/types";
 import { PhoneKV } from "@/components/PhoneKV";
+import { useAuth } from "@/store/auth";
 
 /** Customer card: contacts, 1C data, price type; approve / return to «waiting» (as the site's buttons). */
 export default function Customer() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useIOS();
+  // managers only view customers: approving, price-type requests and editing are for the admin
+  const canEdit = useAuth((s) => s.user?.role === "admin");
   const [busy, setBusy] = useState("");
   const [form, setForm] = useState<Form | null>(null); // «Изменить данные»
   const running = useRef(false);
@@ -105,17 +108,17 @@ export default function Customer() {
                 Сейчас: {x.priceTypeLabel}
                 {x.roleRequestedAt ? ` · ${date(x.roleRequestedAt)}` : ""}
               </Text>
-              <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
+              {canEdit ? <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
                 <ActionButton label="Одобрить" kind="success" loading={busy === "approve"} onPress={() => decide("approve")} />
                 <ActionButton label="Отклонить" kind="danger" loading={busy === "reject"} onPress={() => decide("reject")} />
-              </View>
+              </View> : <Text style={{ color: c.secondary, marginTop: 8 }}>Решение принимает администратор</Text>}
             </Card>
           ) : null}
-          <View style={{ flexDirection: "row", gap: 8 }}>
+          {!canEdit ? null : <View style={{ flexDirection: "row", gap: 8 }}>
             {!x.isApproved ? <ActionButton label="Подтвердить" kind="success" loading={busy === "approve"} onPress={() => act("approve")} /> : null}
             {x.isApproved ? <ActionButton label="Снять подтверждение" kind="danger" loading={busy === "block"} onPress={() => act("block")} /> : null}
-          </View>
-          {form ? (
+          </View>}
+          {!canEdit ? null : form ? (
             <CustomerForm
               form={form}
               setForm={setForm}
