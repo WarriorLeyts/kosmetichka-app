@@ -30,6 +30,7 @@ import { BackBar } from "@/components/iosui/BrandHeader";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
+import { OrderDone } from "@/components/OrderDone";
 import { markChatSeen, markStatusSeen } from "@/unread";
 import { orderTitle, usePageTitle } from "@/pageTitle";
 import type { ChatMessage, LineChange, Order, Product, RemovedOrderItem, Variant } from "@/types";
@@ -551,12 +552,16 @@ export default function OrderScreen() {
             Заказ №{order.id}
           </Text>
           <View style={styles.headRow}>
-            <View style={[styles.status, { backgroundColor: s.bg }]}>
-              <Ionicons name={s.icon} size={22} color={s.fg} />
-              <Text style={[styles.statusText, { color: s.fg }]}>{s.label}</Text>
-            </View>
+            {/* «Выполнен» gets the big banner below instead of the small pill */}
+            {order.status === "exported" ? null : (
+              <View style={[styles.status, { backgroundColor: s.bg }]}>
+                <Ionicons name={s.icon} size={22} color={s.fg} />
+                <Text style={[styles.statusText, { color: s.fg }]}>{s.label}</Text>
+              </View>
+            )}
             <Text style={[iosText.subhead, { color: c.secondary }]}>от {dateLong(order.createdAt)}</Text>
           </View>
+          {order.status === "exported" ? <OrderDone /> : null}
 
           {needsConfirm ? (
             <View style={[panel, { gap: 10 }]}>
