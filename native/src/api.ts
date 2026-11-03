@@ -122,6 +122,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       ...init,
       headers: {
         Accept: "application/json",
+        // the site prices a retail customer differently on the website (lib/siteMode.ts there)
+        ...(Platform.OS === "web" ? { "X-Kosmetichka-Client": "web" } : {}),
         ...(init.body ? { "Content-Type": "application/json" } : {}),
         ...(init.headers || {}),
       },

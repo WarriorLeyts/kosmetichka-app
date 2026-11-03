@@ -15,6 +15,8 @@
  */
 
 /** Пороги цены для клиента «Опт»: от 5 000 ₽ в оптовых ценах — опт, от 50 000 ₽ в крупнооптовых — крупный опт. */
+import { SITE_RETAIL_DISCOUNT } from "./siteMode";
+
 export const WHOLESALE_MIN_ORDER = 5_000;
 export const BIG_WHOLESALE_MIN_ORDER = 50_000;
 
@@ -27,7 +29,8 @@ export function resolveCustomerPriceType(
   if (!customer) return "guest";
   if (customer.priceType === "big_wholesale") return "big_wholesale";
   if (customer.priceType === "wholesale") return "wholesale";
-  if (customer.priceType === "retail") return "retail";
+  // website: «Розница» buys at «Скидка по карте» (the server prices it the same way)
+  if (customer.priceType === "retail") return SITE_RETAIL_DISCOUNT ? "discount" : "retail";
   return "discount";
 }
 

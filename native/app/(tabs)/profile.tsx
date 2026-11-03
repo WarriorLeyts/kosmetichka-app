@@ -19,7 +19,7 @@ import { NotifySheet } from "@/components/NotifySheet";
 import { useTheme, type ThemePref } from "@/theme";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
-import { RETAIL_ENABLED } from "@/siteMode";
+import { RETAIL_ENABLED, SITE_RETAIL_DISCOUNT } from "@/siteMode";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -133,7 +133,7 @@ export default function Profile() {
 
         {/* loyalty card from MAXMA (by phone); customers without a card see nothing.
             Wholesale prices give no bonuses, so a wholesale customer sees no card (it shows after a switch to retail). */}
-        {!RETAIL_ENABLED || wholesale ? null : customer && card ? (
+        {!(RETAIL_ENABLED || SITE_RETAIL_DISCOUNT) || wholesale ? null : customer && card ? (
           <LoyaltyCardPanel
             card={card}
             width={cardW}
