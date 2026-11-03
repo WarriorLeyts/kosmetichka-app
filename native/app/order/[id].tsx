@@ -30,6 +30,7 @@ import { BackBar } from "@/components/iosui/BrandHeader";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
+import { OrderDone } from "@/components/OrderDone";
 import { markChatSeen, markStatusSeen } from "@/unread";
 import { orderTitle, usePageTitle } from "@/pageTitle";
 import type { ChatMessage, LineChange, Order, Product, RemovedOrderItem, Variant } from "@/types";
@@ -550,7 +551,8 @@ export default function OrderScreen() {
           <Text style={[iosText.largeTitle, { color: c.label, marginTop: 4 }]} accessibilityRole="header">
             Заказ №{order.id}
           </Text>
-          <View style={styles.headRow}>
+          {order.status === "exported" && LOOK ? <OrderDone look={LOOK} date={`от ${dateLong(order.createdAt)}`} /> : null}
+          <View style={[styles.headRow, order.status === "exported" && LOOK ? { display: "none" } : null]}>
             <View style={[styles.status, { backgroundColor: s.bg }]}>
               <Ionicons name={s.icon} size={22} color={s.fg} />
               <Text style={[styles.statusText, { color: s.fg }]}>{s.label}</Text>
@@ -1058,6 +1060,9 @@ function GradientButton({ title, icon, onPress, loading }: { title: string; icon
     </Pressable>
   );
 }
+
+// preview only: ?look=a|b|c in the browser
+const LOOK = typeof location !== "undefined" ? new URLSearchParams(location.search).get("look") : null;
 
 const styles = StyleSheet.create({
   contactCard: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 22, padding: 18, marginTop: 14, boxShadow: "0 8px 22px rgba(139,61,255,0.35)" },
