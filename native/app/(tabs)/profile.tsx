@@ -144,7 +144,11 @@ export default function Profile() {
                   text: "Отвязать",
                   style: "destructive",
                   onPress: () => {
-                    api.loyaltyUnlink().then(() => setCard(null)).catch((e) => Alert.alert("Не получилось", e instanceof Error ? e.message : ""));
+                    api.loyaltyUnlink().then(() => {
+                      setCard(null);
+                      // the card decides the website prices — the cart recounts at once
+                      void useAuth.getState().reloadCustomer();
+                    }).catch((e) => Alert.alert("Не получилось", e instanceof Error ? e.message : ""));
                   },
                 },
               ])

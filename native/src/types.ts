@@ -44,6 +44,8 @@ export type Customer = {
   city?: string | null;
   address?: string | null;
   priceType?: string | null;
+  /** a MAXMA loyalty card is linked (website: «Розница» with a card buys at «Скидка по карте») */
+  hasCard?: boolean;
   /** wholesale level the admin granted ("wholesale" | "big_wholesale") */
   wholesaleAccess?: string | null;
   /** request for a wholesale price type: "pending" | "rejected" */

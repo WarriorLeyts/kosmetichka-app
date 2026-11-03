@@ -24,13 +24,13 @@ export type PriceType = "guest" | "retail" | "discount" | "wholesale" | "big_who
 
 /** Базовый тариф клиента (без учёта корзины). */
 export function resolveCustomerPriceType(
-  customer: { priceType?: string | null } | null
+  customer: { priceType?: string | null; hasCard?: boolean } | null
 ): PriceType {
   if (!customer) return "guest";
   if (customer.priceType === "big_wholesale") return "big_wholesale";
   if (customer.priceType === "wholesale") return "wholesale";
-  // website: «Розница» buys at «Скидка по карте» (the server prices it the same way)
-  if (customer.priceType === "retail") return SITE_RETAIL_DISCOUNT ? "discount" : "retail";
+  // website: «Розница» with a linked loyalty card buys at «Скидка по карте» (the server prices it the same way)
+  if (customer.priceType === "retail") return SITE_RETAIL_DISCOUNT && customer.hasCard ? "discount" : "retail";
   return "discount";
 }
 

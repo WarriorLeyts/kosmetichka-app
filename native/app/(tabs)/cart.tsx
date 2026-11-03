@@ -178,7 +178,8 @@ export default function Cart() {
     }, 450);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customer?.id, priceType, cartKey, promoCode, spend]);
+    // hasCard: on the website a linked / unlinked card changes the prices
+  }, [customer?.id, priceType, customer?.hasCard, cartKey, promoCode, spend]);
 
   // «Опт»: the price by the order sum — less than 5 000 ₽ discount, from 5 000 wholesale, from 50 000 big wholesale
   const active = cartPriceTier(items, customer);

@@ -53,6 +53,8 @@ export default function LoyaltyAdd() {
     run(async () => {
       if (!code.replace(/\D/g, "")) throw new Error("Введите код из СМС");
       await api.loyaltyConfirm(code);
+      // the card decides the website prices — the cart recounts at once
+      void useAuth.getState().reloadCustomer();
       router.back(); // the profile reloads the card when it comes back into view
     });
 
