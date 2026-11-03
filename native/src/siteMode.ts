@@ -8,7 +8,11 @@ import { Platform } from "react-native";
 export const RETAIL_ENABLED = Platform.OS !== "web";
 
 /**
- * The website: a retail customer («Розница») sees and pays the discount price («Скидка по карте») and
- * can add a MAXMA loyalty card. The phone apps keep retail prices. Mirrors SITE_RETAIL_DISCOUNT on the site.
+ * A retail customer («Розница») with a linked MAXMA card sees and pays the discount price («Скидка по
+ * карте») — first on the website, now in the phone apps too. Mirrors SITE_RETAIL_DISCOUNT / APPS_TOO
+ * on the site.
  */
-export const SITE_RETAIL_DISCOUNT = Platform.OS === "web";
+export const SITE_RETAIL_DISCOUNT = true;
+
+/** Bonuses are collected, not spent (owner's decision) — the «Списать бонусы» switch is hidden everywhere. */
+export const BONUS_SPEND = false;

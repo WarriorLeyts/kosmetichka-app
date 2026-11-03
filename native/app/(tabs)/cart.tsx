@@ -20,7 +20,7 @@ import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import type { CartItem, Product } from "@/types";
-import { RETAIL_ENABLED } from "@/siteMode";
+import { BONUS_SPEND, RETAIL_ENABLED } from "@/siteMode";
 import { FitText } from "@/components/FitText";
 import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
 import { TierProgress } from "@/components/TierProgress";
@@ -467,7 +467,7 @@ export default function Cart() {
                 }}
               />
             ) : null}
-            {customer && calc?.bonuses && RETAIL_ENABLED ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
+            {customer && calc?.bonuses && RETAIL_ENABLED && BONUS_SPEND ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
 
             {/* «Опт»: the price by the order sum — how much more to the next price, right above «Оформить заказ» */}
             <TierProgress items={items} customer={customer} dark={dark} />
