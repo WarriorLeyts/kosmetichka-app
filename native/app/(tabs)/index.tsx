@@ -24,6 +24,7 @@ import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { UI_SIZES, uiScale } from "@/uiScale";
 import type { Product } from "@/types";
 import { FitText } from "@/components/FitText";
+import { PendingOrderNote, usePendingOrders } from "@/components/home/PendingOrder";
 
 const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "new", label: "Новинки", icon: "sparkles-outline" },
@@ -46,6 +47,8 @@ export default function Home() {
   const addToCart = useAddToCart();
 
   const [sizeOpen, setSizeOpen] = useState(false);
+  // orders waiting for the manager: a bright card under the search
+  const pendingIds = usePendingOrders(!!customer);
   const [headerH, setHeaderH] = useState(0); // the scene fills exactly the screen below the header
   const scrollY = useRef(new Animated.Value(0)).current;
   const [sceneTop, setSceneTop] = useState<number | null>(null);
@@ -148,6 +151,7 @@ export default function Home() {
           </Pressable>
         </View>
         )}
+        <PendingOrderNote ids={pendingIds} />
       </View>
 
       {/* new home content: scroll-driven box scene + categories with images */}
