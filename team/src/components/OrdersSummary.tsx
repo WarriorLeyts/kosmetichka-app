@@ -139,7 +139,7 @@ export function StatusTiles({ counts, status, onChange, desktop }: { counts: Ord
                 <View style={st.labelRow}>
                   <View style={[st.dot, { backgroundColor: DOT[s] }]} />
                   <Text style={[st.label, small && st.labelSmall, { color: on ? VIOLET : c.label }]} numberOfLines={1}>
-                    {SHORT[s] ?? x?.label ?? s}
+                    {(small && s === "consultation" ? "Проверка" : SHORT[s]) ?? x?.label ?? s}
                   </Text>
                 </View>
                 <Text style={[st.count, small && st.countSmall, { color: c.label }]}>{counts ? x?.count ?? 0 : "–"}</Text>
