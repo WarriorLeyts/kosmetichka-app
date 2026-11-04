@@ -8,8 +8,11 @@ import { onLiveHint } from "@/live";
 import { VIOLET_PINK } from "@/components/TabBar";
 
 /** Orders still in work (not «Выполнен» / «Отменён»), newest first, with their stage; follows live changes. */
-export function useActiveOrders(enabled: boolean): { id: number; status: string }[] {
-  const [rows, setRows] = useState<{ id: number; status: string }[]>([]);
+type Active = { id: number; status: string; needsConfirm?: boolean };
+
+/** …the ones waiting for the customer's confirmation go first — he has to act on them. */
+export function useActiveOrders(enabled: boolean): Active[] {
+  const [rows, setRows] = useState<Active[]>([]);
   useEffect(() => {
     if (!enabled) {
       setRows([]);
@@ -18,7 +21,7 @@ export function useActiveOrders(enabled: boolean): { id: number; status: string 
     let alive = true;
     const load = (fresh = false) =>
       orderStatus(fresh)
-        .then((s) => alive && setRows(s.statuses.filter((o) => STEP_INDEX[o.status] !== undefined && o.status !== "exported").sort((a, b) => b.id - a.id)))
+        .then((s) => alive && setRows(s.statuses.filter((o) => STEP_INDEX[o.status] !== undefined && o.status !== "exported").sort((a, b) => Number(!!b.needsConfirm) - Number(!!a.needsConfirm) || b.id - a.id)))
         .catch(() => {});
     void load();
     const off = onLiveHint((h) => {
@@ -64,12 +67,14 @@ const NOTES: Record<string, string> = {
  * Home screen: the newest order in work — one line saying its stage («ожидает подтверждения»,
  * «собирается», «на проверке», «оформлен»). Opens the order. Gone when nothing is in work.
  */
-export function PendingOrderNote({ orders }: { orders: { id: number; status: string }[] }) {
+export function PendingOrderNote({ orders }: { orders: Active[] }) {
   if (!orders.length) return null;
-  const { id, status } = orders[0];
+  const { id, status, needsConfirm } = orders[0];
   const more = orders.length - 1;
-  const title = `Заказ №${id} ${TITLES[status] ?? ""}`.trim();
-  const sub = more > 0 ? `${NOTES[status] ?? ""} · ещё ${more} в работе` : NOTES[status] ?? "";
+  // the manager collected the order and waits for the customer: say what to do
+  const title = needsConfirm ? `Заказ №${id} собран — подтвердите` : `Заказ №${id} ${TITLES[status] ?? ""}`.trim();
+  const note = needsConfirm ? "Проверьте состав и нажмите «Подтвердить заказ»" : NOTES[status] ?? "";
+  const sub = more > 0 ? `${note} · ещё ${more} в работе` : note;
   return (
     <Pressable
       onPress={() => router.push(`/order/${id}`)}
@@ -80,7 +85,7 @@ export function PendingOrderNote({ orders }: { orders: { id: number; status: str
       <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.card}>
         <View style={st.head}>
           <View style={st.icon}>
-            <Ionicons name={status === "pending" ? "time" : status === "assembly" ? "cube" : status === "consultation" ? "chatbubble-ellipses" : "checkmark-circle"} size={24} color="#8b3dff" />
+            <Ionicons name={needsConfirm ? "hand-left" : status === "pending" ? "time" : status === "assembly" ? "cube" : status === "consultation" ? "chatbubble-ellipses" : "checkmark-circle"} size={24} color="#8b3dff" />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={st.title}>{title}</Text>

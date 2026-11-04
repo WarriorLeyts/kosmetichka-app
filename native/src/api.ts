@@ -391,7 +391,8 @@ export const api = {
   },
   orderStatus(): Promise<{
     pending: number;
-    statuses: { id: number; status: string }[];
+    /** needsConfirm: the manager waits for the customer to check and confirm the order */
+    statuses: { id: number; status: string; needsConfirm?: boolean }[];
     managerMessages: { orderId: number; latestAt: string; preview: string }[];
     isApproved?: boolean;
   }> {
