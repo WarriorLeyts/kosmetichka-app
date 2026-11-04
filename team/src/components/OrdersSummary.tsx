@@ -304,7 +304,7 @@ const st = StyleSheet.create({
   week: { flexDirection: "row", marginBottom: 4 },
   weekDay: { width: `${100 / 7}%`, textAlign: "center", fontSize: 13, fontWeight: "600" },
   days: { flexDirection: "row", flexWrap: "wrap" },
-  cell: { width: `${100 / 7}%`, aspectRatio: 1, maxHeight: 52, alignItems: "center", justifyContent: "center" },
+  cell: { width: `${100 / 7}%`, height: 48, alignItems: "center", justifyContent: "center" },
   dayBtn: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
   day: { fontSize: 16, fontWeight: "700" },
   allBtn: { borderWidth: 1, borderRadius: 24, paddingHorizontal: 16, height: 46, justifyContent: "center" },
