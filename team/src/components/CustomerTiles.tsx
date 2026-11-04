@@ -134,10 +134,19 @@ export function CustomerTiles({
               accessibilityState={{ selected: on }}
               style={[st.segItem, on && { backgroundColor: VIOLET }]}
             >
-              <Text style={[st.segText, small && { fontSize: 13 }, { color: on ? "#fff" : c.label }]} numberOfLines={1}>
-                {small && t.value === "" ? "Все" : small && t.value === "big_wholesale" ? "Кр. опт" : t.label}
-                {counts ? <Text style={{ opacity: 0.7 }}>{`  ${counts.types[t.key] ?? 0}`}</Text> : null}
-              </Text>
+              {small ? (
+                <>
+                  <Text style={[st.segText, { fontSize: 13.5, color: on ? "#fff" : c.label }]} numberOfLines={1}>
+                    {t.value === "" ? "Все" : t.value === "big_wholesale" ? "Кр. опт" : t.label}
+                  </Text>
+                  <Text style={{ fontSize: 12, fontWeight: "600", color: on ? "rgba(255,255,255,0.85)" : c.secondary }}>{counts ? counts.types[t.key] ?? 0 : " "}</Text>
+                </>
+              ) : (
+                <Text style={[st.segText, { color: on ? "#fff" : c.label }]} numberOfLines={1}>
+                  {t.label}
+                  {counts ? <Text style={{ opacity: 0.7 }}>{`  ${counts.types[t.key] ?? 0}`}</Text> : null}
+                </Text>
+              )}
             </Pressable>
           );
         })}
