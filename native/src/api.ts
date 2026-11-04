@@ -242,8 +242,10 @@ export const api = {
   register(body: {
     name: string; companyName?: string; address?: string; phone: string; email: string; password: string;
     captchaToken: string; smsCode: string; priceType: string; source?: "site";
+    shopType?: string; shopLink?: string;
   }) {
-    return request<{ success: boolean; autoLogin: boolean; message: string }>("/api/auth/register", {
+    // proofToken: wholesale applicant — 3 days to upload the shop photos / videos (uploadProof)
+    return request<{ success: boolean; autoLogin: boolean; message: string; proofToken?: string }>("/api/auth/register", {
       method: "POST",
       body: json(body),
     });
@@ -282,8 +284,9 @@ export const api = {
   role(): Promise<RoleInfo> {
     return request("/api/mobile/role");
   },
-  roleSet(priceType: string): Promise<RoleInfo> {
-    return request("/api/mobile/role", { method: "POST", body: json({ priceType }) });
+  /** extra: a retail customer's first wholesale request — where he resells (the photos go first, uploadProof) */
+  roleSet(priceType: string, extra?: { shopType: string; shopLink?: string }): Promise<RoleInfo> {
+    return request("/api/mobile/role", { method: "POST", body: json({ priceType, ...extra }) });
   },
   roleWithdraw(): Promise<RoleInfo> {
     return request("/api/mobile/role", { method: "DELETE" });
@@ -412,6 +415,27 @@ export const api = {
       throw new ApiError(typeof data?.error === "string" && data.error ? data.error : `Не удалось загрузить файл (${res.status})`, res.status);
     }
     return data as ChatUpload;
+  },
+  /** A wholesale proof photo / video. `token` — the registration pass (not signed in yet); else the login cookie. */
+  async uploadProof(file: { uri: string; name: string; mime: string }, token: string | null): Promise<{ id: number }> {
+    const form = new FormData();
+    form.append("file", await formFile(file.uri, file.name, file.mime), file.name);
+    let res: Response;
+    try {
+      res = await fetch(BASE_URL + "/api/proofs", {
+        method: "POST",
+        body: form,
+        credentials: "include",
+        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+    } catch {
+      throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
+    }
+    const data = await res.json().catch(() => null);
+    if (!res.ok || typeof data?.id !== "number") {
+      throw new ApiError(typeof data?.error === "string" && data.error ? data.error : `Не удалось загрузить файл (${res.status})`, res.status);
+    }
+    return data;
   },
   sendMessage(orderId: number, text: string) {
     return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ text }) });

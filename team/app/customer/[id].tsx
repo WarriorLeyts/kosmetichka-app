@@ -1,10 +1,12 @@
 import { useRef, useState } from "react";
-import { Alert, Linking, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { router, useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, Chips, ErrorState, KV, Loading, SectionTitle } from "@/components/kit";
 import { useLoad } from "@/useLoad";
-import { get, post, put } from "@/api";
+import { BASE_URL, get, post, put } from "@/api";
 import { date } from "@/format";
 import { useIOS } from "@/ios";
 import { CustomerBadge } from "@/components/CustomerBadge";
@@ -101,6 +103,48 @@ export default function Customer() {
             <KV k="Код 1С" v={x.oneCId} />
             <KV k="Заказов" v={x.ordersCount} onPress={() => router.navigate({ pathname: "/orders", params: { all: "1", status: "", customer: x.phone || x.companyName || x.name || "" } })} />
           </Card>
+          {/* wholesale proof the customer sent: where he resells + photos / videos */}
+          {x.shopType || x.proofs?.length ? (
+            <Card>
+              <Text style={{ color: c.label, fontSize: 16.5, fontWeight: "700" }}>Подтверждение</Text>
+              <View style={{ height: 6 }} />
+              <KV k="Где продаёт" v={x.shopTypeLabel} />
+              {x.shopLink ? (
+                <KV
+                  k="Онлайн-магазин"
+                  v={x.shopLink}
+                  onPress={() => {
+                    const u = /^https?:\/\//i.test(x.shopLink!) ? x.shopLink! : `https://${x.shopLink!.replace(/^@/, "instagram.com/")}`;
+                    void WebBrowser.openBrowserAsync(u).catch(() => {});
+                  }}
+                />
+              ) : null}
+              {x.proofs?.length ? (
+                <View style={styles.proofs}>
+                  {x.proofs.map((p) => (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => void WebBrowser.openBrowserAsync(BASE_URL + p.url).catch(() => {})}
+                      accessibilityRole="button"
+                      accessibilityLabel={p.kind === "video" ? "Открыть видео" : "Открыть фото"}
+                      style={[styles.proof, { backgroundColor: c.cellPressed }]}
+                    >
+                      {p.kind === "video" ? (
+                        <View style={styles.proofVideo}>
+                          <Ionicons name="play-circle" size={34} color="#8b3dff" />
+                          <Text style={{ color: c.secondary, fontSize: 12 }}>{Math.max(1, Math.round(p.size / 1048576))} МБ</Text>
+                        </View>
+                      ) : (
+                        <Image source={{ uri: BASE_URL + p.url }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+              ) : (
+                <Text style={{ color: c.secondary, marginTop: 6 }}>Фото и видео ещё не загружены</Text>
+              )}
+            </Card>
+          ) : null}
           {x.roleRequestStatus === "pending" && x.roleRequestLabel ? (
             <Card>
               <Text style={{ color: c.label, fontSize: 16.5, fontWeight: "700" }}>Заявка на «{x.roleRequestLabel}»</Text>
@@ -239,4 +283,10 @@ function CustomerForm({ form, setForm, busy, onCancel, onSave }: { form: Form; s
 const fs = StyleSheet.create({
   label: { fontSize: 13, fontWeight: "600", marginBottom: 6, marginLeft: 2 },
   input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16 },
+});
+
+const styles = StyleSheet.create({
+  proofs: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
+  proof: { width: 92, height: 92, borderRadius: 14, overflow: "hidden" },
+  proofVideo: { flex: 1, alignItems: "center", justifyContent: "center", gap: 2 },
 });

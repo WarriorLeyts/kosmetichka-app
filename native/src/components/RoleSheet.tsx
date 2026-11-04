@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Sheet } from "@/components/iosui/Sheet";
 import { tap } from "@/components/ui";
 import { iosText, useIOS } from "@/ios";
@@ -83,6 +84,12 @@ export function RoleSheet({ open, onClose }: { open: boolean; onClose: () => voi
           },
         },
       ]);
+      return;
+    }
+    // a retail customer's first wholesale request: conditions + proof on a separate screen
+    if (o.state === "request" && o.value !== "retail" && info?.priceType === "retail" && !info?.wholesaleAccess) {
+      onClose();
+      router.push(`/wholesale-request?level=${o.value}`);
       return;
     }
     if (o.state === "request") {

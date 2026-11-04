@@ -15,7 +15,8 @@ import { GradientButton, OutlineButton } from "@/components/iosui/Buttons";
 import { AuthBackdrop } from "@/components/iosui/AuthBackdrop";
 import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
-import { RETAIL_ENABLED } from "@/siteMode";
+import { RETAIL_ENABLED, SITE_RETAIL_DISCOUNT } from "@/siteMode";
+import { WholesaleProofForm, WholesaleTerms, uploadProofs, type ProofFile, type ShopType } from "@/components/WholesaleProof";
 
 const VIOLET = "#8b1ee6";
 
@@ -26,7 +27,7 @@ const TYPES: { value: string; label: string; desc: string; icon: keyof typeof Io
   { value: "big_wholesale", label: "Крупный опт", desc: "Крупные закупки", icon: "business-outline" },
 ];
 
-type Errors = Partial<Record<"name" | "address" | "email" | "password" | "phone" | "smsCode" | "captcha" | "consent", string>>;
+type Errors = Partial<Record<"name" | "address" | "email" | "password" | "phone" | "smsCode" | "captcha" | "consent" | "shopType" | "shopLink" | "proofs", string>>;
 
 /** Fades/slides its children in when mounted (dependent fields, hints). */
 function Appear({ children }: { children: ReactNode }) {
@@ -83,6 +84,11 @@ export default function Register() {
   const refresh = useAuth((s) => s.refresh);
   const [f, setF] = useState({ name: "", companyName: "", address: "", phone: "", email: "", password: "" });
   const [priceType, setPriceType] = useState("wholesale"); // the project's initial state
+  // wholesale proof: where the customer resells + photos / videos (sent right after the application)
+  const [shopType, setShopType] = useState<ShopType | null>(null);
+  const [shopLink, setShopLink] = useState("");
+  const [proofs, setProofs] = useState<ProofFile[]>([]);
+  const [uploading, setUploading] = useState("");
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
   const [smsSent, setSmsSent] = useState(false);
@@ -140,6 +146,9 @@ export default function Register() {
     if (!f.name.trim()) e.name = "Укажите имя";
     // wholesale: the shop's address is required (orders are sent there)
     if (wholesale && f.address.trim().length < 5) e.address = "Укажите адрес магазина";
+    if (wholesale && !shopType) e.shopType = "Выберите, где вы продаёте";
+    if (wholesale && shopType && shopType !== "offline" && shopLink.trim().length < 4) e.shopLink = "Укажите ссылку на онлайн-магазин";
+    if (wholesale && proofs.length === 0) e.proofs = "Добавьте хотя бы одно фото или видео";
     if (!f.email.trim()) e.email = "Укажите email";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = "Проверьте email";
     if (f.password.length < 6) e.password = "Пароль должен быть не короче 6 символов";
@@ -158,7 +167,32 @@ export default function Register() {
     setBusy("submit");
     setError("");
     try {
-      const r = await api.register({ ...f, address: wholesale ? f.address.trim() : undefined, captchaToken: captcha ?? "", smsCode: smsCode.trim(), priceType, ...(RETAIL_ENABLED ? {} : { source: "site" }) });
+      const r = await api.register({
+        ...f,
+        address: wholesale ? f.address.trim() : undefined,
+        captchaToken: captcha ?? "",
+        smsCode: smsCode.trim(),
+        priceType,
+        ...(wholesale && shopType ? { shopType, shopLink: shopLink.trim() || undefined } : {}),
+        ...(RETAIL_ENABLED ? {} : { source: "site" as const }),
+      });
+      // the application is saved — now the photos / videos (the pass is valid 3 days)
+      if (wholesale && r.proofToken && proofs.length) {
+        let left = proofs;
+        for (;;) {
+          const res = await uploadProofs(left, r.proofToken, (d, t) => setUploading(d < t ? `Загружаем файлы: ${d + 1} из ${t}` : ""));
+          if (!res.failed.length) break;
+          left = res.failed;
+          const again = await new Promise<boolean>((done) =>
+            Alert.alert("Не все файлы загрузились", `${res.error}\nНе загружено: ${left.length}. Заявка уже отправлена.`, [
+              { text: "Пропустить", style: "cancel", onPress: () => done(false) },
+              { text: "Повторить", onPress: () => done(true) },
+            ])
+          );
+          if (!again) break;
+        }
+        setUploading("");
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       if (r.autoLogin) {
         await clearPendingLogout();
@@ -203,7 +237,8 @@ export default function Register() {
 
           <Text style={[styles.h1, { color: c.label }]}>Кто вы?</Text>
           <View style={{ gap: 12 }}>
-            {TYPES.filter((t) => RETAIL_ENABLED || t.value !== "retail").map((t) => (
+            {/* retail signs up on the website too now (SITE_RETAIL_DISCOUNT: card → discount prices) */}
+            {TYPES.filter((t) => RETAIL_ENABLED || SITE_RETAIL_DISCOUNT || t.value !== "retail").map((t) => (
               <TypeCard
                 key={t.value}
                 t={t}
@@ -217,14 +252,7 @@ export default function Register() {
           </View>
           {wholesale ? (
             <Appear>
-              <View style={[styles.hint, { backgroundColor: dark ? "#2A1F38" : "#F5EEFB" }]}>
-                <View style={styles.hintIcon}>
-                  <Ionicons name="information-outline" size={20} color={VIOLET} />
-                </View>
-                <Text style={[styles.hintText, { color: c.label }]}>
-                  Оптовые аккаунты подтверждает менеджер — мы свяжемся с вами после регистрации.
-                </Text>
-              </View>
+              <WholesaleTerms />
             </Appear>
           ) : null}
 
@@ -240,6 +268,24 @@ export default function Register() {
                   onChangeText={upd("address")}
                   autoComplete="street-address"
                   error={errors.address}
+                />
+                <WholesaleProofForm
+                  shopType={shopType}
+                  setShopType={(t) => {
+                    setShopType(t);
+                    setErrors((p) => ({ ...p, shopType: undefined, shopLink: undefined }));
+                  }}
+                  shopLink={shopLink}
+                  setShopLink={(v) => {
+                    setShopLink(v);
+                    setErrors((p) => ({ ...p, shopLink: undefined }));
+                  }}
+                  files={proofs}
+                  setFiles={(fl) => {
+                    setProofs(fl);
+                    setErrors((p) => ({ ...p, proofs: undefined }));
+                  }}
+                  errors={errors}
                 />
               </Appear>
             ) : null}
@@ -353,7 +399,7 @@ export default function Register() {
           ) : null}
 
           <GradientButton
-            title={busy === "submit" ? "Отправляем…" : wholesale ? "Отправить заявку" : "Зарегистрироваться"}
+            title={busy === "submit" ? uploading || "Отправляем…" : wholesale ? "Отправить заявку" : "Зарегистрироваться"}
             loading={busy === "submit"}
             onPress={submit}
             style={{ marginTop: 6 }}
