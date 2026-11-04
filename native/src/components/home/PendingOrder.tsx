@@ -61,13 +61,12 @@ const NOTES: Record<string, string> = {
 };
 
 /**
- * Home screen: the newest order in work — its stage and the whole way (Ожидает → … → Выполнен).
- * Opens the order. Gone when nothing is in work.
+ * Home screen: the newest order in work — one line saying its stage («ожидает подтверждения»,
+ * «собирается», «на проверке», «оформлен»). Opens the order. Gone when nothing is in work.
  */
 export function PendingOrderNote({ orders }: { orders: { id: number; status: string }[] }) {
   if (!orders.length) return null;
   const { id, status } = orders[0];
-  const at = STEP_INDEX[status] ?? 0;
   const more = orders.length - 1;
   const title = `Заказ №${id} ${TITLES[status] ?? ""}`.trim();
   const sub = more > 0 ? `${NOTES[status] ?? ""} · ещё ${more} в работе` : NOTES[status] ?? "";
@@ -75,7 +74,7 @@ export function PendingOrderNote({ orders }: { orders: { id: number; status: str
     <Pressable
       onPress={() => router.push(`/order/${id}`)}
       accessibilityRole="button"
-      accessibilityLabel={`${title}. Этап ${at + 1} из ${STEPS.length}. ${sub}`}
+      accessibilityLabel={`${title}. ${sub}`}
       style={({ pressed }) => [st.wrap, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
     >
       <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.card}>
@@ -88,26 +87,6 @@ export function PendingOrderNote({ orders }: { orders: { id: number; status: str
             {sub ? <Text style={st.sub}>{sub}</Text> : null}
           </View>
           <Ionicons name="chevron-forward" size={22} color="#fff" />
-        </View>
-        <View style={st.steps}>
-          {STEPS.map((x, i) => {
-            const done = i < at;
-            const now = i === at;
-            return (
-              <View key={x.status} style={st.step}>
-                <View style={st.lineRow}>
-                  <View style={[st.line, { opacity: i === 0 ? 0 : i <= at ? 1 : 0.35 }]} />
-                  <View style={[st.dot, now ? st.dotNow : done ? st.dotDone : st.dotNext]}>
-                    {done ? <Ionicons name="checkmark" size={11} color="#b832e0" /> : now ? <View style={st.nowCore} /> : null}
-                  </View>
-                  <View style={[st.line, { opacity: i === STEPS.length - 1 ? 0 : i < at ? 1 : 0.35 }]} />
-                </View>
-                <Text numberOfLines={1} style={[st.stepText, { opacity: i <= at ? 1 : 0.7, fontWeight: now ? "800" : "500" }]}>
-                  {x.label}
-                </Text>
-              </View>
-            );
-          })}
         </View>
       </LinearGradient>
     </Pressable>
