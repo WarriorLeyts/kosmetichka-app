@@ -113,7 +113,7 @@ export function WholesaleProofForm({
   };
 
   return (
-    <View style={{ gap: 4 }}>
+    <View style={{ gap: 4, marginBottom: 14 }}>
       <Text style={[st.label, { color: c.secondary }]}>Где вы продаёте</Text>
       <View style={st.types}>
         {TYPES.map((t) => {
@@ -216,7 +216,7 @@ const st = StyleSheet.create({
   b: { fontWeight: "700" },
   rule: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
   label: { fontSize: 13, fontWeight: "600", marginBottom: 4 },
-  types: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  types: { flexDirection: "row", gap: 8, flexWrap: "wrap", marginBottom: 8 },
   type: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1.5, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 },
   typeText: { fontSize: 15, fontWeight: "600" },
   err: { color: "#ff3b30", fontSize: 13 },
