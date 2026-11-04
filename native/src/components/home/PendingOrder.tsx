@@ -37,7 +37,7 @@ export function useActiveOrders(enabled: boolean): { id: number; status: string 
 /** the order's way, as the customer sees it */
 const STEPS = [
   { status: "pending", label: "Ожидает" },
-  { status: "approved", label: "Подтверждён" },
+  { status: "approved", label: "Принят" },
   { status: "assembly", label: "Сборка" },
   { status: "consultation", label: "Проверка" },
   { status: "payment", label: "Оформлен" },
@@ -56,7 +56,7 @@ const NOTES: Record<string, string> = {
   pending: "Менеджер проверит его и свяжется с вами",
   approved: "Скоро начнём сборку",
   assembly: "Собираем ваш заказ",
-  consultation: "Проверьте заказ и подтвердите его",
+  consultation: "Менеджер согласует заказ с вами",
   payment: "Менеджер свяжется по оплате и доставке",
 };
 
