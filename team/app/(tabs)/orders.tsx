@@ -3,7 +3,7 @@ import { Alert, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ListScreen } from "@/components/ListScreen";
-import { ActionButton, Card, Chips, Empty, ErrorState, Loading, SearchField, StatusPill, VIOLET } from "@/components/kit";
+import { ActionButton, Card, Empty, ErrorState, Loading, SearchField, StatusPill, VIOLET } from "@/components/kit";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { useTabBarSpace } from "@/components/TabBar";
 import { useDesktop } from "@/useDesktop";
@@ -11,7 +11,8 @@ import { usePaged } from "@/usePaged";
 import { get, post } from "@/api";
 import { date, money, time } from "@/format";
 import { useIOS } from "@/ios";
-import { STATUS_LABELS, STATUS_ORDER } from "@/orderStatus";
+import { DayNav, StatusTiles } from "@/components/OrdersSummary";
+import { STATUS_LABELS } from "@/orderStatus";
 import { clientName, type OrderListItem, type OrdersPage } from "@/types";
 import { isUnread, useChatSeen } from "@/store/chatSeen";
 
@@ -25,7 +26,8 @@ export default function Orders() {
   const c = useIOS();
   const params = useLocalSearchParams<{ status?: string; all?: string; customer?: string }>();
   const [status, setStatus] = useState(params.status ?? "");
-  const [allDates, setAllDates] = useState(params.all === "1");
+  // "YYYY-MM-DD" — that working day, "" — all dates, null — the current working day
+  const [day, setDay] = useState<string | null>(params.all === "1" ? "" : null);
   const [q, setQ] = useState("");
   const [meta, setMeta] = useState<OrdersPage | null>(null);
   // several orders at once: «Выбрать» → tick orders → «Изменить статус»
@@ -38,36 +40,28 @@ export default function Orders() {
   const desktop = useDesktop();
   useEffect(() => {
     if (params.status !== undefined) setStatus(params.status);
-    if (params.all !== undefined) setAllDates(params.all === "1");
+    if (params.all !== undefined) setDay(params.all === "1" ? "" : null);
     if (params.customer !== undefined) setQ(params.customer);
   }, [params.status, params.all, params.customer]);
 
   // the counters only from the answer for the current filters (a slower old one must not overwrite them)
-  const filterKey = `${status}|${allDates}|${q}`;
+  const filterKey = `${status}|${day}|${q}`;
   const latest = useRef(filterKey);
   latest.current = filterKey;
   const list = usePaged<OrderListItem>(
     async (offset) => {
       const mine = filterKey;
       const p = new URLSearchParams({ page: String(Math.floor(offset / 50) + 1) });
-      if (allDates) p.set("date", "");
+      if (day !== null) p.set("date", day);
       if (status) p.set("status", status);
       if (q.trim()) p.set("customer", q.trim());
       const r = await get<OrdersPage>(`/api/team/orders?${p}`);
       if (latest.current === mine) setMeta(r);
       return { items: r.orders, hasMore: r.page < r.totalPages };
     },
-    [status, allDates, q],
+    [status, day, q],
     { poll: 30_000, live: true } // new orders and statuses appear by themselves (at once with live hints)
   );
-
-  const counts = meta?.todayCounts.byStatus ?? [];
-  const statusChips = [
-    { value: "", label: "Все", count: allDates ? undefined : meta?.todayCounts.total },
-    ...STATUS_ORDER.filter((s) => s !== "approved")
-      .map((s) => ({ value: s, label: STATUS_LABELS[s], count: allDates ? undefined : counts.find((x) => x.status === s)?.count }))
-      .filter((x) => !(["exported", "cancelled"].includes(x.value) && !allDates && !x.count)),
-  ];
 
   const toggle = (id: number) =>
     setPicked((prev) => {
@@ -130,15 +124,8 @@ export default function Orders() {
       header={
         <>
           <SearchField value={q} onChange={setQ} placeholder="Клиент: имя, компания, телефон, ИНН" />
-          <Chips
-            items={[
-              { value: "day", label: meta ? `Рабочий день ${date(meta.filters.businessToday + "T12:00:00")}` : "Рабочий день" },
-              { value: "all", label: "Все даты" },
-            ]}
-            value={allDates ? "all" : "day"}
-            onChange={(v) => setAllDates(v === "all")}
-          />
-          <Chips items={statusChips} value={status} onChange={setStatus} />
+          <DayNav day={day} today={meta?.filters.businessToday} onChange={setDay} />
+          <StatusTiles counts={meta?.counts} status={status} onChange={setStatus} desktop={desktop} />
           {meta ? <Text style={[styles.total, { color: c.secondary }]}>Найдено: {meta.totalCount}</Text> : null}
         </>
       }

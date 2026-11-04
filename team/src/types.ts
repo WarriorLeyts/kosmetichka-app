@@ -25,6 +25,8 @@ export type OrdersPage = Paging & {
   orders: OrderListItem[];
   filters: { date: string; businessToday: string; customer: string; status: string };
   todayCounts: { total: number; byStatus: StatusCount[] };
+  /** the chosen day (or all dates) and search: count and sum per stage; `confirmed` — «На проверке» the customer confirmed */
+  counts?: { total: number; sum: number; confirmed: number; byStatus: { status: string; label: string; count: number; sum: number }[] };
 };
 
 export type ItemCheck = {
