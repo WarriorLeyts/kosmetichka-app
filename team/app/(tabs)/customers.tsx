@@ -2,15 +2,17 @@ import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ListScreen } from "@/components/ListScreen";
-import { Card, Chips, Empty, ErrorState, Loading, SearchField } from "@/components/kit";
+import { Card, Empty, ErrorState, Loading, SearchField } from "@/components/kit";
 import { usePaged } from "@/usePaged";
 import { get } from "@/api";
 import { date } from "@/format";
 import { useIOS } from "@/ios";
 import type { CustomerRow, CustomersPage } from "@/types";
 import { CustomerBadge } from "@/components/CustomerBadge";
+import { CustomerTiles } from "@/components/CustomerTiles";
+import { useDesktop } from "@/useDesktop";
 
-/** Клиенты: search, status filter (all / approved / waiting / blocked) as on the site, price type filter. */
+/** Клиенты: search, status tiles (waiting / requests / approved / blocked / «Неактуальные») with counts, price type switch. */
 export default function Customers() {
   const c = useIOS();
   const [q, setQ] = useState("");
@@ -18,6 +20,8 @@ export default function Customers() {
   // price type: Розница (with the discount card) / Опт / Крупный опт
   const [type, setType] = useState("");
   const [total, setTotal] = useState<number | null>(null);
+  const [counts, setCounts] = useState<CustomersPage["counts"]>();
+  const desktop = useDesktop();
   // «Найдено» only from the answer for the current search / filters (a slower old one must not overwrite it)
   const filterKey = `${q}|${status}|${type}`;
   const latest = useRef(filterKey);
@@ -30,7 +34,10 @@ export default function Customers() {
       if (status) p.set("status", status);
       if (type) p.set("type", type);
       const r = await get<CustomersPage>(`/api/team/customers?${p}`);
-      if (latest.current === mine) setTotal(r.totalCount);
+      if (latest.current === mine) {
+        setTotal(r.totalCount);
+        setCounts(r.counts);
+      }
       return { items: r.customers, hasMore: r.page < r.totalPages };
     },
     [q, status, type]
@@ -47,27 +54,7 @@ export default function Customers() {
       header={
         <>
           <SearchField value={q} onChange={setQ} placeholder="Имя, компания, телефон, email" />
-          <Chips
-            items={[
-              { value: "", label: "Все" },
-              { value: "pending", label: "Ожидают" },
-              { value: "approved", label: "Подтверждённые" },
-              { value: "blocked", label: "Заблокированные" },
-              { value: "requests", label: "Заявки на опт" },
-            ]}
-            value={status}
-            onChange={setStatus}
-          />
-          <Chips
-            items={[
-              { value: "", label: "Все типы" },
-              { value: "retail", label: "Розница" },
-              { value: "wholesale", label: "Опт" },
-              { value: "big_wholesale", label: "Крупный опт" },
-            ]}
-            value={type}
-            onChange={setType}
-          />
+          <CustomerTiles counts={counts} status={status} setStatus={setStatus} type={type} setType={setType} desktop={desktop} />
           {total != null ? <Text style={{ color: c.secondary, fontSize: 13, marginBottom: 8, marginLeft: 4 }}>Найдено: {total}</Text> : null}
         </>
       }
@@ -86,6 +73,8 @@ export default function Customers() {
           </Text>
           {x.roleRequestStatus === "pending" && x.roleRequest ? (
             <Text style={{ color: "#B45309", fontWeight: "700", marginTop: 4 }}>Заявка: {ROLE_LABELS[x.roleRequest] ?? x.roleRequest}</Text>
+          ) : x.roleRequestStatus === "stale" && x.roleRequest ? (
+            <Text style={{ color: c.secondary, fontWeight: "600", marginTop: 4 }}>Неактуальная заявка: {ROLE_LABELS[x.roleRequest] ?? x.roleRequest}</Text>
           ) : null}
           <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>С {date(x.createdAt)}</Text>
         </Card>

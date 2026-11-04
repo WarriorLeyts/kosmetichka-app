@@ -89,8 +89,15 @@ export type CustomerRow = {
   priceType: string; priceTypeLabel: string; isActive: boolean; isApproved: boolean; manager: string | null; displayName: string; createdAt: string;
   /** customer's request for a wholesale price type */
   roleRequest?: string | null; roleRequestStatus?: string | null;
+  /** a sign-up set aside as «Неактуальные» (ISO) */
+  requestStaleAt?: string | null;
 };
-export type CustomersPage = Paging & { customers: CustomerRow[]; filters: { q: string; status: string } };
+export type CustomersPage = Paging & {
+  customers: CustomerRow[];
+  filters: { q: string; status: string };
+  /** tiles: each status within the chosen type, each type within the chosen status (+ search) */
+  counts?: { all: number; newWeek: number; byStatus: Record<string, number>; types: Record<string, number> };
+};
 export type CustomerDetail = {
   customer: CustomerRow & {
     address: string | null; oneCId: string | null; role: string; ordersCount: number; updatedAt: string;

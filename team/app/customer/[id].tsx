@@ -81,6 +81,54 @@ export default function Customer() {
     );
   };
 
+  /** confirm → call → reload (one at a time) */
+  const confirmRun = (key: string, title: string, text: string, ok: string, destructive: boolean, call: () => Promise<unknown>) =>
+    Alert.alert(title, text, [
+      { text: "Отмена", style: "cancel" },
+      {
+        text: ok,
+        style: destructive ? "destructive" : "default",
+        onPress: async () => {
+          if (running.current) return;
+          running.current = true;
+          setBusy(key);
+          try {
+            await call();
+            await reload();
+          } catch (e) {
+            Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+          } finally {
+            running.current = false;
+            setBusy("");
+          }
+        },
+      },
+    ]);
+  const setStale = (stale: boolean) =>
+    confirmRun(
+      stale ? "stale" : "unstale",
+      stale ? "В неактуальные?" : "Вернуть в заявки?",
+      stale
+        ? "Заявка уйдёт в «Неактуальные»: клиент не подтверждён и не заблокирован. Если он снова отправит заявку, она вернётся в заявки."
+        : "Заявка снова появится в «Ожидают» или «Заявки на опт».",
+      stale ? "В неактуальные" : "Вернуть",
+      false,
+      () => post(`/api/admin/customers/${id}/stale`, { stale })
+    );
+  const setBlocked = (blocked: boolean) =>
+    confirmRun(
+      blocked ? "lock" : "unlock",
+      blocked ? "Заблокировать клиента?" : "Разблокировать клиента?",
+      blocked ? "Клиент не сможет войти и оформлять заказы." : "Клиент снова сможет войти.",
+      blocked ? "Заблокировать" : "Разблокировать",
+      blocked,
+      () => put(`/api/admin/customers/${id}`, { isActive: !blocked })
+    );
+  // an open request: a sign-up waiting for approval or a wholesale request; «Неактуальные» — set aside
+  const signupOpen = !!x && x.isActive && !x.isApproved && !x.requestStaleAt;
+  const roleOpen = !!x && x.isActive && x.roleRequestStatus === "pending";
+  const stale = !!x && x.isActive && ((!x.isApproved && !!x.requestStaleAt) || x.roleRequestStatus === "stale");
+
   return (
     <Screen title={x?.displayName ?? "Клиент"} onRefresh={reload}>
       {loading && !data ? <Loading /> : !x ? <ErrorState text={error || "Клиент не найден"} onRetry={reload} /> : (
@@ -158,9 +206,31 @@ export default function Customer() {
               </View> : <Text style={{ color: c.secondary, marginTop: 8 }}>Решение принимает администратор</Text>}
             </Card>
           ) : null}
-          {!canEdit ? null : <View style={{ flexDirection: "row", gap: 8 }}>
-            {!x.isApproved ? <ActionButton label="Подтвердить" kind="success" loading={busy === "approve"} onPress={() => act("approve")} /> : null}
-            {x.isApproved ? <ActionButton label="Снять подтверждение" kind="danger" loading={busy === "block"} onPress={() => act("block")} /> : null}
+          {stale ? (
+            <Card>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Ionicons name="archive-outline" size={20} color={c.secondary} />
+                <Text style={{ color: c.label, fontSize: 16.5, fontWeight: "700", flex: 1 }}>
+                  Заявка неактуальна{x.roleRequestStatus === "stale" && x.roleRequestLabel ? ` · «${x.roleRequestLabel}»` : ""}
+                </Text>
+              </View>
+              <Text style={{ color: c.secondary, marginTop: 6 }}>
+                {x.requestStaleAt ? `С ${date(x.requestStaleAt)}. ` : ""}Если клиент снова отправит заявку, она вернётся в заявки.
+              </Text>
+              {canEdit ? (
+                <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
+                  <ActionButton label="Вернуть в заявки" kind="soft" loading={busy === "unstale"} onPress={() => setStale(false)} />
+                  <ActionButton label="Заблокировать" kind="danger" loading={busy === "lock"} onPress={() => setBlocked(true)} />
+                </View>
+              ) : null}
+            </Card>
+          ) : null}
+          {!canEdit ? null : <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+            {!x.isApproved && x.isActive ? <ActionButton label="Подтвердить" kind="success" loading={busy === "approve"} onPress={() => act("approve")} /> : null}
+            {x.isApproved && x.isActive ? <ActionButton label="Снять подтверждение" kind="danger" loading={busy === "block"} onPress={() => act("block")} /> : null}
+            {signupOpen || roleOpen ? <ActionButton label="В неактуальные" kind="soft" loading={busy === "stale"} onPress={() => setStale(true)} /> : null}
+            {(signupOpen || roleOpen) ? <ActionButton label="Заблокировать" kind="danger" loading={busy === "lock"} onPress={() => setBlocked(true)} /> : null}
+            {!x.isActive ? <ActionButton label="Разблокировать" kind="success" loading={busy === "unlock"} onPress={() => setBlocked(false)} /> : null}
           </View>}
           {!canEdit ? null : form ? (
             <CustomerForm
