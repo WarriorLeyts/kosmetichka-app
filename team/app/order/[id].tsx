@@ -360,10 +360,7 @@ export default function OrderScreen() {
         {/* invoice: PDF to open / send (phones: the file into the share sheet) */}
         <View style={[styles.actions, { marginTop: 10 }]}>
           {Platform.OS === "web" ? (
-            <>
-              <ActionButton label="Счёт PDF" kind="soft" icon="document-outline" onPress={() => void openInvoicePdf(o.id)} />
-              <ActionButton label="Счёт для печати" kind="soft" icon="print-outline" onPress={() => window.open(`/admin/orders/${o.id}/invoice`, "_blank")} />
-            </>
+            <ActionButton label="Счёт PDF" kind="soft" icon="document-outline" onPress={() => void openInvoicePdf(o.id)} />
           ) : null}
           <ActionButton
             label="Поделиться счётом"
