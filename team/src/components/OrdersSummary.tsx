@@ -6,6 +6,7 @@ import { tap } from "@/components/ui";
 import { useIOS } from "@/ios";
 import { money } from "@/format";
 import { VIOLET } from "@/components/kit";
+import { Sheet } from "@/components/iosui/Sheet";
 import type { OrdersPage } from "@/types";
 
 const PINK = "#e82c87";
@@ -36,6 +37,7 @@ export function DayNav({ day, today, onChange }: { day: string | null; today: st
   const atToday = !all && (day === null || day === today);
   const box = { backgroundColor: dark ? "#2B193D" : "#FFFFFF", borderColor: dark ? "rgba(200,160,255,0.2)" : "#E9E4F5" };
   const arrowBg = dark ? "rgba(139,61,255,0.25)" : "#F3EDFC";
+  const [calendar, setCalendar] = useState(false);
   const go = (by: number) => {
     if (!today) return;
     tap();
@@ -48,7 +50,17 @@ export function DayNav({ day, today, onChange }: { day: string | null; today: st
         <Pressable onPress={() => go(-1)} hitSlop={6} accessibilityRole="button" accessibilityLabel="Предыдущий день" style={[st.arrow, { backgroundColor: arrowBg }]}>
           <Ionicons name="chevron-back" size={18} color={VIOLET} />
         </Pressable>
-        <Pressable onPress={() => all && go(0)} accessibilityRole="button" style={st.dayBox}>
+        <Pressable
+          onPress={() => {
+            if (!today) return;
+            tap();
+            setCalendar(true);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Выбрать день"
+          style={st.dayBox}
+        >
+          <Ionicons name="calendar-outline" size={17} color={VIOLET} />
           <Text style={[st.day, { color: c.label }]} numberOfLines={1}>
             {all ? "Выбрать день" : shown ? (atToday ? `Сегодня, ${dayLabel(shown).split(", ")[1]}` : dayLabel(shown)) : "Сегодня"}
           </Text>
@@ -74,7 +86,117 @@ export function DayNav({ day, today, onChange }: { day: string | null; today: st
       >
         <Text style={[st.allText, { color: all ? "#fff" : c.label }]}>Все даты</Text>
       </Pressable>
+      {today ? (
+        <Sheet open={calendar} onClose={() => setCalendar(false)} title="Выберите день">
+          <Calendar
+            value={all ? null : shown ?? null}
+            today={today}
+            onPick={(d) => {
+              setCalendar(false);
+              onChange(d >= today ? null : d);
+            }}
+          />
+        </Sheet>
+      ) : null}
       {!all && shown ? <Text style={[st.hint, { color: c.secondary }]}>рабочий день с 19:00 {ddmm(shiftDay(shown, -1))}</Text> : null}
+    </View>
+  );
+}
+
+const MONTHS_NOM = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+const WEEK_HEAD = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+const pad = (n: number) => String(n).padStart(2, "0");
+
+/** A month grid (Monday first); days after `today` can't be picked. «Сегодня» / «Вчера» on top. */
+function Calendar({ value, today, onPick }: { value: string | null; today: string; onPick: (d: string) => void }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const start = value ?? today;
+  const [ym, setYm] = useState({ y: Number(start.slice(0, 4)), m: Number(start.slice(5, 7)) - 1 });
+  const first = new Date(Date.UTC(ym.y, ym.m, 1, 12));
+  const lead = (first.getUTCDay() + 6) % 7;
+  const daysIn = new Date(Date.UTC(ym.y, ym.m + 1, 0, 12)).getUTCDate();
+  const cells: (string | null)[] = [...Array(lead).fill(null), ...Array.from({ length: daysIn }, (_, i) => `${ym.y}-${pad(ym.m + 1)}-${pad(i + 1)}`)];
+  while (cells.length % 7) cells.push(null);
+  const atLast = `${ym.y}-${pad(ym.m + 1)}` >= today.slice(0, 7);
+  const move = (by: number) => {
+    tap();
+    const d = new Date(Date.UTC(ym.y, ym.m + by, 1, 12));
+    setYm({ y: d.getUTCFullYear(), m: d.getUTCMonth() });
+  };
+  const quick = [
+    { label: "Сегодня", d: today },
+    { label: "Вчера", d: shiftDay(today, -1) },
+    { label: "Позавчера", d: shiftDay(today, -2) },
+  ];
+  return (
+    <View style={{ paddingHorizontal: 16, paddingBottom: 12, maxWidth: 420, width: "100%", alignSelf: "center" }}>
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
+        {quick.map((q) => (
+          <Pressable
+            key={q.label}
+            onPress={() => {
+              tap();
+              onPick(q.d);
+            }}
+            style={[st.quick, { borderColor: value === q.d ? VIOLET : dark ? "rgba(200,160,255,0.25)" : "#E9E4F5", backgroundColor: value === q.d ? VIOLET : "transparent" }]}
+          >
+            <Text style={{ color: value === q.d ? "#fff" : c.label, fontWeight: "600", fontSize: 15 }}>{q.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+      <View style={st.monthRow}>
+        <Pressable onPress={() => move(-1)} hitSlop={8} accessibilityRole="button" accessibilityLabel="Предыдущий месяц" style={[st.arrow, { backgroundColor: dark ? "rgba(139,61,255,0.25)" : "#F3EDFC" }]}>
+          <Ionicons name="chevron-back" size={18} color={VIOLET} />
+        </Pressable>
+        <Text style={[st.month, { color: c.label }]}>
+          {MONTHS_NOM[ym.m]} {ym.y}
+        </Text>
+        <Pressable
+          onPress={() => !atLast && move(1)}
+          disabled={atLast}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Следующий месяц"
+          style={[st.arrow, { backgroundColor: dark ? "rgba(139,61,255,0.25)" : "#F3EDFC", opacity: atLast ? 0.35 : 1 }]}
+        >
+          <Ionicons name="chevron-forward" size={18} color={VIOLET} />
+        </Pressable>
+      </View>
+      <View style={st.week}>
+        {WEEK_HEAD.map((w, i) => (
+          <Text key={w} style={[st.weekDay, { color: i > 4 ? PINK : c.secondary }]}>
+            {w}
+          </Text>
+        ))}
+      </View>
+      <View style={st.days}>
+        {cells.map((d, i) => {
+          if (!d) return <View key={i} style={st.cell} />;
+          const future = d > today;
+          const on = d === value;
+          const isToday = d === today;
+          return (
+            <View key={i} style={st.cell}>
+              <Pressable
+                disabled={future}
+                onPress={() => {
+                  tap();
+                  onPick(d);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={dayLabel(d)}
+                accessibilityState={{ selected: on, disabled: future }}
+                style={[st.dayBtn, on && { backgroundColor: VIOLET }, !on && isToday && { borderWidth: 1.5, borderColor: VIOLET }]}
+              >
+                <Text style={{ fontSize: 16, fontWeight: on || isToday ? "700" : "500", color: on ? "#fff" : future ? c.secondary : isToday ? VIOLET : c.label, opacity: future ? 0.4 : 1 }}>
+                  {Number(d.slice(8))}
+                </Text>
+              </Pressable>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -175,7 +297,15 @@ const st = StyleSheet.create({
   navRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 },
   nav: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 24, padding: 5, gap: 4 },
   arrow: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
-  dayBox: { paddingHorizontal: 8, minWidth: 128, alignItems: "center" },
+  dayBox: { paddingHorizontal: 8, minWidth: 128, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 6 },
+  quick: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 14, paddingVertical: 8 },
+  monthRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
+  month: { fontSize: 17, fontWeight: "700" },
+  week: { flexDirection: "row", marginBottom: 4 },
+  weekDay: { width: `${100 / 7}%`, textAlign: "center", fontSize: 13, fontWeight: "600" },
+  days: { flexDirection: "row", flexWrap: "wrap" },
+  cell: { width: `${100 / 7}%`, aspectRatio: 1, maxHeight: 52, alignItems: "center", justifyContent: "center" },
+  dayBtn: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center" },
   day: { fontSize: 16, fontWeight: "700" },
   allBtn: { borderWidth: 1, borderRadius: 24, paddingHorizontal: 16, height: 46, justifyContent: "center" },
   allText: { fontSize: 15.5, fontWeight: "600" },
