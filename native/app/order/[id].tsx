@@ -146,7 +146,11 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
 }
 
 /** `id` — when shown beside the orders list on a computer (otherwise from the route) */
-export default function OrderScreen({ id: idProp }: { id?: string } = {}) {
+/**
+ * `split` (computer orders page): the chat is drawn as its own column on the right of the order,
+ * not under it.
+ */
+export default function OrderScreen({ id: idProp, split = false }: { id?: string; split?: boolean } = {}) {
   const params = useLocalSearchParams<{ id: string }>();
   const id = idProp ?? params.id;
   // beside the orders list on a computer: no logo / «back» bar — the list is the way back
@@ -536,6 +540,99 @@ export default function OrderScreen({ id: idProp }: { id?: string } = {}) {
     </View>
   );
 
+  const chatHead = (
+      <View style={styles.chatHead}>
+              <Ionicons name="chatbubble-ellipses-outline" size={26} color={VIOLET} />
+              <Text style={[styles.h, { color: c.label, marginBottom: 0 }]}>Чат с менеджером</Text>
+            </View>
+  );
+  const chatList = (
+    <>
+            {chatLoading ? (
+              <ActivityIndicator style={{ marginVertical: 18 }} color={VIOLET} />
+            ) : chatError && messages.length === 0 ? (
+              <Pressable onPress={loadMessages} style={{ alignItems: "center", marginVertical: 14 }}>
+                <Text style={[iosText.subhead, { color: c.secondary }]}>Не удалось загрузить сообщения</Text>
+                <Text style={[iosText.subhead, { color: VIOLET, marginTop: 4 }]}>Повторить</Text>
+              </Pressable>
+            ) : messages.length === 0 && pending.length === 0 ? (
+              <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginVertical: 14 }]}>Напишите, если есть вопросы по заказу</Text>
+            ) : null}
+            {messages.map((m) => bubble(m.id, !m.isFromManager, m.text, m.createdAt))}
+            {pending.map((p) =>
+              p.failed ? (
+                <Pressable key={p.key} onPress={() => send(p.text, p.key)} accessibilityRole="button" accessibilityLabel="Не отправлено. Нажмите, чтобы повторить">
+                  {bubble(
+                    p.key + "b",
+                    true,
+                    p.text,
+                    p.createdAt,
+                    <Text style={{ color: "#FF3B30", fontSize: 12 }}>Не отправлено · повторить</Text>
+                  )}
+                </Pressable>
+              ) : (
+                bubble(p.key, true, p.text, p.createdAt, p.sent ? undefined : <ActivityIndicator size="small" color={c.secondary} style={{ transform: [{ scale: 0.7 }] }} />)
+              )
+            )}
+            {uploading ? (
+              <View style={[styles.bubble, styles.mine, { backgroundColor: dark ? "#352044" : "#F3ECFA", flexDirection: "row", alignItems: "center", gap: 8 }]}>
+                <ActivityIndicator size="small" color={VIOLET} />
+                <Text style={{ color: c.label, flexShrink: 1 }} numberOfLines={1}>
+                  Отправка: {uploading}
+                </Text>
+              </View>
+            ) : null}
+    </>
+  );
+  // message input, pinned to the bottom (stays above the keyboard)
+  const composer = (
+      <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: dark ? "#211032" : "#fff" }, !dark && styles.composerShadow]}>
+        <View style={[styles.wrap, { flexDirection: "row", alignItems: "flex-end", gap: 10 }]}>
+          <Pressable
+            onPress={() => {
+              tap();
+              Keyboard.dismiss();
+              setAttachOpen(true);
+            }}
+            disabled={!!uploading}
+            accessibilityRole="button"
+            accessibilityLabel="Прикрепить фото, видео или файл"
+            style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: uploading ? 0.5 : pressed ? 0.7 : 1 }]}
+          >
+            {uploading ? <ActivityIndicator size="small" color={VIOLET} /> : <Ionicons name="attach" size={26} color={VIOLET} />}
+          </Pressable>
+          {canRequest ? (
+            <Pressable
+              onPress={() => {
+                tap();
+                Keyboard.dismiss();
+                router.push(`/order-add?order=${orderId}&mode=chat`);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Добавить товар в заказ"
+              style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: pressed ? 0.7 : 1 }]}
+            >
+              <Ionicons name="bag-add-outline" size={24} color={VIOLET} />
+            </Pressable>
+          ) : null}
+          <TextInput
+            value={text}
+            onChangeText={setText}
+            placeholder="Написать сообщение…"
+            placeholderTextColor={c.secondary}
+            style={[styles.input, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", color: c.label }]}
+            multiline
+            maxLength={2000}
+          />
+          <Pressable onPress={() => send(text)} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel="Отправить" style={{ opacity: text.trim() ? 1 : 0.45 }}>
+            <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.send}>
+              <Ionicons name="paper-plane-outline" size={22} color="#fff" />
+            </LinearGradient>
+          </Pressable>
+        </View>
+      </View>
+  );
+
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior="padding">
       {embedded ? <View style={{ height: 16 }} /> : (
@@ -545,9 +642,11 @@ export default function OrderScreen({ id: idProp }: { id?: string } = {}) {
         </View>
       </View>
       )}
+      <View style={split ? styles.splitRow : { flex: 1 }}>
       <ScrollView
-        ref={scrollRef}
-        onScroll={onScroll}
+        ref={split ? undefined : scrollRef}
+        onScroll={split ? undefined : onScroll}
+        style={{ flex: 1 }}
         scrollEventThrottle={64}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
         keyboardShouldPersistTaps="handled"
@@ -854,96 +953,35 @@ export default function OrderScreen({ id: idProp }: { id?: string } = {}) {
             </Pressable>
           ) : null}
 
-          {/* chat */}
+          {split ? null : (
           <View style={[panel, { marginTop: 16 }]}>
-            <View style={styles.chatHead}>
-              <Ionicons name="chatbubble-ellipses-outline" size={26} color={VIOLET} />
-              <Text style={[styles.h, { color: c.label, marginBottom: 0 }]}>Чат с менеджером</Text>
-            </View>
-            {chatLoading ? (
-              <ActivityIndicator style={{ marginVertical: 18 }} color={VIOLET} />
-            ) : chatError && messages.length === 0 ? (
-              <Pressable onPress={loadMessages} style={{ alignItems: "center", marginVertical: 14 }}>
-                <Text style={[iosText.subhead, { color: c.secondary }]}>Не удалось загрузить сообщения</Text>
-                <Text style={[iosText.subhead, { color: VIOLET, marginTop: 4 }]}>Повторить</Text>
-              </Pressable>
-            ) : messages.length === 0 && pending.length === 0 ? (
-              <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginVertical: 14 }]}>Напишите, если есть вопросы по заказу</Text>
-            ) : null}
-            {messages.map((m) => bubble(m.id, !m.isFromManager, m.text, m.createdAt))}
-            {pending.map((p) =>
-              p.failed ? (
-                <Pressable key={p.key} onPress={() => send(p.text, p.key)} accessibilityRole="button" accessibilityLabel="Не отправлено. Нажмите, чтобы повторить">
-                  {bubble(
-                    p.key + "b",
-                    true,
-                    p.text,
-                    p.createdAt,
-                    <Text style={{ color: "#FF3B30", fontSize: 12 }}>Не отправлено · повторить</Text>
-                  )}
-                </Pressable>
-              ) : (
-                bubble(p.key, true, p.text, p.createdAt, p.sent ? undefined : <ActivityIndicator size="small" color={c.secondary} style={{ transform: [{ scale: 0.7 }] }} />)
-              )
-            )}
-            {uploading ? (
-              <View style={[styles.bubble, styles.mine, { backgroundColor: dark ? "#352044" : "#F3ECFA", flexDirection: "row", alignItems: "center", gap: 8 }]}>
-                <ActivityIndicator size="small" color={VIOLET} />
-                <Text style={{ color: c.label, flexShrink: 1 }} numberOfLines={1}>
-                  Отправка: {uploading}
-                </Text>
-              </View>
-            ) : null}
+            {chatHead}
+            {chatList}
           </View>
+          )}
         </View>
       </ScrollView>
-
-      {/* message input, pinned to the bottom (stays above the keyboard) */}
-      <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: dark ? "#211032" : "#fff" }, !dark && styles.composerShadow]}>
-        <View style={[styles.wrap, { flexDirection: "row", alignItems: "flex-end", gap: 10 }]}>
-          <Pressable
-            onPress={() => {
-              tap();
-              Keyboard.dismiss();
-              setAttachOpen(true);
+      {split ? (
+        <View style={[styles.chatCol, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+          <View style={styles.chatColHead}>{chatHead}</View>
+          <ScrollView
+            ref={scrollRef}
+            onScroll={onScroll}
+            scrollEventThrottle={64}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingHorizontal: 14, paddingBottom: 12 }}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => {
+              if (nearBottom.current) scrollRef.current?.scrollToEnd({ animated: false });
             }}
-            disabled={!!uploading}
-            accessibilityRole="button"
-            accessibilityLabel="Прикрепить фото, видео или файл"
-            style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: uploading ? 0.5 : pressed ? 0.7 : 1 }]}
           >
-            {uploading ? <ActivityIndicator size="small" color={VIOLET} /> : <Ionicons name="attach" size={26} color={VIOLET} />}
-          </Pressable>
-          {canRequest ? (
-            <Pressable
-              onPress={() => {
-                tap();
-                Keyboard.dismiss();
-                router.push(`/order-add?order=${orderId}&mode=chat`);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Добавить товар в заказ"
-              style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Ionicons name="bag-add-outline" size={24} color={VIOLET} />
-            </Pressable>
-          ) : null}
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="Написать сообщение…"
-            placeholderTextColor={c.secondary}
-            style={[styles.input, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", color: c.label }]}
-            multiline
-            maxLength={2000}
-          />
-          <Pressable onPress={() => send(text)} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel="Отправить" style={{ opacity: text.trim() ? 1 : 0.45 }}>
-            <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.send}>
-              <Ionicons name="paper-plane-outline" size={22} color="#fff" />
-            </LinearGradient>
-          </Pressable>
+            {chatList}
+          </ScrollView>
+          {composer}
         </View>
+      ) : null}
       </View>
+      {split ? null : composer}
       <Sheet open={attachOpen} onClose={() => setAttachOpen(false)} title="Отправить менеджеру">
         <SheetOptions
           options={[
@@ -1112,6 +1150,10 @@ const styles = StyleSheet.create({
   metaRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 3 },
   time: { fontSize: 12 },
   composer: { paddingTop: 10, paddingHorizontal: 16 },
+  // computer: order in the middle, its chat as a column on the right
+  splitRow: { flex: 1, flexDirection: "row", gap: 16, paddingRight: 4, paddingBottom: 16 },
+  chatCol: { width: 380, borderRadius: 22, overflow: "hidden" },
+  chatColHead: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   composerShadow: { boxShadow: "0 -4px 18px rgba(31,41,55,0.07)" },
   input: { flex: 1, minHeight: 48, maxHeight: 130, borderRadius: 24, paddingHorizontal: 18, paddingTop: 13, paddingBottom: 13, fontSize: 16 },
   attach: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },

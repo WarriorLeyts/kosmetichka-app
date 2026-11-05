@@ -23,6 +23,7 @@ import { useTheme } from "@/theme";
 import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
 import { EmbeddedPane } from "@/embedded";
 import OrderScreen from "../order/[id]";
+import { DESKTOP_SIDEBAR_W } from "@/components/DesktopCategories";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -40,8 +41,7 @@ const FILTERS: { key: string; label: string }[] = [
 
 /** One order card: status icon, number, date, status pill, total, chevron — the whole card opens the order. */
 /** message: a manager message not read yet; stage: the order's stage changed since it was last opened */
-/** computer: `onOpen` shows the order beside the list instead of opening it, `active` — the one shown */
-function OrderCard({ order, message, stage, onOpen, active }: { order: Order; message: boolean; stage: boolean; onOpen?: (id: number) => void; active?: boolean }) {
+function OrderCard({ order, message, stage }: { order: Order; message: boolean; stage: boolean }) {
   const unread = message || stage;
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -52,12 +52,11 @@ function OrderCard({ order, message, stage, onOpen, active }: { order: Order; me
     <Pressable
       onPress={() => {
         tap();
-        if (onOpen) onOpen(order.id);
-        else router.push(`/order/${order.id}`);
+        router.push(`/order/${order.id}`);
       }}
       accessibilityRole="button"
       accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${money(order.total)}${message ? ", новое сообщение" : ""}${stage ? ", статус изменился" : ""}`}
-      style={({ pressed }) => [styles.card, { backgroundColor: pressed ? c.cellPressed : c.cell }, !dark && styles.shadow, active && { borderWidth: 2, borderColor: VIOLET }]}
+      style={({ pressed }) => [styles.card, { backgroundColor: pressed ? c.cellPressed : c.cell }, !dark && styles.shadow]}
     >
       <View style={styles.cardRow}>
         <View style={[styles.statusIcon, { backgroundColor: s.bg }]}>
@@ -101,6 +100,56 @@ function OrderCard({ order, message, stage, onOpen, active }: { order: Order; me
       ) : null}
     </Pressable>
   );
+}
+
+/** computer: one compact line of the orders column — status icon, №, date, sum, status */
+function DeskOrderRow({ order, unread, active, onOpen }: { order: Order; unread: boolean; active: boolean; onOpen: (id: number) => void }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  const s = statusLook(order.status, dark);
+  const activeBg = dark ? "rgba(139,61,255,0.22)" : "#F4EBFF";
+  return (
+    <Pressable
+      onPress={() => {
+        tap();
+        onOpen(order.id);
+      }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: active }}
+      accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${money(order.total)}${unread ? ", есть новое" : ""}`}
+      style={(st: { pressed: boolean; hovered?: boolean }) => [styles.row, active && { backgroundColor: activeBg }, st.hovered && !active ? { backgroundColor: dark ? "rgba(255,255,255,0.05)" : "#FAF6FE" } : null]}
+    >
+      <View style={[styles.rowIcon, { backgroundColor: s.bg }]}>
+        <Ionicons name={s.icon} size={18} color={s.fg} />
+        {unread ? <View style={[styles.rowDot, { borderColor: active ? activeBg : c.cell }]} /> : null}
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <View style={styles.rowLine}>
+          <Text style={[styles.rowNum, { color: active ? VIOLET : c.label }]} numberOfLines={1}>
+            №{order.id}
+          </Text>
+          <Text style={[styles.rowSum, { color: c.label }]} numberOfLines={1}>
+            {money(order.total)}
+          </Text>
+        </View>
+        <View style={styles.rowLine}>
+          <Text style={[styles.rowSub, { color: s.fg, flexShrink: 1 }]} numberOfLines={1}>
+            {s.label}
+          </Text>
+          <Text style={[styles.rowSub, { color: c.secondary }]} numberOfLines={1}>
+            {dateShort(order.createdAt)}
+          </Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+/** «5 нояб.» */
+function dateShort(iso: string) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
 
 export default function Orders() {
@@ -242,14 +291,93 @@ export default function Orders() {
 
   const shown = desktop ? picked ?? orders[0]?.id ?? null : null;
 
+  // computer: three columns — the orders (like the catalogue's categories), the order, its chat
+  if (desktop)
+    return (
+      <View style={{ flex: 1, backgroundColor: bg }}>
+        <View style={styles.deskRow}>
+          <View style={[styles.side, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+            <FlatList
+              data={orders}
+              keyExtractor={(o) => String(o.id)}
+              contentContainerStyle={{ paddingBottom: 6 }}
+              onEndReachedThreshold={0.5}
+              onEndReached={() => {
+                if (!loading && data && data.page < data.totalPages) load(data.page + 1, "append");
+              }}
+              showsVerticalScrollIndicator={false}
+              ListHeaderComponent={
+                <View>
+                  <Text style={[styles.sideTitle, { color: c.label }]}>Мои заказы</Text>
+                  {stats && stats.totalOrders > 0 ? (
+                    <Text style={[styles.sideStats, { color: c.secondary }]}>
+                      {stats.totalOrders} · {money(stats.totalSum)}
+                    </Text>
+                  ) : null}
+                  <View style={styles.sideFilters}>
+                    {FILTERS.map((f) => {
+                      const on = status === f.key;
+                      return (
+                        <Pressable
+                          key={f.key}
+                          onPress={() => {
+                            tap();
+                            setStatus(f.key);
+                          }}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected: on }}
+                          style={[styles.sideChip, on ? { backgroundColor: dark ? "rgba(139,61,255,0.28)" : "#F4EBFF" } : { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F5F3F8" }]}
+                        >
+                          <Text style={[styles.sideChipText, { color: on ? VIOLET : c.secondary }, on && { fontWeight: "700" }]}>{f.label}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              }
+              ListEmptyComponent={
+                loading ? (
+                  <ActivityIndicator style={{ margin: 30 }} color={VIOLET} />
+                ) : (
+                  <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginVertical: 24, paddingHorizontal: 10 }]}>
+                    {status ? "Заказов не найдено" : "Заказов пока нет"}
+                  </Text>
+                )
+              }
+              ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 14 }} color={VIOLET} /> : null}
+              renderItem={({ item }) => (
+                <DeskOrderRow order={item} unread={unread.has(item.id) || stageNews.has(item.id)} active={item.id === shown} onOpen={setPicked} />
+              )}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            {shown ? (
+              <EmbeddedPane.Provider value>
+                <OrderScreen key={shown} id={String(shown)} split />
+              </EmbeddedPane.Provider>
+            ) : !loading && !status ? (
+              <View style={[styles.empty, { backgroundColor: c.cell, marginTop: 24, alignSelf: "center", width: 420 }, !dark && styles.shadow]}>
+                <Ionicons name="receipt-outline" size={32} color={VIOLET} />
+                <Text style={[iosText.headline, { color: c.label, marginTop: 12 }]}>Заказов пока нет</Text>
+                <Pressable onPress={() => router.navigate("/catalog")} style={{ marginTop: 18, alignSelf: "stretch" }}>
+                  <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
+                    <Text style={styles.ctaText}>Перейти в каталог</Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </View>
+    );
+
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
-      <View style={desktop ? styles.deskRow : { flex: 1 }}>
+      <View style={{ flex: 1 }}>
       <FlatList
-        style={desktop ? styles.deskList : undefined}
         data={orders}
         keyExtractor={(o) => String(o.id)}
-        contentContainerStyle={desktop ? { paddingTop: 8, paddingBottom: 30, gap: 12 } : { paddingHorizontal: 16, paddingTop: insets.top, paddingBottom: bottomSpace + 8, gap: 12, width: "100%", maxWidth: 640, alignSelf: "center" }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top, paddingBottom: bottomSpace + 8, gap: 12, width: "100%", maxWidth: 640, alignSelf: "center" }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={VIOLET} colors={[VIOLET]} />}
         onEndReachedThreshold={0.5}
         onEndReached={() => {
@@ -344,25 +472,29 @@ export default function Orders() {
         }
         ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={VIOLET} /> : null}
         renderItem={({ item }) => (
-          <OrderCard order={item} message={unread.has(item.id)} stage={stageNews.has(item.id)} onOpen={desktop ? setPicked : undefined} active={desktop && item.id === shown} />
+          <OrderCard order={item} message={unread.has(item.id)} stage={stageNews.has(item.id)} />
         )}
       />
-      {desktop && shown ? (
-        <View style={[styles.deskPane, { backgroundColor: c.cell }, !dark && styles.shadow]}>
-          <EmbeddedPane.Provider value>
-            <OrderScreen key={shown} id={String(shown)} />
-          </EmbeddedPane.Provider>
-        </View>
-      ) : null}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20 },
-  deskList: { width: 440, flexGrow: 0 },
-  deskPane: { flex: 1, borderRadius: 22, marginTop: 24, marginBottom: 24, paddingHorizontal: 8, overflow: "hidden" },
+  deskRow: { flex: 1, flexDirection: "row", gap: 16, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20, paddingTop: 16 },
+  side: { width: DESKTOP_SIDEBAR_W, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 8, marginBottom: 16, alignSelf: "flex-start", maxHeight: "100%" },
+  sideTitle: { fontSize: 18, fontWeight: "800", paddingHorizontal: 10, paddingTop: 2 },
+  sideStats: { fontSize: 13, paddingHorizontal: 10, marginTop: 2 },
+  sideFilters: { flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 6, paddingTop: 10, paddingBottom: 10 },
+  sideChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
+  sideChipText: { fontSize: 12.5 },
+  row: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 8, paddingVertical: 8, borderRadius: 12, minHeight: 52 },
+  rowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  rowDot: { position: "absolute", top: -3, right: -3, width: 11, height: 11, borderRadius: 6, backgroundColor: PINK, borderWidth: 2 },
+  rowLine: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
+  rowNum: { fontSize: 14.5, fontWeight: "700", flexShrink: 1 },
+  rowSum: { fontSize: 14, fontWeight: "700" },
+  rowSub: { fontSize: 12.5, marginTop: 1 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   stats: { flexDirection: "row", alignItems: "center", borderRadius: 22, paddingVertical: 14, paddingHorizontal: 12 },
   statHalf: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4 },
