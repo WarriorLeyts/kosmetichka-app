@@ -1,4 +1,4 @@
-import { scaleStyles, useCardScale, PHONE_CARD_SCALE } from "@/cardScale";
+import { scaleStyles, useCardScale } from "@/cardScale";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Image } from "expo-image";
@@ -277,6 +277,7 @@ export default function Cart() {
   const renderItem = ({ item }: { item: CartItem }) => {
     // the line card: 0.8 on a phone (cardScale.ts)
     const li = k === 1 ? lineBase : linePhone;
+    const lk = k === 1 ? 1 : CART_LINE_SCALE;
     const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
     const price = priceFor(item, active);
     const min = Math.max(1, item.minOrderQty ?? 1);
@@ -302,16 +303,16 @@ export default function Cart() {
           {img ? (
             <Image source={{ uri: img }} style={StyleSheet.absoluteFill} contentFit="contain" transition={150} />
           ) : (
-            <Ionicons name="image-outline" size={28 * k} color={c.secondary} />
+            <Ionicons name="image-outline" size={28 * lk} color={c.secondary} />
           )}
         </Pressable>
-        <View style={{ flex: 1, paddingRight: 26 * k }}>
+        <View style={{ flex: 1, paddingRight: 26 * lk }}>
           {item.brand?.name ? (
             <Text style={[li.brand, { color: c.secondary }]} numberOfLines={1}>
               {item.brand.name.toUpperCase()}
             </Text>
           ) : null}
-          <Text style={[li.name, { color: c.label }]}>{item.name}</Text>
+          <Text style={[li.name, { color: c.label }]} numberOfLines={k === 1 ? undefined : 2}>{item.name}</Text>
           {item.variantName ? <Text style={li.variant}>{item.variantName}</Text> : null}
           <Text style={[li.unit, { color: c.secondary }]}>
             {money(price)} × {item.quantity}
@@ -322,14 +323,14 @@ export default function Cart() {
           <View style={li.stepRow}>
             <View style={[li.stepper, { backgroundColor: soft }]}>
               <Pressable onPress={minus} hitSlop={6} accessibilityLabel="Уменьшить количество" style={li.stepBtn}>
-                <Ionicons name="remove" size={22 * k} color={c.label} />
+                <Ionicons name="remove" size={22 * lk} color={c.label} />
               </Pressable>
               <View style={[li.qtyBox, { backgroundColor: c.cell }]}>
                 <Text style={[li.qty, { color: c.label }]}>{item.quantity}</Text>
               </View>
               <Pressable onPress={plus} disabled={atMax} hitSlop={6} accessibilityLabel="Увеличить количество" style={{ opacity: atMax ? 0.4 : 1 }}>
                 <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={li.plus}>
-                  <Ionicons name="add" size={24 * k} color="#fff" />
+                  <Ionicons name="add" size={24 * lk} color="#fff" />
                 </LinearGradient>
               </Pressable>
             </View>
@@ -349,7 +350,7 @@ export default function Cart() {
           accessibilityLabel="Удалить из корзины"
           style={[li.remove, { backgroundColor: soft }]}
         >
-          <Ionicons name="close" size={17 * k} color={c.secondary} />
+          <Ionicons name="close" size={17 * lk} color={c.secondary} />
         </Pressable>
       </View>
     );
@@ -638,4 +639,6 @@ const lineBase = StyleSheet.create({
   plus: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(139,61,255,0.35)" },
   remove: { position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
 });
-const linePhone = StyleSheet.create(scaleStyles(lineBase, PHONE_CARD_SCALE));
+/** cart lines on a phone: smaller than the catalog cards (0.7) — the owner found 0.8 still too big */
+const CART_LINE_SCALE = 0.7;
+const linePhone = StyleSheet.create(scaleStyles(lineBase, CART_LINE_SCALE));
