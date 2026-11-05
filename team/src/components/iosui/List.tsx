@@ -4,14 +4,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { iosText, useIOS } from "../../ios";
 import { tap } from "../ui";
 
-/** Inset grouped section (like Settings.app). */
+const VIOLET = "#8b3dff";
+const PINK = "#e82c87";
+
+/** A rounded menu block, as the customer app's profile (white card with a soft shadow). */
 export function Section({ header, footer, children }: { header?: string; footer?: string; children: ReactNode }) {
   const c = useIOS();
+  const dark = c.blurTint === "dark";
   const items = Children.toArray(children).filter(isValidElement);
   return (
-    <View style={{ marginBottom: 35 }}>
-      {header ? <Text style={[styles.header, { color: c.secondary }]}>{header.toUpperCase()}</Text> : null}
-      <View style={[styles.group, { backgroundColor: c.cell }]}>
+    <View style={{ marginBottom: 26 }}>
+      {header ? <Text style={[styles.header, { color: c.secondary }]}>{header}</Text> : null}
+      <View style={[styles.group, { backgroundColor: c.cell }, !dark && styles.shadow]}>
         {items.map((child, i) => (
           <View key={i}>
             {child}
@@ -26,7 +30,10 @@ export function Section({ header, footer, children }: { header?: string; footer?
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
-/** Settings-style row: colored rounded-square icon, title, optional value, chevron. */
+/**
+ * Menu row as in the customer app: a light violet rounded square with an outline icon, title, optional
+ * value, chevron. `iconBg` only picks pink (red / pink colours) or violet for the icon.
+ */
 export function Row({
   icon,
   iconBg,
@@ -63,11 +70,11 @@ export function Row({
       style={({ pressed }) => [styles.row, pressed && { backgroundColor: c.cellPressed }]}
     >
       {icon ? (
-        <View style={[styles.icon, { backgroundColor: iconBg ?? "#8E8E93" }]}>
-          <Ionicons name={icon} size={18} color="#fff" />
+        <View style={[styles.icon, { backgroundColor: pinkIcon(iconBg) ? "rgba(232,44,135,0.1)" : "rgba(139,61,255,0.12)" }]}>
+          <Ionicons name={outline(icon)} size={21} color={pinkIcon(iconBg) ? PINK : VIOLET} />
         </View>
       ) : null}
-      <View style={{ flex: 1, paddingVertical: subtitle ? 9 : 11 }}>
+      <View style={{ flex: 1, paddingVertical: subtitle ? 10 : 12 }}>
         <Text
           numberOfLines={1}
           style={[
@@ -86,19 +93,28 @@ export function Row({
       </View>
       {value ? <Text style={[iosText.body, { color: c.secondary, marginRight: 6 }]}>{value}</Text> : null}
       {toggle !== undefined ? (
-        <Switch value={toggle} onValueChange={onToggle} trackColor={{ true: "#34C759", false: undefined }} />
+        <Switch value={toggle} onValueChange={onToggle} trackColor={{ true: VIOLET, false: undefined }} thumbColor="#fff" />
       ) : chevron && onPress && !center && !destructive ? (
-        <Ionicons name="chevron-forward" size={18} color={c.chevron} />
+        <Ionicons name="chevron-forward" size={19} color={c.chevron} />
       ) : null}
     </Pressable>
   );
 }
 
+/** the outline variant of an icon when Ionicons has one (cube → cube-outline) */
+function outline(name: IconName): IconName {
+  if (name.endsWith("-outline")) return name;
+  const o = `${name}-outline` as IconName;
+  return o in Ionicons.glyphMap ? o : name;
+}
+const pinkIcon = (bg?: string) => !!bg && /^#(ff3b30|e82c87|ff2d55)$/i.test(bg);
+
 const styles = StyleSheet.create({
-  header: { fontSize: 13, letterSpacing: -0.08, marginLeft: 32, marginBottom: 7 },
-  footer: { fontSize: 13, letterSpacing: -0.08, marginHorizontal: 32, marginTop: 7, lineHeight: 18 },
-  group: { marginHorizontal: 16, borderRadius: 10, overflow: "hidden" },
-  sep: { height: StyleSheet.hairlineWidth, marginLeft: 59 },
-  row: { flexDirection: "row", alignItems: "center", minHeight: 44, paddingHorizontal: 16, gap: 15 },
-  icon: { width: 29, height: 29, borderRadius: 7, alignItems: "center", justifyContent: "center" },
+  header: { fontSize: 14, fontWeight: "600", marginLeft: 22, marginBottom: 8 },
+  footer: { fontSize: 13, letterSpacing: -0.08, marginHorizontal: 22, marginTop: 7, lineHeight: 18 },
+  group: { marginHorizontal: 16, borderRadius: 20, overflow: "hidden" },
+  shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
+  sep: { height: StyleSheet.hairlineWidth, marginLeft: 66 },
+  row: { flexDirection: "row", alignItems: "center", minHeight: 60, paddingHorizontal: 14, gap: 14 },
+  icon: { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center" },
 });
