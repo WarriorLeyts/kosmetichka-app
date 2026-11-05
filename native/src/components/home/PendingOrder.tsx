@@ -81,7 +81,7 @@ export function PendingOrderNote({ orders, wide }: { orders: Active[]; wide?: bo
       onPress={() => router.push(`/order/${id}`)}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${sub}`}
-      style={({ pressed }) => [st.wrap, wide && { maxWidth: undefined, marginTop: 0 }, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+      style={({ pressed }) => [st.wrap, wide && { maxWidth: "100%", marginTop: 0 }, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
     >
       <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.card}>
         <View style={st.head}>
