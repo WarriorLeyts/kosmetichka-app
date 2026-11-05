@@ -586,7 +586,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
   );
   // message input, pinned to the bottom (stays above the keyboard)
   const composer = (
-      <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: dark ? "#211032" : "#fff" }, !dark && styles.composerShadow]}>
+      <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: split ? "transparent" : dark ? "#211032" : "#fff" }, !dark && !split && styles.composerShadow]}>
         <View style={[styles.wrap, { flexDirection: "row", alignItems: "flex-end", gap: 10 }]}>
           <Pressable
             onPress={() => {
