@@ -11,7 +11,7 @@ import type { OrdersPage } from "@/types";
 
 const PINK = "#e82c87";
 const WEEKDAYS = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
-const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
 
 /** "YYYY-MM-DD" ± days (noon UTC, so no time-zone shifts) */
 export function shiftDay(day: string, by: number) {
@@ -60,7 +60,7 @@ export function DayNav({ day, today, onChange }: { day: string | null; today: st
           accessibilityLabel="Выбрать день"
           style={st.dayBox}
         >
-          <Ionicons name="calendar-outline" size={17} color={VIOLET} />
+          <Ionicons name="calendar-outline" size={15} color={VIOLET} />
           <Text style={[st.day, { color: c.label }]} numberOfLines={1}>
             {all ? "Выбрать день" : shown ? (atToday ? `Сегодня, ${dayLabel(shown).split(", ")[1]}` : dayLabel(shown)) : "Сегодня"}
           </Text>
@@ -237,7 +237,7 @@ export function StatusTiles({ counts, status, onChange, desktop }: { counts: Ord
         <>
           <Pressable onPress={() => pick("")} accessibilityRole="button" accessibilityState={{ selected: status === "" }} style={{ width: allWidth }}>
             {status === "" ? (
-              <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[st.tile, small && st.tileSmall, st.allTile, { borderColor: "transparent" }]}>
+              <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[st.tile, small && st.tileSmall, st.allTile, { borderWidth: 0, padding: small ? 11 : 15 }]}>
                 <AllContent counts={counts} small={small} on />
               </LinearGradient>
             ) : (

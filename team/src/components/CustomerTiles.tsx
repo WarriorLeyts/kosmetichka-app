@@ -10,8 +10,8 @@ const PINK = "#e82c87";
 
 /** status tiles: label, dot, line under the number; `urgent` — a decision is waiting (coloured border) */
 const TILES: { value: string; label: string; dot: string; sub: (n: number) => string; urgent?: boolean }[] = [
-  { value: "pending", label: "Ожидают", dot: "#F59E0B", sub: (n) => (n ? "нужно проверить" : "новых нет"), urgent: true },
-  { value: "requests", label: "Заявки на опт", dot: "#C084FC", sub: () => "переход с розницы", urgent: true },
+  // every request: sign-ups and опт / крупный опт requests of existing customers
+  { value: "pending", label: "Ожидают", dot: "#F59E0B", sub: (n) => (n ? "нужно проверить" : "заявок нет"), urgent: true },
   { value: "approved", label: "Подтверждённые", dot: "#22C55E", sub: () => "работают с нами" },
   { value: "blocked", label: "Заблокированные", dot: "#EF4444", sub: () => "не могут войти" },
   { value: "stale", label: "Неактуальные", dot: "#94A3B8", sub: () => "передумали" },
@@ -25,8 +25,8 @@ const TYPES = [
 ] as const;
 
 /**
- * Клиенты: «Все клиенты» + a tile per status (count), then the price type switch (count).
- * Phone: 2 tiles in a row; computer: 3.
+ * Клиенты: «Все клиенты» across the whole width, then a tile per status (count) 2 in a row, then the
+ * price type switch (count).
  */
 export function CustomerTiles({
   counts,
@@ -46,7 +46,7 @@ export function CustomerTiles({
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const [w, setW] = useState(0);
-  const cols = desktop ? 3 : 2;
+  const cols = 2;
   const gap = desktop ? 10 : 8;
   const cell = w ? (w - gap * (cols - 1)) / cols : 0;
   const small = !desktop;
@@ -62,9 +62,9 @@ export function CustomerTiles({
       <View style={[st.grid, { gap }]} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
         {w ? (
           <>
-            <Pressable onPress={() => pick("")} accessibilityRole="button" accessibilityState={{ selected: status === "" }} style={{ width: cell }}>
+            <Pressable onPress={() => pick("")} accessibilityRole="button" accessibilityState={{ selected: status === "" }} style={{ width: w }}>
               {status === "" ? (
-                <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[st.tile, small && st.tileSmall, { borderColor: "transparent" }]}>
+                <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[st.tile, small && st.tileSmall, st.gradTile, { padding: small ? 12 : 15 }]}>
                   <Text style={[st.label, small && st.labelSmall, { color: "#fff" }]}>Все клиенты</Text>
                   <Text style={[st.count, small && st.countSmall, { color: "#fff" }]}>{n(counts?.all)}</Text>
                   <Text style={[st.sub, small && st.subSmall, { color: "rgba(255,255,255,0.88)" }]} numberOfLines={1}>
@@ -159,6 +159,8 @@ const st = StyleSheet.create({
   grid: { flexDirection: "row", flexWrap: "wrap", marginBottom: 10 },
   tile: { borderWidth: 1, borderRadius: 18, padding: 14, overflow: "hidden" },
   tileSmall: { borderRadius: 16, padding: 11 },
+  /** no border on the gradient: a transparent one showed the gradient repeated as thin lines at the edges */
+  gradTile: { borderWidth: 0, margin: 0 },
   labelRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   dot: { width: 9, height: 9, borderRadius: 5 },
   label: { fontSize: 14.5, fontWeight: "600", flexShrink: 1 },
