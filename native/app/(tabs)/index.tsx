@@ -25,6 +25,7 @@ import { UI_SIZES, uiScale } from "@/uiScale";
 import type { Product } from "@/types";
 import { FitText } from "@/components/FitText";
 import { PendingOrderNote, useActiveOrders } from "@/components/home/PendingOrder";
+import { DesktopHome } from "@/components/home/DesktopHome";
 
 const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "new", label: "Новинки", icon: "sparkles-outline" },
@@ -73,6 +74,9 @@ export default function Home() {
     setFilters(patch);
     router.navigate("/catalog");
   };
+
+  // computer: categories on the left, banner and «Новинки» beside them (not the phone screen stretched)
+  if (desktop) return <DesktopHome categories={categories} fresh={fresh} orders={activeOrders} openCatalog={openCatalog} />;
 
   return (
     <>

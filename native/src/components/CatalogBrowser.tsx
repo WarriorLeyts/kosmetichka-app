@@ -18,6 +18,7 @@ import { TitleBar } from "@/components/iosui/TitleBar";
 import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { DESKTOP_SIDEBAR_W, DesktopCategories } from "@/components/DesktopCategories";
 import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
 import { useAddToCart } from "@/useAddToCart";
@@ -91,7 +92,9 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const c = useIOS();
   const { width } = useWindowDimensions();
   const desktop = useDesktop();
-  const columns = width >= 1280 ? 5 : width >= 900 ? 4 : width >= 600 ? 3 : 2;
+  // computer: categories on the left, the goods beside them — up to 5 cards in a row (≥ 165 px each)
+  const deskMain = Math.min(width, DESKTOP_MAX_CONTENT) - 40 - DESKTOP_SIDEBAR_W - 24;
+  const columns = desktop ? Math.max(3, Math.min(5, Math.floor(deskMain / 165))) : width >= 900 ? 4 : width >= 600 ? 3 : 2;
   const tabSpace = useTabBarSpace();
   const bottomSpace = pick ? pick.bottomSpace : tabSpace;
   const { store, name: storeName } = useCatalogStore();
@@ -251,6 +254,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
 
       {/* search */}
       <View style={[styles.search, { backgroundColor: c.blurTint === "dark" ? "#2B193D" : "rgba(118,118,128,0.12)" }]}>
+        {desktop ? <View style={{ width: 8 }} /> : (
         <Pressable
           onPress={() => { tap(); setCatOpen(true); }}
           accessibilityRole="button"
@@ -259,6 +263,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
         >
           <Ionicons name="apps-outline" size={20} color="#8b3dff" />
         </Pressable>
+        )}
         <Ionicons name="search-outline" size={21} color={c.secondary} />
         <SearchInput />
         <Pressable
@@ -358,13 +363,20 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           <ErrorView message={error} onRetry={() => load(1, "replace")} />
         </>
       ) : (
+        <View style={desktop ? styles.deskRow : { flex: 1 }}>
+        {desktop ? (
+          <View style={styles.deskSide}>
+            <DesktopCategories categories={f.categories} selected={f.categoryGuid} onSelect={selectCat} />
+          </View>
+        ) : null}
         <FlatList
+          style={{ flex: 1 }}
           key={`cols-${columns}`}
           ref={listRef}
           data={busy ? EMPTY : products}
           numColumns={columns}
           keyExtractor={(p) => String(p.id)}
-          contentContainerStyle={[{ paddingHorizontal: 11, paddingBottom: bottomSpace }, desktop && { width: "100%", maxWidth: DESKTOP_MAX_CONTENT, alignSelf: "center", paddingHorizontal: 20 }]}
+          contentContainerStyle={[{ paddingHorizontal: 11, paddingBottom: bottomSpace }, desktop && { paddingHorizontal: 0, paddingBottom: 40 }]}
           ListHeaderComponent={header}
           keyboardDismissMode="on-drag"
           renderItem={renderItem}
@@ -394,6 +406,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           }
           ListFooterComponent={loading && !busy && products.length > 0 ? <ActivityIndicator style={{ margin: 24 }} color="#8b3dff" /> : null}
         />
+        </View>
       )}
 
       <Sheet open={sortOpen} onClose={() => setSortOpen(false)} title="Сортировка">
@@ -418,6 +431,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
 }
 
 const styles = StyleSheet.create({
+  deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_MAX_CONTENT, alignSelf: "center", paddingHorizontal: 20 },
+  deskSide: { paddingTop: 24, paddingBottom: 20 },
   typesWrap: { marginHorizontal: -11, marginTop: 4, marginBottom: 6 },
   types: { paddingHorizontal: 16, gap: 8 },
   typeChip: { height: 36, paddingHorizontal: 15, borderRadius: 18, borderWidth: 1, justifyContent: "center" },
