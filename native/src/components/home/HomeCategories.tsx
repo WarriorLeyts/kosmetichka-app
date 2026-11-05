@@ -6,6 +6,7 @@ import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import type { Category } from "../../types";
 import { useDesktop } from "../../useDesktop";
+import { PHONE_CARD_SCALE, scaleStyles, useCardScale } from "../../cardScale";
 
 /** «Категории товаров» — two-column grid as on the mockup: picture on top, white label with a chevron over its bottom. */
 export function HomeCategories({ categories, onOpen }: { categories: Category[]; onOpen: (guid: string | null) => void }) {
@@ -13,6 +14,9 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
   const dark = c.blurTint === "dark";
   // computer: four in a row, taller cards
   const desktop = useDesktop();
+  // the category cards (not the heading) at 0.8 on a phone, as the product cards (cardScale.ts)
+  const k = useCardScale();
+  const cs = k === 1 ? cardBase : cardPhone;
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
@@ -34,7 +38,7 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
         {categories.map((cat) => {
           const icon = iconFor(cat.name);
           return (
-            <View key={cat.guid} style={[styles.cell, desktop && { width: "25%", padding: 8 }]}>
+            <View key={cat.guid} style={[cs.cell, desktop && { width: "25%", padding: 8 }]}>
               <Pressable
                 onPress={() => {
                   tap();
@@ -42,20 +46,20 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
                 }}
                 accessibilityRole="button"
                 accessibilityLabel={cat.name}
-                style={({ pressed }) => [styles.card, desktop && { height: 230 }, { backgroundColor: c.cell, transform: [{ scale: pressed ? 0.98 : 1 }] }, !dark && styles.shadow]}
+                style={({ pressed }) => [cs.card, desktop && { height: 230 }, { backgroundColor: c.cell, transform: [{ scale: pressed ? 0.98 : 1 }] }, !dark && styles.shadow]}
               >
-                <View style={[styles.pic, { backgroundColor: dark ? "#352044" : "#F3ECFA" }]}>
+                <View style={[cs.pic, { backgroundColor: dark ? "#352044" : "#F3ECFA" }]}>
                   {icon ? (
                     <Image source={icon} style={styles.img} contentFit="contain" />
                   ) : (
-                    <Ionicons name="sparkles-outline" size={40} color="#c28be8" />
+                    <Ionicons name="sparkles-outline" size={40 * k} color="#c28be8" />
                   )}
                 </View>
-                <View style={[styles.label, { backgroundColor: dark ? "rgba(33,16,50,0.92)" : "rgba(255,255,255,0.94)" }]}>
-                  <Text style={[styles.name, { color: c.label }]} numberOfLines={2}>
+                <View style={[cs.label, { backgroundColor: dark ? "rgba(33,16,50,0.92)" : "rgba(255,255,255,0.94)" }]}>
+                  <Text style={[cs.name, { color: c.label }]} numberOfLines={2}>
                     {cat.name}
                   </Text>
-                  <Ionicons name="chevron-forward" size={20} color={dark ? "#D7B8FF" : "#8b2be0"} />
+                  <Ionicons name="chevron-forward" size={20 * k} color={dark ? "#D7B8FF" : "#8b2be0"} />
                 </View>
               </Pressable>
             </View>
@@ -73,11 +77,16 @@ const styles = StyleSheet.create({
   all: { flexDirection: "row", alignItems: "center", gap: 6 },
   allText: { color: "#7a1ee8", fontSize: 17, fontWeight: "500" },
   grid: { flexDirection: "row", flexWrap: "wrap" },
+  shadow: { boxShadow: "0 4px 16px rgba(120,60,180,0.08)" },
+  img: { width: "78%", height: "92%" },
+});
+
+/** a category card; 0.8 on a phone */
+const cardBase = StyleSheet.create({
   cell: { width: "50%", padding: 5 },
   card: { borderRadius: 22, overflow: "hidden", height: 176 },
-  shadow: { boxShadow: "0 4px 16px rgba(120,60,180,0.08)" },
   pic: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", paddingBottom: 50 },
-  img: { width: "78%", height: "92%" },
   label: { position: "absolute", left: 6, right: 6, bottom: 6, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, minHeight: 50, borderRadius: 16 },
   name: { flex: 1, fontSize: 17, fontWeight: "600", lineHeight: 21 },
 });
+const cardPhone = StyleSheet.create(scaleStyles(cardBase, PHONE_CARD_SCALE));
