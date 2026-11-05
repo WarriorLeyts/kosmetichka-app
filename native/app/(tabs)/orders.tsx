@@ -126,20 +126,15 @@ function DeskOrderRow({ order, unread, active, onOpen }: { order: Order; unread:
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={styles.rowLine}>
           <Text style={[styles.rowNum, { color: active ? VIOLET : c.label }]} numberOfLines={1}>
-            №{order.id}
+            №{order.id} <Text style={[styles.rowSub, { color: c.secondary, fontWeight: "400" }]}>· {dateShort(order.createdAt)}</Text>
           </Text>
           <Text style={[styles.rowSum, { color: c.label }]} numberOfLines={1}>
             {money(order.total)}
           </Text>
         </View>
-        <View style={styles.rowLine}>
-          <Text style={[styles.rowSub, { color: s.fg, flexShrink: 1 }]} numberOfLines={1}>
-            {s.label}
-          </Text>
-          <Text style={[styles.rowSub, { color: c.secondary }]} numberOfLines={1}>
-            {dateShort(order.createdAt)}
-          </Text>
-        </View>
+        <Text style={[styles.rowSub, { color: s.fg }]} numberOfLines={1}>
+          {s.label}
+        </Text>
       </View>
     </Pressable>
   );

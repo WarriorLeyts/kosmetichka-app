@@ -618,7 +618,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
           <TextInput
             value={text}
             onChangeText={setText}
-            placeholder="Написать сообщение…"
+            placeholder={split ? "Сообщение…" : "Написать сообщение…"}
             placeholderTextColor={c.secondary}
             style={[styles.input, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", color: c.label }]}
             multiline
@@ -635,7 +635,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior="padding">
-      {embedded ? <View style={{ height: 16 }} /> : (
+      {split ? null : embedded ? <View style={{ height: 16 }} /> : (
       <View style={{ paddingTop: insets.top, paddingHorizontal: 16, backgroundColor: bg }}>
         <View style={styles.wrap}>
           <BackBar onBack={goBack} color={c.label} />
