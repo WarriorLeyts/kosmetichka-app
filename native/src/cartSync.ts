@@ -111,6 +111,9 @@ export function syncCart(): Promise<void> {
   return busy;
 }
 
+/** what the customer can change: lines, quantities, comment (fresh prices / stock / photos don't count) */
+const sig = (items: CartItem[], comment: string) => items.map((i) => `${i.cartKey}:${i.quantity}`).sort().join(",") + "|" + comment;
+
 let started = false;
 /** called once from the root layout */
 export function startCartSync() {
@@ -119,6 +122,7 @@ export function startCartSync() {
   // this device changed the cart → send it a moment later (several taps go as one)
   useCartStore.subscribe((s, prev) => {
     if (applying || cartQuiet.n > 0 || (s.items === prev.items && s.comment === prev.comment)) return;
+    if (sig(s.items, s.comment) === sig(prev.items, prev.comment)) return;
     const customerId = useAuth.getState().customer?.id;
     if (!customerId) return;
     meta = { ...meta, dirty: true };
