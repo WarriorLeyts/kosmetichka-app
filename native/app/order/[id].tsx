@@ -27,6 +27,7 @@ import { NO_LINES, useOrderEdit } from "@/store/orderEdit";
 import { priceFor, resolveCustomerPriceType } from "@/pricing";
 import { ErrorView, tap } from "@/components/ui";
 import { BackBar } from "@/components/iosui/BrandHeader";
+import { useEmbedded } from "@/embedded";
 import { VIOLET_PINK } from "@/components/TabBar";
 import { iosText, useIOS } from "@/ios";
 import { statusLook } from "@/orderStatus";
@@ -148,6 +149,8 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
 export default function OrderScreen({ id: idProp }: { id?: string } = {}) {
   const params = useLocalSearchParams<{ id: string }>();
   const id = idProp ?? params.id;
+  // beside the orders list on a computer: no logo / «back» bar — the list is the way back
+  const embedded = useEmbedded();
   // deep links can carry anything here — only a positive whole number is an order id
   const orderId = /^[0-9]+$/.test(String(id ?? "")) ? Number(id) : NaN;
   const c = useIOS();
@@ -535,11 +538,13 @@ export default function OrderScreen({ id: idProp }: { id?: string } = {}) {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior="padding">
+      {embedded ? <View style={{ height: 16 }} /> : (
       <View style={{ paddingTop: insets.top, paddingHorizontal: 16, backgroundColor: bg }}>
         <View style={styles.wrap}>
           <BackBar onBack={goBack} color={c.label} />
         </View>
       </View>
+      )}
       <ScrollView
         ref={scrollRef}
         onScroll={onScroll}
