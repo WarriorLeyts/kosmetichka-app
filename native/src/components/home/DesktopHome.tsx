@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useIOS } from "@/ios";
 import { tap } from "@/components/ui";
-import { DESKTOP_MAX_CONTENT } from "@/useDesktop";
+import { DESKTOP_WIDE } from "@/useDesktop";
 import { CatalogCard } from "@/components/CatalogCard";
 import { DesktopCategories } from "@/components/DesktopCategories";
 import { PendingOrderNote, type useActiveOrders } from "@/components/home/PendingOrder";
@@ -55,7 +55,7 @@ export function DesktopHome({
         <DesktopCategories categories={categories} selected={null} onSelect={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.main} showsVerticalScrollIndicator={false}>
-        <PendingOrderNote orders={orders} />
+        <PendingOrderNote orders={orders} wide />
 
         <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
           <View style={{ flex: 1 }}>
@@ -140,7 +140,7 @@ export function DesktopHome({
 }
 
 const styles = StyleSheet.create({
-  row: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_MAX_CONTENT, alignSelf: "center", paddingHorizontal: 20 },
+  row: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20 },
   side: { paddingTop: 24, paddingBottom: 20 },
   main: { paddingTop: 24, paddingBottom: 40, gap: 18 },
   hero: { borderRadius: 26, paddingHorizontal: 34, paddingVertical: 26, flexDirection: "row", alignItems: "center", gap: 20, minHeight: 210, overflow: "hidden" },

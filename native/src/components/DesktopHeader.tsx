@@ -13,7 +13,7 @@ import { cartPriceTier, rawCartTotal } from "@/pricing";
 import { money } from "@/format";
 import { useIOS } from "@/ios";
 import { useTheme } from "@/theme";
-import { DESKTOP_MAX_CONTENT } from "@/useDesktop";
+import { DESKTOP_WIDE } from "@/useDesktop";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -153,11 +153,11 @@ export function DesktopHeader() {
 
 const styles = StyleSheet.create({
   bar: { height: 72, borderBottomWidth: StyleSheet.hairlineWidth, justifyContent: "center", zIndex: 10 },
-  inner: { width: "100%", maxWidth: DESKTOP_MAX_CONTENT, alignSelf: "center", paddingHorizontal: 24, flexDirection: "row", alignItems: "center" },
+  inner: { width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 24, flexDirection: "row", alignItems: "center" },
   nav: { flexDirection: "row", gap: 4, marginRight: 20 },
   navItem: { paddingHorizontal: 14, height: 40, borderRadius: 20, justifyContent: "center" },
   navText: { fontSize: 16 },
-  search: { flex: 1, height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, maxWidth: 460 },
+  search: { flex: 1, height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, maxWidth: 560 },
   searchInput: { flex: 1, fontSize: 15, height: 44, outlineStyle: "none" } as object,
   actions: { flexDirection: "row", alignItems: "center", gap: 6, marginLeft: "auto", paddingLeft: 16 },
   icon: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },

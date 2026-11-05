@@ -67,7 +67,8 @@ const NOTES: Record<string, string> = {
  * Home screen: the newest order in work — one line saying its stage («ожидает подтверждения»,
  * «собирается», «на проверке», «оформлен»). Opens the order. Gone when nothing is in work.
  */
-export function PendingOrderNote({ orders }: { orders: Active[] }) {
+/** `wide` — the computer's home column: the full width, no top gap */
+export function PendingOrderNote({ orders, wide }: { orders: Active[]; wide?: boolean }) {
   if (!orders.length) return null;
   const { id, status, needsConfirm } = orders[0];
   const more = orders.length - 1;
@@ -80,7 +81,7 @@ export function PendingOrderNote({ orders }: { orders: Active[] }) {
       onPress={() => router.push(`/order/${id}`)}
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${sub}`}
-      style={({ pressed }) => [st.wrap, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
+      style={({ pressed }) => [st.wrap, wide && { maxWidth: undefined, marginTop: 0 }, { transform: [{ scale: pressed ? 0.98 : 1 }] }]}
     >
       <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.card}>
         <View style={st.head}>

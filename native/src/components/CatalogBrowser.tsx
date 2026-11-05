@@ -1,4 +1,4 @@
-import { DESKTOP_MAX_CONTENT, useDesktop } from "@/useDesktop";
+import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -93,7 +93,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const { width } = useWindowDimensions();
   const desktop = useDesktop();
   // computer: categories on the left, the goods beside them — up to 5 cards in a row (≥ 165 px each)
-  const deskMain = Math.min(width, DESKTOP_MAX_CONTENT) - 40 - DESKTOP_SIDEBAR_W - 24;
+  const deskMain = Math.min(width, DESKTOP_WIDE) - 40 - DESKTOP_SIDEBAR_W - 24;
   const columns = desktop ? Math.max(3, Math.min(5, Math.floor(deskMain / 165))) : width >= 900 ? 4 : width >= 600 ? 3 : 2;
   const tabSpace = useTabBarSpace();
   const bottomSpace = pick ? pick.bottomSpace : tabSpace;
@@ -431,7 +431,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
 }
 
 const styles = StyleSheet.create({
-  deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_MAX_CONTENT, alignSelf: "center", paddingHorizontal: 20 },
+  deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20 },
   deskSide: { paddingTop: 24, paddingBottom: 20 },
   typesWrap: { marginHorizontal: -11, marginTop: 4, marginBottom: 6 },
   types: { paddingHorizontal: 16, gap: 8 },
