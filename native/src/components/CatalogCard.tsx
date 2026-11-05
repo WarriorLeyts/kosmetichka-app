@@ -17,6 +17,7 @@ import { FavHeart } from "./FavHeart";
 import { useCartStore } from "../store/cart";
 import { FitText } from "./FitText";
 import { SafeImage } from "./SafeImage";
+import { scaleStyles, useCardScale, PHONE_CARD_SCALE } from "../cardScale";
 
 type Props = {
   product: Product;
@@ -47,6 +48,8 @@ const STOCK = {
 
 /** Product card for the iOS-style catalog grid (fixed-height blocks keep rows aligned). */
 function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite, pickMode, picked = 0, picking, onPickStep, cartStepper = true }: Props) {
+  const k = useCardScale();
+  const styles = k === 1 ? baseStyles : phoneStyles;
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const img = imageUrl(product.images?.[0]?.path, 480);
@@ -71,7 +74,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
         {img ? (
           <SafeImage uri={img} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} />
         ) : (
-          <Ionicons name="image-outline" size={34} color="#C7C7CC" />
+          <Ionicons name="image-outline" size={34 * k} color="#C7C7CC" />
         )}
         <Pressable
           hitSlop={10}
@@ -88,7 +91,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           style={styles.fav}
         >
           <Animated.View style={{ transform: [{ scale: heart }] }}>
-            <FavHeart size={23} active={isFavorite} color="#7925D6" /* on the white photo tile in both themes */ />
+            <FavHeart size={23 * k} active={isFavorite} color="#7925D6" /* on the white photo tile in both themes */ />
           </Animated.View>
         </Pressable>
       </View>
@@ -114,7 +117,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
             </FitText>
             <FitText
               minimumFontScale={0.6}
-              style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: rows.length >= 3 ? 16 : 19 }]}
+              style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: (rows.length >= 3 ? 16 : 19) * k }]}
             >
               {money(r.value)}
             </FitText>
@@ -139,7 +142,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           style={({ pressed }) => [{ opacity: pressed ? 0.88 : 1 }]}
         >
           <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.button, { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}>
-            <Ionicons name="cart" size={18} color="#fff" />
+            <Ionicons name="cart" size={18 * k} color="#fff" />
             <Text numberOfLines={1} style={styles.buttonText}>
               В корзине · {inCart} шт.
             </Text>
@@ -165,7 +168,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
             {picking ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Ionicons name={pickMode && !out ? "add" : "cart-outline"} size={pickMode && !out ? 20 : 18} color="#fff" />
+              <Ionicons name={pickMode && !out ? "add" : "cart-outline"} size={(pickMode && !out ? 20 : 18) * k} color="#fff" />
             )}
             <Text numberOfLines={1} style={styles.buttonText}>
               {out ? "Нет в наличии" : pickMode ? "Добавить" : "В корзину"}
@@ -236,9 +239,11 @@ function PickRow({ product, qty, out, dark, label, onStep }: { product: Product;
 type Side = { label: string; icon: keyof typeof Ionicons.glyphMap; a11y: string; onPress?: () => void };
 
 function Stepper({ qty, dark, label, atCap, minusLabel, onMinus, onPlus, side }: { qty: number; dark: boolean; label: string; atCap: boolean; minusLabel: string; onMinus: () => void; onPlus: () => void; side: Side }) {
+  const k = useCardScale();
+  const styles = k === 1 ? baseStyles : phoneStyles;
   const [w, setW] = useState(0);
   // narrow cards (small phones): the side button keeps only its icon
-  const compact = w > 0 && w < 156;
+  const compact = w > 0 && w < 156 * k;
   return (
     <View style={styles.qtyRow} onLayout={(e) => setW(e.nativeEvent.layout.width)}>
       <View
@@ -254,7 +259,7 @@ function Stepper({ qty, dark, label, atCap, minusLabel, onMinus, onPlus, side }:
           onPress={onMinus}
           style={({ pressed }) => [styles.stepBtn, pressed && { opacity: 0.5 }]}
         >
-          <Ionicons name="remove" size={18} color={label} />
+          <Ionicons name="remove" size={18 * k} color={label} />
         </Pressable>
         <FitText minimumFontScale={0.7} style={[styles.qty, { color: label }]}>
           {qty}
@@ -267,7 +272,7 @@ function Stepper({ qty, dark, label, atCap, minusLabel, onMinus, onPlus, side }:
           onPress={onPlus}
           style={({ pressed }) => [styles.stepBtn, { opacity: atCap ? 0.3 : pressed ? 0.5 : 1 }]}
         >
-          <Ionicons name="add" size={18} color={label} />
+          <Ionicons name="add" size={18 * k} color={label} />
         </Pressable>
       </View>
       <Pressable
@@ -284,9 +289,9 @@ function Stepper({ qty, dark, label, atCap, minusLabel, onMinus, onPlus, side }:
           style={[styles.button, styles.inCartBtn, { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
         >
           {compact ? (
-            <Ionicons name={side.icon} size={19} color="#fff" />
+            <Ionicons name={side.icon} size={19 * k} color="#fff" />
           ) : (
-            <FitText minimumFontScale={0.9} style={[styles.buttonText, { fontSize: 13 }]}>
+            <FitText minimumFontScale={0.9} style={[styles.buttonText, { fontSize: 13 * k }]}>
               {side.label}
             </FitText>
           )}
@@ -298,7 +303,7 @@ function Stepper({ qty, dark, label, atCap, minusLabel, onMinus, onPlus, side }:
 
 export const CatalogCard = memo(CatalogCardBase);
 
-const styles = StyleSheet.create({
+const baseStyles = StyleSheet.create({
   card: {
     flex: 1,
     margin: 5,
@@ -335,3 +340,6 @@ const styles = StyleSheet.create({
   qty: { minWidth: 20, textAlign: "center", fontSize: 16, fontWeight: "800" },
   inCartBtn: { marginTop: 0, paddingHorizontal: 4 },
 });
+
+/** phone: the whole card at 0.8 (cardScale.ts) */
+const phoneStyles = StyleSheet.create(scaleStyles(baseStyles, PHONE_CARD_SCALE));

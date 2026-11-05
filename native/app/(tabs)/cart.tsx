@@ -1,3 +1,4 @@
+import { scaleStyles, useCardScale, PHONE_CARD_SCALE } from "@/cardScale";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Image } from "expo-image";
@@ -76,6 +77,7 @@ function CommentInput({ style, placeholderColor }: { style: object; placeholderC
 /** Cart — iOS style, same look as the catalog and profile. Pricing, thresholds and checkout are the existing logic. */
 export default function Cart() {
   const c = useIOS();
+  const k = useCardScale();
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const bottomSpace = useTabBarSpace();
@@ -273,6 +275,8 @@ export default function Cart() {
   };
 
   const renderItem = ({ item }: { item: CartItem }) => {
+    // the line card: 0.8 on a phone (cardScale.ts)
+    const li = k === 1 ? lineBase : linePhone;
     const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
     const price = priceFor(item, active);
     const min = Math.max(1, item.minOrderQty ?? 1);
@@ -293,39 +297,39 @@ export default function Cart() {
       setQty(item.cartKey, item.quantity + 1);
     };
     return (
-      <View style={[card, styles.item, styles.wrap]}>
-        <Pressable onPress={() => router.push(`/product/${item.id}`)} accessibilityLabel={item.name} style={styles.photo}>
+      <View style={[card, li.item, styles.wrap]}>
+        <Pressable onPress={() => router.push(`/product/${item.id}`)} accessibilityLabel={item.name} style={li.photo}>
           {img ? (
             <Image source={{ uri: img }} style={StyleSheet.absoluteFill} contentFit="contain" transition={150} />
           ) : (
-            <Ionicons name="image-outline" size={28} color={c.secondary} />
+            <Ionicons name="image-outline" size={28 * k} color={c.secondary} />
           )}
         </Pressable>
-        <View style={{ flex: 1, paddingRight: 26 }}>
+        <View style={{ flex: 1, paddingRight: 26 * k }}>
           {item.brand?.name ? (
-            <Text style={[styles.brand, { color: c.secondary }]} numberOfLines={1}>
+            <Text style={[li.brand, { color: c.secondary }]} numberOfLines={1}>
               {item.brand.name.toUpperCase()}
             </Text>
           ) : null}
-          <Text style={[styles.name, { color: c.label }]}>{item.name}</Text>
-          {item.variantName ? <Text style={styles.variant}>{item.variantName}</Text> : null}
-          <Text style={[styles.unit, { color: c.secondary }]}>
+          <Text style={[li.name, { color: c.label }]}>{item.name}</Text>
+          {item.variantName ? <Text style={li.variant}>{item.variantName}</Text> : null}
+          <Text style={[li.unit, { color: c.secondary }]}>
             {money(price)} × {item.quantity}
           </Text>
-          <FitText style={styles.sum}>
+          <FitText style={li.sum}>
             {money(price * item.quantity)}
           </FitText>
-          <View style={styles.stepRow}>
-            <View style={[styles.stepper, { backgroundColor: soft }]}>
-              <Pressable onPress={minus} hitSlop={6} accessibilityLabel="Уменьшить количество" style={styles.stepBtn}>
-                <Ionicons name="remove" size={22} color={c.label} />
+          <View style={li.stepRow}>
+            <View style={[li.stepper, { backgroundColor: soft }]}>
+              <Pressable onPress={minus} hitSlop={6} accessibilityLabel="Уменьшить количество" style={li.stepBtn}>
+                <Ionicons name="remove" size={22 * k} color={c.label} />
               </Pressable>
-              <View style={[styles.qtyBox, { backgroundColor: c.cell }]}>
-                <Text style={[styles.qty, { color: c.label }]}>{item.quantity}</Text>
+              <View style={[li.qtyBox, { backgroundColor: c.cell }]}>
+                <Text style={[li.qty, { color: c.label }]}>{item.quantity}</Text>
               </View>
               <Pressable onPress={plus} disabled={atMax} hitSlop={6} accessibilityLabel="Увеличить количество" style={{ opacity: atMax ? 0.4 : 1 }}>
-                <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.plus}>
-                  <Ionicons name="add" size={24} color="#fff" />
+                <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={li.plus}>
+                  <Ionicons name="add" size={24 * k} color="#fff" />
                 </LinearGradient>
               </Pressable>
             </View>
@@ -343,9 +347,9 @@ export default function Cart() {
             remove(item.cartKey);
           }}
           accessibilityLabel="Удалить из корзины"
-          style={[styles.remove, { backgroundColor: soft }]}
+          style={[li.remove, { backgroundColor: soft }]}
         >
-          <Ionicons name="close" size={17} color={c.secondary} />
+          <Ionicons name="close" size={17 * k} color={c.secondary} />
         </Pressable>
       </View>
     );
@@ -616,3 +620,22 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, width: "100%", maxWidth: 440, alignSelf: "center" },
   emptyIcon: { width: 84, height: 84, borderRadius: 26, alignItems: "center", justifyContent: "center", marginBottom: 16 },
 });
+
+/** a cart line; on a phone the whole line card is drawn at 0.8 (cardScale.ts) */
+const lineBase = StyleSheet.create({
+  item: { flexDirection: "row", gap: 14, padding: 14, marginBottom: 12 },
+  photo: { width: 112, height: 132, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  brand: { fontSize: 13, letterSpacing: 0.3, marginBottom: 3 },
+  name: { fontSize: 16, lineHeight: 21 },
+  variant: { color: VIOLET, fontSize: 13, fontWeight: "600", marginTop: 3 },
+  unit: { fontSize: 15, marginTop: 6 },
+  sum: { color: PINK, fontSize: 26, fontWeight: "800", marginTop: 2 },
+  stepRow: { flexDirection: "row", marginTop: 10 },
+  stepper: { flexDirection: "row", alignItems: "center", borderRadius: 24, padding: 3, gap: 4 },
+  stepBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
+  qtyBox: { minWidth: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
+  qty: { fontSize: 17, fontWeight: "600" },
+  plus: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(139,61,255,0.35)" },
+  remove: { position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+});
+const linePhone = StyleSheet.create(scaleStyles(lineBase, PHONE_CARD_SCALE));
