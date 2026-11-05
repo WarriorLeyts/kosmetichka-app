@@ -1,6 +1,6 @@
 import { scaleStyles, useCardScale } from "@/cardScale";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -25,6 +25,7 @@ import { BONUS_SPEND, RETAIL_ENABLED } from "@/siteMode";
 import { FitText } from "@/components/FitText";
 import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
 import { TierProgress } from "@/components/TierProgress";
+import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -81,6 +82,8 @@ export default function Cart() {
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const bottomSpace = useTabBarSpace();
+  // computer: the goods on the left, «Ваш заказ» (delivery, comment, total, «Оформить») on the right
+  const desktop = useDesktop();
   const listRef = useRef<FlatList<CartItem>>(null);
   const [showJump, setShowJump] = useState(false);
   const geo = useRef({ y: 0, h: 0, content: 0 });
@@ -297,6 +300,57 @@ export default function Cart() {
       tap();
       setQty(item.cartKey, item.quantity + 1);
     };
+    if (desktop) {
+      // computer: one row — photo, name, price per piece, «− n +», sum, remove
+      return (
+        <View style={[card, styles.deskLine]}>
+          <Pressable onPress={() => router.push(`/product/${item.id}`)} accessibilityLabel={item.name} style={styles.deskPhoto}>
+            {img ? <Image source={{ uri: img }} style={StyleSheet.absoluteFill} contentFit="contain" transition={150} /> : <Ionicons name="image-outline" size={24} color={c.secondary} />}
+          </Pressable>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            {item.brand?.name ? (
+              <Text style={[styles.deskBrand, { color: c.secondary }]} numberOfLines={1}>
+                {item.brand.name.toUpperCase()}
+              </Text>
+            ) : null}
+            <Pressable onPress={() => router.push(`/product/${item.id}`)}>
+              <Text style={[styles.deskName, { color: c.label }]} numberOfLines={2}>
+                {item.name}
+              </Text>
+            </Pressable>
+            {item.variantName ? <Text style={lineBase.variant}>{item.variantName}</Text> : null}
+            <Text style={{ color: c.secondary, fontSize: 13, marginTop: 3 }}>{money(price)} за шт.</Text>
+            {unavailable ? (
+              <Text style={[styles.stockHint, { color: "#E5484D", fontWeight: "600" }]}>{unavailable}</Text>
+            ) : showStock ? (
+              <Text style={[styles.stockHint, { color: c.secondary }]}>В наличии {stock} шт.</Text>
+            ) : null}
+          </View>
+          <View style={[lineBase.stepper, { backgroundColor: soft }]}>
+            <Pressable onPress={minus} accessibilityLabel="Уменьшить количество" style={styles.deskStepBtn}>
+              <Ionicons name="remove" size={20} color={c.label} />
+            </Pressable>
+            <Text style={[styles.deskQty, { color: c.label }]}>{item.quantity}</Text>
+            <Pressable onPress={plus} disabled={atMax} accessibilityLabel="Увеличить количество" style={{ opacity: atMax ? 0.4 : 1 }}>
+              <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.deskPlus}>
+                <Ionicons name="add" size={20} color="#fff" />
+              </LinearGradient>
+            </Pressable>
+          </View>
+          <FitText style={styles.deskSum}>{money(price * item.quantity)}</FitText>
+          <Pressable
+            onPress={() => {
+              tap();
+              remove(item.cartKey);
+            }}
+            accessibilityLabel="Удалить из корзины"
+            style={[styles.deskRemove, { backgroundColor: soft }]}
+          >
+            <Ionicons name="close" size={17} color={c.secondary} />
+          </Pressable>
+        </View>
+      );
+    }
     return (
       <View style={[card, li.item, styles.wrap]}>
         <Pressable onPress={() => router.push(`/product/${item.id}`)} accessibilityLabel={item.name} style={li.photo}>
@@ -369,34 +423,7 @@ export default function Cart() {
     checkJump();
   };
 
-  return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-      <FlatList
-        ref={listRef}
-        onScroll={onListScroll}
-        scrollEventThrottle={100}
-        onLayout={(e) => {
-          geo.current.h = e.nativeEvent.layout.height;
-          checkJump();
-        }}
-        onContentSizeChange={(_w, h) => {
-          geo.current.content = h;
-          checkJump();
-        }}
-        data={items}
-        keyExtractor={(i) => i.cartKey}
-        renderItem={renderItem}
-        contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 16, paddingBottom: bottomSpace }}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View style={styles.wrap}>
-            <BrandHeader title="Корзина" />
-          </View>
-        }
-        ListFooterComponent={
-          <View style={styles.wrap}>
+  const clearButton = (
             <Pressable
               onPress={() =>
                 Alert.alert("Очистить корзину?", undefined, [
@@ -410,7 +437,11 @@ export default function Cart() {
               <Ionicons name="trash-outline" size={20} color={c.secondary} />
               <Text style={[iosText.body, { color: c.secondary }]}>Очистить корзину</Text>
             </Pressable>
-
+  );
+  // delivery / pickup, comment, promo, total and «Оформить заказ»: under the goods on a phone,
+  // a column on the right on a computer
+  const checkoutPanel = (
+    <>
             {/* how the order is received: «Заберу в магазине» or an address for the delivery */}
             <View style={[styles.pickup, { backgroundColor: dark ? "#2B193D" : "#EEEEF3" }]}>
               <View style={{ flex: 1 }}>
@@ -538,10 +569,56 @@ export default function Cart() {
             <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginTop: 10 }]}>
               Заказ попадёт менеджеру на подтверждение. Оплата — после согласования.
             </Text>
+    </>
+  );
+
+  return (
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: bg }} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+      <View style={desktop && items.length ? styles.deskRow : { flex: 1 }}>
+      <FlatList
+        style={{ flex: 1 }}
+        ref={listRef}
+        onScroll={onListScroll}
+        scrollEventThrottle={100}
+        onLayout={(e) => {
+          geo.current.h = e.nativeEvent.layout.height;
+          checkJump();
+        }}
+        onContentSizeChange={(_w, h) => {
+          geo.current.content = h;
+          checkJump();
+        }}
+        data={items}
+        keyExtractor={(i) => i.cartKey}
+        renderItem={renderItem}
+        contentContainerStyle={desktop ? { paddingTop: 8, paddingBottom: 40 } : { paddingTop: insets.top, paddingHorizontal: 16, paddingBottom: bottomSpace }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <View style={desktop ? undefined : styles.wrap}>
+            <BrandHeader title="Корзина" />
           </View>
         }
+        ListFooterComponent={
+          desktop ? (
+            <View>{clearButton}</View>
+          ) : (
+            <View style={styles.wrap}>
+              {clearButton}
+              {checkoutPanel}
+            </View>
+          )
+        }
       />
-      {showJump ? (
+      {desktop && items.length ? (
+        <ScrollView style={styles.deskSide} contentContainerStyle={[styles.deskPanel, { backgroundColor: c.cell }, !dark && styles.shadow]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <Text style={[styles.deskPanelTitle, { color: c.label }]}>Ваш заказ</Text>
+          {checkoutPanel}
+        </ScrollView>
+      ) : null}
+      </View>
+      {showJump && !desktop ? (
         <Pressable
           onPress={() => {
             tap();
@@ -586,6 +663,19 @@ function GradientButton({
 }
 
 const styles = StyleSheet.create({
+  deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20, alignItems: "flex-start" },
+  deskSide: { width: 400, flexGrow: 0, maxHeight: "100%", paddingTop: 96 },
+  deskPanel: { borderRadius: 22, padding: 20, marginBottom: 30 },
+  deskPanelTitle: { fontSize: 21, fontWeight: "800", marginBottom: 4 },
+  deskLine: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 10 },
+  deskPhoto: { width: 76, height: 76, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  deskBrand: { fontSize: 12, letterSpacing: 0.3, marginBottom: 2 },
+  deskName: { fontSize: 15.5, lineHeight: 20 },
+  deskStepBtn: { width: 38, height: 38, alignItems: "center", justifyContent: "center" },
+  deskQty: { minWidth: 34, textAlign: "center", fontSize: 16, fontWeight: "700" },
+  deskPlus: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
+  deskSum: { width: 130, textAlign: "right", color: PINK, fontSize: 20, fontWeight: "800" },
+  deskRemove: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   card: { borderRadius: 22 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
