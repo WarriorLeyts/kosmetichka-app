@@ -143,6 +143,14 @@ export function startCartSync() {
     if (id !== lastId) {
       lastId = id;
       if (id) void syncCart();
+      else {
+        // signed out: this device's copy is cleared, the saved one stays — the next sign-in
+        // (same account or another) takes the saved one again and adds what is here then
+        if (pushTimer) clearTimeout(pushTimer);
+        pushTimer = null;
+        meta = { owner: null, syncedAt: null, dirty: false };
+        saveMeta();
+      }
     }
   });
   // back to the app / the browser tab → take what the other devices changed
