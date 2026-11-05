@@ -6,6 +6,7 @@
  */
 import { Platform } from "react-native";
 import type {
+  CartItem,
   AppNotification, Brand, Category, ChatMessage, Customer, Order, OrdersPage, Product, RoleInfo, Variant,
 } from "./types";
 
@@ -201,6 +202,13 @@ export const api = {
     // cards don't show the description — the server leaves it out (≈65% of the page)
     p.set("lite", "1");
     return request(`/api/catalog/products?${p.toString()}`, signal ? { signal } : {});
+  },
+  /** the cart saved for the account (shared by the site and the apps) */
+  cartGet(): Promise<{ items: CartItem[]; comment: string; updatedAt: string | null }> {
+    return request("/api/mobile/cart");
+  },
+  cartPut(items: CartItem[], comment: string): Promise<{ updatedAt: string }> {
+    return request("/api/mobile/cart", { method: "PUT", body: JSON.stringify({ items, comment }) });
   },
   catalogMeta(): Promise<{ categories: Category[]; brands: Brand[] }> {
     return request("/api/mobile/catalog-meta");

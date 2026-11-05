@@ -11,6 +11,7 @@ import Constants, { ExecutionEnvironment } from "expo-constants";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
+import { startCartSync } from "@/cartSync";
 import { onLiveHint, startLive, stopLive } from "@/live";
 import { installCrashReporter, reportError, setCrashScreen } from "@/crash";
 import { listenPush, registerPush } from "@/push";
@@ -128,6 +129,10 @@ function AppRoot() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+  // one cart for the account on the site and in the apps (src/cartSync.ts)
+  useEffect(() => {
+    startCartSync();
+  }, []);
   // the whole app mounting again and again (a loop) is reported with the theme / size (src/stormWatch.ts)
   useEffect(() => {
     stormWatch("root-mount", () => ({ mode: useTheme.getState().mode, desktop }));

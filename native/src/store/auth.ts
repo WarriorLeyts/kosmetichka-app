@@ -4,7 +4,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { api, ApiError, setOnUnauthorized } from "../api";
 import type { Customer } from "../types";
-import { useCartStore } from "./cart";
+import { cartQuiet, useCartStore } from "./cart";
 import { useFavorites } from "./favorites";
 import { useWaitlistStore } from "./waitlist";
 import { clearOrderStatus } from "../unread";
@@ -19,8 +19,14 @@ const LOGOUT_PENDING_KEY = "kosmetichka-logout-pending";
 
 /** Everything kept on the phone for the signed-in account. */
 function clearLocalAccountData() {
-  useCartStore.getState().clear();
-  useCartStore.getState().setComment("");
+  // the account's saved cart stays on the server: emptying this device's copy is not sent there
+  cartQuiet.n++;
+  try {
+    useCartStore.getState().clear();
+    useCartStore.getState().setComment("");
+  } finally {
+    cartQuiet.n--;
+  }
   useFavorites.getState().clear();
   useWaitlistStore.getState().reset();
   orderCache.clear();

@@ -3,6 +3,10 @@ import { persist } from "zustand/middleware";
 import { persistStorage } from "./storage";
 import type { CartItem, OrderItem, Product, Variant } from "../types";
 
+/** > 0 while the app empties the cart for an account change (sign-out, another account): such a change
+ * stays on this device and is never sent as the account's saved cart (src/cartSync.ts) */
+export const cartQuiet = { n: 0 };
+
 type CartState = {
   items: CartItem[];
   /** «Комментарий к заказу» — kept while the cart changes, cleared after checkout */
