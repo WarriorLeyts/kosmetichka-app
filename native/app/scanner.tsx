@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { themed } from "@/theme";
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import { CameraView, useCameraPermissions } from "expo-camera";
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useCameraPermissions } from "expo-camera";
+import { BarcodeCamera } from "@/components/BarcodeCamera";
 import { Linking } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,6 +18,8 @@ export default function Scanner() {
   const [torch, setTorch] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [camError, setCamError] = useState(""); // browser: the camera could not start
+  const web = Platform.OS === "web";
   const handled = useRef(false);
   // ?store=pick: scanning on «Добавить товар» searches there, the product is added from its card
   const { store } = useLocalSearchParams<{ store?: string }>();
@@ -58,9 +61,10 @@ export default function Scanner() {
     }
   };
 
-  if (!permission) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
+  // the browser asks for the camera itself (BarcodeCamera.web.tsx)
+  if (!web && !permission) return <View style={{ flex: 1, backgroundColor: "#000" }} />;
 
-  if (!permission.granted) {
+  if (!web && permission && !permission.granted) {
     return (
       <View style={[styles.center, { paddingTop: insets.top }]}>
         <Ionicons name="camera-outline" size={56} color="#fff" />
@@ -80,20 +84,23 @@ export default function Scanner() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "#000" }}>
-      <CameraView
-        style={StyleSheet.absoluteFill}
-        facing="back"
-        enableTorch={torch}
-        barcodeScannerSettings={{ barcodeTypes: ["ean13", "ean8", "upc_a", "upc_e", "code128", "code39", "qr"] }}
-        onBarcodeScanned={busy ? undefined : ({ data }) => onCode(String(data))}
-      />
+      {camError ? (
+        <View style={[styles.center, StyleSheet.absoluteFill]}>
+          <Ionicons name="camera-outline" size={48} color="#fff" />
+          <Text style={[styles.text, { fontSize: 16, marginTop: 14, maxWidth: 420 }]}>{camError}</Text>
+        </View>
+      ) : (
+        <BarcodeCamera torch={torch} onCode={busy ? undefined : onCode} onError={setCamError} />
+      )}
       <View style={[styles.top, { paddingTop: insets.top + 10 }]}>
         <Pressable onPress={() => router.back()} style={styles.round} hitSlop={10} accessibilityRole="button" accessibilityLabel="Закрыть сканер">
           <Ionicons name="close" size={24} color="#fff" />
         </Pressable>
+        {web ? null : (
         <Pressable onPress={() => setTorch(!torch)} style={styles.round} hitSlop={10} accessibilityRole="button" accessibilityLabel={torch ? "Выключить фонарик" : "Включить фонарик"}>
           <Ionicons name={torch ? "flash" : "flash-outline"} size={22} color="#fff" />
         </Pressable>
+        )}
       </View>
       <View style={[styles.frameWrap, { pointerEvents: "none" }]}>
         <View style={styles.frame} />
