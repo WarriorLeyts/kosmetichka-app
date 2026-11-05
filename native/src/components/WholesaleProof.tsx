@@ -1,7 +1,6 @@
 import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import { IOSField } from "@/components/iosui/Field";
 import { tap } from "@/components/ui";
 import { iosText, useIOS } from "@/ios";
 import { api } from "@/api";
@@ -55,25 +54,21 @@ const TYPES: { value: ShopType; label: string; icon: keyof typeof Ionicons.glyph
 ];
 
 /**
- * «Где вы продаёте» + link + photos / videos of the shop or online orders. State is the parent's;
- * errors: { shopType?, shopLink?, proofs? }.
+ * «Где вы продаёте» + photos / videos of the shop or online orders (no link: the photos are enough).
+ * State is the parent's; errors: { shopType?, proofs? }.
  */
 export function WholesaleProofForm({
   shopType,
   setShopType,
-  shopLink,
-  setShopLink,
   files,
   setFiles,
   errors,
 }: {
   shopType: ShopType | null;
   setShopType: (t: ShopType) => void;
-  shopLink: string;
-  setShopLink: (s: string) => void;
   files: ProofFile[];
   setFiles: (f: ProofFile[]) => void;
-  errors: { shopType?: string; shopLink?: string; proofs?: string };
+  errors: { shopType?: string; proofs?: string };
 }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -137,18 +132,6 @@ export function WholesaleProofForm({
       </View>
       {errors.shopType ? <Text style={st.err}>{errors.shopType}</Text> : null}
 
-      {shopType === "online" || shopType === "both" ? (
-        <IOSField
-          label="Ссылка на онлайн-магазин"
-          placeholder="Instagram, сайт или маркетплейс"
-          value={shopLink}
-          onChangeText={setShopLink}
-          autoCapitalize="none"
-          autoCorrect={false}
-          keyboardType="url"
-          error={errors.shopLink}
-        />
-      ) : null}
 
       <Text style={[st.label, { color: c.secondary, marginTop: 6 }]}>Фото или видео магазина либо онлайн-заказов</Text>
       <View style={st.grid}>

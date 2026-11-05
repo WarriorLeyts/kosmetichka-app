@@ -27,7 +27,7 @@ const TYPES: { value: string; label: string; desc: string; icon: keyof typeof Io
   { value: "big_wholesale", label: "Крупный опт", desc: "Крупные закупки", icon: "business-outline" },
 ];
 
-type Errors = Partial<Record<"name" | "address" | "email" | "password" | "phone" | "smsCode" | "captcha" | "consent" | "shopType" | "shopLink" | "proofs", string>>;
+type Errors = Partial<Record<"name" | "address" | "email" | "password" | "phone" | "smsCode" | "captcha" | "consent" | "shopType" | "proofs", string>>;
 
 /** Fades/slides its children in when mounted (dependent fields, hints). */
 function Appear({ children }: { children: ReactNode }) {
@@ -86,7 +86,6 @@ export default function Register() {
   const [priceType, setPriceType] = useState("wholesale"); // the project's initial state
   // wholesale proof: where the customer resells + photos / videos (sent right after the application)
   const [shopType, setShopType] = useState<ShopType | null>(null);
-  const [shopLink, setShopLink] = useState("");
   const [proofs, setProofs] = useState<ProofFile[]>([]);
   const [uploading, setUploading] = useState("");
   const [captcha, setCaptcha] = useState<string | null>(null);
@@ -147,7 +146,6 @@ export default function Register() {
     // wholesale: the shop's address is required (orders are sent there)
     if (wholesale && f.address.trim().length < 5) e.address = "Укажите адрес магазина";
     if (wholesale && !shopType) e.shopType = "Выберите, где вы продаёте";
-    if (wholesale && shopType && shopType !== "offline" && shopLink.trim().length < 4) e.shopLink = "Укажите ссылку на онлайн-магазин";
     if (wholesale && proofs.length === 0) e.proofs = "Добавьте хотя бы одно фото или видео";
     if (!f.email.trim()) e.email = "Укажите email";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = "Проверьте email";
@@ -173,7 +171,7 @@ export default function Register() {
         captchaToken: captcha ?? "",
         smsCode: smsCode.trim(),
         priceType,
-        ...(wholesale && shopType ? { shopType, shopLink: shopLink.trim() || undefined } : {}),
+        ...(wholesale && shopType ? { shopType } : {}),
         ...(RETAIL_ENABLED ? {} : { source: "site" as const }),
       });
       // the application is saved — now the photos / videos (the pass is valid 3 days)
@@ -273,12 +271,7 @@ export default function Register() {
                   shopType={shopType}
                   setShopType={(t) => {
                     setShopType(t);
-                    setErrors((p) => ({ ...p, shopType: undefined, shopLink: undefined }));
-                  }}
-                  shopLink={shopLink}
-                  setShopLink={(v) => {
-                    setShopLink(v);
-                    setErrors((p) => ({ ...p, shopLink: undefined }));
+                    setErrors((p) => ({ ...p, shopType: undefined }));
                   }}
                   files={proofs}
                   setFiles={(fl) => {

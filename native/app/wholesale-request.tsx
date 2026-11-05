@@ -23,16 +23,14 @@ export default function WholesaleRequest() {
   const customer = useAuth((s) => s.customer);
   const setCustomer = useAuth((s) => s.setCustomer);
   const [shopType, setShopType] = useState<ShopType | null>(null);
-  const [shopLink, setShopLink] = useState("");
   const [files, setFiles] = useState<ProofFile[]>([]);
-  const [errors, setErrors] = useState<{ shopType?: string; shopLink?: string; proofs?: string }>({});
+  const [errors, setErrors] = useState<{ shopType?: string; proofs?: string }>({});
   const [busy, setBusy] = useState("");
 
   const send = async () => {
     if (busy) return;
     const e: typeof errors = {};
     if (!shopType) e.shopType = "Выберите, где вы продаёте";
-    else if (shopType !== "offline" && shopLink.trim().length < 4) e.shopLink = "Укажите ссылку на онлайн-магазин";
     if (!files.length) e.proofs = "Добавьте хотя бы одно фото или видео";
     setErrors(e);
     if (Object.keys(e).length) return;
@@ -42,7 +40,7 @@ export default function WholesaleRequest() {
       const up = await uploadProofs(files, null, (d, t) => setBusy(d < t ? `Загружаем файлы: ${d + 1} из ${t}` : "Отправляем заявку…"));
       if (up.failed.length === files.length) throw new Error(up.error || "Файлы не загрузились");
       if (up.failed.length) setFiles(up.failed);
-      const r = await api.roleSet(target, { shopType: shopType!, shopLink: shopLink.trim() || undefined });
+      const r = await api.roleSet(target, { shopType: shopType! });
       if (customer) setCustomer({ ...customer, priceType: r.priceType, wholesaleAccess: r.wholesaleAccess, roleRequest: r.roleRequest, roleRequestStatus: r.roleRequestStatus });
       Alert.alert(
         "Заявка отправлена",
@@ -75,12 +73,7 @@ export default function WholesaleRequest() {
               shopType={shopType}
               setShopType={(t) => {
                 setShopType(t);
-                setErrors((p) => ({ ...p, shopType: undefined, shopLink: undefined }));
-              }}
-              shopLink={shopLink}
-              setShopLink={(v) => {
-                setShopLink(v);
-                setErrors((p) => ({ ...p, shopLink: undefined }));
+                setErrors((p) => ({ ...p, shopType: undefined }));
               }}
               files={files}
               setFiles={(f) => {
