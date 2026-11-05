@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
@@ -48,6 +49,10 @@ export function DesktopHome({
   const toggleFav = useFavorites((s) => s.toggle);
   const addToCart = useAddToCart();
   const active = effectivePriceType(cart, customer);
+  // the grid is drawn once the column has its width (prices then fit their columns from the start)
+  const [gridW, setGridW] = useState(0);
+  const items = fresh.slice(0, 10);
+  const rows = [items.slice(0, 5), items.slice(5, 10)].filter((r) => r.length);
 
   return (
     <View style={styles.row}>
@@ -106,20 +111,28 @@ export function DesktopHome({
                 <Ionicons name="arrow-forward" size={17} color={dark ? "#D7B8FF" : "#8b2be0"} />
               </Pressable>
             </View>
-            <View style={styles.grid}>
-              {fresh.slice(0, 10).map((p) => (
-                <View key={p.id} style={styles.cell}>
-                  <CatalogCard
-                    product={p}
-                    customer={customer}
-                    activePrice={active}
-                    inCart={cart.find((x) => x.cartKey === String(p.id))?.quantity ?? 0}
-                    isFavorite={favorites.some((f) => f.id === p.id)}
-                    onAdd={addToCart}
-                    onFavorite={toggleFav}
-                  />
-                </View>
-              ))}
+            <View style={styles.grid} onLayout={(e) => setGridW(Math.round(e.nativeEvent.layout.width))}>
+              {gridW > 0
+                ? rows.map((row, i) => (
+                    <View key={i} style={styles.gridRow}>
+                      {row.map((p) => (
+                        <View key={p.id} style={styles.cell}>
+                          <CatalogCard
+                            product={p}
+                            customer={customer}
+                            activePrice={active}
+                            inCart={cart.find((x) => x.cartKey === String(p.id))?.quantity ?? 0}
+                            isFavorite={favorites.some((f) => f.id === p.id)}
+                            onAdd={addToCart}
+                            onFavorite={toggleFav}
+                          />
+                        </View>
+                      ))}
+                      {/* a short last row keeps the cards their size */}
+                      {Array.from({ length: 5 - row.length }, (_, k) => <View key={`gap${k}`} style={styles.cell} />)}
+                    </View>
+                  ))
+                : null}
             </View>
           </>
         ) : null}
@@ -158,7 +171,8 @@ const styles = StyleSheet.create({
   section: { fontSize: 24, fontWeight: "800" },
   all: { flexDirection: "row", alignItems: "center", gap: 6 },
   allText: { color: "#7a1ee8", fontSize: 16, fontWeight: "500" },
-  grid: { flexDirection: "row", flexWrap: "wrap", marginHorizontal: -5, marginTop: -8 },
-  cell: { width: "20%" },
+  grid: { marginHorizontal: -5, marginTop: -8 },
+  gridRow: { flexDirection: "row" },
+  cell: { flex: 1 / 5 },
   contacts: { flexDirection: "row", alignItems: "center", gap: 8, alignSelf: "center", paddingVertical: 14 },
 });
