@@ -41,7 +41,7 @@ export function WholesaleTerms() {
       <View style={st.rule}>
         <Ionicons name="car-outline" size={18} color={PINK} />
         <Text style={[st.termsText, { color: c.label, flex: 1 }]}>
-          При заказе от <Text style={st.b}>50 000 ₽</Text> — бесплатная доставка по Ингушетии и Грозному.
+          При заказе от <Text style={st.b}>50 000 ₽</Text> — бесплатная доставка по Чеченской Республике, Ингушетии и Дагестану.
         </Text>
       </View>
     </View>

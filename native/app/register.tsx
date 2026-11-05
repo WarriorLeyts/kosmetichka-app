@@ -23,7 +23,7 @@ const VIOLET = "#8b1ee6";
 // strictly three customer types (no «Скидка» at registration)
 const TYPES: { value: string; label: string; desc: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: "retail", label: "Розница", desc: "Покупаю для себя", icon: "bag-handle-outline" },
-  { value: "wholesale", label: "Опт", desc: "Владелец магазина", icon: "storefront-outline" },
+  { value: "wholesale", label: "Опт", desc: "Для перепродажи", icon: "storefront-outline" },
   { value: "big_wholesale", label: "Крупный опт", desc: "Крупные закупки", icon: "business-outline" },
 ];
 
