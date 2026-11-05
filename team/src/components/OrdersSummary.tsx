@@ -62,7 +62,7 @@ export function DayNav({ day, today, onChange }: { day: string | null; today: st
         >
           <Ionicons name="calendar-outline" size={15} color={VIOLET} />
           <Text style={[st.day, { color: c.label }]} numberOfLines={1}>
-            {all ? "Выбрать день" : shown ? (atToday ? `Сегодня, ${dayLabel(shown).split(", ")[1]}` : dayLabel(shown)) : "Сегодня"}
+            {all ? "Выбрать день" : shown ? (atToday ? "Сегодня" : dayLabel(shown)) : "Сегодня"}
           </Text>
         </Pressable>
         <Pressable
