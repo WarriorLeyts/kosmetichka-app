@@ -65,6 +65,14 @@ export function DesktopHome({
           <View style={{ flex: 1 }}>
             <Text style={styles.heroTitle}>Собираем ваш заказ</Text>
             <Text style={styles.heroText}>Сеть магазинов косметики и парфюмерии. Любимые средства — вместе, каждая деталь с заботой</Text>
+            <Pressable
+              onPress={() => openCatalog({})}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.heroBtn, pressed && { opacity: 0.9 }]}
+            >
+              <Text style={styles.heroBtnText}>Перейти в каталог</Text>
+              <Ionicons name="arrow-forward" size={18} color={VIOLET} />
+            </Pressable>
           </View>
           <Image source={require("../../../assets/categories/gift.png")} style={styles.heroImg} contentFit="contain" />
         </LinearGradient>
@@ -148,9 +156,11 @@ const styles = StyleSheet.create({
   row: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20 },
   side: { paddingTop: 24, paddingBottom: 20 },
   main: { paddingTop: 24, paddingBottom: 40, gap: 18 },
-  hero: { borderRadius: 26, paddingHorizontal: 34, paddingVertical: 26, flexDirection: "row", alignItems: "center", gap: 20, minHeight: 180, overflow: "hidden" },
+  hero: { borderRadius: 26, paddingHorizontal: 34, paddingVertical: 26, flexDirection: "row", alignItems: "center", gap: 20, minHeight: 210, overflow: "hidden" },
   heroTitle: { color: "#fff", fontSize: 34, fontWeight: "800" },
   heroText: { color: "rgba(255,255,255,0.92)", fontSize: 16, lineHeight: 22, marginTop: 8, maxWidth: 440 },
+  heroBtn: { marginTop: 18, alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", borderRadius: 24, paddingHorizontal: 22, height: 46 },
+  heroBtnText: { color: VIOLET, fontSize: 16, fontWeight: "700" },
   heroImg: { width: 240, height: 190 },
   login: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 18, padding: 16 },
   loginTitle: { fontSize: 16, fontWeight: "700" },
