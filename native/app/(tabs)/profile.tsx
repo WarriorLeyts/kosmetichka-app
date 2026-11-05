@@ -20,6 +20,12 @@ import { useTheme, type ThemePref } from "@/theme";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
 import { RETAIL_ENABLED, SITE_RETAIL_DISCOUNT } from "@/siteMode";
+import { useDesktop, DESKTOP_WIDE } from "@/useDesktop";
+import { EmbeddedPane } from "@/embedded";
+import EditProfile from "../edit-profile";
+import Waitlist from "../waitlist";
+import Favorites from "../favorites";
+import Info from "../info";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -34,7 +40,8 @@ const TIER: Record<string, string> = {
   big_wholesale: "Крупный оптовый клиент",
 };
 
-type Item = { icon: IconName; title: string; pink?: boolean; fav?: boolean; count?: number; value?: string; needsAuth?: boolean; onPress: () => void };
+type Pane = "data" | "waitlist" | "favorites" | "info";
+type Item = { pane?: Pane; icon: IconName; title: string; pink?: boolean; fav?: boolean; count?: number; value?: string; needsAuth?: boolean; onPress: () => void };
 
 /** Profile — iOS style: brand header, large title, one rounded menu block, gradient sign-in button. */
 export default function Profile() {
@@ -91,19 +98,24 @@ export default function Profile() {
   const favCount = useFavorites((s) => s.items.length);
   const waitCount = useWaitlistStore((s) => s.ids.length);
 
+  // computer: the menu on the left, the chosen section on the right (signed-in customers)
+  const desktop = useDesktop();
+  const split = desktop && !!customer;
+  const [pane, setPane] = useState<Pane>("data");
   // signed-out users go to the login screen for account-only sections (existing behaviour of those screens)
   const go = (path: string, needsAuth?: boolean) => router.push(needsAuth && !customer ? "/login" : (path as never));
+  const open = (p: Pane, path: string, needsAuth?: boolean) => (split ? setPane(p) : go(path, needsAuth));
 
   const items: Item[] = [
-    { icon: "person-outline", title: "Мои данные", needsAuth: true, onPress: () => go("/edit-profile", true) },
+    { pane: "data", icon: "person-outline", title: "Мои данные", needsAuth: true, onPress: () => open("data", "/edit-profile", true) },
     ...(customer
       ? [{ icon: "pricetags-outline" as IconName, title: "Тип цен", value: PRICE_LABEL[customer.priceType ?? ""] ?? undefined, onPress: () => setRoleOpen(true) }]
       : []),
     ...(customer ? [{ icon: "notifications-outline" as IconName, title: "Уведомления", onPress: () => setNotifyOpen(true) }] : []),
     { icon: "cube-outline", title: "Мои заказы", needsAuth: true, onPress: () => (customer ? router.navigate("/orders") : router.push("/login")) },
-    { icon: "time-outline", title: "Лист ожидания", needsAuth: true, count: customer ? waitCount : 0, onPress: () => go("/waitlist", true) },
-    { icon: "heart-outline", title: "Избранное", fav: true, count: favCount, onPress: () => go("/favorites") },
-    { icon: "document-text-outline", title: "Контакты и документы", onPress: () => go("/info") },
+    { pane: "waitlist", icon: "time-outline", title: "Лист ожидания", needsAuth: true, count: customer ? waitCount : 0, onPress: () => open("waitlist", "/waitlist", true) },
+    { pane: "favorites", icon: "heart-outline", title: "Избранное", fav: true, count: favCount, onPress: () => open("favorites", "/favorites") },
+    { pane: "info", icon: "document-text-outline", title: "Контакты и документы", onPress: () => open("info", "/info") },
     { icon: "contrast-outline", title: "Оформление", value: THEME_LABEL[themePref], onPress: () => setThemeOpen(true) },
   ];
 
@@ -111,15 +123,21 @@ export default function Profile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: "transparent" }}>
+      <View style={split ? styles.deskRow : { flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{
-          paddingTop: insets.top,
-          paddingBottom: bottomSpace,
-          paddingHorizontal: 16,
-          width: "100%",
-          maxWidth: 600,
-          alignSelf: "center",
-        }}
+        style={split ? styles.deskMenu : undefined}
+        contentContainerStyle={
+          split
+            ? { paddingTop: 8, paddingBottom: 30 }
+            : {
+                paddingTop: insets.top,
+                paddingBottom: bottomSpace,
+                paddingHorizontal: 16,
+                width: "100%",
+                maxWidth: 600,
+                alignSelf: "center",
+              }
+        }
         showsVerticalScrollIndicator={false}
       >
         <BrandHeader title="Профиль" />
@@ -169,7 +187,7 @@ export default function Profile() {
               }}
               accessibilityRole="button"
               accessibilityLabel={it.title}
-              style={({ pressed }) => [styles.row, pressed && { backgroundColor: c.cellPressed }]}
+              style={({ pressed }) => [styles.row, pressed && { backgroundColor: c.cellPressed }, split && it.pane === pane && { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "#F4EBFF" }]}
             >
               <View style={[styles.iconWrap, { backgroundColor: it.pink ? "rgba(232,44,135,0.1)" : "rgba(139,61,255,0.1)" }]}>
                 {it.fav ? <FavHeart size={21} /> : <Ionicons name={it.icon} size={21} color={it.pink ? PINK : VIOLET} />}
@@ -219,6 +237,14 @@ export default function Profile() {
           </Pressable>
         )}
       </ScrollView>
+      {split ? (
+        <View style={[styles.deskPane, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+          <EmbeddedPane.Provider value>
+            {pane === "data" ? <EditProfile /> : pane === "waitlist" ? <Waitlist /> : pane === "favorites" ? <Favorites /> : <Info />}
+          </EmbeddedPane.Provider>
+        </View>
+      ) : null}
+      </View>
       <RoleSheet open={roleOpen} onClose={() => setRoleOpen(false)} />
       <NotifySheet open={notifyOpen} onClose={() => setNotifyOpen(false)} />
       <Sheet open={themeOpen} onClose={() => setThemeOpen(false)} title="Оформление">
@@ -244,6 +270,9 @@ const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
 ];
 
 const styles = StyleSheet.create({
+  deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20 },
+  deskMenu: { width: 360, flexGrow: 0 },
+  deskPane: { flex: 1, borderRadius: 22, marginTop: 24, marginBottom: 24, paddingHorizontal: 12, overflow: "hidden" },
   block: { borderRadius: 20, overflow: "hidden" },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   row: { flexDirection: "row", alignItems: "center", gap: 14, minHeight: 60, paddingHorizontal: 14 },

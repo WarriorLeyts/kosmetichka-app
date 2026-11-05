@@ -2,16 +2,20 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useIOS } from "../../ios";
+import { useEmbedded } from "../../embedded";
 
 /** Inner screen header: violet back chevron + large title on one row (as on the mockups). */
 export function TitleBar({ title, onBack }: { title: string; onBack?: () => void }) {
   const c = useIOS();
   const back = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace("/")));
+  const embedded = useEmbedded();
   return (
     <View style={styles.row}>
+      {embedded ? null : (
       <Pressable onPress={back} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={styles.back}>
         <Ionicons name="chevron-back" size={30} color="#8b3dff" />
       </Pressable>
+      )}
       <Text style={[styles.title, { color: c.label }]} numberOfLines={2} accessibilityRole="header">
         {title}
       </Text>

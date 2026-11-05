@@ -20,6 +20,9 @@ import type { Order, OrdersPage } from "@/types";
 import { FitText } from "@/components/FitText";
 import { stormWatch } from "@/stormWatch";
 import { useTheme } from "@/theme";
+import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
+import { EmbeddedPane } from "@/embedded";
+import OrderScreen from "../order/[id]";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -37,7 +40,8 @@ const FILTERS: { key: string; label: string }[] = [
 
 /** One order card: status icon, number, date, status pill, total, chevron — the whole card opens the order. */
 /** message: a manager message not read yet; stage: the order's stage changed since it was last opened */
-function OrderCard({ order, message, stage }: { order: Order; message: boolean; stage: boolean }) {
+/** computer: `onOpen` shows the order beside the list instead of opening it, `active` — the one shown */
+function OrderCard({ order, message, stage, onOpen, active }: { order: Order; message: boolean; stage: boolean; onOpen?: (id: number) => void; active?: boolean }) {
   const unread = message || stage;
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -48,11 +52,12 @@ function OrderCard({ order, message, stage }: { order: Order; message: boolean; 
     <Pressable
       onPress={() => {
         tap();
-        router.push(`/order/${order.id}`);
+        if (onOpen) onOpen(order.id);
+        else router.push(`/order/${order.id}`);
       }}
       accessibilityRole="button"
       accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${money(order.total)}${message ? ", новое сообщение" : ""}${stage ? ", статус изменился" : ""}`}
-      style={({ pressed }) => [styles.card, { backgroundColor: pressed ? c.cellPressed : c.cell }, !dark && styles.shadow]}
+      style={({ pressed }) => [styles.card, { backgroundColor: pressed ? c.cellPressed : c.cell }, !dark && styles.shadow, active && { borderWidth: 2, borderColor: VIOLET }]}
     >
       <View style={styles.cardRow}>
         <View style={[styles.statusIcon, { backgroundColor: s.bg }]}>
@@ -110,6 +115,9 @@ export default function Orders() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
+  // computer: the list on the left, the chosen order (with its chat) on the right
+  const desktop = useDesktop();
+  const [picked, setPicked] = useState<number | null>(null);
   const [unread, setUnread] = useState<Set<number>>(new Set());
   const [stageNews, setStageNews] = useState<Set<number>>(new Set());
 
@@ -232,12 +240,16 @@ export default function Orders() {
 
   const stats = data?.stats;
 
+  const shown = desktop ? picked ?? orders[0]?.id ?? null : null;
+
   return (
     <View style={{ flex: 1, backgroundColor: bg }}>
+      <View style={desktop ? styles.deskRow : { flex: 1 }}>
       <FlatList
+        style={desktop ? styles.deskList : undefined}
         data={orders}
         keyExtractor={(o) => String(o.id)}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top, paddingBottom: bottomSpace + 8, gap: 12, width: "100%", maxWidth: 640, alignSelf: "center" }}
+        contentContainerStyle={desktop ? { paddingTop: 8, paddingBottom: 30, gap: 12 } : { paddingHorizontal: 16, paddingTop: insets.top, paddingBottom: bottomSpace + 8, gap: 12, width: "100%", maxWidth: 640, alignSelf: "center" }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={VIOLET} colors={[VIOLET]} />}
         onEndReachedThreshold={0.5}
         onEndReached={() => {
@@ -331,13 +343,26 @@ export default function Orders() {
           )
         }
         ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={VIOLET} /> : null}
-        renderItem={({ item }) => <OrderCard order={item} message={unread.has(item.id)} stage={stageNews.has(item.id)} />}
+        renderItem={({ item }) => (
+          <OrderCard order={item} message={unread.has(item.id)} stage={stageNews.has(item.id)} onOpen={desktop ? setPicked : undefined} active={desktop && item.id === shown} />
+        )}
       />
+      {desktop && shown ? (
+        <View style={[styles.deskPane, { backgroundColor: c.cell }, !dark && styles.shadow]}>
+          <EmbeddedPane.Provider value>
+            <OrderScreen key={shown} id={String(shown)} />
+          </EmbeddedPane.Provider>
+        </View>
+      ) : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20 },
+  deskList: { width: 440, flexGrow: 0 },
+  deskPane: { flex: 1, borderRadius: 22, marginTop: 24, marginBottom: 24, paddingHorizontal: 8, overflow: "hidden" },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   stats: { flexDirection: "row", alignItems: "center", borderRadius: 22, paddingVertical: 14, paddingHorizontal: 12 },
   statHalf: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4 },

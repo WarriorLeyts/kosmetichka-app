@@ -144,8 +144,10 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
   return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
 }
 
-export default function OrderScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+/** `id` — when shown beside the orders list on a computer (otherwise from the route) */
+export default function OrderScreen({ id: idProp }: { id?: string } = {}) {
+  const params = useLocalSearchParams<{ id: string }>();
+  const id = idProp ?? params.id;
   // deep links can carry anything here — only a positive whole number is an order id
   const orderId = /^[0-9]+$/.test(String(id ?? "")) ? Number(id) : NaN;
   const c = useIOS();
