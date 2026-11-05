@@ -13,6 +13,7 @@ import { useFavorites } from "@/store/favorites";
 import { effectivePriceType } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { CatalogCard } from "@/components/CatalogCard";
+import { ClearX } from "@/components/ClearX";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { useTabBarSpace } from "@/components/TabBar";
@@ -52,6 +53,7 @@ function SearchInput() {
   useEffect(() => () => store.setState({ typing: false }), [store]);
 
   return (
+    <>
     <TextInput
       value={query}
       onChangeText={setQuery}
@@ -60,11 +62,19 @@ function SearchInput() {
       style={[styles.searchInput, { color: c.label }]}
       returnKeyType="search"
       onSubmitEditing={() => store.getState().set({ search: query.trim() })}
-      clearButtonMode="while-editing"
       autoCorrect={false}
       accessibilityLabel="Поиск по каталогу"
       keyboardAppearance={c.blurTint}
     />
+    <ClearX
+      value={query}
+      color={c.secondary}
+      onClear={() => {
+        setQuery("");
+        store.getState().set({ search: "" });
+      }}
+    />
+    </>
   );
 }
 
@@ -116,6 +126,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const [error, setError] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  // far down the list: a round «наверх» button takes the customer back to the search at once
+  const [toTop, setToTop] = useState(false);
   const reqId = useRef(0);
   const abort = useRef<AbortController | null>(null);
   const listRef = useRef<FlatList<Product>>(null);
@@ -385,6 +397,11 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           maxToRenderPerBatch={8}
           windowSize={9}
           removeClippedSubviews={Platform.OS === "android"}
+          onScroll={(e) => {
+            const far = e.nativeEvent.contentOffset.y > e.nativeEvent.layoutMeasurement.height * 1.5;
+            setToTop((was) => (was === far ? was : far));
+          }}
+          scrollEventThrottle={100}
           onEndReachedThreshold={1.2}
           onEndReached={() => {
             // not during a refresh (after login): the next page would cancel the list being reloaded
@@ -409,6 +426,19 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
         </View>
       )}
 
+      {toTop ? (
+        <Pressable
+          onPress={() => {
+            tap();
+            listRef.current?.scrollToOffset({ offset: 0, animated: true });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Наверх"
+          style={({ pressed }) => [styles.toTop, { bottom: (desktop ? 28 : bottomSpace) + 12, opacity: pressed ? 0.85 : 1 }]}
+        >
+          <Ionicons name="arrow-up" size={24} color="#fff" />
+        </Pressable>
+      ) : null}
       <Sheet open={sortOpen} onClose={() => setSortOpen(false)} title="Сортировка">
         <SheetOptions
           options={SORT_OPTIONS}
@@ -431,6 +461,17 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
 }
 
 const styles = StyleSheet.create({
+  toTop: {
+    position: "absolute",
+    right: 18,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#8b3dff",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "0 6px 18px rgba(139,61,255,0.38)",
+  },
   deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20 },
   deskSide: { paddingTop: 24, paddingBottom: 20 },
   typesWrap: { marginHorizontal: -11, marginTop: 4, marginBottom: 6 },

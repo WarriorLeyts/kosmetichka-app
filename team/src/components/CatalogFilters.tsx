@@ -7,6 +7,7 @@ import { SORT_LABELS, useCatalogMeta, type CatalogStore, type Quick, type Sort }
 import { useDesktop } from "../useDesktop";
 import { Button, tap } from "./ui";
 import { CategoryDrawer } from "./CategoryDrawer";
+import { ClearX } from "@/components/ClearX";
 
 const QUICK: { key: Quick; label: string }[] = [
   { key: "new", label: "Новинки" },
@@ -108,14 +109,19 @@ export function CatalogFilters({ open, onClose, store }: { open: boolean; onClos
           {meta.brands.length > 0 && (
             <>
               <Text style={styles.h}>Бренды {brands.length > 0 ? `· выбрано ${brands.length}` : ""}</Text>
-              <TextInput
-                value={brandQuery}
-                onChangeText={setBrandQuery}
-                placeholder="Найти бренд"
-                placeholderTextColor={colors.faint}
-                style={styles.search}
-                autoCorrect={false}
-              />
+              <View style={{ justifyContent: "center" }}>
+                <TextInput
+                  value={brandQuery}
+                  onChangeText={setBrandQuery}
+                  placeholder="Найти бренд"
+                  placeholderTextColor={colors.faint}
+                  style={[styles.search, { paddingRight: 44 }]}
+                  autoCorrect={false}
+                />
+                <View style={{ position: "absolute", right: 8 }}>
+                  <ClearX value={brandQuery} onClear={() => setBrandQuery("")} color={colors.faint} />
+                </View>
+              </View>
               <View style={styles.box}>
                 {brandList.map((b, i) => {
                   const on = brands.includes(b.guid);

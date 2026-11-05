@@ -7,6 +7,7 @@ import { colors, radius, themed, useTheme } from "@/theme";
 import { SORT_LABELS, catalogStoreByName, type Quick, type Sort } from "@/store/catalog";
 import { Button, tap } from "@/components/ui";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { ClearX } from "@/components/ClearX";
 
 const QUICK: { key: Quick; label: string }[] = [
   { key: "new", label: "Новинки" },
@@ -87,14 +88,19 @@ export default function Filters() {
         {s.brands.length > 0 && (
           <>
             <Text style={styles.h}>Бренды {brands.length > 0 ? `· выбрано ${brands.length}` : ""}</Text>
-            <TextInput
-              value={brandQuery}
-              onChangeText={setBrandQuery}
-              placeholder="Найти бренд"
-              placeholderTextColor={colors.faint}
-              style={styles.search}
-              autoCorrect={false}
-            />
+            <View style={{ justifyContent: "center" }}>
+              <TextInput
+                value={brandQuery}
+                onChangeText={setBrandQuery}
+                placeholder="Найти бренд"
+                placeholderTextColor={colors.faint}
+                style={[styles.search, { paddingRight: 44 }]}
+                autoCorrect={false}
+              />
+              <View style={{ position: "absolute", right: 8 }}>
+                <ClearX value={brandQuery} onClear={() => setBrandQuery("")} color={colors.faint} />
+              </View>
+            </View>
             <View style={styles.box}>
               {brandList.map((b, i) => {
                 const on = brands.includes(b.guid);

@@ -14,6 +14,7 @@ import { money } from "@/format";
 import { useIOS } from "@/ios";
 import { useTheme } from "@/theme";
 import { DESKTOP_WIDE } from "@/useDesktop";
+import { ClearX } from "@/components/ClearX";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -117,6 +118,7 @@ export function DesktopHeader() {
             style={[styles.searchInput, { color: c.label }]}
             accessibilityLabel="Поиск товаров"
           />
+          <ClearX value={q} onClear={() => setQ("")} color={dark ? "#C3AECF" : "#8A7CA6"} size={18} />
         </View>
 
         <View style={styles.actions}>

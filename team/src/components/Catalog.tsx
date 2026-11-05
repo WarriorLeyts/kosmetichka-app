@@ -18,6 +18,7 @@ import { ErrorState } from "./kit";
 import { Scanner } from "./Scanner";
 import { useTabBarSpace } from "./TabBar";
 import { tap } from "./ui";
+import { ClearX } from "@/components/ClearX";
 
 const VIOLET = "#8b3dff";
 const SORT_OPTIONS = (Object.keys(SORT_LABELS) as Sort[]).map((v) => ({ value: v, label: SORT_LABELS[v] }));
@@ -44,6 +45,7 @@ function SearchInput({ store }: { store: CatalogStore }) {
   }, [query]);
 
   return (
+    <>
     <TextInput
       value={query}
       onChangeText={setQuery}
@@ -52,11 +54,19 @@ function SearchInput({ store }: { store: CatalogStore }) {
       style={[styles.searchInput, { color: c.label }, Platform.OS === "web" && ({ outlineStyle: "none" } as object)]}
       returnKeyType="search"
       onSubmitEditing={() => store.getState().set({ search: query.trim() })}
-      clearButtonMode="while-editing"
       autoCorrect={false}
       accessibilityLabel="Поиск по каталогу"
       keyboardAppearance={c.blurTint}
     />
+    <ClearX
+      value={query}
+      color={c.secondary}
+      onClear={() => {
+        setQuery("");
+        store.getState().set({ search: "" });
+      }}
+    />
+    </>
   );
 }
 
