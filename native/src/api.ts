@@ -210,6 +210,12 @@ export const api = {
   cartPut(items: CartItem[], comment: string): Promise<{ updatedAt: string }> {
     return request("/api/mobile/cart", { method: "PUT", body: JSON.stringify({ items, comment }) });
   },
+  favoritesGet(): Promise<{ items: Product[]; updatedAt: string | null }> {
+    return request("/api/mobile/favorites");
+  },
+  favoritesPut(items: Product[]): Promise<{ updatedAt: string }> {
+    return request("/api/mobile/favorites", { method: "PUT", body: JSON.stringify({ items }) });
+  },
   catalogMeta(): Promise<{ categories: Category[]; brands: Brand[] }> {
     return request("/api/mobile/catalog-meta");
   },

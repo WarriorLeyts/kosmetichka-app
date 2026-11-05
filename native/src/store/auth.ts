@@ -5,7 +5,7 @@ import { router } from "expo-router";
 import { api, ApiError, setOnUnauthorized } from "../api";
 import type { Customer } from "../types";
 import { cartQuiet, useCartStore } from "./cart";
-import { useFavorites } from "./favorites";
+import { favQuiet, useFavorites } from "./favorites";
 import { useWaitlistStore } from "./waitlist";
 import { clearOrderStatus } from "../unread";
 import { orderCache } from "../orderCache";
@@ -27,7 +27,13 @@ function clearLocalAccountData() {
   } finally {
     cartQuiet.n--;
   }
-  useFavorites.getState().clear();
+  // the saved favourites stay on the server too
+  favQuiet.n++;
+  try {
+    useFavorites.getState().clear();
+  } finally {
+    favQuiet.n--;
+  }
   useWaitlistStore.getState().reset();
   orderCache.clear();
   clearOrderStatus();

@@ -3,6 +3,9 @@ import { persist } from "zustand/middleware";
 import { persistStorage } from "./storage";
 import type { Product } from "../types";
 
+/** while > 0, changes to the favourites stay on this device (sign-out clearing; src/favoritesSync.ts) */
+export const favQuiet = { n: 0 };
+
 type FavState = {
   items: Product[];
   toggle: (p: Product) => boolean;

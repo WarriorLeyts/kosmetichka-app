@@ -12,6 +12,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from "@expo-google-fonts/inter";
 import { useAuth } from "@/store/auth";
 import { startCartSync } from "@/cartSync";
+import { startFavoritesSync } from "@/favoritesSync";
 import { onLiveHint, startLive, stopLive } from "@/live";
 import { installCrashReporter, reportError, setCrashScreen } from "@/crash";
 import { listenPush, registerPush } from "@/push";
@@ -129,9 +130,10 @@ function AppRoot() {
   useEffect(() => {
     refresh();
   }, [refresh]);
-  // one cart for the account on the site and in the apps (src/cartSync.ts)
+  // one cart and one list of favourites for the account on the site and in the apps (src/cartSync.ts, src/favoritesSync.ts)
   useEffect(() => {
     startCartSync();
+    startFavoritesSync();
   }, []);
   // the whole app mounting again and again (a loop) is reported with the theme / size (src/stormWatch.ts)
   useEffect(() => {
