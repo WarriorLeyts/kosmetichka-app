@@ -11,6 +11,7 @@ import { api, ApiError, imageUrl } from "@/api";
 import { BonusBox, PromoBox } from "@/components/PromoBox";
 import type { CheckoutCalc } from "@/api";
 import { money, plural } from "@/format";
+import { CardHintTotal } from "@/components/CardHint";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
@@ -543,6 +544,8 @@ export default function Cart() {
                   {money(calc && (calc.promo || (spend && calc.bonuses?.applied)) ? calc.total : total)}
                 </FitText>
               </View>
+              {/* retail without a loyalty card: the same cart with the card */}
+              <CardHintTotal withCard={rawCartTotal(items, "discount")} now={total} />
             </View>
 
             {error ? (

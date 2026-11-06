@@ -1,3 +1,4 @@
+import { CardHintStrip } from "./CardHint";
 import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
@@ -328,6 +329,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           <Ionicons name="close" size={15} color="#8b3dff" />
         </Pressable>
       ) : null}
+      {/* retail without a loyalty card: what «Скидка по карте» needs */}
+      <CardHintStrip />
 
       {/* product types inside a subcategory: «Все», «Мисты», «Спреи»… */}
       {types ? (

@@ -19,6 +19,7 @@ import { tap } from "@/components/ui";
 import { useAddToCart } from "@/useAddToCart";
 import { HomeScene } from "@/components/home/HomeScene";
 import { HomeCategories } from "@/components/home/HomeCategories";
+import { CardHintTile } from "@/components/CardHint";
 import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { UI_SIZES, uiScale } from "@/uiScale";
@@ -156,6 +157,8 @@ export default function Home() {
         </View>
         )}
         <PendingOrderNote orders={activeOrders} />
+        {/* retail without a loyalty card: how to get the discount prices */}
+        <CardHintTile />
       </View>
 
       {/* new home content: scroll-driven box scene + categories with images */}
