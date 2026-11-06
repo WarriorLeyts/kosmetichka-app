@@ -117,7 +117,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
             </FitText>
             <FitText
               minimumFontScale={0.6}
-              style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: k === 1 ? (rows.length >= 3 ? 15 : 20) : rows.length >= 3 ? 13 : 15 }]}
+              style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: k === 1 ? (rows.length >= 3 ? 15 : 20) : rows.length >= 3 ? 11 : 15 }]}
             >
               {money(r.value)}
             </FitText>
