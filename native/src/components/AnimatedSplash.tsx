@@ -8,14 +8,13 @@ import { getSplashTarget } from "../splashTarget";
 
 /**
  * Launch animation (every cold start): the logo draws itself with a white line, «КОСМЕТИЧКА» appears
- * letter by letter, then the logo shrinks and flies to its place above «И» in the
+ * letter by letter, then the logo shrinks, turns red and flies to its place above «И» in the
  * home header while the home screen shows through. Light / dark versions follow the app theme.
- * The drawing is a sprite sheet (8 × 4 frames of 340 px) rendered from the real logo outline, in the brand gradient.
+ * The drawing is a sprite sheet (8 × 4 frames of 340 px) rendered from the real logo outline.
  */
 
 const SHEET = require("../../assets/splash/draw-sheet.png");
-// the brand heart in our violet → pink gradient (as in the wordmark)
-const LOGO_GRAD = require("../../assets/home2/logo-grad.png");
+const LOGO = require("../../assets/home2/logo-white.png");
 const GLOW_LIGHT = require("../../assets/splash/glow-light.png");
 const GLOW_DARK = require("../../assets/splash/glow-dark.png");
 const WORD = "КОСМЕТИЧКА".split("");
@@ -25,6 +24,7 @@ const L = 124; // logo size on the splash
 // sprite cells are 340 px with the 300 px logo in the middle: the empty margin keeps
 // neighbouring frames from bleeding in as a thin line at the edge
 const C = (L * 340) / 300;
+const RED = "#E8202A";
 
 /** null = still deciding, false = skip today, true = play */
 function useShouldPlay() {
@@ -214,7 +214,7 @@ function Scene({ onEnd }: { onEnd: () => void }) {
         </Animated.View>
       </Animated.View>
 
-      {/* the logo flies to its place above «И», turning into the gradient heart */}
+      {/* the logo flies to its place above «И», turning red */}
       {target ? (
         <Animated.View
           style={{
@@ -227,7 +227,10 @@ function Scene({ onEnd }: { onEnd: () => void }) {
             transform: [{ translateX: fdx }, { translateY: fdy }, { scale: fs }],
           }}
         >
-          <Image source={LOGO_GRAD} style={StyleSheet.absoluteFill} contentFit="contain" />
+          <Image source={LOGO} style={StyleSheet.absoluteFill} contentFit="contain" />
+          <Animated.View style={[StyleSheet.absoluteFill, { opacity: red }]}>
+            <Image source={LOGO} tintColor={RED} style={StyleSheet.absoluteFill} contentFit="contain" />
+          </Animated.View>
         </Animated.View>
       ) : null}
     </View>
