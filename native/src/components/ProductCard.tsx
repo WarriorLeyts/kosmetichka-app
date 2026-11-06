@@ -129,7 +129,7 @@ const styles = themed(() => ({
   name: { fontSize: 13, fontWeight: "600", color: colors.text, lineHeight: 17, minHeight: 34 },
   // pill like the site's .product-meta strong: 4×9 padding, 10.5px, 800
   stock: { alignSelf: "flex-start", borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4, marginTop: 4, marginBottom: 6 },
-  stockText: { fontSize: 10.5, fontWeight: "800" },
+  stockText: { fontSize: 11, fontWeight: "800" },
   addWrap: { marginTop: 8 },
   add: {
     height: 36,

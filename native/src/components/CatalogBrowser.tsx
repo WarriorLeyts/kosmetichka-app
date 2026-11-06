@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 4,
   },
-  filterBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },
+  filterBadgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
   sortBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -526,5 +526,5 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(139,61,255,0.1)",
     maxWidth: "90%",
   },
-  catChipText: { color: "#8b3dff", fontSize: 14, fontWeight: "500", flexShrink: 1 },
+  catChipText: { color: "#8b3dff", fontSize: 15, fontWeight: "500", flexShrink: 1 },
 });

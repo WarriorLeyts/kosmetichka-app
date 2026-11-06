@@ -15,7 +15,7 @@ export function OrderChangeCard({ data, color }: { data: { title?: unknown; by?:
   const lines = (Array.isArray(data.lines) ? (data.lines as Line[]) : []).slice(0, 30);
   return (
     <View style={{ width: 250, maxWidth: "100%" }}>
-      <Text style={{ color, fontWeight: "700", fontSize: 14, marginBottom: 6 }}>
+      <Text style={{ color, fontWeight: "700", fontSize: 15, marginBottom: 6 }}>
         {data.by === "customer" ? "🛒 " : "✏️ "}
         {String(data.title ?? "Заказ изменён")}
       </Text>
@@ -33,7 +33,7 @@ export function OrderChangeCard({ data, color }: { data: { title?: unknown; by?:
                 {String(l.name ?? "")}
               </Text>
               <View style={[styles.tag, { backgroundColor: k.bg }]}>
-                <Text style={{ color: k.fg, fontSize: 12, fontWeight: "700" }}>{String(l.text ?? "")}</Text>
+                <Text style={{ color: k.fg, fontSize: 13, fontWeight: "700" }}>{String(l.text ?? "")}</Text>
               </View>
             </View>
           </View>

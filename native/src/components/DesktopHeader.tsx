@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
   inner: { width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 24, flexDirection: "row", alignItems: "center" },
   nav: { flexDirection: "row", gap: 4, marginRight: 20 },
   navItem: { paddingHorizontal: 14, height: 40, borderRadius: 20, justifyContent: "center" },
-  navText: { fontSize: 16 },
+  navText: { fontSize: 17 },
   search: { flex: 1, height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, maxWidth: 560 },
   searchInput: { flex: 1, fontSize: 15, height: 44, outlineStyle: "none" } as object,
   actions: { flexDirection: "row", alignItems: "center", gap: 6, marginLeft: "auto", paddingLeft: 16 },
@@ -168,5 +168,5 @@ const styles = StyleSheet.create({
   cart: { flexDirection: "row", alignItems: "center", gap: 8, height: 44, borderRadius: 22, paddingHorizontal: 16, backgroundColor: VIOLET, marginHorizontal: 4 },
   cartText: { color: "#fff", fontSize: 15, fontWeight: "600" },
   cartCount: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
-  cartCountText: { color: VIOLET, fontSize: 12, fontWeight: "700" },
+  cartCountText: { color: VIOLET, fontSize: 13, fontWeight: "700" },
 });

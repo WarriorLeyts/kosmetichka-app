@@ -77,25 +77,25 @@ function OrderCard({ order, message, stage }: { order: Order; message: boolean; 
       {message ? (
         <View style={[styles.note, { backgroundColor: dark ? "rgba(232,44,135,0.16)" : "#fdf2f8" }]}>
           <Ionicons name="chatbubble-ellipses-outline" size={17} color={PINK} />
-          <Text style={{ color: PINK, fontSize: 14, fontWeight: "600", flex: 1 }}>Новое сообщение</Text>
+          <Text style={{ color: PINK, fontSize: 15, fontWeight: "600", flex: 1 }}>Новое сообщение</Text>
         </View>
       ) : null}
       {stage ? (
         <View style={[styles.note, { backgroundColor: dark ? "rgba(139,61,255,0.18)" : "#f5f3ff" }]}>
           <Ionicons name="refresh-circle-outline" size={17} color={dark ? "#c4a8ff" : "#6d28d9"} />
-          <Text style={{ color: dark ? "#c4a8ff" : "#6d28d9", fontSize: 14, fontWeight: "600", flex: 1 }}>Статус заказа изменился</Text>
+          <Text style={{ color: dark ? "#c4a8ff" : "#6d28d9", fontSize: 15, fontWeight: "600", flex: 1 }}>Статус заказа изменился</Text>
         </View>
       ) : null}
       {needsConfirm ? (
         <View style={[styles.note, { backgroundColor: dark ? "rgba(255,149,0,0.15)" : "#fff7ed" }]}>
           <Ionicons name="alert-circle-outline" size={17} color="#c2410c" />
-          <Text style={{ color: "#c2410c", fontSize: 14, flex: 1 }}>Заказ собран — проверьте и подтвердите его</Text>
+          <Text style={{ color: "#c2410c", fontSize: 15, flex: 1 }}>Заказ собран — проверьте и подтвердите его</Text>
         </View>
       ) : null}
       {confirmed ? (
         <View style={[styles.note, { backgroundColor: dark ? "rgba(52,199,89,0.15)" : "#f0fdf4" }]}>
           <Ionicons name="checkmark-circle-outline" size={17} color="#15803d" />
-          <Text style={{ color: "#15803d", fontSize: 14, flex: 1 }}>Вы подтвердили изменения</Text>
+          <Text style={{ color: "#15803d", fontSize: 15, flex: 1 }}>Вы подтвердили изменения</Text>
         </View>
       ) : null}
     </Pressable>
@@ -478,34 +478,34 @@ export default function Orders() {
 const styles = StyleSheet.create({
   deskRow: { flex: 1, flexDirection: "row", gap: 16, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20, paddingTop: 16 },
   side: { width: DESKTOP_SIDEBAR_W, borderRadius: 22, paddingVertical: 12, paddingHorizontal: 8, marginBottom: 16, alignSelf: "flex-start", maxHeight: "100%" },
-  sideTitle: { fontSize: 18, fontWeight: "800", paddingHorizontal: 10, paddingTop: 2 },
+  sideTitle: { fontSize: 17, fontWeight: "800", paddingHorizontal: 10, paddingTop: 2 },
   sideStats: { fontSize: 13, paddingHorizontal: 10, marginTop: 2 },
   sideFilters: { flexDirection: "row", flexWrap: "wrap", gap: 6, paddingHorizontal: 6, paddingTop: 10, paddingBottom: 10 },
   sideChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 },
-  sideChipText: { fontSize: 12.5 },
+  sideChipText: { fontSize: 13 },
   row: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 8, paddingVertical: 8, borderRadius: 12, minHeight: 52 },
   rowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   rowDot: { position: "absolute", top: -3, right: -3, width: 11, height: 11, borderRadius: 6, backgroundColor: PINK, borderWidth: 2 },
   rowLine: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  rowNum: { fontSize: 14.5, fontWeight: "700", flexShrink: 1 },
-  rowSum: { fontSize: 14, fontWeight: "700" },
-  rowSub: { fontSize: 12.5, marginTop: 1 },
+  rowNum: { fontSize: 15, fontWeight: "700", flexShrink: 1 },
+  rowSum: { fontSize: 15, fontWeight: "700" },
+  rowSub: { fontSize: 13, marginTop: 1 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   stats: { flexDirection: "row", alignItems: "center", borderRadius: 22, paddingVertical: 14, paddingHorizontal: 12 },
   statHalf: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 4 },
   statIcon: { width: 52, height: 52, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   statSep: { width: StyleSheet.hairlineWidth, alignSelf: "stretch", marginHorizontal: 6 },
-  statValue: { fontSize: 26, fontWeight: "700" },
+  statValue: { fontSize: 22, fontWeight: "700" },
   chip: { minHeight: 40, paddingHorizontal: 18, borderRadius: 20, justifyContent: "center" },
   chipText: { fontSize: 15 },
   card: { borderRadius: 22, padding: 14 },
   cardRow: { flexDirection: "row", alignItems: "center", gap: 14 },
   statusIcon: { width: 64, height: 64, borderRadius: 18, alignItems: "center", justifyContent: "center", alignSelf: "flex-start" },
   unreadDot: { position: "absolute", top: -3, right: -3, width: 14, height: 14, borderRadius: 7, backgroundColor: PINK, borderWidth: 2 },
-  num: { fontSize: 18, fontWeight: "700" },
+  num: { fontSize: 17, fontWeight: "700" },
   pill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5, marginTop: 2, maxWidth: "100%" },
-  pillText: { fontSize: 14, fontWeight: "500", flexShrink: 1 },
-  total: { fontSize: 19, fontWeight: "700", marginTop: 3 },
+  pillText: { fontSize: 15, fontWeight: "500", flexShrink: 1 },
+  total: { fontSize: 20, fontWeight: "700", marginTop: 3 },
   note: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10, marginTop: 12 },
   empty: { borderRadius: 22, padding: 28, alignItems: "center" },
   cta: { height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },

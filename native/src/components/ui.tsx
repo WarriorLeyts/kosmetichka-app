@@ -39,7 +39,7 @@ export function Button({ title, onPress, loading, disabled, icon, variant = "pri
           <Text
             style={[
               styles.btnText,
-              small && { fontSize: 14 },
+              small && { fontSize: 15 },
               variant !== "primary" && { color: variant === "danger" ? colors.danger : colors.violet },
             ]}
           >
@@ -177,7 +177,7 @@ export function Badge({ text, fg, bg, border }: { text: string; fg: string; bg: 
         borderColor: border,
       }}
     >
-      <Text style={{ color: fg, fontSize: 12, fontWeight: "700" }}>{text}</Text>
+      <Text style={{ color: fg, fontSize: 13, fontWeight: "700" }}>{text}</Text>
     </View>
   );
 }
@@ -192,14 +192,14 @@ export function Notice({ tone, text }: { tone: "error" | "success" | "info"; tex
   return (
     <View style={{ flexDirection: "row", gap: 8, backgroundColor: c.bg, padding: 12, borderRadius: radius.md, marginBottom: 14 }}>
       <Ionicons name={c.icon} size={18} color={c.fg} />
-      <Text style={{ color: c.fg, flex: 1, fontSize: 14, fontWeight: "600" }}>{text}</Text>
+      <Text style={{ color: c.fg, flex: 1, fontSize: 15, fontWeight: "600" }}>{text}</Text>
     </View>
   );
 }
 
 export const styles = themed(() => ({
   btnInner: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 18 },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "800" },
+  btnText: { color: "#fff", fontSize: 17, fontWeight: "800" },
   label: { fontSize: 13, fontWeight: "700", color: colors.text, marginBottom: 6 },
   input: {
     height: 50,
@@ -208,12 +208,12 @@ export const styles = themed(() => ({
     borderColor: colors.border,
     backgroundColor: colors.card,
     paddingHorizontal: 14,
-    fontSize: 16,
+    fontSize: 17,
     color: colors.text,
   },
-  fieldError: { color: colors.danger, fontSize: 12, marginTop: 4 },
+  fieldError: { color: colors.danger, fontSize: 13, marginTop: 4 },
   center: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32 },
-  muted: { color: colors.muted, fontSize: 14, lineHeight: 20 },
+  muted: { color: colors.muted, fontSize: 15, lineHeight: 21 },
   emptyIcon: {
     width: 80,
     height: 80,
@@ -223,7 +223,7 @@ export const styles = themed(() => ({
     justifyContent: "center",
     marginBottom: 16,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "800", color: colors.text, marginBottom: 6, marginTop: 8, textAlign: "center" },
+  emptyTitle: { fontSize: 17, fontWeight: "800", color: colors.text, marginBottom: 6, marginTop: 8, textAlign: "center" },
   stepper: {
     flexDirection: "row",
     alignItems: "center",

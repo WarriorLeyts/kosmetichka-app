@@ -7,7 +7,7 @@ export function ErrorScreen({ onRetry }: { onRetry: () => void }) {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, paddingTop: insets.top + 24, backgroundColor: "#170D25" }}>
       <Text style={{ color: "#fff", fontSize: 22, fontWeight: "700", textAlign: "center" }}>Что-то пошло не так</Text>
-      <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 16, lineHeight: 22, textAlign: "center", marginTop: 10 }}>
+      <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 17, lineHeight: 23, textAlign: "center", marginTop: 10 }}>
         Мы уже получили отчёт об ошибке. Попробуйте ещё раз.
       </Text>
       <Pressable

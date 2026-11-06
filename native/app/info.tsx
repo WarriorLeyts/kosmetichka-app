@@ -90,11 +90,11 @@ export default function Info() {
 
 const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
-  lead: { fontSize: 16, lineHeight: 23, marginBottom: 6 },
+  lead: { fontSize: 17, lineHeight: 24, marginBottom: 6 },
   panel: { borderRadius: 22, marginTop: 14, overflow: "hidden" },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   row: { paddingHorizontal: 18, paddingVertical: 14 },
-  k: { fontSize: 14, fontWeight: "500" },
+  k: { fontSize: 15, fontWeight: "500" },
   v: { fontSize: 17, marginTop: 4, lineHeight: 23 },
   link: { flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 18, minHeight: 60 },
   linkText: { flex: 1, fontSize: 17, fontWeight: "600" },

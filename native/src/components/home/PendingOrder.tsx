@@ -112,8 +112,8 @@ const st = StyleSheet.create({
   dotNow: { backgroundColor: "rgba(255,255,255,0.35)", borderWidth: 2, borderColor: "#fff" },
   dotNext: { borderWidth: 2, borderColor: "rgba(255,255,255,0.45)" },
   nowCore: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#fff" },
-  stepText: { color: "#fff", fontSize: 10.5 },
+  stepText: { color: "#fff", fontSize: 11 },
   icon: { width: 46, height: 46, borderRadius: 23, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
   title: { color: "#fff", fontSize: 17, fontWeight: "800" },
-  sub: { color: "rgba(255,255,255,0.93)", fontSize: 14 },
+  sub: { color: "rgba(255,255,255,0.93)", fontSize: 15 },
 });

@@ -26,5 +26,5 @@ export function TitleBar({ title, onBack }: { title: string; onBack?: () => void
 const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 10, minHeight: 60, paddingTop: 6, paddingBottom: 8 },
   back: { width: 40, height: 44, justifyContent: "center", marginLeft: -6 },
-  title: { flex: 1, fontSize: 30, fontWeight: "700" },
+  title: { flex: 1, fontSize: 32, fontWeight: "700" },
 });

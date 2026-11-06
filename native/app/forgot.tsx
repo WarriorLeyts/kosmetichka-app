@@ -123,7 +123,7 @@ export default function Forgot() {
 
 const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 520, alignSelf: "center" },
-  h1: { fontSize: 34, fontWeight: "800", marginTop: 18, lineHeight: 40 },
+  h1: { fontSize: 32, fontWeight: "800", marginTop: 18, lineHeight: 40 },
   lead: { fontSize: 17, lineHeight: 24, marginTop: 8, marginBottom: 18 },
   panel: { borderRadius: 22, padding: 18, paddingBottom: 10 },
   shadow: { boxShadow: "0 6px 22px rgba(80,40,140,0.07)" },

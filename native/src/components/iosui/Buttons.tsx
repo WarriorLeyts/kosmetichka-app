@@ -83,8 +83,8 @@ export function OutlineButton({
 }
 
 const styles = StyleSheet.create({
-  grad: { height: 56, borderRadius: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingHorizontal: 16, boxShadow: "0 8px 20px rgba(194,26,208,0.28)" },
-  gradText: { color: "#fff", fontSize: 18, fontWeight: "700", flexShrink: 1 },
+  grad: { height: 52, borderRadius: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingHorizontal: 16, boxShadow: "0 8px 20px rgba(194,26,208,0.28)" },
+  gradText: { color: "#fff", fontSize: 17, fontWeight: "700", flexShrink: 1 },
   outline: { minHeight: 52, borderRadius: 16, borderWidth: 1.5, borderColor: "#8b1ee6", backgroundColor: "rgba(194,26,208,0.06)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingHorizontal: 14 },
   outlineText: { color: "#7a12d4", fontSize: 17, fontWeight: "700", flexShrink: 1 },
   // dark theme: the light-theme violet had a contrast of 2.2 on the plum cards

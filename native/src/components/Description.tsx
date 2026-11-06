@@ -150,13 +150,13 @@ const styles = StyleSheet.create({
   panel: { borderRadius: 20, padding: 16 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 4 },
-  title: { fontSize: 21, fontWeight: "700", flexShrink: 1 },
-  p: { fontSize: 16, lineHeight: 23 },
+  title: { fontSize: 20, fontWeight: "700", flexShrink: 1 },
+  p: { fontSize: 17, lineHeight: 24 },
   li: { flexDirection: "row", gap: 10, marginTop: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: PINK, marginTop: 9 },
   sub: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 16, padding: 12, marginTop: 8 },
   subLabel: { fontSize: 15, fontWeight: "600" },
-  subText: { fontSize: 14, lineHeight: 19, marginTop: 2 },
+  subText: { fontSize: 15, lineHeight: 20, marginTop: 2 },
 });
 
 export const Description = memo(DescriptionBase);

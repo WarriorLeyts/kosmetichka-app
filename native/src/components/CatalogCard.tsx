@@ -17,7 +17,7 @@ import { FavHeart } from "./FavHeart";
 import { useCartStore } from "../store/cart";
 import { FitText } from "./FitText";
 import { SafeImage } from "./SafeImage";
-import { scaleStyles, useCardScale, PHONE_CARD_SCALE } from "../cardScale";
+import { scaleStyles, useCardScale, withFonts, PHONE_CARD_SCALE } from "../cardScale";
 
 type Props = {
   product: Product;
@@ -117,7 +117,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
             </FitText>
             <FitText
               minimumFontScale={0.6}
-              style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: (rows.length >= 3 ? 16 : 19) * k }]}
+              style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: k === 1 ? (rows.length >= 3 ? 15 : 20) : rows.length >= 3 ? 13 : 15 }]}
             >
               {money(r.value)}
             </FitText>
@@ -314,7 +314,7 @@ const baseStyles = StyleSheet.create({
   photo: { height: 168, borderRadius: 16, backgroundColor: "#ffffff", alignItems: "center", justifyContent: "center", marginBottom: 8 },
   image: { width: "92%", height: "92%" },
   fav: { position: "absolute", top: 2, right: 2, width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  brand: { fontSize: 12, letterSpacing: 0.2, marginBottom: 2 },
+  brand: { fontSize: 13, letterSpacing: 0.2, marginBottom: 2 },
   name: { fontSize: 15, lineHeight: 19, height: 38 },
   stock: {
     flexDirection: "row",
@@ -327,7 +327,7 @@ const baseStyles = StyleSheet.create({
     paddingVertical: 3,
   },
   stockDot: { width: 7, height: 7, borderRadius: 4 },
-  stockText: { fontSize: 12, fontWeight: "500" },
+  stockText: { fontSize: 13, fontWeight: "500" },
   prices: { flexDirection: "row", borderRadius: 14, paddingVertical: 7, marginTop: 9, height: 54 },
   priceCol: { flex: 1, paddingHorizontal: 6, justifyContent: "center", alignItems: "center" },
   priceLabel: { fontSize: 11, textAlign: "center" },
@@ -337,9 +337,22 @@ const baseStyles = StyleSheet.create({
   qtyRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 10 },
   stepper: { flexDirection: "row", alignItems: "center", height: 44, borderRadius: 22, borderWidth: 1, paddingHorizontal: 1 },
   stepBtn: { width: 26, height: 42, alignItems: "center", justifyContent: "center" },
-  qty: { minWidth: 20, textAlign: "center", fontSize: 16, fontWeight: "800" },
+  qty: { minWidth: 20, textAlign: "center", fontSize: 17, fontWeight: "800" },
   inCartBtn: { marginTop: 0, paddingHorizontal: 4 },
 });
 
 /** phone: the whole card at 0.8 (cardScale.ts) */
-const phoneStyles = StyleSheet.create(scaleStyles(baseStyles, PHONE_CARD_SCALE));
+const phoneStyles = StyleSheet.create(
+  withFonts(scaleStyles(baseStyles, PHONE_CARD_SCALE), {
+    brand: { fontSize: 11 },
+    name: { fontSize: 13, lineHeight: 16, height: 32 },
+    stockText: { fontSize: 11 },
+    priceLabel: { fontSize: 11 },
+    buttonText: { fontSize: 13 },
+    qty: { fontSize: 15 },
+    // «В корзину»: 36 px — the small button of the scale
+    button: { height: 36, borderRadius: 18 },
+    stepper: { height: 36, borderRadius: 18 },
+    stepBtn: { height: 34 },
+  })
+);

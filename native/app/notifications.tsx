@@ -102,7 +102,7 @@ export default function NotificationsScreen() {
       <TitleBar title="Уведомления" />
       {items && items.some((x) => !x.read) ? (
         <Pressable onPress={readAll} hitSlop={8} accessibilityRole="button" style={styles.readAll}>
-          <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "500" }}>Прочитать все</Text>
+          <Text style={{ color: VIOLET, fontSize: 17, fontWeight: "500" }}>Прочитать все</Text>
         </Pressable>
       ) : null}
       {/* website only: browser push for this device */}
@@ -188,12 +188,12 @@ const styles = StyleSheet.create({
   readAll: { alignSelf: "flex-end", marginTop: -6, marginBottom: 8, paddingVertical: 4 },
   card: { flexDirection: "row", alignItems: "flex-start", gap: 12, borderRadius: 20, padding: 14 },
   icon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  title: { fontSize: 16, lineHeight: 21 },
+  title: { fontSize: 17, lineHeight: 22 },
   body: { fontSize: 15, lineHeight: 20, marginTop: 2 },
   time: { fontSize: 13, marginTop: 6 },
   dot: { width: 10, height: 10, borderRadius: 5, backgroundColor: "#e82c87", marginTop: 6 },
   empty: { borderRadius: 22, padding: 28, alignItems: "center", marginTop: 4 },
   emptyIcon: { width: 68, height: 68, borderRadius: 22, backgroundColor: "rgba(139,61,255,0.1)", alignItems: "center", justifyContent: "center", marginBottom: 12 },
-  emptyTitle: { fontSize: 19, fontWeight: "700" },
+  emptyTitle: { fontSize: 20, fontWeight: "700" },
   emptyText: { fontSize: 15, textAlign: "center", marginTop: 6, lineHeight: 21 },
 });

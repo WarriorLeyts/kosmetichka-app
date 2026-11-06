@@ -1,4 +1,4 @@
-import { scaleStyles, useCardScale } from "@/cardScale";
+import { scaleStyles, useCardScale, withFonts } from "@/cardScale";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Image } from "expo-image";
@@ -448,7 +448,7 @@ export default function Cart() {
               <View style={{ flex: 1 }}>
                 <Text style={[iosText.body, { color: c.label, fontWeight: "600" }]}>Заберу в магазине</Text>
                 <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`} hitSlop={6}>
-                  <Text style={{ color: VIOLET, fontSize: 14, marginTop: 3, textDecorationLine: "underline" }}>
+                  <Text style={{ color: VIOLET, fontSize: 15, marginTop: 3, textDecorationLine: "underline" }}>
                     <Ionicons name="location-outline" size={14} color={VIOLET} /> {SHOP_ADDRESS}
                   </Text>
                 </Pressable>
@@ -669,13 +669,13 @@ const styles = StyleSheet.create({
   deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20, alignItems: "flex-start" },
   deskSide: { width: 400, flexGrow: 0, maxHeight: "100%", paddingTop: 96 },
   deskPanel: { borderRadius: 22, padding: 20, marginBottom: 30 },
-  deskPanelTitle: { fontSize: 21, fontWeight: "800", marginBottom: 4 },
+  deskPanelTitle: { fontSize: 20, fontWeight: "800", marginBottom: 4 },
   deskLine: { flexDirection: "row", alignItems: "center", gap: 16, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 10 },
   deskPhoto: { width: 76, height: 76, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  deskBrand: { fontSize: 12, letterSpacing: 0.3, marginBottom: 2 },
-  deskName: { fontSize: 15.5, lineHeight: 20 },
+  deskBrand: { fontSize: 13, letterSpacing: 0.3, marginBottom: 2 },
+  deskName: { fontSize: 15, lineHeight: 19 },
   deskStepBtn: { width: 38, height: 38, alignItems: "center", justifyContent: "center" },
-  deskQty: { minWidth: 34, textAlign: "center", fontSize: 16, fontWeight: "700" },
+  deskQty: { minWidth: 34, textAlign: "center", fontSize: 17, fontWeight: "700" },
   deskPlus: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
   deskSum: { width: 130, textAlign: "right", color: PINK, fontSize: 20, fontWeight: "800" },
   deskRemove: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
@@ -686,31 +686,31 @@ const styles = StyleSheet.create({
   item: { flexDirection: "row", gap: 14, padding: 14, marginBottom: 12 },
   photo: { width: 112, height: 132, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   brand: { fontSize: 13, letterSpacing: 0.3, marginBottom: 3 },
-  name: { fontSize: 16, lineHeight: 21 },
+  name: { fontSize: 17, lineHeight: 22 },
   variant: { color: VIOLET, fontSize: 13, fontWeight: "600", marginTop: 3 },
   unit: { fontSize: 15, marginTop: 6 },
-  sum: { color: PINK, fontSize: 26, fontWeight: "800", marginTop: 2 },
+  sum: { color: PINK, fontSize: 22, fontWeight: "800", marginTop: 2 },
   stepRow: { flexDirection: "row", marginTop: 10 },
   stepper: { flexDirection: "row", alignItems: "center", borderRadius: 24, padding: 3, gap: 4 },
   stepBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
   qtyBox: { minWidth: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
   qty: { fontSize: 17, fontWeight: "600" },
   plus: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(139,61,255,0.35)" },
-  stockHint: { fontSize: 12, marginTop: 6 },
+  stockHint: { fontSize: 13, marginTop: 6 },
   jump: { position: "absolute", alignSelf: "center", borderRadius: 22, overflow: "hidden", boxShadow: "0 6px 18px rgba(120,40,200,0.35)" },
   jumpInner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 18, height: 44 },
-  jumpText: { color: "#fff", fontSize: 16, fontWeight: "700" },
+  jumpText: { color: "#fff", fontSize: 17, fontWeight: "700" },
   remove: { position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
   clear: { flexDirection: "row", alignItems: "center", gap: 10, alignSelf: "flex-start", paddingVertical: 10, paddingHorizontal: 4 },
-  label: { fontSize: 16, fontWeight: "600", marginTop: 10, marginBottom: 8 },
-  comment: { minHeight: 52, maxHeight: 140, borderRadius: 16, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, fontSize: 16, textAlignVertical: "top" },
+  label: { fontSize: 17, fontWeight: "600", marginTop: 10, marginBottom: 8 },
+  comment: { minHeight: 52, maxHeight: 140, borderRadius: 16, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14, fontSize: 17, textAlignVertical: "top" },
   summary: { borderRadius: 20, paddingHorizontal: 18, paddingVertical: 14, marginTop: 18, marginBottom: 12 },
   sumRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
-  totalLabel: { fontSize: 30, fontWeight: "800" },
+  totalLabel: { fontSize: 22, fontWeight: "800" },
   total: { color: PINK, fontSize: 32, fontWeight: "800", flexShrink: 1 },
   errorBox: { flexDirection: "row", gap: 8, alignItems: "center", backgroundColor: "rgba(255,59,48,0.1)", borderRadius: 14, padding: 12, marginBottom: 10 },
-  cta: { height: 56, borderRadius: 28, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, boxShadow: "0 8px 20px rgba(139,61,255,0.35)" },
-  ctaText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+  cta: { height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, boxShadow: "0 8px 20px rgba(139,61,255,0.35)" },
+  ctaText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, width: "100%", maxWidth: 440, alignSelf: "center" },
   emptyIcon: { width: 84, height: 84, borderRadius: 26, alignItems: "center", justifyContent: "center", marginBottom: 16 },
 });
@@ -720,10 +720,10 @@ const lineBase = StyleSheet.create({
   item: { flexDirection: "row", gap: 14, padding: 14, marginBottom: 12 },
   photo: { width: 112, height: 132, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   brand: { fontSize: 13, letterSpacing: 0.3, marginBottom: 3 },
-  name: { fontSize: 16, lineHeight: 21 },
+  name: { fontSize: 17, lineHeight: 22 },
   variant: { color: VIOLET, fontSize: 13, fontWeight: "600", marginTop: 3 },
   unit: { fontSize: 15, marginTop: 6 },
-  sum: { color: PINK, fontSize: 26, fontWeight: "800", marginTop: 2 },
+  sum: { color: PINK, fontSize: 22, fontWeight: "800", marginTop: 2 },
   stepRow: { flexDirection: "row", marginTop: 10 },
   stepper: { flexDirection: "row", alignItems: "center", borderRadius: 24, padding: 3, gap: 4 },
   stepBtn: { width: 44, height: 44, alignItems: "center", justifyContent: "center" },
@@ -734,4 +734,13 @@ const lineBase = StyleSheet.create({
 });
 /** cart lines on a phone: smaller than the catalog cards (0.7) — the owner found 0.8 still too big */
 const CART_LINE_SCALE = 0.7;
-const linePhone = StyleSheet.create(scaleStyles(lineBase, CART_LINE_SCALE));
+const linePhone = StyleSheet.create(
+  withFonts(scaleStyles(lineBase, CART_LINE_SCALE), {
+    brand: { fontSize: 11 },
+    name: { fontSize: 15, lineHeight: 19 },
+    variant: { fontSize: 11 },
+    unit: { fontSize: 13 },
+    sum: { fontSize: 17 },
+    qty: { fontSize: 15 },
+  })
+);

@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   capsuleFill: { flex: 1, borderRadius: 29, boxShadow: disabled("shadow") ? undefined : "0 6px 18px rgba(130,0,255,0.45)" },
   item: { flex: 1, height: BAR_HEIGHT - 12, alignItems: "center", justifyContent: "center" },
   content: { alignItems: "center", justifyContent: "center", gap: 3 },
-  label: { fontSize: 12, fontWeight: "500" },
+  label: { fontSize: 13, fontWeight: "500" },
   badge: {
     position: "absolute",
     top: -4,
@@ -192,5 +192,5 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#fff",
   },
-  badgeText: { color: "#fff", fontSize: 9.5, fontWeight: "800" },
+  badgeText: { color: "#fff", fontSize: 11, fontWeight: "800" },
 });

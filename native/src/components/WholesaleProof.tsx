@@ -140,7 +140,7 @@ export function WholesaleProofForm({
             {f.video ? (
               <View style={st.videoThumb}>
                 <Ionicons name="videocam" size={26} color={VIOLET} />
-                <Text style={{ color: c.secondary, fontSize: 12 }}>видео</Text>
+                <Text style={{ color: c.secondary, fontSize: 13 }}>видео</Text>
               </View>
             ) : (
               <Image source={{ uri: f.uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -164,7 +164,7 @@ export function WholesaleProofForm({
             style={[st.thumb, st.addBtn, { borderColor: errors.proofs ? "#ff3b30" : VIOLET }]}
           >
             <Ionicons name="add" size={28} color={VIOLET} />
-            <Text style={{ color: VIOLET, fontSize: 12, fontWeight: "600" }}>Добавить</Text>
+            <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>Добавить</Text>
           </Pressable>
         ) : null}
       </View>

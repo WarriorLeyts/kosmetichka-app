@@ -44,8 +44,8 @@ const STOCK = {
 const BAR = 50; // back / favourite row
 const THUMB = 52; // compact photo
 const COMPACT = 68; // compact row under the top bar
-const TITLE_FONT = 28;
-const TITLE_LINE = 34;
+const TITLE_FONT = 22;
+const TITLE_LINE = 28;
 const SMALL_FONT = 17;
 
 /** Volume / weight from the product name («…, 100 мл» → «100 мл»). */
@@ -301,7 +301,7 @@ export default function ProductScreen() {
           <View style={styles.metaRow}>
             {volume ? (
               <View style={[styles.volume, { backgroundColor: dark ? "#352044" : "#EFEAFF" }]}>
-                <Text style={{ color: dark ? c.label : "#4b3a8c", fontSize: 14 }}>{volume}</Text>
+                <Text style={{ color: dark ? c.label : "#4b3a8c", fontSize: 15 }}>{volume}</Text>
               </View>
             ) : null}
             <View style={[styles.stock, { backgroundColor: st.bg }]}>
@@ -317,7 +317,7 @@ export default function ProductScreen() {
                 <Text numberOfLines={1} style={{ fontSize: 13, color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B" }}>
                   {r.label}
                 </Text>
-                <FitText minimumFontScale={0.6} style={{ fontSize: rows.length >= 3 ? 19 : 22, fontWeight: "700", color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A" }}>
+                <FitText minimumFontScale={0.6} style={{ fontSize: rows.length >= 3 ? 20 : 22, fontWeight: "700", color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A" }}>
                   {money(r.value)}
                 </FitText>
                 {r.hint ? <Text numberOfLines={1} style={{ fontSize: 11, color: "#8A7A9B", marginTop: 1 }}>{r.hint}</Text> : null}
@@ -330,7 +330,7 @@ export default function ProductScreen() {
             </Pressable>
           ) : null}
           <View style={{ marginTop: 10, gap: 3 }}>
-            {min > 1 ? <Text style={{ color: VIOLET, fontSize: 14, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}
+            {min > 1 ? <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}
             {product.article ? <Text style={{ color: c.secondary, fontSize: 13 }}>Арт. {product.article}</Text> : null}
             {product.barcode ? <Text style={{ color: c.secondary, fontSize: 13 }}>Штрихкод {product.barcode}</Text> : null}
           </View>
@@ -713,12 +713,12 @@ const styles = StyleSheet.create({
   dActions: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, maxWidth: 520 },
   topBar: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 },
   barBtn: { width: 44, height: 44, justifyContent: "center" },
-  brandWord: { flex: 1, textAlign: "center", fontSize: 19, letterSpacing: 3.2 },
+  brandWord: { flex: 1, textAlign: "center", fontSize: 20, letterSpacing: 3.2 },
   pad: { paddingHorizontal: 16 },
   dots: { flexDirection: "row", justifyContent: "center", gap: 7, height: 26, alignItems: "center" },
   dot: { width: 8, height: 8, borderRadius: 4 },
   dotActive: { width: 8 },
-  brand: { fontSize: 14, letterSpacing: 0.4, marginBottom: 4 },
+  brand: { fontSize: 15, letterSpacing: 0.4, marginBottom: 4 },
   title: { fontSize: TITLE_FONT, lineHeight: TITLE_LINE, fontWeight: "700" },
   compactTitle: { fontSize: SMALL_FONT, lineHeight: TITLE_LINE * (SMALL_FONT / TITLE_FONT), fontWeight: "700" },
   abs: { position: "absolute" },
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
   priceCol: { flex: 1, paddingHorizontal: 12, justifyContent: "center", alignItems: "center" },
   panel: { borderRadius: 20, padding: 16, marginTop: 18 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
-  h: { fontSize: 21, fontWeight: "700", marginBottom: 6 },
+  h: { fontSize: 20, fontWeight: "700", marginBottom: 6 },
   variantRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 10 },
   variantImg: { width: 48, height: 48, borderRadius: 10, backgroundColor: "#fff" },
   variantAdd: { width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(139,61,255,0.1)", alignItems: "center", justifyContent: "center" },
@@ -744,6 +744,6 @@ const styles = StyleSheet.create({
   bottomInner: { flexDirection: "row", alignItems: "center", gap: 12, width: "100%", maxWidth: 640, alignSelf: "center" },
   qty: { flexDirection: "row", alignItems: "center", borderRadius: 26, padding: 3, gap: 4 },
   qtyBox: { minWidth: 42, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 6 },
-  cta: { height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.35)" },
-  ctaText: { color: "#fff", fontSize: 18, fontWeight: "600", flexShrink: 1 },
+  cta: { height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.35)" },
+  ctaText: { color: "#fff", fontSize: 17, fontWeight: "600", flexShrink: 1 },
 });

@@ -225,7 +225,7 @@ export default function EditProfile() {
                 />
                 {f.key === "phone" && phoneChanged ? (
                   <View style={{ marginTop: -4, marginBottom: 8 }}>
-                    <Text style={{ color: c.secondary, fontSize: 14, marginBottom: 8 }}>
+                    <Text style={{ color: c.secondary, fontSize: 15, marginBottom: 8 }}>
                       Новый номер нужно подтвердить: на него придёт код из SMS.
                     </Text>
                     <Pressable
@@ -295,7 +295,7 @@ export default function EditProfile() {
             accessibilityLabel="Удалить аккаунт"
             style={({ pressed }) => [{ alignSelf: "center", paddingVertical: 18, paddingHorizontal: 12, opacity: pressed ? 0.6 : 1 }]}
           >
-            <Text style={{ color: "#FF3B30", fontSize: 16 }}>Удалить аккаунт</Text>
+            <Text style={{ color: "#FF3B30", fontSize: 17 }}>Удалить аккаунт</Text>
           </Pressable>
         </View>
       </ScrollView>
@@ -322,13 +322,13 @@ export default function EditProfile() {
 
 const styles = StyleSheet.create({
   codeBtn: { height: 44, borderRadius: 12, backgroundColor: "#8b3dff", alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  codeBtnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  codeBtnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   panel: { borderRadius: 22, padding: 16, paddingBottom: 4, marginTop: 10 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   h: { fontSize: 22, fontWeight: "700" },
   banner: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 14, padding: 12, marginTop: 4 },
   bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 10, paddingHorizontal: 16 },
-  cta: { height: 56, borderRadius: 28, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
-  ctaText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+  cta: { height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
+  ctaText: { color: "#fff", fontSize: 17, fontWeight: "600" },
 });

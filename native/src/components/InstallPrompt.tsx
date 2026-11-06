@@ -162,5 +162,5 @@ const styles = StyleSheet.create({
   stepText: { flex: 1 },
   sep: { height: StyleSheet.hairlineWidth, marginLeft: 64 },
   btn: { height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
-  btnText: { fontSize: 16, fontWeight: "600" },
+  btnText: { fontSize: 17, fontWeight: "600" },
 });

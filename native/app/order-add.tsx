@@ -208,7 +208,7 @@ export default function OrderAddScreen() {
               );
             })}
             <Pressable onPress={() => setVariantFor(null)} style={{ alignSelf: "center", padding: 10 }}>
-              <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "600" }}>Готово</Text>
+              <Text style={{ color: VIOLET, fontSize: 17, fontWeight: "600" }}>Готово</Text>
             </Pressable>
           </View>
         ) : null}
@@ -225,5 +225,5 @@ const styles = StyleSheet.create({
   variant: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 8 },
   variantImg: { width: 44, height: 44, borderRadius: 10 },
   vStepper: { flexDirection: "row", alignItems: "center", gap: 8 },
-  vQty: { color: VIOLET, fontWeight: "800", fontSize: 16, minWidth: 22, textAlign: "center" },
+  vQty: { color: VIOLET, fontWeight: "800", fontSize: 17, minWidth: 22, textAlign: "center" },
 });

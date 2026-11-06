@@ -63,7 +63,7 @@ const w = (v: "400" | "500" | "600" | "700") => (Platform.OS === "ios" ? v : und
 
 /** iOS text styles (Dynamic Type «Large» sizes) */
 export const iosText = {
-  largeTitle: { fontSize: 34, lineHeight: 41, letterSpacing: 0.37, fontWeight: w("700"), fontFamily: iosFont.bold },
+  largeTitle: { fontSize: 32, lineHeight: 39, letterSpacing: 0.37, fontWeight: w("700"), fontFamily: iosFont.bold },
   title2: { fontSize: 22, lineHeight: 28, letterSpacing: 0.35, fontWeight: w("600"), fontFamily: iosFont.semibold },
   headline: { fontSize: 17, lineHeight: 22, letterSpacing: -0.41, fontWeight: w("600"), fontFamily: iosFont.semibold },
   body: { fontSize: 17, lineHeight: 22, letterSpacing: -0.41, fontWeight: w("400"), fontFamily: iosFont.regular },

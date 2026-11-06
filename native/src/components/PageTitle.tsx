@@ -13,7 +13,7 @@ export function PageTitle({
 }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
-      <GradientText style={{ fontSize: 30, fontWeight: "900", lineHeight: 36 }} colors={colors}>
+      <GradientText style={{ fontSize: 32, fontWeight: "900", lineHeight: 38 }} colors={colors}>
         {title}
       </GradientText>
     </View>

@@ -30,3 +30,13 @@ export function scaleStyles<T extends Record<string, object>>(styles: T, k: numb
   }
   return out as T;
 }
+
+/**
+ * The scaled phone styles with the text put back on the app's type scale (11 / 13 / 15 / 17 / 20 / 22):
+ * the boxes stay at k, the letters are not 9.6 or 11.9 px.
+ */
+export function withFonts<T extends Record<string, object>>(styles: T, fonts: Partial<Record<keyof T, object>>): T {
+  const out: Record<string, object> = { ...styles };
+  for (const [name, f] of Object.entries(fonts)) if (f) out[name] = { ...(styles as Record<string, object>)[name], ...f };
+  return out as T;
+}

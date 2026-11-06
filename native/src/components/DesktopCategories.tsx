@@ -108,11 +108,11 @@ const styles = StyleSheet.create({
   // its own scroll: the column stays on screen while the goods scroll beside it
   box: { width: DESKTOP_SIDEBAR_W, maxHeight: "100%", borderRadius: 22, paddingVertical: 12, paddingHorizontal: 8, alignSelf: "flex-start" },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
-  title: { fontSize: 18, fontWeight: "800", paddingHorizontal: 10, paddingTop: 2, paddingBottom: 8 },
+  title: { fontSize: 17, fontWeight: "800", paddingHorizontal: 10, paddingTop: 2, paddingBottom: 8 },
   top: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 8, paddingVertical: 7, borderRadius: 12, minHeight: 44 },
   icon: { width: 30, height: 30 },
   iconBox: { width: 30, height: 30, borderRadius: 9, alignItems: "center", justifyContent: "center" },
-  topText: { flex: 1, fontSize: 14.5, fontWeight: "600" },
+  topText: { flex: 1, fontSize: 15, fontWeight: "600" },
   sub: { paddingLeft: 48, paddingRight: 8, paddingVertical: 6, borderRadius: 10 },
-  subText: { fontSize: 13.5, lineHeight: 18 },
+  subText: { fontSize: 13, lineHeight: 17 },
 });

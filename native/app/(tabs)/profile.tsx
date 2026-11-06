@@ -279,14 +279,14 @@ const styles = StyleSheet.create({
   iconWrap: { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   sep: { position: "absolute", left: 66, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   login: {
-    height: 56,
-    borderRadius: 28,
+    height: 52,
+    borderRadius: 26,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 9,
     boxShadow: "0 8px 20px rgba(139,61,255,0.35)",
   },
-  loginText: { color: "#fff", fontSize: 18, fontWeight: "600" },
+  loginText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   logout: { marginTop: 22, height: 54, borderRadius: 20, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
 });

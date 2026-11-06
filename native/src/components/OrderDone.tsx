@@ -27,6 +27,6 @@ export function OrderDone() {
 const st = StyleSheet.create({
   banner: { alignItems: "center", borderRadius: 24, paddingVertical: 24, paddingHorizontal: 18, marginTop: 14, gap: 8, boxShadow: "0 10px 26px rgba(139,61,255,0.35)" },
   bigIcon: { width: 68, height: 68, borderRadius: 34, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
-  title: { color: "#fff", fontSize: 26, fontWeight: "800", textAlign: "center" },
-  text: { color: "rgba(255,255,255,0.95)", fontSize: 16, textAlign: "center", lineHeight: 21 },
+  title: { color: "#fff", fontSize: 22, fontWeight: "800", textAlign: "center" },
+  text: { color: "rgba(255,255,255,0.95)", fontSize: 17, textAlign: "center", lineHeight: 22 },
 });

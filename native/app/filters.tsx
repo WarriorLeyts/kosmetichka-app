@@ -155,7 +155,7 @@ const styles = themed(() => ({
   rowText: { fontSize: 15, color: colors.text, fontWeight: "600", flex: 1, marginRight: 8 },
   search: {
     height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
-    paddingHorizontal: 14, fontSize: 16, marginBottom: 10, color: colors.text,
+    paddingHorizontal: 14, fontSize: 17, marginBottom: 10, color: colors.text,
   },
   footer: {
     position: "absolute", left: 0, right: 0, bottom: 0, flexDirection: "row", gap: 10, padding: 16,

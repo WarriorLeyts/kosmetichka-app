@@ -76,7 +76,7 @@ export function BrandWord({ color, style }: { color: string; style?: object }) {
 const wordStyle = StyleSheet.create({
   bar: { height: 50, alignItems: "center", justifyContent: "center" },
   back: { position: "absolute", left: -6, top: 3, width: 44, height: 44, justifyContent: "center" },
-  word: { fontSize: 19, letterSpacing: 3.2, fontWeight: "400", textAlign: "center" },
+  word: { fontSize: 20, letterSpacing: 3.2, fontWeight: "400", textAlign: "center" },
 });
 
 /** Top bar for inner screens: back chevron on the left, «КОСМЕТИЧКА» centred. */

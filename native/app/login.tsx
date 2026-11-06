@@ -124,7 +124,7 @@ export default function Login() {
             {error ? (
               <Animated.View style={[styles.error, { opacity: errAnim }]}>
                 <Ionicons name="alert-circle" size={18} color="#FF3B30" />
-                <Text style={{ color: "#FF3B30", fontSize: 14, flex: 1 }}>{error}</Text>
+                <Text style={{ color: "#FF3B30", fontSize: 15, flex: 1 }}>{error}</Text>
               </Animated.View>
             ) : null}
             <GradientButton title={loading ? "Входим…" : "Войти"} loading={loading} onPress={submit} style={{ marginTop: 4 }} />
@@ -148,12 +148,12 @@ const LINK_DARK = "#D9BBFF";
 
 const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 520, alignSelf: "center" },
-  h1: { fontSize: 34, fontWeight: "800", marginTop: 18 },
+  h1: { fontSize: 32, fontWeight: "800", marginTop: 18 },
   lead: { fontSize: 17, lineHeight: 23, marginTop: 6, marginBottom: 18 },
   panel: { borderRadius: 22, padding: 18, paddingBottom: 10 },
   shadow: { boxShadow: "0 6px 22px rgba(80,40,140,0.07)" },
   error: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(255,59,48,0.08)", borderRadius: 12, padding: 10, marginBottom: 12 },
   forgot: { alignSelf: "center", paddingVertical: 14 },
   forgotText: { color: "#7a12d4", fontSize: 17, fontWeight: "600" },
-  h2: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
+  h2: { fontSize: 17, fontWeight: "700", marginBottom: 12 },
 });

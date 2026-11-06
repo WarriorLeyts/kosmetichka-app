@@ -92,6 +92,6 @@ export default function WholesaleRequest() {
 
 const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 560, alignSelf: "center" },
-  h1: { fontSize: 30, fontWeight: "800", marginTop: 4 },
+  h1: { fontSize: 32, fontWeight: "800", marginTop: 4 },
   panel: { borderRadius: 20, padding: 16, marginTop: 16 },
 });

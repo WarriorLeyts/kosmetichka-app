@@ -87,8 +87,8 @@ const styles = StyleSheet.create({
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   icon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
-  title: { flex: 1, fontSize: 16, lineHeight: 21, fontWeight: "600" },
+  title: { flex: 1, fontSize: 17, lineHeight: 22, fontWeight: "600" },
   text: { ...iosText.footnote, lineHeight: 19 },
   btn: { height: 44, borderRadius: 22, backgroundColor: VIOLET, alignItems: "center", justifyContent: "center" },
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  btnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
 });

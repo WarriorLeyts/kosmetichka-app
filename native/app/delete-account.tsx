@@ -51,7 +51,7 @@ export default function DeleteAccount() {
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }} keyboardShouldPersistTaps="handled">
         <View style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}>
-          <Text style={{ color: c.label, fontSize: 16, lineHeight: 22 }}>
+          <Text style={{ color: c.label, fontSize: 17, lineHeight: 23 }}>
             Будут удалены ваши имя, телефон, e-mail, адрес и привязанная карта лояльности. Войти в этот аккаунт больше не получится.
           </Text>
           <Text style={{ color: c.secondary, fontSize: 15, lineHeight: 21, marginTop: 10 }}>
@@ -88,6 +88,6 @@ export default function DeleteAccount() {
 const styles = StyleSheet.create({
   panel: { borderRadius: 22, padding: 16, paddingBottom: 4 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
-  btn: { marginTop: 20, minHeight: 54, borderRadius: 27, backgroundColor: "#FF3B30", alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
+  btn: { marginTop: 20, minHeight: 52, borderRadius: 26, backgroundColor: "#FF3B30", alignItems: "center", justifyContent: "center", paddingHorizontal: 20 },
   btnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
 });

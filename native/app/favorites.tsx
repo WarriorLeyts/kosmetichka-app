@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   empty: { margin: 5, marginTop: 10, borderRadius: 22, padding: 28, alignItems: "center" },
   emptyIcon: { width: 68, height: 68, borderRadius: 22, backgroundColor: "rgba(232,44,135,0.1)", alignItems: "center", justifyContent: "center", marginBottom: 12 },
-  emptyTitle: { fontSize: 19, fontWeight: "700" },
+  emptyTitle: { fontSize: 20, fontWeight: "700" },
   emptyText: { fontSize: 15, textAlign: "center", marginTop: 6, lineHeight: 21 },
   cta: { height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },
   ctaText: { color: "#fff", fontSize: 17, fontWeight: "600" },

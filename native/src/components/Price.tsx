@@ -34,7 +34,7 @@ export function PriceRows({ rows, large }: { rows: Row[]; large?: boolean }) {
     <View style={{ gap: large ? 6 : 2 }}>
       {rows.map((r) => (
         <View key={r.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <Text style={{ fontSize: large ? 15 : 12, color: r.active ? colors.text : colors.faint, fontWeight: r.active ? "600" : "400" }}>
+          <Text style={{ fontSize: large ? 15 : 13, color: r.active ? colors.text : colors.faint, fontWeight: r.active ? "600" : "400" }}>
             {r.label}
           </Text>
           {r.active && !large ? (
@@ -45,7 +45,7 @@ export function PriceRows({ rows, large }: { rows: Row[]; large?: boolean }) {
           ) : (
             <Text
               style={{
-                fontSize: large ? (r.active ? 22 : 16) : r.active ? 15 : 12,
+                fontSize: large ? (r.active ? 22 : 17) : r.active ? 15 : 13,
                 fontWeight: r.active ? "800" : "500",
                 color: r.active ? colors.pink : colors.faint,
               }}

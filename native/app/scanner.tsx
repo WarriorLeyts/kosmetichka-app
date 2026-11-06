@@ -87,7 +87,7 @@ export default function Scanner() {
       {camError ? (
         <View style={[styles.center, StyleSheet.absoluteFill]}>
           <Ionicons name="camera-outline" size={48} color="#fff" />
-          <Text style={[styles.text, { fontSize: 16, marginTop: 14, maxWidth: 420 }]}>{camError}</Text>
+          <Text style={[styles.text, { fontSize: 17, marginTop: 14, maxWidth: 420 }]}>{camError}</Text>
         </View>
       ) : (
         <BarcodeCamera torch={torch} onCode={busy ? undefined : onCode} onError={setCamError} />

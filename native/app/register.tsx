@@ -405,8 +405,8 @@ export default function Register() {
 
 const styles = StyleSheet.create({
   wrap: { width: "100%", maxWidth: 560, alignSelf: "center" },
-  h1: { fontSize: 30, fontWeight: "800", marginTop: 6, marginBottom: 14 },
-  h2: { fontSize: 21, fontWeight: "700" },
+  h1: { fontSize: 32, fontWeight: "800", marginTop: 6, marginBottom: 14 },
+  h2: { fontSize: 20, fontWeight: "700" },
   sub: { fontSize: 15, marginTop: 4, marginBottom: 12 },
   panel: { borderRadius: 22, padding: 16, paddingBottom: 6 },
   shadow: { boxShadow: "0 4px 18px rgba(80,40,140,0.06)" },
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
   smsRow: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
   consent: { flexDirection: "row", gap: 12, alignItems: "flex-start", marginTop: 18, marginBottom: 12 },
   box: { width: 28, height: 28, borderRadius: 8, borderWidth: 2, alignItems: "center", justifyContent: "center", marginTop: 1 },
-  consentText: { flex: 1, fontSize: 16, lineHeight: 23 },
+  consentText: { flex: 1, fontSize: 17, lineHeight: 24 },
   link: { color: VIOLET, textDecorationLine: "underline" },
   err: { color: "#FF3B30", fontSize: 13 },
   errorBox: { flexDirection: "row", gap: 8, alignItems: "center", backgroundColor: "rgba(255,59,48,0.08)", borderRadius: 12, padding: 12, marginBottom: 10 },
