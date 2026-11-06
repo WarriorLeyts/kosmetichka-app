@@ -169,7 +169,7 @@ function AppRoot() {
         screenLayout={disabled("layout") ? undefined : ({ children }) => <PageLayout>{children}</PageLayout>}
         screenOptions={{
           headerTintColor: colors.text,
-          headerTitleStyle: { fontWeight: "800" },
+          headerTitleStyle: { fontWeight: "800", fontSize: 17 },
           headerShadowVisible: false,
           headerStyle: { backgroundColor: mode === "dark" ? "#1C0F2C" : "#FFFFFF" },
           contentStyle: { backgroundColor: colors.bg },

@@ -291,7 +291,7 @@ function Stepper({ qty, dark, label, atCap, minusLabel, onMinus, onPlus, side }:
           {compact ? (
             <Ionicons name={side.icon} size={19 * k} color="#fff" />
           ) : (
-            <FitText minimumFontScale={0.9} style={[styles.buttonText, { fontSize: 13 * k }]}>
+            <FitText minimumFontScale={0.9} style={[styles.buttonText, { fontSize: k === 1 ? 13 : 11 }]}>
               {side.label}
             </FitText>
           )}

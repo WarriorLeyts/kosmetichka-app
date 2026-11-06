@@ -117,12 +117,12 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
           {typeof obj.imagePath === "string" && imageUrl(obj.imagePath, 320)?.startsWith(BASE_URL + "/") ? (
             <Image source={{ uri: imageUrl(obj.imagePath, 320) ?? undefined }} style={{ width: 220, height: 130, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" />
           ) : null}
-          <Text style={{ fontWeight: "600", color }}>{obj.name}</Text>
-          {typeof obj.variantName === "string" && obj.variantName ? <Text style={{ color, opacity: 0.8 }}>{obj.variantName}</Text> : null}
-          <Text style={{ color, fontWeight: "700" }}>
+          <Text style={{ fontWeight: "600", color, fontSize: 15 }}>{obj.name}</Text>
+          {typeof obj.variantName === "string" && obj.variantName ? <Text style={{ color, opacity: 0.8, fontSize: 15 }}>{obj.variantName}</Text> : null}
+          <Text style={{ color, fontWeight: "700", fontSize: 15 }}>
             {Number(obj.quantity) || 1} шт.{typeof obj.price === "number" && obj.price > 0 ? ` × ${money(obj.price)}` : ""}
           </Text>
-          {obj.added === true ? <Text style={{ color: "#16A34A", fontWeight: "700" }}>✓ Менеджер добавил в заказ</Text> : null}
+          {obj.added === true ? <Text style={{ color: "#16A34A", fontWeight: "700", fontSize: 15 }}>✓ Менеджер добавил в заказ</Text> : null}
         </View>
       );
     }

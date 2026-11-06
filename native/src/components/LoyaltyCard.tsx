@@ -184,7 +184,7 @@ export function LoyaltyCardPanel({ card, width, onUnlink }: { card: Card; width:
       ) : null}
       {onUnlink ? (
         <Pressable onPress={onUnlink} hitSlop={6} accessibilityRole="button" style={{ alignSelf: "center", paddingVertical: 8 }}>
-          <Text style={{ color: c.secondary, fontSize: 14 }}>Отвязать карту</Text>
+          <Text style={{ color: c.secondary, fontSize: 15 }}>Отвязать карту</Text>
         </Pressable>
       ) : null}
     </View>
@@ -194,7 +194,7 @@ export function LoyaltyCardPanel({ card, width, onUnlink }: { card: Card; width:
 const styles = StyleSheet.create({
   panel: { borderRadius: 20, padding: 14, marginBottom: 16 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
-  title: { fontSize: 18, fontWeight: "600", marginBottom: 10, marginLeft: 2 },
+  title: { fontSize: 17, fontWeight: "600", marginBottom: 10, marginLeft: 2 },
   card: { overflow: "hidden", alignSelf: "center", boxShadow: "0 8px 22px rgba(10,70,142,0.35)" },
   brand: { color: "#fff", fontWeight: "700", letterSpacing: 0.2 },
   small: { color: "#fff", fontWeight: "700", letterSpacing: 0.2 },

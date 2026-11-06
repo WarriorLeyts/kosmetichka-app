@@ -216,7 +216,7 @@ export default function Home() {
 
       <Pressable style={styles.contacts} onPress={() => router.push("/info")}>
         <Ionicons name="call-outline" size={18} color={colors.muted} />
-        <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
+        <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 15 }}>Контакты и документы</Text>
       </Pressable>
       </View>
     </Animated.ScrollView>
