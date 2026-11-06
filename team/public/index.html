@@ -68,6 +68,12 @@
         outline-offset: 2px;
         border-radius: 12px;
       }
+      /* text fields: no browser frame while typing (the field itself shows the cursor) */
+      input, textarea, input:focus, textarea:focus, input:focus-visible, textarea:focus-visible,
+      input[tabindex]:focus-visible, textarea[tabindex]:focus-visible {
+        outline: none !important;
+        box-shadow: none;
+      }
     </style>
   </head>
 

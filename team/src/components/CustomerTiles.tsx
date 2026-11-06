@@ -96,7 +96,6 @@ export function CustomerTiles({
                     small && st.tileSmall,
                     box,
                     { width: cell },
-                    hot && { borderColor: t.dot, borderWidth: 1.5 },
                     on && { borderColor: VIOLET, borderWidth: 2, backgroundColor: dark ? "rgba(139,61,255,0.2)" : "#F6F0FF" },
                   ]}
                 >
