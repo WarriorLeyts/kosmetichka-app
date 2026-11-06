@@ -68,10 +68,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="theme-color" content="#170D25" />
     <link rel="manifest" href="/assets/pwa/site.webmanifest" />
-    <!-- tab icon: the brand logo (not Expo's default) -->
+    <!-- tab and search-results icon: the gradient heart on white (Google wants a multiple of 48 px) -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/pwa/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="64x64" href="/assets/pwa/favicon-64.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/pwa/icon-192.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/assets/pwa/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/assets/pwa/favicon-96.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/assets/pwa/favicon-192.png" />
+    <!-- the site's name in search results: «Косметичка», not the address -->
+    <meta name="application-name" content="Косметичка" />
+    <meta property="og:site_name" content="Косметичка" />
+    <meta property="og:title" content="Косметичка" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"Косметичка","alternateName":["Косметичка опт","kosmetichka-opt.ru"],"url":"https://kosmetichka-opt.ru/"}</script>
     <link rel="apple-touch-icon" href="/assets/pwa/icon-180.png" />
     <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
     <style id="expo-reset">
