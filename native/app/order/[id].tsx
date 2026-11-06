@@ -117,17 +117,17 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
           {typeof obj.imagePath === "string" && imageUrl(obj.imagePath, 320)?.startsWith(BASE_URL + "/") ? (
             <Image source={{ uri: imageUrl(obj.imagePath, 320) ?? undefined }} style={{ width: 220, height: 130, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" />
           ) : null}
-          <Text style={{ fontWeight: "600", color, fontSize: 15 }}>{obj.name}</Text>
-          {typeof obj.variantName === "string" && obj.variantName ? <Text style={{ color, opacity: 0.8, fontSize: 15 }}>{obj.variantName}</Text> : null}
-          <Text style={{ color, fontWeight: "700", fontSize: 15 }}>
+          <Text style={{ fontWeight: "600", color }}>{obj.name}</Text>
+          {typeof obj.variantName === "string" && obj.variantName ? <Text style={{ color, opacity: 0.8 }}>{obj.variantName}</Text> : null}
+          <Text style={{ color, fontWeight: "700" }}>
             {Number(obj.quantity) || 1} шт.{typeof obj.price === "number" && obj.price > 0 ? ` × ${money(obj.price)}` : ""}
           </Text>
-          {obj.added === true ? <Text style={{ color: "#16A34A", fontWeight: "700", fontSize: 15 }}>✓ Менеджер добавил в заказ</Text> : null}
+          {obj.added === true ? <Text style={{ color: "#16A34A", fontWeight: "700" }}>✓ Менеджер добавил в заказ</Text> : null}
         </View>
       );
     }
     // product cards only from the manager — a customer can't fake them by typing JSON
-    if (!fromManager) return <Text style={{ color, fontSize: 17, lineHeight: 22 }}>{text}</Text>;
+    if (!fromManager) return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
     if (obj?._t === "product" && typeof obj.name === "string") {
       return (
         <View style={{ width: 210 }}>
@@ -142,7 +142,7 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
   } catch {
     /* plain text */
   }
-  return <Text style={{ color, fontSize: 17, lineHeight: 22 }}>{text}</Text>;
+  return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
 }
 
 /** `id` — when shown beside the orders list on a computer (otherwise from the route) */
@@ -567,7 +567,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                     true,
                     p.text,
                     p.createdAt,
-                    <Text style={{ color: "#FF3B30", fontSize: 13 }}>Не отправлено · повторить</Text>
+                    <Text style={{ color: "#FF3B30", fontSize: 12 }}>Не отправлено · повторить</Text>
                   )}
                 </Pressable>
               ) : (
@@ -702,7 +702,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               {order.editable && !editing ? (
                 <Pressable onPress={startEdit} hitSlop={8} accessibilityRole="button" style={styles.editLink}>
                   <Ionicons name="create-outline" size={18} color={VIOLET} />
-                  <Text style={{ color: VIOLET, fontSize: 17, fontWeight: "600" }}>Изменить</Text>
+                  <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "600" }}>Изменить</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -734,7 +734,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                     {img ? <Image source={{ uri: img }} style={{ width: "88%", height: "88%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={26} color="#AEAEB2" />}
                   </View>
                   <View style={{ flex: 1, gap: 6 }}>
-                    <Text style={{ fontSize: 17, lineHeight: 22, color: c.label, textDecorationLine: gone ? "line-through" : "none" }}>{it.productName}</Text>
+                    <Text style={{ fontSize: 16, lineHeight: 21, color: c.label, textDecorationLine: gone ? "line-through" : "none" }}>{it.productName}</Text>
                     {it.variantName ? <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>{it.variantName}</Text> : null}
                     {editing ? (
                       gone ? (
@@ -756,7 +756,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                       ) : (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                           <Stepper value={q} onChange={(n) => setQty((m) => ({ ...m, [it.id]: n }))} />
-                          <Text style={{ color: c.secondary, fontSize: 15 }}>× {money(it.price)}</Text>
+                          <Text style={{ color: c.secondary, fontSize: 14 }}>× {money(it.price)}</Text>
                         </View>
                       )
                     ) : (
@@ -804,11 +804,11 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                         <View style={[styles.badge, { backgroundColor: "rgba(31,138,59,0.12)" }]}>
                           <Text style={[styles.badgeText, { color: "#1f8a3b" }]}>Новый</Text>
                         </View>
-                        <Text style={{ fontSize: 17, lineHeight: 22, color: c.label }}>{l.product.name}</Text>
+                        <Text style={{ fontSize: 16, lineHeight: 21, color: c.label }}>{l.product.name}</Text>
                         {l.variantName ? <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>{l.variantName}</Text> : null}
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                           <Stepper value={l.quantity} onChange={(n) => editStore.setQty(l.key, n)} />
-                          <Text style={{ color: c.secondary, fontSize: 15 }}>× {money(priceFor(l.product, priceType))}</Text>
+                          <Text style={{ color: c.secondary, fontSize: 14 }}>× {money(priceFor(l.product, priceType))}</Text>
                         </View>
                       </View>
                       <Pressable
@@ -837,7 +837,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                 style={[styles.addRow, { borderColor: dark ? "rgba(200,160,255,0.35)" : "rgba(139,61,255,0.35)" }]}
               >
                 <Ionicons name="add-circle-outline" size={22} color={VIOLET} />
-                <Text style={{ color: VIOLET, fontSize: 17, fontWeight: "600" }}>Добавить товары</Text>
+                <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "600" }}>Добавить товары</Text>
               </Pressable>
             ) : null}
             {editing ? (
@@ -898,10 +898,10 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               <Text style={[iosText.footnote, { color: c.secondary }]}>{order.deliveryType === "pickup" ? "Заберу в магазине" : "Доставка"}</Text>
               {order.deliveryType === "pickup" ? (
                 <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`}>
-                  <Text style={{ color: VIOLET, fontSize: 17, marginTop: 4, textDecorationLine: "underline" }}>{SHOP_ADDRESS}</Text>
+                  <Text style={{ color: VIOLET, fontSize: 16, marginTop: 4, textDecorationLine: "underline" }}>{SHOP_ADDRESS}</Text>
                 </Pressable>
               ) : (
-                <Text style={{ color: c.label, fontSize: 17, marginTop: 4 }}>{order.deliveryAddress || "Адрес уточнит менеджер"}</Text>
+                <Text style={{ color: c.label, fontSize: 16, marginTop: 4 }}>{order.deliveryAddress || "Адрес уточнит менеджер"}</Text>
               )}
             </View>
           ) : null}
@@ -909,7 +909,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
           {order.comment ? (
             <View style={panel}>
               <Text style={[iosText.footnote, { color: c.secondary }]}>Комментарий</Text>
-              <Text style={{ color: c.label, fontSize: 17, marginTop: 4 }}>{order.comment}</Text>
+              <Text style={{ color: c.label, fontSize: 16, marginTop: 4 }}>{order.comment}</Text>
             </View>
           ) : null}
 
@@ -1016,7 +1016,7 @@ function Stepper({ value, onChange }: { value: number; onChange: (n: number) => 
       >
         <Ionicons name="remove" size={20} color={c.label} />
       </Pressable>
-      <Text style={{ minWidth: 28, textAlign: "center", fontSize: 17, fontWeight: "700", color: c.label }}>{value}</Text>
+      <Text style={{ minWidth: 28, textAlign: "center", fontSize: 16, fontWeight: "700", color: c.label }}>{value}</Text>
       <Pressable
         onPress={() => {
           tap();
@@ -1055,7 +1055,7 @@ function RemovedBlock({ items }: { items: RemovedOrderItem[] }) {
   const dark = c.blurTint === "dark";
   return (
     <View style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}>
-      <Text style={[styles.h, { color: c.label, fontSize: 17 }]}>Удалено из заказа</Text>
+      <Text style={[styles.h, { color: c.label, fontSize: 18 }]}>Удалено из заказа</Text>
       {items.map((r, i) => {
         const img = r.imagePath ? imageUrl(r.imagePath, 160) : null;
         return (
@@ -1112,50 +1112,50 @@ function GradientButton({ title, icon, onPress, loading }: { title: string; icon
 const styles = StyleSheet.create({
   contactCard: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 22, padding: 18, marginTop: 14, boxShadow: "0 8px 22px rgba(139,61,255,0.35)" },
   contactIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
-  contactTitle: { color: "#fff", fontSize: 20, fontWeight: "800" },
-  contactText: { color: "rgba(255,255,255,0.95)", fontSize: 17, lineHeight: 22, fontWeight: "500" },
+  contactTitle: { color: "#fff", fontSize: 19, fontWeight: "800" },
+  contactText: { color: "rgba(255,255,255,0.95)", fontSize: 16, lineHeight: 21, fontWeight: "500" },
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   headRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 10, marginTop: 8 },
   status: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, maxWidth: "100%" },
   statusText: { fontSize: 17, fontWeight: "600", flexShrink: 1 },
   panel: { borderRadius: 22, padding: 16, marginTop: 14 },
-  h: { fontSize: 20, fontWeight: "700", marginBottom: 4 },
+  h: { fontSize: 21, fontWeight: "700", marginBottom: 4 },
   item: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 12 },
   photo: { width: 92, height: 92, borderRadius: 16, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   photoSmall: { width: 64, height: 64, borderRadius: 12 },
   editLink: { flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 4 },
   badge: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { fontSize: 13, fontWeight: "600", flexShrink: 1 },
+  badgeText: { fontSize: 12.5, fontWeight: "600", flexShrink: 1 },
   stepper: { flexDirection: "row", alignItems: "center", borderRadius: 20, paddingHorizontal: 4, height: 38 },
   stepBtn: { width: 34, height: 34, alignItems: "center", justifyContent: "center" },
   trash: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   restore: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start", paddingVertical: 4 },
   addRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 50, borderRadius: 16, borderWidth: 1.5, borderStyle: "dashed", marginTop: 10 },
   pricePill: { alignSelf: "flex-start", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
-  priceText: { color: VIOLET, fontSize: 17, fontWeight: "600" },
+  priceText: { color: VIOLET, fontSize: 16, fontWeight: "600" },
   totalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 2 },
   total: { color: PINK, fontSize: 22, fontWeight: "700" },
   actions: { flexDirection: "row", gap: 12, marginTop: 16 },
-  cta: { height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
+  cta: { height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
   ctaText: { color: "#fff", fontSize: 17, fontWeight: "600", flexShrink: 1 },
-  outline: { flex: 1, height: 52, borderRadius: 26, borderWidth: 1.5, borderColor: VIOLET, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
+  outline: { flex: 1, height: 54, borderRadius: 27, borderWidth: 1.5, borderColor: VIOLET, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
   outlineText: { color: VIOLET, fontSize: 17, fontWeight: "600" },
   cancel: { alignSelf: "center", paddingVertical: 12, paddingHorizontal: 16, marginTop: 4 },
   chatHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
   bubble: { maxWidth: "84%", borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9, marginTop: 8 },
   mine: { alignSelf: "flex-end", borderBottomRightRadius: 6 },
   theirs: { alignSelf: "flex-start", borderBottomLeftRadius: 6 },
-  from: { color: PINK, fontWeight: "600", fontSize: 13, marginBottom: 2 },
+  from: { color: PINK, fontWeight: "600", fontSize: 12, marginBottom: 2 },
   metaRow: { flexDirection: "row", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 3 },
-  time: { fontSize: 13 },
+  time: { fontSize: 12 },
   composer: { paddingTop: 10, paddingHorizontal: 16 },
   // computer: order in the middle, its chat as a column on the right
   splitRow: { flex: 1, flexDirection: "row", gap: 16, paddingRight: 4, paddingBottom: 16 },
   chatCol: { width: 380, borderRadius: 22, overflow: "hidden" },
   chatColHead: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   composerShadow: { boxShadow: "0 -4px 18px rgba(31,41,55,0.07)" },
-  input: { flex: 1, minHeight: 48, maxHeight: 130, borderRadius: 24, paddingHorizontal: 18, paddingTop: 13, paddingBottom: 13, fontSize: 17 },
+  input: { flex: 1, minHeight: 48, maxHeight: 130, borderRadius: 24, paddingHorizontal: 18, paddingTop: 13, paddingBottom: 13, fontSize: 16 },
   attach: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   video: { width: 210, height: 140, borderRadius: 12, backgroundColor: "#1b1030", alignItems: "center", justifyContent: "center", gap: 4 },
   videoText: { color: "#fff", fontSize: 13, fontWeight: "600" },

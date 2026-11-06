@@ -216,7 +216,7 @@ export default function Home() {
 
       <Pressable style={styles.contacts} onPress={() => router.push("/info")}>
         <Ionicons name="call-outline" size={18} color={colors.muted} />
-        <Text style={{ color: colors.muted, fontWeight: "600", fontSize: 15 }}>Контакты и документы</Text>
+        <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
       </Pressable>
       </View>
     </Animated.ScrollView>
@@ -245,20 +245,20 @@ const styles = themed(() => ({
   glass: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", borderWidth: 1 },
   glassLight: { backgroundColor: "rgba(255,255,255,0.62)", borderColor: "rgba(121,37,214,0.16)", boxShadow: "0 6px 16px rgba(121,37,214,0.12)" },
   glassDark: { backgroundColor: "rgba(255,255,255,0.08)", borderColor: "rgba(220,190,255,0.24)", boxShadow: "0 6px 16px rgba(0,0,0,0.25)" },
-  sizeIcon: { fontSize: 17, fontWeight: "600" },
-  subtitle: { fontSize: 15, fontWeight: "500", textAlign: "center", marginTop: 4, marginBottom: 18 },
+  sizeIcon: { fontSize: 16, fontWeight: "600" },
+  subtitle: { fontSize: 14, fontWeight: "500", textAlign: "center", marginTop: 4, marginBottom: 18 },
   searchRow: { flexDirection: "row", gap: 10, alignItems: "center" },
   search: { flex: 1, height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 18, borderWidth: 1 },
   searchLight: { backgroundColor: "rgba(250,247,255,0.85)", borderColor: "rgba(121,37,214,0.22)", boxShadow: "0 8px 20px rgba(121,37,214,0.08)" },
   searchDark: { backgroundColor: "rgba(255,255,255,0.09)", borderColor: "rgba(200,160,255,0.35)" },
-  searchText: { fontSize: 17, flexShrink: 1 },
+  searchText: { fontSize: 16, flexShrink: 1 },
   scan: { width: 52, height: 52, borderRadius: 18, alignItems: "center", justifyContent: "center", boxShadow: "0 8px 18px rgba(169,59,242,0.32)" },
   loginBanner: {
     margin: 16, marginBottom: 0, padding: 14, borderRadius: radius.lg, backgroundColor: colors.violetSoft,
     flexDirection: "row", alignItems: "center", gap: 12, borderWidth: 1, borderColor: colors.violetBorder,
   },
-  loginTitle: { fontWeight: "800", color: colors.text, fontSize: 15 },
-  loginText: { color: colors.muted, fontSize: 13, marginTop: 2 },
+  loginTitle: { fontWeight: "800", color: colors.text, fontSize: 14 },
+  loginText: { color: colors.muted, fontSize: 12, marginTop: 2 },
   quickRow: { paddingHorizontal: 16, paddingTop: 16, gap: 8 },
   quick: {
     flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: colors.card, borderRadius: 999,

@@ -6,7 +6,7 @@ import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import type { Category } from "../../types";
 import { useDesktop } from "../../useDesktop";
-import { PHONE_CARD_SCALE, scaleStyles, useCardScale, withFonts } from "../../cardScale";
+import { PHONE_CARD_SCALE, scaleStyles, useCardScale } from "../../cardScale";
 
 /** «Категории товаров» — two-column grid as on the mockup: picture on top, white label with a chevron over its bottom. */
 export function HomeCategories({ categories, onOpen }: { categories: Category[]; onOpen: (guid: string | null) => void }) {
@@ -73,7 +73,7 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 12, marginTop: 8 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 6, marginBottom: 8 },
-  h: { fontSize: 22, fontWeight: "700" },
+  h: { fontSize: 24, fontWeight: "700" },
   all: { flexDirection: "row", alignItems: "center", gap: 6 },
   allText: { color: "#7a1ee8", fontSize: 17, fontWeight: "500" },
   grid: { flexDirection: "row", flexWrap: "wrap" },
@@ -89,4 +89,4 @@ const cardBase = StyleSheet.create({
   label: { position: "absolute", left: 6, right: 6, bottom: 6, flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 10, minHeight: 50, borderRadius: 16 },
   name: { flex: 1, fontSize: 17, fontWeight: "600", lineHeight: 21 },
 });
-const cardPhone = StyleSheet.create(withFonts(scaleStyles(cardBase, PHONE_CARD_SCALE), { name: { fontSize: 13, lineHeight: 16 } }));
+const cardPhone = StyleSheet.create(scaleStyles(cardBase, PHONE_CARD_SCALE));
