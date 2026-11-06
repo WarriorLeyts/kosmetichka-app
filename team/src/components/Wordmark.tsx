@@ -5,7 +5,6 @@ import { useIOS } from "../ios";
 
 export const BRAND_VIOLET = "#7925D6";
 export const BRAND_PINK = "#EF419A";
-const LOGO_RED = "#E8202A";
 
 /**
  * «КОСМЕТИЧКА» wordmark, the same everywhere as in the home header: wide capitals in the brand
@@ -41,8 +40,7 @@ export function Wordmark({ size = 19, light, style }: { size?: number; light?: b
       </View>
       {withI > 0 ? (
         <Image
-          source={require("../../assets/home2/logo-white.png")}
-          tintColor={LOGO_RED}
+          source={require("../../assets/home2/logo-grad.png")}
           contentFit="contain"
           style={{ position: "absolute", width: logo, height: logo, top: size * 0.5 - logo * 0.78, left: iCenter - logo / 2 }}
         />
