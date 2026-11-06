@@ -8,13 +8,12 @@ import { getSplashTarget } from "../splashTarget";
 
 /**
  * Launch animation (every cold start): the logo draws itself with a white line, «КОСМЕТИЧКА» appears
- * letter by letter, then the logo shrinks, turns red and flies to its place above «И» in the
+ * letter by letter, then the logo shrinks and flies to its place above «И» in the
  * home header while the home screen shows through. Light / dark versions follow the app theme.
- * The drawing is a sprite sheet (8 × 4 frames of 340 px) rendered from the real logo outline.
+ * The drawing is a sprite sheet (8 × 4 frames of 340 px) rendered from the real logo outline, in the brand gradient.
  */
 
 const SHEET = require("../../assets/splash/draw-sheet.png");
-const LOGO = require("../../assets/home2/logo-white.png");
 // the brand heart in our violet → pink gradient (as in the wordmark)
 const LOGO_GRAD = require("../../assets/home2/logo-grad.png");
 const GLOW_LIGHT = require("../../assets/splash/glow-light.png");
@@ -228,10 +227,7 @@ function Scene({ onEnd }: { onEnd: () => void }) {
             transform: [{ translateX: fdx }, { translateY: fdy }, { scale: fs }],
           }}
         >
-          <Image source={LOGO} style={StyleSheet.absoluteFill} contentFit="contain" />
-          <Animated.View style={[StyleSheet.absoluteFill, { opacity: red }]}>
-            <Image source={LOGO_GRAD} style={StyleSheet.absoluteFill} contentFit="contain" />
-          </Animated.View>
+          <Image source={LOGO_GRAD} style={StyleSheet.absoluteFill} contentFit="contain" />
         </Animated.View>
       ) : null}
     </View>
