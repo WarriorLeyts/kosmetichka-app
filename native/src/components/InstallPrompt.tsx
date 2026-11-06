@@ -115,7 +115,7 @@ export function InstallPrompt() {
     <Sheet open={open} onClose={close}>
       <View style={styles.body}>
         <View style={styles.head}>
-          <Image source={{ uri: "/assets/pwa/icon-180.png" }} style={styles.appIcon} accessibilityIgnoresInvertColors />
+          <Image source={{ uri: "/assets/pwa/icon-180.png?v=2" }} style={styles.appIcon} accessibilityIgnoresInvertColors />
           <View style={{ flex: 1 }}>
             <Text style={[iosText.headline, { color: c.label }]}>Установите приложение «Косметичка»</Text>
             <Text style={[iosText.footnote, { color: c.secondary, marginTop: 2 }]}>Откроется с экрана «Домой» — как обычное приложение, с уведомлениями о заказах</Text>

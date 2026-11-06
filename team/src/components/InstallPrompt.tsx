@@ -85,7 +85,7 @@ export function IOSInstallSheet({ open, onClose }: { open: boolean; onClose: () 
   return (
     <Sheet open={open} onClose={onClose}>
       <View style={styles.head}>
-        <Image source={{ uri: `${BASE_PATH}/assets/pwa/icon-180.png` }} style={styles.appIcon} accessibilityIgnoresInvertColors />
+        <Image source={{ uri: `${BASE_PATH}/assets/pwa/icon-180.png?v=2` }} style={styles.appIcon} accessibilityIgnoresInvertColors />
         <Text style={[styles.title, { color: c.label }]}>Установите «Косметичка Team»</Text>
         <Text style={[styles.sub, { color: c.secondary }]}>Откроется как приложение — без панелей браузера и с уведомлениями о заказах.</Text>
       </View>
