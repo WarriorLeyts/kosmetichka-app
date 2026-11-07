@@ -87,6 +87,8 @@ export type CustomerMsg = { id: number; text: string; isFromPicker: boolean; use
 export type CustomerRow = {
   id: number; name: string | null; companyName: string | null; phone: string | null; email: string | null; inn: string | null; city: string | null;
   priceType: string; priceTypeLabel: string; isActive: boolean; isApproved: boolean; manager: string | null; displayName: string; createdAt: string;
+  /** linked to a 1С counterparty — sent to admins only */
+  inOneC?: boolean;
   /** customer's request for a wholesale price type */
   roleRequest?: string | null; roleRequestStatus?: string | null;
   /** a sign-up set aside as «Неактуальные» (ISO) */
