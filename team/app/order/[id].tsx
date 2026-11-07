@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Alert, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Linking, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -280,6 +280,29 @@ export default function OrderScreen() {
   }, [orderId, chatKey]);
 
   // «Заказ оформлен» is not offered until the customer checked and confirmed the order
+  /** the customer agreed outside the app: confirm the order for them (admin / manager) */
+  const confirmForCustomer = () =>
+    Alert.alert("Подтвердить за клиента?", `Заказ № ${orderId} будет подтверждён, как если бы клиент нажал «Подтвердить заказ». В чате будет видно, что подтвердили вы.`, [
+      { text: "Отмена", style: "cancel" },
+      {
+        text: "Подтвердить",
+        onPress: async () => {
+          if (running.current) return;
+          running.current = true;
+          setBusy("confirm");
+          try {
+            await post(`/api/admin/orders/${orderId}/confirm`, {});
+            await reload();
+          } catch (e) {
+            Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+            reload();
+          } finally {
+            running.current = false;
+            setBusy("");
+          }
+        },
+      },
+    ]);
   const waitingCustomer = !!o && (!!o.awaitingConfirmationSince || (o.status === "consultation" && !o.customerConfirmed));
   const actions = useMemo(
     () => (o ? (STATUS_ACTIONS[o.status] ?? []).filter((a) => !(a.to === "payment" && (o.awaitingConfirmationSince || !o.customerConfirmed))) : []),
@@ -338,7 +361,20 @@ export default function OrderScreen() {
               <Text style={{ fontWeight: "400" }}>Заказ у клиента на проверке. «Заказ оформлен» станет доступен после его подтверждения. Клиенту придёт напоминание через 2 ч и через сутки.</Text>
             </Text>
           </View>
-        ) : o.status === "consultation" && o.customerConfirmed ? (
+        ) : null}
+        {waitingCustomer && (me?.role === "admin" || me?.role === "manager") ? (
+          // the customer agreed by phone / in a messenger: a manager or an admin confirms for them
+          <Pressable
+            onPress={confirmForCustomer}
+            disabled={busy === "confirm"}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.confirmFor, { opacity: pressed || busy === "confirm" ? 0.7 : 1 }]}
+          >
+            {busy === "confirm" ? <ActivityIndicator color="#fff" /> : <Ionicons name="checkmark-done" size={19} color="#fff" />}
+            <Text style={styles.confirmForText}>Подтвердить за клиента</Text>
+          </Pressable>
+        ) : null}
+        {waitingCustomer || o.status === "assembly" ? null : o.status === "consultation" && o.customerConfirmed ? (
           <View style={[styles.note, { backgroundColor: "rgba(22,163,74,0.12)" }]}>
             <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
             <Text style={{ color: "#16A34A", fontWeight: "600", flex: 1 }}>Клиент подтвердил заказ — можно нажать «Заказ оформлен»</Text>
@@ -665,6 +701,8 @@ export default function OrderScreen() {
 }
 
 const styles = StyleSheet.create({
+  confirmFor: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 24, backgroundColor: "#16A34A", marginTop: 10 },
+  confirmForText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   total: { color: "#e82c87", fontSize: 22, fontWeight: "800" },
   note: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, padding: 10, marginTop: 10 },
