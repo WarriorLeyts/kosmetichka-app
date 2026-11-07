@@ -1,7 +1,7 @@
 import { useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AccessibilityInfo, ActivityIndicator, Alert, Animated, FlatList, ScrollView, Pressable, StyleSheet, Text, useWindowDimensions, View,
+  AccessibilityInfo, ActivityIndicator, Alert, Animated, FlatList, ScrollView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View,
 } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -85,6 +85,10 @@ export default function ProductScreen() {
   const [qty, setLocalQty] = useState(1);
   const [titleBox, setTitleBox] = useState<{ y: number; h: number } | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
+  // In the browser the scroll position reaches the animations only after the page has moved (no native
+  // driver), so anything pinned by following the scroll shakes. There: the simple header outside the
+  // scroll (fades in, never moves) and no photo-to-thumbnail flight — as with «reduce motion».
+  const simple = reduceMotion || Platform.OS === "web";
   const scrollY = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
   const padY = useRef(0);
@@ -177,6 +181,7 @@ export default function ProductScreen() {
       title,
       compactTitle: { opacity: p(D * 0.85, D, 0, 1), transform: [{ translateY: pin }] },
       headerBg: { opacity: p(D * 0.45, D, 0, 1), transform: [{ translateY: pin }] },
+      headerFade: { opacity: p(D * 0.45, D, 0, 1) },
       fadeEarly: { opacity: p(0, D * 0.45, 1, 0) },
       reducedThumb: { opacity: p(D * 0.7, D, 0, 1) },
     };
@@ -189,7 +194,7 @@ export default function ProductScreen() {
       <Pressable onPress={goBack} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={styles.barBtn}>
         <Ionicons name="chevron-back" size={28} color={c.label} />
       </Pressable>
-      <Animated.View style={[{ flex: 1, alignItems: "center" }, !reduceMotion && anim.fadeEarly]}>
+      <Animated.View style={[{ flex: 1, alignItems: "center" }, !simple && anim.fadeEarly]}>
         <Wordmark />
       </Animated.View>
       {product ? (
@@ -485,9 +490,9 @@ export default function ProductScreen() {
   // compact header background: pinned, light with a thin shadow
   const headerBg = (
         <Animated.View
-          style={[{ pointerEvents: "none" }, styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#211032" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, anim.headerBg]}
+          style={[{ pointerEvents: "none" }, styles.headerBg, { height: T + COMPACT, backgroundColor: dark ? "#211032" : "#fff", borderBottomColor: c.separator }, !dark && styles.headerShadow, simple ? anim.headerFade : anim.headerBg]}
         >
-          {reduceMotion ? (
+          {simple ? (
             <Animated.View style={[styles.reducedRow, { top: T }, anim.reducedThumb]}>
               {images[slide] ? <Image source={{ uri: images[slide] }} style={{ width: THUMB, height: THUMB }} contentFit="contain" /> : null}
               <Text style={{ flex: 1, fontSize: SMALL_FONT, fontWeight: "600", color: c.label }} numberOfLines={2}>
@@ -575,7 +580,7 @@ export default function ProductScreen() {
       >
         {/* place for the big photo (the photo itself is drawn above, see below) */}
         <View style={{ height: S }} />
-        <Animated.View style={[styles.dots, !reduceMotion && anim.fadeEarly]}>
+        <Animated.View style={[styles.dots, !simple && anim.fadeEarly]}>
           {images.length > 1
             ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? VIOLET : dark ? "#43295A" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
             : null}
@@ -590,7 +595,7 @@ export default function ProductScreen() {
         </View>
         {/* title placeholder: keeps the place in the layout; the visible title is the animated copy */}
         <Text
-          style={[titleStyle, { marginLeft: 16, opacity: titleBox && !reduceMotion ? 0 : 1 }]}
+          style={[titleStyle, { marginLeft: 16, opacity: titleBox && !simple ? 0 : 1 }]}
           onLayout={(e) => setTitleBox({ y: e.nativeEvent.layout.y, h: e.nativeEvent.layout.height })}
         >
           {product.name}
@@ -603,21 +608,21 @@ export default function ProductScreen() {
 
         {relatedBlock}
 
-        {!reduceMotion ? headerBg : null}
+        {!simple ? headerBg : null}
 
         {/* the photo: shrinks into the compact header thumbnail while scrolling (same element, no swap) */}
         <Animated.View
           style={[
             styles.photo,
             { top: PHOTO_TOP, left: (W - S) / 2, width: S, height: S, backgroundColor: dark ? "#fff" : "transparent" },
-            !reduceMotion && anim.photo,
+            !simple && anim.photo,
           ]}
         >
           {gallery}
         </Animated.View>
 
         {/* the title: moves next to the thumbnail and gets smaller */}
-        {titleBox && !reduceMotion ? (
+        {titleBox && !simple ? (
           <>
             <Animated.Text importantForAccessibility="no-hide-descendants" accessibilityElementsHidden style={[titleStyle, styles.abs, { top: titleBox.y, left: 16 }, anim.title]}>
               {product.name}
@@ -637,8 +642,9 @@ export default function ProductScreen() {
             </Animated.Text>
           </>
         ) : null}
-        {reduceMotion ? headerBg : null}
       </Animated.ScrollView>
+
+      {simple ? headerBg : null}
 
       {topBar}
 
