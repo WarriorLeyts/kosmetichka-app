@@ -116,7 +116,7 @@ export function RoleSheet({ open, onClose }: { open: boolean; onClose: () => voi
       ) : (
         <>
           <View style={[styles.group, { backgroundColor: c.cell }]}>
-            {info.roleOptions.filter((o) => RETAIL_ENABLED || o.value !== "retail" || o.state === "current").map((o, i) => (
+            {info.roleOptions.filter((o) => (RETAIL_ENABLED || o.value !== "retail" || o.state === "current") && (o.value !== "big_wholesale" || o.state === "current")).map((o, i) => (
               <Pressable
                 key={o.value}
                 onPress={() => pick(o)}

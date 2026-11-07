@@ -24,7 +24,7 @@ const VIOLET = "#8b1ee6";
 const TYPES: { value: string; label: string; desc: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: "retail", label: "Розница", desc: "Покупаю для себя", icon: "bag-handle-outline" },
   { value: "wholesale", label: "Опт", desc: "Для перепродажи", icon: "storefront-outline" },
-  { value: "big_wholesale", label: "Крупный опт", desc: "Крупные закупки", icon: "business-outline" },
+  // «Крупный опт» is not chosen at sign-up any more (the cart still gives its prices from 50 000 ₽)
 ];
 
 type Errors = Partial<Record<"name" | "address" | "email" | "password" | "phone" | "smsCode" | "captcha" | "consent" | "shopType" | "proofs", string>>;
