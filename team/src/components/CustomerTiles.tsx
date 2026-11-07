@@ -107,7 +107,7 @@ export function CustomerTiles({
                   </View>
                   <Text style={[st.count, small && st.countSmall, { color: c.label }]}>{n(value)}</Text>
                   <Text
-                    style={[st.sub, small && st.subSmall, { color: hot ? (t.value === "pending" ? (dark ? "#FCD34D" : "#B45309") : dark ? "#D8B4FE" : "#7E22CE") : c.secondary }, hot && { fontWeight: "700" }]}
+                    style={[st.sub, small && st.subSmall, { color: hot && t.value !== "pending" ? (dark ? "#D8B4FE" : "#7E22CE") : c.secondary }, hot && { fontWeight: "700" }]}
                     numberOfLines={1}
                   >
                     {counts ? t.sub(value) : " "}
