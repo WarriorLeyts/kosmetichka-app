@@ -23,7 +23,7 @@ const VIOLET = "#8b1ee6";
 // strictly three customer types (no «Скидка» at registration)
 const TYPES: { value: string; label: string; desc: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { value: "retail", label: "Розница", desc: "Покупаю для себя", icon: "bag-handle-outline" },
-  { value: "wholesale", label: "Опт", desc: "Для перепродажи", icon: "storefront-outline" },
+  { value: "wholesale", label: "Опт / Крупный опт", desc: "Для перепродажи", icon: "storefront-outline" },
   // «Крупный опт» is not chosen at sign-up any more (the cart still gives its prices from 50 000 ₽)
 ];
 
