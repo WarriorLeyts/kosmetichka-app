@@ -31,6 +31,9 @@ export default function Customers() {
   const admin = useAuth((s) => s.user?.role === "admin");
   // admin: wholesale customers with their 1С manager / without one
   const [manager, setManager] = useState("");
+  // shown under «Опт» / «Кр. опт» only; leaving them drops the filter
+  const optTab = type === "wholesale" || type === "big_wholesale";
+  if (!optTab && manager) setManager("");
   // «Найдено» only from the answer for the current search / filters (a slower old one must not overwrite it)
   const filterKey = `${q}|${status}|${type}|${period.from}|${period.to}|${manager}`;
   const latest = useRef(filterKey);
@@ -44,7 +47,7 @@ export default function Customers() {
       if (type) p.set("type", type);
       if (period.from) p.set("from", period.from);
       if (period.to) p.set("to", period.to);
-      if (admin && manager) p.set("manager", manager);
+      if (admin && optTab && manager) p.set("manager", manager);
       const r = await get<CustomersPage>(`/api/team/customers?${p}`);
       if (latest.current === mine) {
         setTotal(r.totalCount);
@@ -68,7 +71,7 @@ export default function Customers() {
           <SearchField value={q} onChange={setQ} placeholder="Имя, компания, телефон, email" />
           <PeriodFilter value={period} onChange={setPeriod} count={counts?.all} />
           <CustomerTiles counts={counts} status={status} setStatus={setStatus} type={type} setType={setType} desktop={desktop} />
-          {admin ? <ManagerFilter value={manager} onChange={setManager} counts={counts?.managers} /> : null}
+          {admin && optTab ? <ManagerFilter value={manager} onChange={setManager} counts={counts?.managers} /> : null}
           {total != null ? <Text style={{ color: c.secondary, fontSize: 13, marginBottom: 8, marginLeft: 4 }}>Найдено: {total}</Text> : null}
         </>
       }
