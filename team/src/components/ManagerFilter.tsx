@@ -4,7 +4,7 @@ import { useIOS } from "@/ios";
 import { VIOLET } from "@/components/kit";
 
 const OPTIONS = [
-  { value: "", key: "all", label: "Все оптовики" },
+  { value: "", key: "all", label: "Все опт" },
   { value: "linked", key: "linked", label: "С менеджером" },
   { value: "nomanager", key: "nomanager", label: "Без менеджера" },
 ] as const;
@@ -29,7 +29,7 @@ export function ManagerFilter({ value, onChange, counts }: { value: string; onCh
             }}
             accessibilityRole="button"
             accessibilityState={{ selected: on }}
-            style={[st.item, on && { backgroundColor: VIOLET }]}
+            style={[st.item, o.key !== "all" && { flexGrow: 1.35 }, on && { backgroundColor: VIOLET }]}
           >
             <Text style={[st.text, { color: on ? "#fff" : alert ? warn : c.label }]} numberOfLines={1}>
               {o.label}
@@ -44,6 +44,6 @@ export function ManagerFilter({ value, onChange, counts }: { value: string; onCh
 
 const st = StyleSheet.create({
   seg: { flexDirection: "row", borderWidth: 1, borderRadius: 16, padding: 4, gap: 4, marginBottom: 10 },
-  item: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 8, paddingHorizontal: 4, borderRadius: 12 },
+  item: { flexGrow: 1, flexBasis: 0, alignItems: "center", justifyContent: "center", paddingVertical: 8, paddingHorizontal: 4, borderRadius: 12 },
   text: { fontSize: 13.5, fontWeight: "600" },
 });
