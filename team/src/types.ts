@@ -98,7 +98,14 @@ export type CustomersPage = Paging & {
   customers: CustomerRow[];
   filters: { q: string; status: string };
   /** tiles: each status within the chosen type, each type within the chosen status (+ search) */
-  counts?: { all: number; newWeek: number; byStatus: Record<string, number>; types: Record<string, number> };
+  counts?: {
+    all: number;
+    newWeek: number;
+    byStatus: Record<string, number>;
+    types: Record<string, number>;
+    /** admins only: wholesale customers — all / with their 1С manager / without */
+    managers?: { all: number; linked: number; nomanager: number };
+  };
 };
 export type CustomerDetail = {
   customer: CustomerRow & {
