@@ -1,5 +1,6 @@
 import { Text, View } from "react-native";
 import { useWarehouseStock } from "../warehouseStock";
+import { WarehousePills } from "./WarehousePills";
 
 export type WarehouseQty = { name: string; qty: number };
 
@@ -24,9 +25,7 @@ export function StockLine({ stock, need, big, byWarehouse: given, productId }: {
   return (
     <View>
       {total}
-      <Text style={{ color: "#6B7280", fontSize: big ? 14 : 12, marginTop: 2 }}>
-        {byWarehouse.map((w) => `${w.name}: ${w.qty}`).join(" · ")}
-      </Text>
+      <WarehousePills list={byWarehouse} />
     </View>
   );
 }
