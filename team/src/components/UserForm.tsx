@@ -23,7 +23,7 @@ export function UserForm({ initial, isNew, onSubmit, busy, groups }: { initial: 
     if (!d.login.trim()) e.login = "Введите логин";
     if (isNew && !d.password) e.password = "Введите пароль";
     if (d.password && d.password.length < 6) e.password = "Минимум 6 символов";
-    if (d.role === "manager" && !d.oneCGroup) e.oneCGroup = "Выберите группу в 1С";
+    if (d.role === "manager" && !d.oneCGroup) e.oneCGroup = "Выберите группу 1С или «Розничные клиенты»";
     setErr(e);
     if (Object.keys(e).length) return;
     onSubmit({ ...d, name: d.name.trim(), login: d.login.trim(), oneCGroup: d.role === "manager" ? d.oneCGroup : "" });
@@ -37,9 +37,9 @@ export function UserForm({ initial, isNew, onSubmit, busy, groups }: { initial: 
       <Chips items={ROLES.map((r) => ({ value: r.value, label: r.label }))} value={d.role} onChange={(v) => setD({ ...d, role: v as UserDraft["role"] })} />
       {d.role === "manager" ? (
         <View style={{ marginBottom: 12 }}>
-          <Text style={{ color: c.label, fontSize: 15, fontWeight: "600" }}>Группа в 1С</Text>
+          <Text style={{ color: c.label, fontSize: 15, fontWeight: "600" }}>Чьих клиентов ведёт</Text>
           <Text style={{ color: c.secondary, fontSize: 13, marginTop: 2, marginBottom: 8 }}>
-            Менеджер видит только клиентов этой группы и их заказы
+            Группа 1С — оптовые клиенты этой группы и их заказы. «Розничные клиенты» — все розничные (с картой и без) и их заказы
           </Text>
           {[...new Set([...groups, ...(d.oneCGroup ? [d.oneCGroup] : [])])].map((g, i) => {
             const on = d.oneCGroup === g;
@@ -53,6 +53,7 @@ export function UserForm({ initial, isNew, onSubmit, busy, groups }: { initial: 
               >
                 <Ionicons name={on ? "checkmark-circle" : "ellipse-outline"} size={22} color={on ? VIOLET : c.tertiary} />
                 <Text style={{ color: c.label, fontSize: 16, fontWeight: on ? "600" : "400", flex: 1 }}>{g}</Text>
+                {g === "Розничные клиенты" ? <Ionicons name="bag-handle-outline" size={18} color={c.secondary} /> : null}
               </Pressable>
             );
           })}
