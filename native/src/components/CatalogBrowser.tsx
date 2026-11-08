@@ -20,6 +20,7 @@ import { TitleBar } from "@/components/iosui/TitleBar";
 import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
+import { BrandSheet } from "@/components/BrandSheet";
 import { DESKTOP_SIDEBAR_W, DesktopCategories } from "@/components/DesktopCategories";
 import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
@@ -127,6 +128,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const [error, setError] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
+  const [brandOpen, setBrandOpen] = useState(false);
   // far down the list: a round «наверх» button takes the customer back to the search at once
   const [toTop, setToTop] = useState(false);
   const reqId = useRef(0);
@@ -295,6 +297,17 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           {busy ? (f.typing || f.search ? "Поиск…" : "Загрузка…") : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
         </Text>
         <Pressable
+          onPress={() => { tap(); setBrandOpen(true); }}
+          accessibilityRole="button"
+          accessibilityLabel={f.brandGuids.length ? `Бренд, выбрано ${f.brandGuids.length}` : "Бренд"}
+          style={[styles.brandBtn, f.brandGuids.length ? styles.brandBtnOn : { backgroundColor: c.cell }]}
+        >
+          <Text style={[styles.sortText, { color: f.brandGuids.length ? "#fff" : c.label }]} numberOfLines={1}>
+            {f.brandGuids.length ? `Бренд · ${f.brandGuids.length}` : "Бренд"}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color={f.brandGuids.length ? "#fff" : c.label} />
+        </Pressable>
+        <Pressable
           onPress={() => { tap(); router.push(`/filters${routeSuffix}`); }}
           accessibilityRole="button"
           accessibilityLabel={filterCount > 0 ? `Фильтры, выбрано ${filterCount}` : "Фильтры"}
@@ -452,6 +465,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           }}
         />
       </Sheet>
+      <BrandSheet open={brandOpen} onClose={() => setBrandOpen(false)} store={store} />
       <CategoryDrawer
         open={catOpen}
         onClose={closeCats}
@@ -487,7 +501,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, minWidth: 0, fontSize: 17, height: "100%" },
   scan: { width: 42, height: 42, borderRadius: 21, alignItems: "center", justifyContent: "center", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" },
   controls: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 5, marginTop: 14, marginBottom: 8 },
-  count: { flex: 1, fontSize: 15 },
+  count: { flex: 1, minWidth: 0, fontSize: 15 },
   filterBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
   filterBadge: {
     position: "absolute",
@@ -513,6 +527,8 @@ const styles = StyleSheet.create({
     boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
   },
   sortText: { fontSize: 15, flexShrink: 1 },
+  brandBtn: { flexDirection: "row", alignItems: "center", gap: 5, height: 38, borderRadius: 19, paddingHorizontal: 13, flexShrink: 0, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" },
+  brandBtnOn: { backgroundColor: "#8b3dff" },
   catChip: {
     flexDirection: "row",
     alignItems: "center",

@@ -203,6 +203,17 @@ export const api = {
     p.set("lite", "1");
     return request(`/api/catalog/products?${p.toString()}`, signal ? { signal } : {});
   },
+  /** brands of the products this search / these filters find (the brand filter itself ignored), most first */
+  brandFacets(q: CatalogQuery, signal?: AbortSignal): Promise<{ brands: { guid: string; name: string; count: number }[] }> {
+    const p = new URLSearchParams();
+    p.set("facets", "brand");
+    if (q.search) p.set("search", q.search);
+    q.categoryGuids?.forEach((g) => p.append("categoryGuid", g));
+    if (q.onlyStock) p.set("onlyStock", "true");
+    q.quick?.forEach((x) => p.append("quick", x));
+    q.nameAny?.forEach((x) => p.append("nameAny", x));
+    return request(`/api/catalog/products?${p.toString()}`, signal ? { signal } : {});
+  },
   /** the cart saved for the account (shared by the site and the apps) */
   cartGet(): Promise<{ items: CartItem[]; comment: string; updatedAt: string | null }> {
     return request("/api/mobile/cart");
