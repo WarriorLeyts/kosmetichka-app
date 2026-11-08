@@ -21,7 +21,6 @@ import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 import { BrandSheet } from "@/components/BrandSheet";
-import { BrandChips } from "@/components/BrandChips";
 import { DESKTOP_SIDEBAR_W, DesktopCategories } from "@/components/DesktopCategories";
 import { Empty, ErrorView, tap } from "@/components/ui";
 import { plural } from "@/format";
@@ -246,11 +245,6 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   // the filters badge: not the sort, not the brands (they show on «Бренд · N»)
   const filterCount = f.activeFilterCount() - (f.sort !== "popularity" ? 1 : 0) - f.brandGuids.length;
   const selectedCat = f.categories.find((x) => x.guid === f.categoryGuid);
-  // the chosen brands with their names (logos above the products)
-  const selectedBrands = useMemo(
-    () => f.brandGuids.map((g) => f.brands.find((b) => b.guid === g)).filter((b): b is NonNullable<typeof b> => !!b),
-    [f.brandGuids, f.brands]
-  );
   const types = f.categoryGuid ? SUB_FILTERS[f.categoryGuid] : undefined;
   const dark = c.blurTint === "dark";
   // a phone: the count, «Бренд», filters and sort in one row — the sort shows only its icon
@@ -349,12 +343,6 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
         </Pressable>
       </View>
 
-      <BrandChips
-        brands={selectedBrands}
-        onRemove={(g) => f.set({ brandGuids: f.brandGuids.filter((x) => x !== g) })}
-        onClear={() => f.set({ brandGuids: [] })}
-        onOpen={() => setBrandOpen(true)}
-      />
       {selectedCat ? (
         <Pressable
           onPress={() => { tap(); f.set({ categoryGuid: null }); }}
