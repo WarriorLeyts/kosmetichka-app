@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Image } from "expo-image";
@@ -13,6 +13,7 @@ import { useDesktop } from "../useDesktop";
 import { CatalogCard } from "./CatalogCard";
 import { CatalogFilters } from "./CatalogFilters";
 import { BrandSheet } from "./BrandSheet";
+import { BrandChips } from "./BrandChips";
 import { CategoryDrawer } from "./CategoryDrawer";
 import { Sheet, SheetOptions } from "./iosui/Sheet";
 import { ErrorState } from "./kit";
@@ -190,6 +191,11 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
   const closeCats = useCallback(() => setCatOpen(false), []);
   const selectCat = useCallback((guid: string | null) => store.getState().set({ categoryGuid: guid }), [store]);
   const nFilters = filterCount(f);
+  // the chosen brands with their names (logos above the products)
+  const selectedBrands = useMemo(
+    () => f.brandGuids.map((g) => meta.brands.find((b) => b.guid === g)).filter((b): b is NonNullable<typeof b> => !!b),
+    [f.brandGuids, meta.brands]
+  );
   // a phone: the count, «Бренд», filters and sort in one row — the sort shows only its icon
   const narrow = !desktop && width < 440;
   const selectedCat = meta.categories.find((x) => x.guid === f.categoryGuid);
@@ -287,6 +293,12 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
         </Pressable>
       </View>
 
+      <BrandChips
+        brands={selectedBrands}
+        onRemove={(g) => f.set({ brandGuids: f.brandGuids.filter((x) => x !== g) })}
+        onClear={() => f.set({ brandGuids: [] })}
+        onOpen={() => setBrandOpen(true)}
+      />
       {selectedCat ? (
         <Pressable onPress={() => { tap(); f.set({ categoryGuid: null }); }} accessibilityRole="button" accessibilityLabel={`Категория ${selectedCat.name}, убрать`} style={styles.catChip}>
           <Text style={styles.catChipText} numberOfLines={1}>{selectedCat.name}</Text>
