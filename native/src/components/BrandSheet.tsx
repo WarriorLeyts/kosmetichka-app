@@ -223,7 +223,13 @@ export function BrandSheet({ open, onClose, store }: { open: boolean; onClose: (
       </Pressable>
       <GradientButton
         style={{ flex: 1 }}
-        title={picked.length === 0 ? "Показать товары" : `Показать ${found.toLocaleString("ru-RU")} ${plural(found, "товар", "товара", "товаров")}`}
+        title={
+          picked.length === 0
+            ? "Показать товары"
+            : width < 360
+              ? `Показать · ${found.toLocaleString("ru-RU")}`
+              : `Показать ${found.toLocaleString("ru-RU")} ${plural(found, "товар", "товара", "товаров")}`
+        }
         onPress={apply}
       />
     </View>
@@ -255,7 +261,7 @@ export function BrandSheet({ open, onClose, store }: { open: boolean; onClose: (
           <Animated.View
             style={[
               styles.sheet,
-              { height: Math.round(height * 0.88) - (Platform.OS === "web" ? 0 : 0), backgroundColor: c.bg },
+              { height: Math.round(height * 0.88), backgroundColor: c.bg },
               { transform: [{ translateY: anim.interpolate({ inputRange: [0, 1], outputRange: [height * 0.4, 0] }) }] },
             ]}
           >
