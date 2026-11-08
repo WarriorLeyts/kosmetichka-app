@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
+import { useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -7,7 +7,6 @@ import { colors, radius, themed, useTheme } from "@/theme";
 import { SORT_LABELS, catalogStoreByName, type Quick, type Sort } from "@/store/catalog";
 import { Button, tap } from "@/components/ui";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
-import { ClearX } from "@/components/ClearX";
 
 const QUICK: { key: Quick; label: string }[] = [
   { key: "new", label: "Новинки" },
@@ -23,20 +22,12 @@ export default function Filters() {
   const [sort, setSort] = useState<Sort>(s.sort);
   const [onlyStock, setOnlyStock] = useState(s.onlyStock);
   const [quick, setQuick] = useState<Quick[]>(s.quick);
-  const [brands, setBrands] = useState<string[]>(s.brandGuids);
-  const [brandQuery, setBrandQuery] = useState("");
   const [catOpen, setCatOpen] = useState(false);
   const [category, setCategory] = useState<string | null>(s.categoryGuid);
 
-  const brandList = useMemo(() => {
-    const q = brandQuery.trim().toLowerCase();
-    const list = q ? s.brands.filter((b) => b.name.toLowerCase().includes(q)) : s.brands;
-    // selected first
-    return [...list.filter((b) => brands.includes(b.guid)), ...list.filter((b) => !brands.includes(b.guid))].slice(0, 80);
-  }, [s.brands, brandQuery, brands]);
-
   const apply = () => {
-    s.set({ sort, onlyStock, quick, brandGuids: brands, categoryGuid: category });
+    // brands are chosen with «Бренд» in the catalogue, not here
+    s.set({ sort, onlyStock, quick, categoryGuid: category });
     router.back();
   };
 
@@ -85,39 +76,6 @@ export default function Filters() {
           })}
         </View>
 
-        {s.brands.length > 0 && (
-          <>
-            <Text style={styles.h}>Бренды {brands.length > 0 ? `· выбрано ${brands.length}` : ""}</Text>
-            <View style={{ justifyContent: "center" }}>
-              <TextInput
-                value={brandQuery}
-                onChangeText={setBrandQuery}
-                placeholder="Найти бренд"
-                placeholderTextColor={colors.faint}
-                style={[styles.search, { paddingRight: 44 }]}
-                autoCorrect={false}
-              />
-              <View style={{ position: "absolute", right: 8 }}>
-                <ClearX value={brandQuery} onClear={() => setBrandQuery("")} color={colors.faint} />
-              </View>
-            </View>
-            <View style={styles.box}>
-              {brandList.map((b, i) => {
-                const on = brands.includes(b.guid);
-                return (
-                  <Pressable
-                    key={b.guid}
-                    onPress={() => { tap(); setBrands(on ? brands.filter((x) => x !== b.guid) : [...brands, b.guid]); }}
-                    style={[styles.row, i > 0 && styles.sep]}
-                  >
-                    <Text style={styles.rowText}>{b.name}</Text>
-                    <Ionicons name={on ? "checkbox" : "square-outline"} size={22} color={on ? colors.pink : colors.faint} />
-                  </Pressable>
-                );
-              })}
-            </View>
-          </>
-        )}
       </ScrollView>
 
       <CategoryDrawer
@@ -137,7 +95,6 @@ export default function Filters() {
             setSort("popularity");
             setOnlyStock(false);
             setQuick([]);
-            setBrands([]);
             setCategory(null);
           }}
         />

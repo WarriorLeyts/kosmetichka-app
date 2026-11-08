@@ -242,7 +242,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const routeSuffix = storeName === "main" ? "" : `?store=${storeName}`;
   // typing or a new first page on its way: show «loading» at once instead of the old list
   const busy = f.typing || (loading && replacing);
-  const filterCount = f.activeFilterCount() - (f.sort !== "popularity" ? 1 : 0);
+  // the filters badge: not the sort, not the brands (they show on «Бренд · N»)
+  const filterCount = f.activeFilterCount() - (f.sort !== "popularity" ? 1 : 0) - f.brandGuids.length;
   const selectedCat = f.categories.find((x) => x.guid === f.categoryGuid);
   const types = f.categoryGuid ? SUB_FILTERS[f.categoryGuid] : undefined;
   const dark = c.blurTint === "dark";
