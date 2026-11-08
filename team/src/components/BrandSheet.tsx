@@ -215,9 +215,9 @@ export function BrandSheet({ open, onClose, store }: { open: boolean; onClose: (
         disabled={picked.length === 0}
         accessibilityRole="button"
         accessibilityState={{ disabled: picked.length === 0 }}
-        style={({ pressed }) => [styles.reset, { borderColor: dark ? "rgba(200,160,255,0.35)" : "#DCCDF6", opacity: picked.length === 0 ? 0.45 : pressed ? 0.7 : 1 }]}
+        style={({ pressed }) => [styles.reset, width < 360 && { paddingHorizontal: 14 }, { borderColor: dark ? "rgba(200,160,255,0.35)" : "#DCCDF6", opacity: picked.length === 0 ? 0.45 : pressed ? 0.7 : 1 }]}
       >
-        <Text style={styles.resetText}>Сбросить</Text>
+        <Text style={styles.resetText}>{width < 360 ? "Сброс" : "Сбросить"}</Text>
       </Pressable>
       <GradientButton
         style={{ flex: 1 }}
