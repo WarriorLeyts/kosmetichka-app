@@ -36,6 +36,7 @@ export function CustomerTiles({
   setType,
   desktop,
   showTypes = true,
+  hideTypes = [],
 }: {
   counts: CustomersPage["counts"] | undefined;
   status: string;
@@ -45,6 +46,8 @@ export function CustomerTiles({
   desktop: boolean;
   /** the price-type switch (hidden for the retail account: all its customers are retail) */
   showTypes?: boolean;
+  /** price-type tabs not shown (a 1С group manager has no retail customers) */
+  hideTypes?: string[];
 }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -124,7 +127,7 @@ export function CustomerTiles({
 
       {showTypes ? (
       <View style={[st.seg, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF", borderColor: dark ? "rgba(200,160,255,0.2)" : "#ECE6F4" }]}>
-        {TYPES.map((t) => {
+        {TYPES.filter((t) => !hideTypes.includes(t.value)).map((t) => {
           const on = type === t.value;
           return (
             <Pressable
