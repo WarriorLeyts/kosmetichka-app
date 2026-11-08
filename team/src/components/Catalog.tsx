@@ -12,6 +12,7 @@ import { SUB_FILTERS } from "../subFilters";
 import { useDesktop } from "../useDesktop";
 import { CatalogCard } from "./CatalogCard";
 import { CatalogFilters } from "./CatalogFilters";
+import { BrandSheet } from "./BrandSheet";
 import { CategoryDrawer } from "./CategoryDrawer";
 import { Sheet, SheetOptions } from "./iosui/Sheet";
 import { ErrorState } from "./kit";
@@ -116,6 +117,7 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
   const [sortOpen, setSortOpen] = useState(false);
   const [catOpen, setCatOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [brandOpen, setBrandOpen] = useState(false);
   const [scan, setScan] = useState(false);
   const [scanMsg, setScanMsg] = useState("");
   const reqId = useRef(0);
@@ -188,6 +190,8 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
   const closeCats = useCallback(() => setCatOpen(false), []);
   const selectCat = useCallback((guid: string | null) => store.getState().set({ categoryGuid: guid }), [store]);
   const nFilters = filterCount(f);
+  // a phone: the count, «Бренд», filters and sort in one row — the sort shows only its icon
+  const narrow = !desktop && width < 440;
   const selectedCat = meta.categories.find((x) => x.guid === f.categoryGuid);
   const types = f.categoryGuid ? SUB_FILTERS[f.categoryGuid] : undefined;
   const fieldBg = dark ? "#2B193D" : "rgba(118,118,128,0.12)";
@@ -240,6 +244,17 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
           {loading && products.length === 0 ? "Загрузка…" : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
         </Text>
         <Pressable
+          onPress={() => { tap(); setBrandOpen(true); }}
+          accessibilityRole="button"
+          accessibilityLabel={f.brandGuids.length ? `Бренд, выбрано ${f.brandGuids.length}` : "Бренд"}
+          style={[styles.brandBtn, f.brandGuids.length ? { backgroundColor: VIOLET } : { backgroundColor: c.cell }]}
+        >
+          <Text style={[styles.sortText, { color: f.brandGuids.length ? "#fff" : c.label }]} numberOfLines={1}>
+            {f.brandGuids.length ? `Бренд · ${f.brandGuids.length}` : "Бренд"}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color={f.brandGuids.length ? "#fff" : c.label} />
+        </Pressable>
+        <Pressable
           onPress={() => { tap(); setFiltersOpen(true); }}
           accessibilityRole="button"
           accessibilityLabel={nFilters > 0 ? `Фильтры, выбрано ${nFilters}` : "Фильтры"}
@@ -256,10 +271,19 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
           onPress={() => { tap(); setSortOpen(true); }}
           accessibilityRole="button"
           accessibilityLabel={`Сортировка: ${SORT_LABELS[f.sort]}`}
-          style={[styles.sortBtn, { backgroundColor: c.cell }]}
+          style={[styles.sortBtn, narrow && styles.sortBtnIcon, { backgroundColor: c.cell }]}
         >
-          <Text style={[styles.sortText, { color: c.label }]} numberOfLines={1}>{SORT_LABELS[f.sort]}</Text>
-          <Ionicons name="chevron-down" size={16} color={c.label} />
+          {narrow ? (
+            <>
+              <Ionicons name="swap-vertical" size={19} color={c.label} />
+              {f.sort !== "popularity" ? <View style={styles.sortDot} /> : null}
+            </>
+          ) : (
+            <>
+              <Text style={[styles.sortText, { color: c.label }]} numberOfLines={1}>{SORT_LABELS[f.sort]}</Text>
+              <Ionicons name="chevron-down" size={16} color={c.label} />
+            </>
+          )}
         </Pressable>
       </View>
 
@@ -361,6 +385,7 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
         />
       </Sheet>
       <CategoryDrawer open={catOpen} onClose={closeCats} categories={meta.categories} selected={f.categoryGuid} onSelect={selectCat} />
+      <BrandSheet open={brandOpen} onClose={() => setBrandOpen(false)} store={store} />
       <CatalogFilters open={filtersOpen} onClose={() => setFiltersOpen(false)} store={store} />
       <Scanner open={scan} onClose={() => setScan(false)} onCode={onScanned} />
     </View>
@@ -378,7 +403,10 @@ const styles = StyleSheet.create({
   segItem: { flexGrow: 1, flexShrink: 1, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
   segText: { fontSize: 13.5 },
   controls: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 5, marginTop: 12, marginBottom: 8 },
-  count: { flex: 1, fontSize: 15 },
+  count: { flex: 1, minWidth: 0, fontSize: 15 },
+  brandBtn: { flexDirection: "row", alignItems: "center", gap: 5, height: 38, borderRadius: 19, paddingHorizontal: 13, flexShrink: 0, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" },
+  sortBtnIcon: { width: 38, paddingHorizontal: 0, justifyContent: "center" },
+  sortDot: { position: "absolute", top: 2, right: 2, width: 9, height: 9, borderRadius: 5, backgroundColor: VIOLET },
   filterBtn: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center" },
   filterBadge: { position: "absolute", top: -3, right: -3, minWidth: 17, height: 17, borderRadius: 9, backgroundColor: VIOLET, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
   filterBadgeText: { color: "#fff", fontSize: 10, fontWeight: "700" },

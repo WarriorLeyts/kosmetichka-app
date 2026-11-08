@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, themed } from "../theme";
@@ -7,7 +7,6 @@ import { SORT_LABELS, useCatalogMeta, type CatalogStore, type Quick, type Sort }
 import { useDesktop } from "../useDesktop";
 import { Button, tap } from "./ui";
 import { CategoryDrawer } from "./CategoryDrawer";
-import { ClearX } from "@/components/ClearX";
 
 const QUICK: { key: Quick; label: string }[] = [
   { key: "new", label: "Новинки" },
@@ -15,7 +14,7 @@ const QUICK: { key: Quick; label: string }[] = [
   { key: "gift", label: "Подарочные наборы" },
 ];
 
-/** «Фильтры» of the customer app (category, sorting, in stock, quick filters, brands) as a full-screen panel. */
+/** «Фильтры» of the customer app (category, sorting, in stock, quick filters; brands — «Бренд») as a full-screen panel. */
 export function CatalogFilters({ open, onClose, store }: { open: boolean; onClose: () => void; store: CatalogStore }) {
   const insets = useSafeAreaInsets();
   const desktop = useDesktop();
@@ -23,8 +22,6 @@ export function CatalogFilters({ open, onClose, store }: { open: boolean; onClos
   const [sort, setSort] = useState<Sort>("popularity");
   const [onlyStock, setOnlyStock] = useState(false);
   const [quick, setQuick] = useState<Quick[]>([]);
-  const [brands, setBrands] = useState<string[]>([]);
-  const [brandQuery, setBrandQuery] = useState("");
   const [catOpen, setCatOpen] = useState(false);
   const [category, setCategory] = useState<string | null>(null);
 
@@ -35,20 +32,12 @@ export function CatalogFilters({ open, onClose, store }: { open: boolean; onClos
     setSort(s.sort);
     setOnlyStock(s.onlyStock);
     setQuick(s.quick);
-    setBrands(s.brandGuids);
     setCategory(s.categoryGuid);
-    setBrandQuery("");
   }, [open, store]);
 
-  const brandList = useMemo(() => {
-    const q = brandQuery.trim().toLowerCase();
-    const list = q ? meta.brands.filter((b) => b.name.toLowerCase().includes(q)) : meta.brands;
-    // selected first
-    return [...list.filter((b) => brands.includes(b.guid)), ...list.filter((b) => !brands.includes(b.guid))].slice(0, 80);
-  }, [meta.brands, brandQuery, brands]);
-
   const apply = () => {
-    store.getState().set({ sort, onlyStock, quick, brandGuids: brands, categoryGuid: category });
+    // brands are chosen with «Бренд» in the catalogue, not here
+    store.getState().set({ sort, onlyStock, quick, categoryGuid: category });
     onClose();
   };
 
@@ -106,41 +95,6 @@ export function CatalogFilters({ open, onClose, store }: { open: boolean; onClos
             })}
           </View>
 
-          {meta.brands.length > 0 && (
-            <>
-              <Text style={styles.h}>Бренды {brands.length > 0 ? `· выбрано ${brands.length}` : ""}</Text>
-              <View style={{ justifyContent: "center" }}>
-                <TextInput
-                  value={brandQuery}
-                  onChangeText={setBrandQuery}
-                  placeholder="Найти бренд"
-                  placeholderTextColor={colors.faint}
-                  style={[styles.search, { paddingRight: 44 }]}
-                  autoCorrect={false}
-                />
-                <View style={{ position: "absolute", right: 8 }}>
-                  <ClearX value={brandQuery} onClear={() => setBrandQuery("")} color={colors.faint} />
-                </View>
-              </View>
-              <View style={styles.box}>
-                {brandList.map((b, i) => {
-                  const on = brands.includes(b.guid);
-                  return (
-                    <Pressable
-                      key={b.guid}
-                      onPress={() => { tap(); setBrands(on ? brands.filter((x) => x !== b.guid) : [...brands, b.guid]); }}
-                      style={[styles.row, i > 0 && styles.sep]}
-                      accessibilityRole="checkbox"
-                      accessibilityState={{ checked: on }}
-                    >
-                      <Text style={styles.rowText}>{b.name}</Text>
-                      <Ionicons name={on ? "checkbox" : "square-outline"} size={22} color={on ? colors.pink : colors.faint} />
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </>
-          )}
         </ScrollView>
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + 12 }]}>
@@ -153,7 +107,6 @@ export function CatalogFilters({ open, onClose, store }: { open: boolean; onClos
                 setSort("popularity");
                 setOnlyStock(false);
                 setQuick([]);
-                setBrands([]);
                 setCategory(null);
               }}
             />

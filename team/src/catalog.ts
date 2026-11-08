@@ -59,6 +59,18 @@ export function fetchCatalog(q: CatalogQuery): Promise<CatalogPage> {
   return request(`/api/catalog/products?${p.toString()}`);
 }
 
+/** brands of the products this search / these filters find (the brand filter itself ignored), most first */
+export function brandFacets(q: CatalogQuery, signal?: AbortSignal): Promise<{ brands: { guid: string; name: string; count: number }[] }> {
+  const p = new URLSearchParams();
+  p.set("facets", "brand");
+  if (q.search) p.set("search", q.search);
+  q.categoryGuids?.forEach((g) => p.append("categoryGuid", g));
+  if (q.onlyStock) p.set("onlyStock", "true");
+  q.quick?.forEach((x) => p.append("quick", x));
+  q.nameAny?.forEach((x) => p.append("nameAny", x));
+  return request(`/api/catalog/products?${p.toString()}`, signal ? { signal } : {});
+}
+
 export const SORT_LABELS: Record<Sort, string> = {
   popularity: "Популярные",
   price_asc: "Сначала дешевле",
@@ -198,7 +210,8 @@ export type CatalogStore = ReturnType<typeof createCatalogStore>;
 
 /** filters chosen besides sorting (the badge on the filters button) */
 export function filterCount(s: CatalogFilters): number {
-  return (s.categoryGuid ? 1 : 0) + s.brandGuids.length + (s.onlyStock ? 1 : 0) + s.quick.length + (s.typeLabel ? 1 : 0);
+  // brands are not here: they show on «Бренд · N»
+  return (s.categoryGuid ? 1 : 0) + (s.onlyStock ? 1 : 0) + s.quick.length + (s.typeLabel ? 1 : 0);
 }
 
 /** the query for the current filters */
