@@ -74,7 +74,7 @@ export default function Customers() {
         <>
           <SearchField value={q} onChange={setQ} placeholder="Имя, компания, телефон, email" />
           <PeriodFilter value={period} onChange={setPeriod} count={counts?.all} />
-          <CustomerTiles counts={counts} status={status} setStatus={setStatus} type={type} setType={setType} desktop={desktop} showTypes={!retailAccount} hideTypes={groupManager ? ["retail"] : []} />
+          <CustomerTiles counts={counts} status={status} setStatus={setStatus} type={type} setType={setType} desktop={desktop} showTypes={!retailAccount} showStatuses={!retailAccount} hideTypes={groupManager ? ["retail"] : []} />
           {admin && optTab ? <ManagerFilter value={manager} onChange={setManager} counts={counts?.managers} /> : null}
           {total != null ? <Text style={{ color: c.secondary, fontSize: 13, marginBottom: 8, marginLeft: 4 }}>Найдено: {total}</Text> : null}
         </>

@@ -37,6 +37,7 @@ export function CustomerTiles({
   desktop,
   showTypes = true,
   hideTypes = [],
+  showStatuses = true,
 }: {
   counts: CustomersPage["counts"] | undefined;
   status: string;
@@ -48,6 +49,8 @@ export function CustomerTiles({
   showTypes?: boolean;
   /** price-type tabs not shown (a 1С group manager has no retail customers) */
   hideTypes?: string[];
+  /** the status tiles (Ожидают, Подтверждённые…) — not for the retail account */
+  showStatuses?: boolean;
 }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -87,7 +90,7 @@ export function CustomerTiles({
                 </View>
               )}
             </Pressable>
-            {TILES.map((t) => {
+            {(showStatuses ? TILES : []).map((t) => {
               const on = status === t.value;
               const value = counts?.byStatus[t.value] ?? 0;
               const hot = t.urgent && value > 0;
