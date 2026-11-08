@@ -41,6 +41,11 @@ export default function Users() {
             <Text style={{ color: c.secondary, marginTop: 4 }}>
               {u.login} · с {date(u.createdAt)}
             </Text>
+            {u.role === "manager" ? (
+              <Text style={{ color: u.oneCGroup ? VIOLET : "#C2410C", marginTop: 3, fontWeight: "600" }} numberOfLines={1}>
+                {u.oneCGroup ? `Группа 1С: ${u.oneCGroup}` : "Группа 1С не выбрана — не видит клиентов"}
+              </Text>
+            ) : null}
           </Card>
         ))
       )}

@@ -4,19 +4,22 @@ import { router } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Card } from "@/components/kit";
 import { UserForm } from "@/components/UserForm";
-import { post } from "@/api";
+import { get, post } from "@/api";
+import { useLoad } from "@/useLoad";
 
 export default function NewUser() {
   const [busy, setBusy] = useState(false);
   // two quick taps on «Добавить» must not create the account twice
   const running = useRef(false);
+  const { data } = useLoad(() => get<{ groups?: string[] }>("/api/team/users"), []);
   return (
     <Screen title="Новый сотрудник">
       <Card>
         <UserForm
           isNew
           busy={busy}
-          initial={{ name: "", login: "", password: "", role: "manager" }}
+          groups={data?.groups ?? []}
+          initial={{ name: "", login: "", password: "", role: "manager", oneCGroup: "" }}
           onSubmit={async (d) => {
             if (running.current) return;
             running.current = true;

@@ -135,10 +135,12 @@ export type Stats = {
   checks: { total: number; byStatus: { status: string; label: string; count: number; percent: number }[] };
 };
 
-export type StaffUser = { id: number; name: string; login: string; role: string; roleLabel: string; createdAt: string; isSelf: boolean };
+export type StaffUser = { id: number; name: string; login: string; role: string; roleLabel: string; oneCGroup?: string | null; createdAt: string; isSelf: boolean };
 export type StaffUserDetail = {
   user: StaffUser & { updatedAt: string; assignedOrdersCount: number; canDelete: boolean };
   roleOptions: { value: "admin" | "manager" | "picker"; label: string }[];
+  /** 1С groups a manager account can get */
+  groups?: string[];
 };
 
 export type PickerOrderRow = {
