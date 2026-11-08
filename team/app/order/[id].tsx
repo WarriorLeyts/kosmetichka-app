@@ -33,7 +33,7 @@ const PROBLEM_LABELS: Record<string, string> = {
   insufficient_qty: "Не хватает",
 };
 
-type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null; removed?: boolean; stock?: number | null };
+type Draft = { id?: number; productId: number; productName: string; barcode?: string | null; quantity: number; price: number; variantName: string | null; variantImageUrl: string | null; imageUrl?: string | null; removed?: boolean; stock?: number | null; stockByWarehouse?: { name: string; qty: number }[] };
 
 /** Order card for managers (the manager collects the order himself): client, status buttons, items (with checks and photos), editing during «Сборка», chat with the customer, history. */
 export default function OrderScreen() {
@@ -210,7 +210,7 @@ export default function OrderScreen() {
 
   const startEdit = () => {
     if (!o) return;
-    setEdit(o.items.map((i) => ({ id: i.id, productId: i.productId, productName: i.productName, barcode: i.barcode, quantity: i.quantity, price: i.price, variantName: i.variantName, variantImageUrl: i.variantImageUrl, imageUrl: i.imageUrl, stock: i.stock })));
+    setEdit(o.items.map((i) => ({ id: i.id, productId: i.productId, productName: i.productName, barcode: i.barcode, quantity: i.quantity, price: i.price, variantName: i.variantName, variantImageUrl: i.variantImageUrl, imageUrl: i.imageUrl, stock: i.stock, stockByWarehouse: i.stockByWarehouse })));
   };
 
   const saveEdit = async () => {
@@ -520,7 +520,7 @@ export default function OrderScreen() {
                           {d.variantName ? <Text style={{ color: VIOLET, fontSize: 13 }}>{d.variantName}</Text> : null}
                           {d.barcode ? <Text style={{ color: c.secondary, fontSize: 12 }}>{d.barcode}</Text> : null}
                         </View>
-                        <StockLine stock={d.stock} need={d.quantity} />
+                        <StockLine stock={d.stock} need={d.quantity} byWarehouse={d.stockByWarehouse} />
                       </View>
                       <Pressable onPress={() => patch(idx, { removed: true })} hitSlop={8} accessibilityLabel="Удалить позицию" style={{ paddingTop: 2 }}>
                         <Ionicons name="trash-outline" size={22} color="#DC2626" />
@@ -665,7 +665,7 @@ export default function OrderScreen() {
               </Text>
               <Text style={{ color: c.label, fontWeight: "700" }}>{money(it.total)}</Text>
             </View>
-            <StockLine stock={it.stock} need={it.quantity} />
+            <StockLine stock={it.stock} need={it.quantity} byWarehouse={it.stockByWarehouse} />
             {it.customerChange ? <ChangePill ch={it.customerChange} who="customer" /> : null}
             {it.staffChange ? <ChangePill ch={it.staffChange} who="staff" /> : null}
           </View>
