@@ -12,6 +12,7 @@ import { VIOLET_PINK } from "./TabBar";
 import { FitText } from "./FitText";
 import { tap } from "./ui";
 import { useWarehouseStock } from "../warehouseStock";
+import { WarehousePills } from "./WarehousePills";
 
 type Props = {
   product: CatalogProduct;
@@ -71,11 +72,7 @@ function CatalogCardBase({ product, priceType, onPress, actionLabel, onAction, b
           {n > 0 ? `Остаток: ${n} шт.` : "Нет в наличии"}
         </Text>
       </View>
-      {byWarehouse?.length ? (
-        <Text style={[styles.warehouses, { color: c.secondary }]} numberOfLines={3}>
-          {byWarehouse.map((w) => `${w.name}: ${w.qty}`).join(" · ")}
-        </Text>
-      ) : null}
+      <WarehousePills list={byWarehouse} small />
 
       {/* light panel in both themes: the pink price stays readable in the dark theme */}
       <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
@@ -128,7 +125,6 @@ const styles = StyleSheet.create({
   stock: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start", maxWidth: "100%", marginTop: 7, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
   stockDot: { width: 7, height: 7, borderRadius: 4 },
   stockText: { fontSize: 12, fontWeight: "600", flexShrink: 1 },
-  warehouses: { fontSize: 11, marginTop: 4, lineHeight: 14 },
   prices: { borderRadius: 14, paddingVertical: 7, paddingHorizontal: 8, marginTop: 9, height: 54, alignItems: "center", justifyContent: "center" },
   priceLabel: { fontSize: 11, textAlign: "center", color: "#e82c87" },
   priceValue: { fontSize: 19, fontWeight: "700", marginTop: 1, textAlign: "center", color: "#e82c87" },
