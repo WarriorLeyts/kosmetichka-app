@@ -1,5 +1,12 @@
 /** Data shapes of the site's staff API (kosmetichka-b2b app/api/team/README.md). */
-export type CustomerShort = { name: string | null; companyName: string | null; phone: string | null };
+export type CustomerShort = { name: string | null; companyName: string | null; phone: string | null; manager?: string | null; priceType?: string };
+
+/** the order card line about the customer's 1С manager: «Менеджер: Имя» or, for a wholesaler without one, «Менеджер не назначен» */
+export function managerLine(c: CustomerShort): { text: string; warn: boolean } | null {
+  if (c.manager) return { text: `Менеджер: ${c.manager}`, warn: false };
+  if (c.priceType === "wholesale" || c.priceType === "big_wholesale") return { text: "Менеджер не назначен", warn: true };
+  return null;
+}
 export type Paging = { page: number; pageSize: number; totalCount: number; totalPages: number };
 export type StatusCount = { status: string; label: string; count: number };
 

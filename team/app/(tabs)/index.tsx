@@ -9,7 +9,7 @@ import { useIOS } from "@/ios";
 import { useBadges } from "@/store/badges";
 import { useAuth } from "@/store/auth";
 import { statusColors } from "@/orderStatus";
-import type { Dashboard } from "@/types";
+import { managerLine, type Dashboard } from "@/types";
 
 /** Главная: today, active orders by status, week revenue, customers, latest orders (as /admin). */
 export default function Home() {
@@ -64,6 +64,14 @@ function Dashboard() {
               <Text style={[styles.client, { color: c.label }]} numberOfLines={1}>
                 {o.clientName}
               </Text>
+              {(() => {
+                const m = managerLine(o.customer);
+                return m ? (
+                  <Text style={{ color: m.warn ? (dark ? "#FDBA74" : "#C2410C") : c.secondary, fontSize: 13, marginTop: 1 }} numberOfLines={1}>
+                    {m.text}
+                  </Text>
+                ) : null;
+              })()}
               <View style={styles.rowTop}>
                 <Text style={{ color: c.secondary }}>
                   {date(o.createdAt)} {time(o.createdAt)} · {o.itemsCount} поз.
