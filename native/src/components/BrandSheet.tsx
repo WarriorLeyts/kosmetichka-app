@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { brandLogo } from "@/brandLogos";
 import { api } from "@/api";
 import { useIOS } from "@/ios";
 import { Sheet } from "@/components/iosui/Sheet";
@@ -107,6 +109,7 @@ export function BrandSheet({ open, onClose, store }: { open: boolean; onClose: (
                 <View style={[styles.box, on ? styles.boxOn : { borderColor: dark ? "rgba(200,160,255,0.35)" : "#CFC6DE" }]}>
                   {on ? <Ionicons name="checkmark" size={16} color="#fff" /> : null}
                 </View>
+                <BrandMark name={b.name} dark={dark} />
                 <Text style={[styles.name, { color: c.label, fontWeight: on ? "600" : "400" }]} numberOfLines={1}>
                   {b.name}
                 </Text>
@@ -127,12 +130,38 @@ export function BrandSheet({ open, onClose, store }: { open: boolean; onClose: (
   );
 }
 
+/** the brand's logo on a white tile; without a logo — its first letters */
+function BrandMark({ name, dark }: { name: string; dark: boolean }) {
+  const logo = brandLogo(name);
+  return (
+    <View style={[styles.mark, { backgroundColor: "#fff", borderColor: dark ? "transparent" : "#EEE9F6" }]}>
+      {logo ? (
+        <Image source={{ uri: logo }} style={styles.logo} contentFit="contain" accessibilityIgnoresInvertColors />
+      ) : (
+        <Text style={styles.initials} numberOfLines={1}>
+          {name
+            .replace(/[^\p{L}\p{N} ]/gu, "")
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((w) => w[0])
+            .join("")
+            .toUpperCase()}
+        </Text>
+      )}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  mark: { width: 64, height: 36, borderRadius: 9, borderWidth: 1, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  logo: { width: 54, height: 26 },
+  initials: { color: "#8b3dff", fontSize: 13, fontWeight: "800", letterSpacing: 0.5 },
   head: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, marginBottom: 6 },
   search: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8, height: 40, borderRadius: 12, paddingHorizontal: 12 },
   input: { flex: 1, minWidth: 0, fontSize: 16, height: "100%" },
   reset: { color: "#8b3dff", fontSize: 15, fontWeight: "500" },
-  row: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 48 },
+  row: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 52 },
   box: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, alignItems: "center", justifyContent: "center" },
   boxOn: { backgroundColor: "#8b3dff", borderColor: "#8b3dff" },
   name: { flex: 1, fontSize: 16 },
