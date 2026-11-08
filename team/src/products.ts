@@ -7,6 +7,8 @@ export type ProductRow = {
   barcode: string | null;
   article: string | null;
   stock: number | null;
+  /** stock per 1С warehouse (staff search only) */
+  stockByWarehouse?: { name: string; qty: number }[];
   price: number;
   prices: { priceType: string; price: number }[];
   imagePath: string | null;

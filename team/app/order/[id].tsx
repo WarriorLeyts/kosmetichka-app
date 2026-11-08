@@ -257,7 +257,7 @@ export default function OrderScreen() {
       }
       setEdit((d) => [
         ...(d ?? []),
-        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null },
+        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null, stockByWarehouse: product.stockByWarehouse },
       ]);
       return;
     }
@@ -520,7 +520,7 @@ export default function OrderScreen() {
                           {d.variantName ? <Text style={{ color: VIOLET, fontSize: 13 }}>{d.variantName}</Text> : null}
                           {d.barcode ? <Text style={{ color: c.secondary, fontSize: 12 }}>{d.barcode}</Text> : null}
                         </View>
-                        <StockLine stock={d.stock} need={d.quantity} byWarehouse={d.stockByWarehouse} />
+                        <StockLine stock={d.stock} need={d.quantity} byWarehouse={d.stockByWarehouse} productId={d.productId} />
                       </View>
                       <Pressable onPress={() => patch(idx, { removed: true })} hitSlop={8} accessibilityLabel="Удалить позицию" style={{ paddingTop: 2 }}>
                         <Ionicons name="trash-outline" size={22} color="#DC2626" />
