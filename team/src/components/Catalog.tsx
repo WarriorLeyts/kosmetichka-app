@@ -13,7 +13,7 @@ import { useDesktop } from "../useDesktop";
 import { CatalogCard } from "./CatalogCard";
 import { CatalogFilters } from "./CatalogFilters";
 import { BrandSheet } from "./BrandSheet";
-import { BrandChips } from "./BrandChips";
+import { BrandButton } from "./BrandButton";
 import { CategoryDrawer } from "./CategoryDrawer";
 import { Sheet, SheetOptions } from "./iosui/Sheet";
 import { ErrorState } from "./kit";
@@ -191,7 +191,7 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
   const closeCats = useCallback(() => setCatOpen(false), []);
   const selectCat = useCallback((guid: string | null) => store.getState().set({ categoryGuid: guid }), [store]);
   const nFilters = filterCount(f);
-  // the chosen brands with their names (logos above the products)
+  // the chosen brands with their names (their logos on «Бренд»)
   const selectedBrands = useMemo(
     () => f.brandGuids.map((g) => meta.brands.find((b) => b.guid === g)).filter((b): b is NonNullable<typeof b> => !!b),
     [f.brandGuids, meta.brands]
@@ -249,17 +249,7 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
         <Text style={[styles.count, { color: c.secondary }]} numberOfLines={1}>
           {loading && products.length === 0 ? "Загрузка…" : `${total.toLocaleString("ru-RU")} ${plural(total, "товар", "товара", "товаров")}`}
         </Text>
-        <Pressable
-          onPress={() => { tap(); setBrandOpen(true); }}
-          accessibilityRole="button"
-          accessibilityLabel={f.brandGuids.length ? `Бренд, выбрано ${f.brandGuids.length}` : "Бренд"}
-          style={[styles.brandBtn, f.brandGuids.length ? { backgroundColor: VIOLET } : { backgroundColor: c.cell }]}
-        >
-          <Text style={[styles.sortText, { color: f.brandGuids.length ? "#fff" : c.label }]} numberOfLines={1}>
-            {f.brandGuids.length ? `Бренд · ${f.brandGuids.length}` : "Бренд"}
-          </Text>
-          <Ionicons name="chevron-down" size={16} color={f.brandGuids.length ? "#fff" : c.label} />
-        </Pressable>
+        <BrandButton brands={selectedBrands} count={f.brandGuids.length} onPress={() => setBrandOpen(true)} max={narrow ? 1 : 2} />
         <Pressable
           onPress={() => { tap(); setFiltersOpen(true); }}
           accessibilityRole="button"
@@ -293,12 +283,6 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
         </Pressable>
       </View>
 
-      <BrandChips
-        brands={selectedBrands}
-        onRemove={(g) => f.set({ brandGuids: f.brandGuids.filter((x) => x !== g) })}
-        onClear={() => f.set({ brandGuids: [] })}
-        onOpen={() => setBrandOpen(true)}
-      />
       {selectedCat ? (
         <Pressable onPress={() => { tap(); f.set({ categoryGuid: null }); }} accessibilityRole="button" accessibilityLabel={`Категория ${selectedCat.name}, убрать`} style={styles.catChip}>
           <Text style={styles.catChipText} numberOfLines={1}>{selectedCat.name}</Text>
