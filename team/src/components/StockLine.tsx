@@ -1,4 +1,5 @@
 import { Text, View } from "react-native";
+import { useWarehouseStock } from "../warehouseStock";
 
 export type WarehouseQty = { name: string; qty: number };
 
@@ -6,7 +7,10 @@ export type WarehouseQty = { name: string; qty: number };
  * «Остаток в магазине: 12 шт.» for staff: green, orange when less than needed, red when none.
  * byWarehouse — stock per 1C warehouse («Склад Ленина: 5 · Склад Мира: 2»), when 1C splits it.
  */
-export function StockLine({ stock, need, big, byWarehouse }: { stock: number | null | undefined; need?: number; big?: boolean; byWarehouse?: WarehouseQty[] | null }) {
+export function StockLine({ stock, need, big, byWarehouse: given, productId }: { stock: number | null | undefined; need?: number; big?: boolean; byWarehouse?: WarehouseQty[] | null; productId?: number }) {
+  // not sent with the line (e.g. a product just added from the catalog) → ask the staff endpoint
+  const fetched = useWarehouseStock(given === undefined && (stock ?? 0) > 0 ? productId : null);
+  const byWarehouse = given ?? fetched;
   if (stock === undefined) return null;
   const n = stock ?? 0;
   const short = need != null && n > 0 && n < need;
