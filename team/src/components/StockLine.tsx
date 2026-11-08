@@ -1,14 +1,28 @@
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 
-/** «Остаток в магазине: 12 шт.» for staff: green, orange when less than needed, red when none. */
-export function StockLine({ stock, need, big }: { stock: number | null | undefined; need?: number; big?: boolean }) {
+export type WarehouseQty = { name: string; qty: number };
+
+/**
+ * «Остаток в магазине: 12 шт.» for staff: green, orange when less than needed, red when none.
+ * byWarehouse — stock per 1C warehouse («Склад Ленина: 5 · Склад Мира: 2»), when 1C splits it.
+ */
+export function StockLine({ stock, need, big, byWarehouse }: { stock: number | null | undefined; need?: number; big?: boolean; byWarehouse?: WarehouseQty[] | null }) {
   if (stock === undefined) return null;
   const n = stock ?? 0;
   const short = need != null && n > 0 && n < need;
   const color = n <= 0 ? "#DC2626" : short ? "#EA580C" : "#16A34A";
-  return (
+  const total = (
     <Text style={{ color, fontWeight: "700", fontSize: big ? 16 : 13, marginTop: 4 }}>
       {n <= 0 ? "Нет в наличии" : `Остаток в магазине: ${n} шт.${short ? ` — меньше, чем нужно (${need})` : ""}`}
     </Text>
+  );
+  if (!byWarehouse?.length) return total;
+  return (
+    <View>
+      {total}
+      <Text style={{ color: "#6B7280", fontSize: big ? 14 : 12, marginTop: 2 }}>
+        {byWarehouse.map((w) => `${w.name}: ${w.qty}`).join(" · ")}
+      </Text>
+    </View>
   );
 }

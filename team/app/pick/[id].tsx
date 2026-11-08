@@ -315,7 +315,7 @@ export default function Pick() {
                   {it.variantName ? <Text style={{ color: VIOLET, marginTop: 2 }}>{it.variantName}</Text> : null}
                   {it.barcode ? <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>{it.barcode}</Text> : null}
                   <Text style={{ color: c.label, fontSize: 17, fontWeight: "800", marginTop: 4 }}>Нужно: {it.quantity} шт.</Text>
-                  <StockLine stock={it.stock} need={it.quantity} />
+                  <StockLine stock={it.stock} need={it.quantity} byWarehouse={it.stockByWarehouse} />
                   {it.customerChange ? <ChangePill ch={it.customerChange} who="customer" /> : null}
                   {it.staffChange ? <ChangePill ch={it.staffChange} who="staff" /> : null}
                 </View>

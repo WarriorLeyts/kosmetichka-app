@@ -45,6 +45,8 @@ export type OrderItem = {
   variantName: string | null; variantImageUrl: string | null; imagePath: string | null; imageUrl: string | null;
   /** current stock in the shop */
   stock?: number | null;
+  /** stock per 1C warehouse (staff only; empty when 1C doesn't split it) */
+  stockByWarehouse?: { name: string; qty: number }[];
   check: ItemCheck | null; photos: { id: number; url: string; createdAt: string }[];
   /** what the customer / staff did to this line (null — nothing) */
   customerChange?: LineChange | null;
@@ -159,6 +161,7 @@ export type PickerOrder = {
       id: number; productId: number; productName: string; barcode: string | null; quantity: number; price: number; total: number;
       variantName: string | null; variantImageUrl: string | null; imageUrl: string | null;
       stock?: number | null;
+      stockByWarehouse?: { name: string; qty: number }[];
       check: null | { status: string; statuses: string[]; availableQty: number | null; note: string | null; pickerId: number | null; checkedAt: string };
       photos: { id: number; url: string; createdAt: string }[];
       customerChange?: LineChange | null;

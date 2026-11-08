@@ -16,7 +16,7 @@ import { useLoad } from "@/useLoad";
 import { del, formFile, get, imageUrl, put, request } from "@/api";
 import { useIOS } from "@/ios";
 
-type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
+type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; stockByWarehouse?: { name: string; qty: number }[]; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
 type Variants = { variants: { id: number; imageId: number; imageUrl: string; name: string; sortOrder: number }[]; images: { id: number; path: string; url: string }[] };
 
 const PRICE_NAMES: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
@@ -105,7 +105,7 @@ export default function ProductScreen() {
           <Card>
             <Text style={{ color: c.label, fontSize: 18, fontWeight: "700", lineHeight: 24 }}>{p.name}</Text>
             <View style={{ height: 6 }} />
-            <StockLine stock={p.stock ?? null} big />
+            <StockLine stock={p.stock ?? null} big byWarehouse={p.stockByWarehouse} />
             <KV k="Артикул" v={p.article} />
             <KV k="Штрихкод" v={p.barcode} />
             <KV k="Код 1С" v={p.guid} />
