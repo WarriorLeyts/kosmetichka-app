@@ -23,7 +23,9 @@ export default function More() {
         <Section header="Работа">
           <Row icon="cube" iconBg="#FF9500" title="Товары" subtitle="Каталог, остатки, фото и варианты" onPress={() => router.navigate("/products")} />
           <Row icon="stats-chart" iconBg="#e82c87" title="Статистика" onPress={() => router.push("/stats")} />
-          <Row icon="school" iconBg="#34C759" title="Тесты сотрудников" subtitle="Результаты на сайте" onPress={() => Linking.openURL("https://kosmetichka-opt.ru/academy/results").catch(() => {})} />
+          {user?.role !== "manager" ? (
+            <Row icon="school" iconBg="#34C759" title="Тесты сотрудников" subtitle="Результаты на сайте" onPress={() => Linking.openURL("https://kosmetichka-opt.ru/academy/results").catch(() => {})} />
+          ) : null}
           {user?.role === "admin" ? <Row icon="people-circle" iconBg="#5856D6" title="Сотрудники" onPress={() => router.push("/users")} /> : null}
           {user?.role === "admin" ? <Row icon="megaphone" iconBg="#FF9500" title="Рассылки" subtitle="Push клиентам: акции и новости" onPress={() => router.push("/push")} /> : null}
           {user?.role === "admin" ? <Row icon="bug" iconBg="#FF3B30" title="Ошибки приложений" onPress={() => router.push("/app-errors")} /> : null}
