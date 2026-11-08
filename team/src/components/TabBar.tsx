@@ -24,9 +24,9 @@ const TABS: Record<string, { label: string; icon: IconName; active: IconName }> 
   more: { label: "Ещё", icon: "ellipsis-horizontal-circle-outline", active: "ellipsis-horizontal-circle" },
 };
 
-export function tabsFor(role?: Role) {
+export function tabsFor(_role?: Role) {
   // phones: the frequent sections; everything else is in «Ещё» (on a computer — the side menu)
-  return role === "picker" ? ["picker", "more"] : ["index", "orders", "picker", "customers", "more"];
+  return ["index", "orders", "picker", "customers", "more"];
 }
 
 /** Brand violet → pink (exact project colors) — buttons, chips */
@@ -51,7 +51,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const badges = useBadges((s) => s.counts);
-  // the tabs of this role (pickers: assembly + more; managers and admin: everything else)
+  // the tabs (managers and admin)
   const role = useAuth((s) => s.user?.role);
   useOrderNews(role === "admin" || role === "manager");
   const allowed = tabsFor(role);

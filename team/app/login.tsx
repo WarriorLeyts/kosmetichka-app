@@ -11,7 +11,7 @@ import { AuthBackdrop } from "@/components/iosui/AuthBackdrop";
 import { TeamMark } from "@/components/TeamHeader";
 import { useIOS } from "@/ios";
 
-/** Staff sign-in: the same login and password as the site's admin panel (managers, admin, pickers). */
+/** Staff sign-in: the same login and password as the site's admin panel (managers, admin). */
 export default function Login() {
   const c = useIOS();
   const dark = c.blurTint === "dark";

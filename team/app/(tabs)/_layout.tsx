@@ -19,7 +19,7 @@ export default function TabLayout() {
       )}
       tabBar={desktop ? () => null : (props) => <TabBar {...props} />}
       screenOptions={{ headerShown: false, animation: "fade", sceneStyle: { backgroundColor: "transparent" } }}
-      initialRouteName={user?.role === "picker" ? "picker" : "index"}
+      initialRouteName="index"
     >
       <Tabs.Screen name="index" />
       <Tabs.Screen name="orders" />

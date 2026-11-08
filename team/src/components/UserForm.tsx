@@ -6,10 +6,9 @@ import { GradientButton } from "./iosui/Buttons";
 import { Chips, VIOLET } from "./kit";
 import { useIOS } from "../ios";
 
-export type UserDraft = { name: string; login: string; password: string; role: "admin" | "manager" | "picker"; oneCGroup: string };
+export type UserDraft = { name: string; login: string; password: string; role: "admin" | "manager"; oneCGroup: string };
 const ROLES = [
   { value: "manager", label: "Менеджер" },
-  { value: "picker", label: "Сборщик" },
   { value: "admin", label: "Администратор" },
 ] as const;
 

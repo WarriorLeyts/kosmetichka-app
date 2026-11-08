@@ -6,10 +6,11 @@ import { useBadges } from "./badges";
 import { stopWebPush } from "../webPush";
 import { unregisterPhonePush } from "../phonePush";
 
-export type Role = "admin" | "manager" | "picker";
+// no «Сборщик» role any more (owner: there are no pickers) — admins and managers assemble
+export type Role = "admin" | "manager";
 export type Staff = { id: number; name: string | null; login: string; role: Role; roleLabel?: string };
 type Me = { id: number; name: string; login: string; role: string; roleLabel: string; tokenRole: Role };
-const ROLES: readonly Role[] = ["admin", "manager", "picker"];
+const ROLES: readonly Role[] = ["admin", "manager"];
 // rights follow the role in the login token (tokenRole); anything unknown is not a staff session
 const toStaff = (m: Me): Staff | null =>
   m && ROLES.includes(m.tokenRole) ? { id: m.id, name: m.name, login: m.login, role: m.tokenRole, roleLabel: m.roleLabel } : null;
@@ -97,8 +98,7 @@ export const useAuth = create<AuthState>()(
   )
 );
 
-export const isPicker = (u: Staff | null) => u?.role === "picker";
-export const ROLE_LABEL: Record<Role, string> = { admin: "Администратор", manager: "Менеджер", picker: "Сборщик" };
+export const ROLE_LABEL: Record<Role, string> = { admin: "Администратор", manager: "Менеджер" };
 
 // any 401 during work signs the user out; the tabs layout then shows the login screen
 setOnUnauthorized(() => {

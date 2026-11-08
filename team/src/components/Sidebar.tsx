@@ -13,7 +13,6 @@ type IconName = keyof typeof Ionicons.glyphMap;
 type Item = { href: string; label: string; icon: IconName; roles: Role[]; badge?: string; match?: (p: string) => boolean; external?: boolean };
 
 const STAFF: Role[] = ["admin", "manager"];
-const ALL: Role[] = ["admin", "manager", "picker"];
 
 /** The sections of the admin site, in its order — the same app on phones has them in tabs and «Ещё». */
 export const SECTIONS: { title?: string; items: Item[] }[] = [
@@ -21,7 +20,7 @@ export const SECTIONS: { title?: string; items: Item[] }[] = [
     items: [
       { href: "/", label: "Главная", icon: "home-outline", roles: STAFF, match: (p) => p === "/" },
       { href: "/orders", label: "Заказы", icon: "document-text-outline", roles: STAFF, badge: "orders", match: (p) => p.startsWith("/orders") || p.startsWith("/order/") },
-      { href: "/picker", label: "Сборка", icon: "basket-outline", roles: ALL, badge: "picker", match: (p) => p.startsWith("/picker") || p.startsWith("/pick/") || p.startsWith("/assembly") },
+      { href: "/picker", label: "Сборка", icon: "basket-outline", roles: STAFF, badge: "picker", match: (p) => p.startsWith("/picker") || p.startsWith("/pick/") || p.startsWith("/assembly") },
       { href: "/customers", label: "Клиенты", icon: "people-outline", roles: STAFF, match: (p) => p.startsWith("/customers") || p.startsWith("/customer/") },
       { href: "/products", label: "Товары", icon: "cube-outline", roles: STAFF, match: (p) => p.startsWith("/products") || p.startsWith("/product/") },
       { href: "/stats", label: "Статистика", icon: "stats-chart-outline", roles: STAFF },

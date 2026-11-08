@@ -29,7 +29,7 @@ export default function EditUser() {
               isNew={false}
               busy={busy === "save"}
               groups={data?.groups ?? []}
-              initial={{ name: u.name, login: u.login, password: "", role: u.role as "admin" | "manager" | "picker", oneCGroup: u.oneCGroup ?? "" }}
+              initial={{ name: u.name, login: u.login, password: "", role: (u.role === "admin" ? "admin" : "manager") as "admin" | "manager", oneCGroup: u.oneCGroup ?? "" }}
               onSubmit={async (d) => {
                 if (running.current) return;
                 running.current = true;

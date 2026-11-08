@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { Redirect, router } from "expo-router";
+import { router } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { Card, ErrorState, Loading, SectionTitle, StatusPill } from "@/components/kit";
 import { useLoad } from "@/useLoad";
@@ -16,7 +16,6 @@ import { managerLine, type Dashboard } from "@/types";
 export default function Home() {
   const role = useAuth((s) => s.user?.role);
   if (!role) return null; // profile not loaded yet
-  if (role === "picker") return <Redirect href="/picker" />;
   return <Dashboard />;
 }
 
