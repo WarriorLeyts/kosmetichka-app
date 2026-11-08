@@ -30,9 +30,33 @@ const LOGOS: Record<string, string> = {
   estelprofessional: "estel",
   ollin: "ollin",
   ollinprofessional: "ollin",
+  topface: "topface",
+  flowerknows: "flower-knows",
+  evamosaic: "eva-mosaic",
+  farmstay: "farmstay",
+  estrade: "estrade",
+  charlottetilbury: "charlotte-tilbury",
+  alvindor: "alvin-dor",
+  alvindorprofessional: "alvin-dor",
+  theact: "the-act",
+  lasultanedesaba: "la-sultane-de-saba",
+  catrice: "catrice",
+  catricecosmetics: "catrice",
+  medipeel: "medi-peel",
+  kerasys: "kerasys",
+  lovegeneration: "love-generation",
+  italwax: "italwax",
+  garnier: "garnier",
+  relouis: "relouis",
+  relouispro: "relouis",
+  aravia: "aravia",
+  araviaprofessional: "aravia",
+  anua: "anua",
+  eatmy: "eat-my",
+  omsa: "omsa",
 };
 
-const key = (name: string) => name.toLowerCase().replace(/ó/g, "o").replace(/[^a-z0-9а-яё]/g, "");
+const key = (name: string) => name.toLowerCase().replace(/ó/g, "o").replace(/â/g, "a").replace(/[^a-z0-9а-яё]/g, "");
 
 /** the logo picture of a brand, or null */
 export function brandLogo(name: string | null | undefined): string | null {
