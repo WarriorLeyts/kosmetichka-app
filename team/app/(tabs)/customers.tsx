@@ -29,6 +29,8 @@ export default function Customers() {
   const [counts, setCounts] = useState<CustomersPage["counts"]>();
   const desktop = useDesktop();
   const admin = useAuth((s) => s.user?.role === "admin");
+  // the retail account: every customer is retail — no price-type switch
+  const retailAccount = useAuth((s) => s.user?.role === "manager" && s.user?.oneCGroup === "Розничные клиенты");
   // admin: wholesale customers with their 1С manager / without one
   const [manager, setManager] = useState("");
   // shown under «Опт» / «Кр. опт» only; leaving them drops the filter
@@ -70,7 +72,7 @@ export default function Customers() {
         <>
           <SearchField value={q} onChange={setQ} placeholder="Имя, компания, телефон, email" />
           <PeriodFilter value={period} onChange={setPeriod} count={counts?.all} />
-          <CustomerTiles counts={counts} status={status} setStatus={setStatus} type={type} setType={setType} desktop={desktop} />
+          <CustomerTiles counts={counts} status={status} setStatus={setStatus} type={type} setType={setType} desktop={desktop} showTypes={!retailAccount} />
           {admin && optTab ? <ManagerFilter value={manager} onChange={setManager} counts={counts?.managers} /> : null}
           {total != null ? <Text style={{ color: c.secondary, fontSize: 13, marginBottom: 8, marginLeft: 4 }}>Найдено: {total}</Text> : null}
         </>

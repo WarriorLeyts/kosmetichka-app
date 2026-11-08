@@ -8,12 +8,13 @@ import { unregisterPhonePush } from "../phonePush";
 
 // no «Сборщик» role any more (owner: there are no pickers) — admins and managers assemble
 export type Role = "admin" | "manager";
-export type Staff = { id: number; name: string | null; login: string; role: Role; roleLabel?: string };
-type Me = { id: number; name: string; login: string; role: string; roleLabel: string; tokenRole: Role };
+/** oneCGroup — a manager's customers: a 1С group, or «Розничные клиенты» (every retail customer) */
+export type Staff = { id: number; name: string | null; login: string; role: Role; roleLabel?: string; oneCGroup?: string | null };
+type Me = { id: number; name: string; login: string; role: string; roleLabel: string; tokenRole: Role; oneCGroup?: string | null };
 const ROLES: readonly Role[] = ["admin", "manager"];
 // rights follow the role in the login token (tokenRole); anything unknown is not a staff session
 const toStaff = (m: Me): Staff | null =>
-  m && ROLES.includes(m.tokenRole) ? { id: m.id, name: m.name, login: m.login, role: m.tokenRole, roleLabel: m.roleLabel } : null;
+  m && ROLES.includes(m.tokenRole) ? { id: m.id, name: m.name, login: m.login, role: m.tokenRole, roleLabel: m.roleLabel, oneCGroup: m.oneCGroup ?? null } : null;
 
 type AuthState = {
   user: Staff | null;

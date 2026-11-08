@@ -35,6 +35,7 @@ export function CustomerTiles({
   type,
   setType,
   desktop,
+  showTypes = true,
 }: {
   counts: CustomersPage["counts"] | undefined;
   status: string;
@@ -42,6 +43,8 @@ export function CustomerTiles({
   type: string;
   setType: (t: string) => void;
   desktop: boolean;
+  /** the price-type switch (hidden for the retail account: all its customers are retail) */
+  showTypes?: boolean;
 }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -119,6 +122,7 @@ export function CustomerTiles({
         ) : null}
       </View>
 
+      {showTypes ? (
       <View style={[st.seg, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF", borderColor: dark ? "rgba(200,160,255,0.2)" : "#ECE6F4" }]}>
         {TYPES.map((t) => {
           const on = type === t.value;
@@ -150,6 +154,7 @@ export function CustomerTiles({
           );
         })}
       </View>
+      ) : null}
     </View>
   );
 }
