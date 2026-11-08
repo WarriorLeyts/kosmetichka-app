@@ -246,6 +246,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const selectedCat = f.categories.find((x) => x.guid === f.categoryGuid);
   const types = f.categoryGuid ? SUB_FILTERS[f.categoryGuid] : undefined;
   const dark = c.blurTint === "dark";
+  // a phone: the count, «Бренд», filters and sort in one row — the sort shows only its icon
+  const narrow = !desktop && width < 440;
 
   const header = (
     <View>
@@ -324,10 +326,19 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           onPress={() => { tap(); setSortOpen(true); }}
           accessibilityRole="button"
           accessibilityLabel={`Сортировка: ${SORT_LABELS[f.sort]}`}
-          style={[styles.sortBtn, { backgroundColor: c.cell }]}
+          style={[styles.sortBtn, narrow && styles.sortBtnIcon, { backgroundColor: c.cell }]}
         >
-          <Text style={[styles.sortText, { color: c.label }]} numberOfLines={1}>{SORT_LABELS[f.sort]}</Text>
-          <Ionicons name="chevron-down" size={16} color={c.label} />
+          {narrow ? (
+            <>
+              <Ionicons name="swap-vertical" size={19} color={c.label} />
+              {f.sort !== "popularity" ? <View style={styles.sortDot} /> : null}
+            </>
+          ) : (
+            <>
+              <Text style={[styles.sortText, { color: c.label }]} numberOfLines={1}>{SORT_LABELS[f.sort]}</Text>
+              <Ionicons name="chevron-down" size={16} color={c.label} />
+            </>
+          )}
         </Pressable>
       </View>
 
@@ -527,6 +538,8 @@ const styles = StyleSheet.create({
     boxShadow: "0 1px 6px rgba(0,0,0,0.07)",
   },
   sortText: { fontSize: 15, flexShrink: 1 },
+  sortBtnIcon: { width: 38, paddingHorizontal: 0, justifyContent: "center" },
+  sortDot: { position: "absolute", top: 2, right: 2, width: 9, height: 9, borderRadius: 5, backgroundColor: "#8b3dff" },
   brandBtn: { flexDirection: "row", alignItems: "center", gap: 5, height: 38, borderRadius: 19, paddingHorizontal: 13, flexShrink: 0, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" },
   brandBtnOn: { backgroundColor: "#8b3dff" },
   catChip: {
