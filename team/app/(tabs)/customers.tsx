@@ -7,13 +7,13 @@ import { usePaged } from "@/usePaged";
 import { get } from "@/api";
 import { date } from "@/format";
 import { useIOS } from "@/ios";
+import { ManagerLine } from "@/components/ManagerLine";
 import type { CustomerRow, CustomersPage } from "@/types";
 import { CustomerBadge } from "@/components/CustomerBadge";
 import { CustomerTiles } from "@/components/CustomerTiles";
 import { NO_PERIOD, PeriodFilter, type Period } from "@/components/PeriodFilter";
 import { ManagerFilter } from "@/components/ManagerFilter";
 import { useDesktop } from "@/useDesktop";
-import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/store/auth";
 
 /** Клиенты: search, status tiles (waiting / requests / approved / blocked / «Неактуальные») with counts, price type switch. */
@@ -93,7 +93,7 @@ export default function Customers() {
           ) : x.roleRequestStatus === "stale" && x.roleRequest ? (
             <Text style={{ color: c.secondary, fontWeight: "600", marginTop: 4 }}>Неактуальная заявка: {ROLE_LABELS[x.roleRequest] ?? x.roleRequest}</Text>
           ) : null}
-          {admin && x.inOneC !== undefined && (x.priceType === "wholesale" || x.priceType === "big_wholesale") ? <ManagerLine c={x} /> : null}
+          {admin && x.inOneC !== undefined && (x.priceType === "wholesale" || x.priceType === "big_wholesale") ? <ManagerLine manager={x.inOneC ? x.manager : null} inOneC={x.inOneC} /> : null}
           <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>С {date(x.createdAt)}</Text>
         </Card>
       )}
@@ -103,38 +103,7 @@ export default function Customers() {
 
 const ROLE_LABELS: Record<string, string> = { wholesale: "Опт", big_wholesale: "Крупный опт" };
 
-/** Admin, wholesale customers: their 1С manager, or that nobody looks after them yet (not in 1С / no manager there). */
-function ManagerLine({ c: x }: { c: CustomerRow }) {
-  const c = useIOS();
-  const dark = c.blurTint === "dark";
-  const warn = dark ? "#FDBA74" : "#C2410C";
-  if (x.inOneC && x.manager)
-    return (
-      <View style={styles.mgr}>
-        <Ionicons name="person" size={14} color={dark ? "#D8B4FE" : "#6B2BD9"} />
-        <Text style={[styles.mgrText, { color: dark ? "#D8B4FE" : "#6B2BD9" }]} numberOfLines={1}>
-          {x.manager}
-        </Text>
-        <View style={[styles.oneC, { backgroundColor: dark ? "rgba(139,61,255,0.25)" : "#EFE6FD" }]}>
-          <Text style={[styles.oneCText, { color: dark ? "#D8B4FE" : "#6B2BD9" }]}>1С</Text>
-        </View>
-      </View>
-    );
-  return (
-    <View style={styles.mgr}>
-      <Ionicons name="warning" size={14} color={warn} />
-      <Text style={[styles.mgrText, { color: warn }]} numberOfLines={1}>
-        Менеджер не назначен{x.inOneC ? "" : " · нет в 1С"}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  mgr: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 },
-  mgrText: { fontSize: 14, fontWeight: "600", flexShrink: 1 },
-  oneC: { paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6 },
-  oneCText: { fontSize: 11, fontWeight: "800" },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
   name: { fontSize: 16.5, fontWeight: "700", flex: 1 },
 });

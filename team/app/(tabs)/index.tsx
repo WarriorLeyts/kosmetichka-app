@@ -6,6 +6,7 @@ import { useLoad } from "@/useLoad";
 import { get } from "@/api";
 import { money, date, time } from "@/format";
 import { useIOS } from "@/ios";
+import { ManagerLine } from "@/components/ManagerLine";
 import { useBadges } from "@/store/badges";
 import { useAuth } from "@/store/auth";
 import { statusColors } from "@/orderStatus";
@@ -64,14 +65,7 @@ function Dashboard() {
               <Text style={[styles.client, { color: c.label }]} numberOfLines={1}>
                 {o.clientName}
               </Text>
-              {(() => {
-                const m = managerLine(o.customer);
-                return m ? (
-                  <Text style={{ color: m.warn ? (dark ? "#FDBA74" : "#C2410C") : c.secondary, fontSize: 13, marginTop: 1 }} numberOfLines={1}>
-                    {m.text}
-                  </Text>
-                ) : null;
-              })()}
+              {managerLine(o.customer) ? <ManagerLine manager={o.customer.manager} inOneC={o.customer.oneCId !== undefined ? !!o.customer.oneCId : undefined} /> : null}
               <View style={styles.rowTop}>
                 <Text style={{ color: c.secondary }}>
                   {date(o.createdAt)} {time(o.createdAt)} · {o.itemsCount} поз.

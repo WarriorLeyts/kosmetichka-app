@@ -11,6 +11,7 @@ import { usePaged } from "@/usePaged";
 import { get, post } from "@/api";
 import { date, money, time } from "@/format";
 import { useIOS } from "@/ios";
+import { ManagerLine } from "@/components/ManagerLine";
 import { DayNav, StatusTiles } from "@/components/OrdersSummary";
 import { STATUS_LABELS } from "@/orderStatus";
 import { clientName, managerLine, type OrderListItem, type OrdersPage } from "@/types";
@@ -24,7 +25,6 @@ const BULK_STATUSES = ["assembly", "consultation", "payment", "cancelled"] as co
 /** Заказы: working day (19:00 → 18:59 like the site) or all dates, status chips, customer search. */
 export default function Orders() {
   const c = useIOS();
-  const dark = c.blurTint === "dark";
   const params = useLocalSearchParams<{ status?: string; all?: string; customer?: string }>();
   const [status, setStatus] = useState(params.status ?? "");
   // "YYYY-MM-DD" — that working day, "" — all dates, null — the current working day
@@ -146,14 +146,7 @@ export default function Orders() {
           <Text style={[styles.client, { color: c.label }]} numberOfLines={1}>
             {clientName(o.customer)}
           </Text>
-          {(() => {
-            const m = managerLine(o.customer);
-            return m ? (
-              <Text style={{ color: m.warn ? (dark ? "#FDBA74" : "#C2410C") : c.secondary, fontSize: 13, marginTop: 1 }} numberOfLines={1}>
-                {m.text}
-              </Text>
-            ) : null;
-          })()}
+          {managerLine(o.customer) ? <ManagerLine manager={o.customer.manager} inOneC={o.customer.oneCId !== undefined ? !!o.customer.oneCId : undefined} /> : null}
           <View style={styles.row}>
             <Text style={{ color: c.secondary, flexShrink: 1 }}>
               {date(o.createdAt)} {time(o.createdAt)} · {o.itemsCount} поз.
