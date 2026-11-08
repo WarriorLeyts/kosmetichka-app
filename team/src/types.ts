@@ -63,6 +63,8 @@ export type StaffMsg = { id: number; text: string; isFromPicker: boolean; userId
 export type OrderDetail = {
   order: {
     id: number; status: string; statusLabel: string; total: number; comment: string | null; deliveryType?: "pickup" | "delivery" | null; deliveryAddress?: string | null; customerConfirmed: boolean;
+    /** «Заказ покупателя» in 1С, or why it couldn't go there yet */
+    oneCNumber?: string | null; oneCError?: string | null;
     /** staff changed the items, waiting for the customer's «Подтвердить» since (ISO) — «Заказ оформлен» is blocked */
     awaitingConfirmationSince?: string | null;
     lastCustomerMessageId?: number | null; lastCustomerMessageAt?: string | null; lastStaffMessageId?: number | null;

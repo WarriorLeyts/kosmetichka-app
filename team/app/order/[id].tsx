@@ -369,6 +369,15 @@ export default function OrderScreen() {
           <StatusPill status={o.status} label={o.statusLabel} />
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
+        {o.oneCError ? (
+          // «Заказ оформлен», but 1С didn't take it yet: why (the site tries again by itself)
+          <View style={styles.onecError}>
+            <Text style={{ color: "#B91C1C", fontWeight: "700" }}>Заказ не ушёл в 1С</Text>
+            <Text style={{ color: "#B91C1C", marginTop: 2 }}>{o.oneCError}</Text>
+            <Text style={{ color: "#B91C1C", opacity: 0.8, marginTop: 4, fontSize: 12.5 }}>Сайт повторит сам, как только это исправят.</Text>
+          </View>
+        ) : null}
+        {o.oneCNumber ? <Text style={{ color: "#6B7280", marginTop: 6 }}>В 1С: заказ покупателя {o.oneCNumber}</Text> : null}
         {o.maxmaStuck ? (
           <View style={{ marginTop: 6, gap: 6 }}>
             <Text style={{ color: "#FF3B30", fontWeight: "600" }}>
@@ -758,6 +767,7 @@ export default function OrderScreen() {
 }
 
 const styles = StyleSheet.create({
+  onecError: { marginTop: 8, padding: 10, borderRadius: 12, backgroundColor: "#FEF2F2", borderWidth: 1, borderColor: "#FCA5A5" },
   confirmFor: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 48, borderRadius: 24, backgroundColor: "#16A34A", marginTop: 10 },
   confirmForText: { color: "#fff", fontSize: 16, fontWeight: "700" },
   row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 8 },
