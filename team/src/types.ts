@@ -78,7 +78,7 @@ export type OrderDetail = {
     };
     oneCExportedAt: string | null; bitrixDealId: number | null; createdAt: string; updatedAt: string;
     customerId: number;
-    customer: { id: number; companyName: string | null; name: string | null; phone: string | null; email: string | null; city: string | null; address?: string | null; inn: string | null; manager: string | null; priceType: string; priceTier?: string };
+    customer: { id: number; companyName: string | null; name: string | null; phone: string | null; email: string | null; city: string | null; address?: string | null; inn: string | null; manager: string | null; oneCId?: string | null; priceType: string; priceTier?: string };
     pickerId: number | null; picker: { id: number; name: string } | null;
     items: OrderItem[];
     removedItems?: RemovedItem[];

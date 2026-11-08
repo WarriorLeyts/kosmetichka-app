@@ -42,6 +42,10 @@ export default function OrderScreen() {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const me = useAuth((s) => s.user);
+  // «Менеджер 1С»: an admin gives the customer to one of the 1С groups (the counterparty goes to its folder in 1С)
+  const [groupSheet, setGroupSheet] = useState(false);
+  const [groups, setGroups] = useState<string[] | null>(null);
+  const [groupBusy, setGroupBusy] = useState(false);
   const desktop = useDesktop();
   const [tab, setTab] = useState<Tab>("items");
   const [busy, setBusy] = useState("");
@@ -60,6 +64,48 @@ export default function OrderScreen() {
   useEffect(() => {
     if (tab === "customer" && lastCustomerMsg) markSeen(orderId, lastCustomerMsg);
   }, [tab, lastCustomerMsg, orderId, markSeen]);
+
+  const openGroups = async () => {
+    setGroupSheet(true);
+    if (!groups) {
+      try {
+        setGroups((await get<{ groups: string[] }>("/api/team/onec-groups")).groups);
+      } catch (e) {
+        setGroupSheet(false);
+        Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+      }
+    }
+  };
+  const chooseGroup = (group: string) => {
+    setGroupSheet(false);
+    const cust = o?.customer;
+    if (!cust || group === cust.manager) return;
+    Alert.alert(
+      `Передать клиента «${group}»?`,
+      cust.oneCId
+        ? `В 1С контрагент будет перенесён в папку «${group}».`
+        : `Клиента ещё нет в 1С: он будет заведён в папке «${group}» с договором.`,
+      [
+        { text: "Отмена", style: "cancel" },
+        {
+          text: "Передать",
+          onPress: async () => {
+            if (groupBusy) return;
+            setGroupBusy(true);
+            try {
+              const r = await post<{ created: boolean; moved: boolean; contractCreated: boolean }>(`/api/team/customers/${cust.id}/group`, { group });
+              Alert.alert("Готово", r.created ? `Клиент заведён в 1С в папке «${group}».` : r.moved ? `Контрагент перенесён в папку «${group}».` : `Клиент уже в папке «${group}».`);
+              await reload();
+            } catch (e) {
+              Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+            } finally {
+              setGroupBusy(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const changeStatus = (to: string, label: string) => {
     // «Продолжить сборку» — just the picker's screen; «Собрать заказ» — to assembly, then the picker's screen
@@ -431,13 +477,24 @@ export default function OrderScreen() {
         {/* where to send the order — shown even when empty, so a missing address is seen at once */}
         <KV k="Адрес" v={cust.address?.trim() ? cust.address : "не указан"} />
         <KV k="ИНН" v={cust.inn} />
-        <KV k="Менеджер 1С" v={cust.manager} />
+        {me?.role === "admin" ? (
+          <KV k="Менеджер 1С" v={groupBusy ? "передаём…" : `${cust.manager || "не выбран"}  ›`} onPress={groupBusy ? undefined : openGroups} />
+        ) : (
+          <KV k="Менеджер 1С" v={cust.manager} />
+        )}
         <KV k="Тип цен" v={{ retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" }[cust.priceType] ?? cust.priceType} />
         {cust.priceType === "wholesale" && cust.priceTier ? (
           // «Опт»: the order's prices go by its sum and are recalculated when the order changes
           <KV k="Цены заказа" v={{ discount: "Скидочная (меньше 5 000 ₽)", wholesale: "Опт (от 5 000 ₽)", big_wholesale: "Крупный опт (от 50 000 ₽)" }[cust.priceTier] ?? cust.priceTier} />
         ) : null}
       </Card>
+      <Sheet open={groupSheet} onClose={() => setGroupSheet(false)} title="Менеджер 1С (папка)">
+        {groups ? (
+          <SheetOptions options={groups.map((g) => ({ value: g, label: g }))} value={cust.manager ?? ""} onSelect={chooseGroup} />
+        ) : (
+          <ActivityIndicator style={{ margin: 24 }} />
+        )}
+      </Sheet>
 
       {o.deliveryType ? (
         <Card>
