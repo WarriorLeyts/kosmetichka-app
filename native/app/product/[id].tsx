@@ -15,7 +15,7 @@ import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
 import { useWaitlistStore } from "@/store/waitlist";
-import { effectivePriceType } from "@/pricing";
+import { effectivePriceType, priceFor } from "@/pricing";
 import { priceRows } from "@/components/Price";
 import { CatalogCard } from "@/components/CatalogCard";
 import { Description } from "@/components/Description";
@@ -241,7 +241,13 @@ export default function ProductScreen() {
   const maxQty = typeof product.stock === "number" && product.stock > 0 ? product.stock : Infinity;
   const waiting = waitIds.includes(product.id);
   const pickedTotal = Object.values(variantQty).reduce((a, b) => a + b, 0);
-  const rows = priceRows(product, customer, active);
+  const tierRows = priceRows(product, customer, active);
+  // a wholesale customer the admin allowed it: the retail price first (only here, not in the catalog)
+  const retail = priceFor(product, "retail");
+  const rows =
+    customer?.showRetailPrice && tierRows.every((r) => r.label !== "Розница") && retail > 0
+      ? [{ label: "Розница", value: retail, active: false, color: "#8A7A9B" }, ...tierRows]
+      : tierRows;
   const volume = volumeOf(product.name);
   const shownQty = inCart > 0 ? inCart : qty;
 
@@ -322,7 +328,7 @@ export default function ProductScreen() {
                 <Text numberOfLines={1} style={{ fontSize: 13, color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B" }}>
                   {r.label}
                 </Text>
-                <FitText minimumFontScale={0.6} style={{ fontSize: rows.length >= 3 ? 20 : 22, fontWeight: "700", color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A" }}>
+                <FitText minimumFontScale={0.6} style={{ fontSize: rows.length >= 4 ? 17 : rows.length >= 3 ? 20 : 22, fontWeight: "700", color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A" }}>
                   {money(r.value)}
                 </FitText>
                 {r.hint ? <Text numberOfLines={1} style={{ fontSize: 11, color: "#8A7A9B", marginTop: 1 }}>{r.hint}</Text> : null}

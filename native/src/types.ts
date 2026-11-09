@@ -48,6 +48,8 @@ export type Customer = {
   hasCard?: boolean;
   /** wholesale level the admin granted ("wholesale" | "big_wholesale") */
   wholesaleAccess?: string | null;
+  /** wholesale customer: the admin let him see the retail price too (product card only) */
+  showRetailPrice?: boolean;
   /** request for a wholesale price type: "pending" | "rejected" */
   roleRequest?: string | null;
   roleRequestStatus?: string | null;

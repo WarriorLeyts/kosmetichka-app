@@ -147,6 +147,7 @@ export default function Customer() {
             <KV k="Адрес" v={x.address} />
             <KV k="Тип цен" v={x.priceTypeLabel} />
             <KV k="Доступ к опту" v={x.wholesaleAccess === "big_wholesale" ? "Крупный опт" : x.wholesaleAccess === "wholesale" ? "Опт" : "Нет"} />
+            {x.showRetailPrice ? <KV k="Розничная цена" v="Видит в карточке товара" /> : null}
             <KV k="Менеджер 1С" v={x.manager} />
             <KV k="Код 1С" v={x.oneCId} />
             <KV k="Заказов" v={x.ordersCount} onPress={() => router.navigate({ pathname: "/orders", params: { all: "1", status: "", customer: x.phone || x.companyName || x.name || "" } })} />
@@ -243,7 +244,7 @@ export default function Customer() {
                 running.current = true;
                 setBusy("save");
                 try {
-                  await put(`/api/admin/customers/${id}`, { ...form, isActive: form.isActive === "active", isApproved: form.isApproved === "yes" });
+                  await put(`/api/admin/customers/${id}`, { ...form, isActive: form.isActive === "active", isApproved: form.isApproved === "yes", showRetailPrice: form.showRetailPrice === "yes" });
                   setForm(null);
                   await reload();
                 } catch (e) {
@@ -264,7 +265,7 @@ export default function Customer() {
                   setForm({
                     name: x.name ?? "", companyName: x.companyName ?? "", phone: x.phone ?? "", email: x.email ?? "", inn: x.inn ?? "",
                     address: x.address ?? "", manager: x.manager ?? "", oneCId: x.oneCId ?? "",
-                    priceType: x.priceType, wholesaleAccess: x.wholesaleAccess ?? "",
+                    priceType: x.priceType, wholesaleAccess: x.wholesaleAccess ?? "", showRetailPrice: x.showRetailPrice ? "yes" : "no",
                     isActive: x.isActive ? "active" : "blocked", isApproved: x.isApproved ? "yes" : "no", password: "",
                   })
                 }
@@ -279,7 +280,7 @@ export default function Customer() {
 
 type Form = {
   name: string; companyName: string; phone: string; email: string; inn: string; address: string;
-  manager: string; oneCId: string; priceType: string; wholesaleAccess: string; isActive: "active" | "blocked"; isApproved: "yes" | "no"; password: string;
+  manager: string; oneCId: string; priceType: string; wholesaleAccess: string; showRetailPrice: "yes" | "no"; isActive: "active" | "blocked"; isApproved: "yes" | "no"; password: string;
 };
 
 /** «Изменить данные» — the same fields as the old admin form */
@@ -334,6 +335,8 @@ function CustomerForm({ form, setForm, busy, onCancel, onSave }: { form: Form; s
           value={form.wholesaleAccess}
           onChange={(v) => set({ wholesaleAccess: v })}
         />
+        <Text style={[fs.label, { color: c.secondary }]}>Розничная цена в карточке товара</Text>
+        <Chips items={[{ value: "no", label: "Не показывать" }, { value: "yes", label: "Показывать" }]} value={form.showRetailPrice} onChange={(v) => set({ showRetailPrice: v as "yes" | "no" })} />
         <Text style={[fs.label, { color: c.secondary }]}>Аккаунт</Text>
         <Chips items={[{ value: "active", label: "Активен" }, { value: "blocked", label: "Заблокирован" }]} value={form.isActive} onChange={(v) => set({ isActive: v })} />
         <Text style={[fs.label, { color: c.secondary }]}>Подтверждение</Text>
