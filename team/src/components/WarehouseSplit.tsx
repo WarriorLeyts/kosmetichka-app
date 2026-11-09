@@ -92,16 +92,16 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
           : null;
 
   const soft = dark ? "#352044" : "#F1EEF7";
-  const seg = (m: Mode, title: string, sub: string | null) => {
+  const seg = (m: Mode, title: string, sub: number | null) => {
     const on = mode === m;
     return (
       <Pressable key={m} onPress={() => choose(m)} style={[styles.seg, on && { backgroundColor: VIOLET }]} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`Брать: ${m === "shop" ? labels.shop : m === "stock" ? labels.stock : "разделить"}`}>
-        <Text style={{ color: on ? "#fff" : c.label, fontWeight: "700", fontSize: 14 }} numberOfLines={1}>
+        <Text style={{ color: on ? "#fff" : c.label, fontWeight: "700", fontSize: 15 }} numberOfLines={1}>
           {title}
         </Text>
-        {sub ? (
-          <Text style={{ color: on ? "rgba(255,255,255,0.8)" : c.secondary, fontSize: 11.5 }} numberOfLines={1}>
-            {sub}
+        {sub !== null ? (
+          <Text style={{ color: on ? "rgba(255,255,255,0.85)" : c.secondary, fontSize: 13.5 }} numberOfLines={1}>
+            есть <Text style={{ color: on ? "#fff" : c.label, fontSize: 19, fontWeight: "800" }}>{sub}</Text>
           </Text>
         ) : null}
       </Pressable>
@@ -126,8 +126,8 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
       </View>
 
       <View style={[styles.bar, { backgroundColor: soft }]}>
-        {seg("shop", "Магазин", `есть ${split.shopQty}`)}
-        {seg("stock", "Склад", `есть ${split.stockQty}`)}
+        {seg("shop", "Магазин", split.shopQty)}
+        {seg("stock", "Склад", split.stockQty)}
         {canSplit ? seg("split", "Разделить", null) : null}
       </View>
 
@@ -137,7 +137,7 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
           <Pressable onPress={() => set(stock - 1)} disabled={stock <= 1} style={[styles.step, { backgroundColor: soft, opacity: stock <= 1 ? 0.4 : 1 }]} accessibilityLabel="Со склада на одну меньше">
             <Ionicons name="remove" size={18} color={VIOLET} />
           </Pressable>
-          <Text style={{ color: c.label, fontSize: 16, fontWeight: "800", minWidth: 22, textAlign: "center" }}>{stock}</Text>
+          <Text style={{ color: c.label, fontSize: 20, fontWeight: "800", minWidth: 26, textAlign: "center" }}>{stock}</Text>
           <Pressable onPress={() => set(stock + 1)} disabled={stock >= quantity - 1} style={[styles.step, { backgroundColor: soft, opacity: stock >= quantity - 1 ? 0.4 : 1 }]} accessibilityLabel="Со склада на одну больше">
             <Ionicons name="add" size={18} color={VIOLET} />
           </Pressable>
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   box: { marginTop: 12, gap: 6 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   bar: { flexDirection: "row", borderRadius: 12, padding: 3, gap: 3 },
-  seg: { flex: 1, minHeight: 44, borderRadius: 9, alignItems: "center", justifyContent: "center", paddingHorizontal: 4, paddingVertical: 5 },
+  seg: { flex: 1, minHeight: 54, borderRadius: 9, alignItems: "center", justifyContent: "center", paddingHorizontal: 4, paddingVertical: 5 },
   stepRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 2 },
   step: { width: 36, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
 });

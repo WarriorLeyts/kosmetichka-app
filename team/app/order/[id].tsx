@@ -586,7 +586,7 @@ export default function OrderScreen() {
                           {d.variantName ? <Text style={{ color: VIOLET, fontSize: 13 }}>{d.variantName}</Text> : null}
                           {d.barcode ? <Text style={{ color: c.secondary, fontSize: 12 }}>{d.barcode}</Text> : null}
                         </View>
-                        <StockLine stock={d.stock} need={d.quantity} byWarehouse={d.stockByWarehouse} productId={d.productId} />
+                        <StockLine stock={d.stock} need={d.quantity} byWarehouse={d.stockByWarehouse} productId={d.productId} pillsOnly />
                       </View>
                       <Pressable onPress={() => patch(idx, { removed: true })} hitSlop={8} accessibilityLabel="Удалить позицию" style={{ paddingTop: 2 }}>
                         <Ionicons name="trash-outline" size={22} color="#DC2626" />
@@ -731,7 +731,7 @@ export default function OrderScreen() {
               </Text>
               <Text style={{ color: c.label, fontWeight: "700" }}>{money(it.total)}</Text>
             </View>
-            <StockLine stock={it.stock} need={it.quantity} byWarehouse={it.stockByWarehouse} />
+            <StockLine stock={it.stock} need={it.quantity} byWarehouse={it.stockByWarehouse} pillsOnly />
             {it.customerChange ? <ChangePill ch={it.customerChange} who="customer" /> : null}
             {it.staffChange ? <ChangePill ch={it.staffChange} who="staff" /> : null}
           </View>
