@@ -23,7 +23,8 @@ import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
 
 type Code = "ok" | "out_of_stock" | "expired" | "bad_condition" | "insufficient_qty";
-const CODES: Code[] = ["ok", "out_of_stock", "expired", "bad_condition", "insufficient_qty"];
+// «Просрочен» and «Плохой вид» are not offered any more (owner); old checks with them still show their names
+const CODES: Code[] = ["ok", "out_of_stock", "insufficient_qty"];
 type State = { statuses: Code[]; statusQtys: Partial<Record<Code, string>>; availableQty: string; factQty: string; note: string; photos: string[]; uploading: boolean; /** the line's quantity the marks were made for */ planned?: number };
 
 function qtysFrom(raw: string | null | undefined): Partial<Record<Code, string>> {
