@@ -159,11 +159,15 @@ export type PickerOrder = {
   order: {
     id: number; status: string; comment: string | null; total: number; createdAt: string; pickerId: number | null; picker: { id: number; name: string } | null;
     customer: CustomerShort;
+    /** wholesale: 1С gets two documents — names of the shop and the warehouse; null for retail */
+    warehouses?: { shop: string; stock: string } | null;
     items: {
       id: number; productId: number; productName: string; barcode: string | null; quantity: number; price: number; total: number;
       variantName: string | null; variantImageUrl: string | null; imageUrl: string | null;
       stock?: number | null;
       stockByWarehouse?: { name: string; qty: number }[];
+      /** wholesale: pieces from the shop / the warehouse (the picker's choice, or the 12-piece rule's `suggested`) */
+      warehouseSplit?: { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number } | null;
       check: null | { status: string; statuses: string[]; availableQty: number | null; note: string | null; pickerId: number | null; checkedAt: string };
       photos: { id: number; url: string; createdAt: string }[];
       customerChange?: LineChange | null;

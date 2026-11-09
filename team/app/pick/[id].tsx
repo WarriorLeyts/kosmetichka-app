@@ -21,6 +21,7 @@ import { CHECK_LABELS } from "@/orderStatus";
 import { clientName, type PickerOrder } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
+import { WarehouseSplit } from "@/components/WarehouseSplit";
 
 type Code = "ok" | "out_of_stock" | "expired" | "bad_condition" | "insufficient_qty";
 // «Просрочен» and «Плохой вид» are not offered any more (owner); old checks with them still show their names
@@ -334,6 +335,8 @@ export default function Pick() {
                 />
                 <Text style={{ color: c.secondary }}>шт.</Text>
               </View>
+
+              {o.warehouses && it.warehouseSplit ? <WarehouseSplit orderId={o.id} itemId={it.id} quantity={it.quantity} split={it.warehouseSplit} labels={o.warehouses} /> : null}
 
               <View style={styles.codes}>
                 {CODES.map((code) => {
