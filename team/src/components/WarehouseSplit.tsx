@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { put } from "@/api";
@@ -23,6 +23,8 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
   const [stock, setStock] = useState(split.stock);
   const [suggested, setSuggested] = useState(split.suggested);
   const [splitOpen, setSplitOpen] = useState(false);
+  // what the picker is typing in the «Со склада» field (null — shows the saved number)
+  const [typed, setTyped] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const pending = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -137,7 +139,22 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
           <Pressable onPress={() => set(stock - 1)} disabled={stock <= 1} style={[styles.step, { backgroundColor: soft, opacity: stock <= 1 ? 0.4 : 1 }]} accessibilityLabel="Со склада на одну меньше">
             <Ionicons name="remove" size={18} color={VIOLET} />
           </Pressable>
-          <Text style={{ color: c.label, fontSize: 20, fontWeight: "800", minWidth: 26, textAlign: "center" }}>{stock}</Text>
+          <TextInput
+            value={typed ?? String(stock)}
+            onChangeText={(t) => {
+              const digits = t.replace(/\D/g, "").slice(0, 5);
+              setTyped(digits);
+              if (digits !== "") set(Math.min(quantity, Number(digits)));
+            }}
+            onBlur={() => setTyped(null)}
+            onSubmitEditing={() => setTyped(null)}
+            selectTextOnFocus
+            keyboardType="number-pad"
+            returnKeyType="done"
+            maxLength={5}
+            accessibilityLabel="Сколько штук со склада"
+            style={[styles.qty, { color: c.label, borderColor: dark ? "#43295A" : "#E4E2EC" }]}
+          />
           <Pressable onPress={() => set(stock + 1)} disabled={stock >= quantity - 1} style={[styles.step, { backgroundColor: soft, opacity: stock >= quantity - 1 ? 0.4 : 1 }]} accessibilityLabel="Со склада на одну больше">
             <Ionicons name="add" size={18} color={VIOLET} />
           </Pressable>
@@ -156,5 +173,6 @@ const styles = StyleSheet.create({
   bar: { flexDirection: "row", borderRadius: 12, padding: 3, gap: 3 },
   seg: { flex: 1, minHeight: 54, borderRadius: 9, alignItems: "center", justifyContent: "center", paddingHorizontal: 4, paddingVertical: 5 },
   stepRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 2 },
+  qty: { width: 64, flexGrow: 0, flexShrink: 0, height: 36, borderWidth: 1.5, borderRadius: 10, fontSize: 20, fontWeight: "800", textAlign: "center", paddingHorizontal: 6 },
   step: { width: 36, height: 32, borderRadius: 9, alignItems: "center", justifyContent: "center" },
 });
