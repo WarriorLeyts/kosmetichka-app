@@ -210,11 +210,12 @@ const DOT: Record<string, string> = {
   cancelled: "#EF4444",
 };
 const SHORT: Record<string, string> = { payment: "Оформлен", exported: "В 1С" };
-const TILES = ["pending", "assembly", "consultation", "payment", "exported", "cancelled"];
+// «Оформлен» (payment) is not a tile: «Заказ собран» sends the order to 1С at once (owner, 2026-11-09)
+const TILES = ["pending", "assembly", "consultation", "exported", "cancelled"];
 
 /**
  * Summary tiles: «Все заказы» + one per stage, count and sum; a tap filters the list.
- * Phone: 3 in a row, «Все» across the top. Computer: 4 in a row, «Все» takes two.
+ * Phone: 3 in a row, «Все» across the top. Computer: 4 in a row, «Все» takes two. A short last row is stretched.
  */
 export function StatusTiles({ counts, status, onChange, desktop }: { counts: OrdersPage["counts"] | undefined; status: string; onChange: (s: string) => void; desktop: boolean }) {
   const c = useIOS();
@@ -224,6 +225,14 @@ export function StatusTiles({ counts, status, onChange, desktop }: { counts: Ord
   const gap = desktop ? 10 : 8;
   const cell = w ? (w - gap * (cols - 1)) / cols : 0;
   const allWidth = desktop ? cell * 2 + gap : w;
+  // rows always end flush: the tiles of a short last row share its width
+  const first = desktop ? cols - 2 : 0; // tiles beside «Все» in its row
+  const tileWidth = (i: number) => {
+    if (i < first) return cell;
+    const j = i - first;
+    const inRow = Math.min(cols, TILES.length - first - Math.floor(j / cols) * cols);
+    return (w - gap * (inRow - 1)) / inRow;
+  };
   const by = (s: string) => counts?.byStatus.find((x) => x.status === s);
   const pick = (s: string) => {
     tap();
@@ -246,7 +255,7 @@ export function StatusTiles({ counts, status, onChange, desktop }: { counts: Ord
               </View>
             )}
           </Pressable>
-          {TILES.map((s) => {
+          {TILES.map((s, i) => {
             const x = by(s);
             const on = status === s;
             const confirmed = s === "consultation" && (counts?.confirmed ?? 0) > 0;
@@ -256,7 +265,7 @@ export function StatusTiles({ counts, status, onChange, desktop }: { counts: Ord
                 onPress={() => pick(s)}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
-                style={[st.tile, small && st.tileSmall, tileBox(dark), { width: cell }, on && { borderColor: VIOLET, borderWidth: 2, backgroundColor: dark ? "rgba(139,61,255,0.2)" : "#F6F0FF" }]}
+                style={[st.tile, small && st.tileSmall, tileBox(dark), { width: tileWidth(i) }, on && { borderColor: VIOLET, borderWidth: 2, backgroundColor: dark ? "rgba(139,61,255,0.2)" : "#F6F0FF" }]}
               >
                 <View style={st.labelRow}>
                   <View style={[st.dot, { backgroundColor: DOT[s] }]} />
