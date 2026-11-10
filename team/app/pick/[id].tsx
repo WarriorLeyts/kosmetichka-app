@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
@@ -9,7 +9,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, ErrorState, Loading, SectionTitle, VIOLET } from "@/components/kit";
 import { ChatPanel, type ChatMsg } from "@/components/chat/ChatPanel";
-import { openUrl } from "@/components/chat/MessageBody";
+import { openUrl, ProductRequestContext, type ProductRequest } from "@/components/chat/MessageBody";
 import { afterSheet, pickFile } from "@/components/chat/Attach";
 import { Scanner } from "@/components/Scanner";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
@@ -101,6 +101,34 @@ export default function Pick() {
     // the server sets the price (the order's prices) and the name from the catalogue
     void changeItems({ newItems: [{ productId: product.id, productName: product.name, barcode: product.barcode ?? null, quantity: 1, price: 0, variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null }] });
   };
+
+  // «Добавить в заказ» on the customer's product card in the chat below (as on the order's page)
+  const [chatKey, setChatKey] = useState(0);
+  const requestActions = useMemo(
+    () => ({
+      inOrder: (r: ProductRequest) => o?.items.find((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null))?.quantity ?? 0,
+      add: async (r: ProductRequest) => {
+        if (!o) return;
+        const line = o.items.find((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null));
+        try {
+          await put(`/api/admin/orders/${orderId}/items`, {
+            items: line ? [{ id: line.id, quantity: line.quantity + r.quantity, price: line.price }] : [],
+            removeIds: [],
+            newItems: line ? [] : [{ productId: r.id, productName: r.name, barcode: null, quantity: r.quantity, price: 0, variantName: r.variantName, variantImageUrl: r.variantName && r.imagePath ? imageUrl(r.imagePath) : null }],
+            // the card in the chat becomes «Добавлено в заказ»
+            requestMessageId: r.messageId,
+          });
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+          await reload();
+          setChatKey((k) => k + 1);
+        } catch (e) {
+          Alert.alert("Не добавлено", e instanceof Error ? e.message : "");
+        }
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [o, orderId]
+  );
 
   const onRemove = (it: { id: number; productName: string; quantity: number }) =>
     Alert.alert("Убрать из заказа?", `«${it.productName}» × ${it.quantity}. Клиенту нужно будет подтвердить изменения.`, [
@@ -447,7 +475,9 @@ export default function Pick() {
 
       <SectionTitle>Чат с клиентом</SectionTitle>
       <Card>
-        <ChatPanel liveOrderId={orderId} load={loadChat} send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })} empty="Клиент ещё не писал" />
+        <ProductRequestContext.Provider value={requestActions}>
+          <ChatPanel key={"c" + chatKey} liveOrderId={orderId} load={loadChat} send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })} empty="Клиент ещё не писал" />
+        </ProductRequestContext.Provider>
       </Card>
 
       <ProductPicker open={adding} title="Добавить в заказ" actionLabel="Добавить" priceType={o.priceType ?? null} onClose={() => setAdding(false)} onPick={onAdd} />
