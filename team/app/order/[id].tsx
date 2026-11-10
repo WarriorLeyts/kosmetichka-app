@@ -716,7 +716,8 @@ export default function OrderScreen() {
   function ItemCard({ it }: { it: OrderItem }) {
     const img = it.variantImageUrl || it.imageUrl;
     return (
-      <Card>
+      // tap → the product card (photos, description, stock)
+      <Card onPress={() => router.push({ pathname: "/product/[id]", params: { id: String(it.productId) } })}>
         <View style={{ flexDirection: "row", gap: 12 }}>
           <View style={styles.thumb}>{img ? <Image source={{ uri: imageUrl(img, 160) ?? undefined }} style={{ width: "90%", height: "90%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={22} color="#C7C7CC" />}</View>
           <View style={{ flex: 1 }}>

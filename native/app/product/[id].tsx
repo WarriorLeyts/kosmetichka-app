@@ -27,6 +27,7 @@ import { useAddToCart } from "@/useAddToCart";
 import type { Product, Variant } from "@/types";
 import { FavHeart } from "@/components/FavHeart";
 import { takeSeed } from "@/productSeed";
+import { BrandPlaque } from "@/components/BrandPlaque";
 import { FitText } from "@/components/FitText";
 import { SafeImage } from "@/components/SafeImage";
 import { productTitle, usePageTitle } from "@/pageTitle";
@@ -585,11 +586,7 @@ export default function ProductScreen() {
             ) : null}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
-            {product.brand?.name ? (
-              <Text style={[styles.brand, { color: VIOLET }]} numberOfLines={1}>
-                {product.brand.name.toUpperCase()}
-              </Text>
-            ) : null}
+            {product.brand?.name ? <BrandPlaque guid={product.brandGuid ?? product.brand.guid} name={product.brand.name} /> : null}
             <Text style={[styles.dTitle, { color: c.label }]} accessibilityRole="header">
               {product.name}
             </Text>
@@ -621,11 +618,8 @@ export default function ProductScreen() {
         </Animated.View>
 
         <View style={styles.pad}>
-          {product.brand?.name ? (
-            <Text style={[styles.brand, { color: VIOLET }]} numberOfLines={1}>
-              {product.brand.name.toUpperCase()}
-            </Text>
-          ) : null}
+          {/* the brand: a plaque with its logo — a tap opens all its products */}
+          {product.brand?.name ? <BrandPlaque guid={product.brandGuid ?? product.brand.guid} name={product.brand.name} /> : null}
         </View>
         {/* title placeholder: keeps the place in the layout; the visible title is the animated copy */}
         <Text
