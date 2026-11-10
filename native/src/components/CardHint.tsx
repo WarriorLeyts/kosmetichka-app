@@ -18,7 +18,8 @@ const PINK = "#e82c87";
  */
 export function useCardHint(): boolean {
   const customer = useAuth((s) => s.customer);
-  return SITE_RETAIL_DISCOUNT && customer?.priceType === "retail" && !customer.hasCard;
+  // cardLinked: any card is linked (hasCard — the card gives the discount price: «900…» / «Максма Скидка»)
+  return SITE_RETAIL_DISCOUNT && customer?.priceType === "retail" && !(customer.cardLinked ?? customer.hasCard);
 }
 
 const openLink = () => {

@@ -45,7 +45,10 @@ export type Customer = {
   address?: string | null;
   priceType?: string | null;
   /** a MAXMA loyalty card is linked (website: «Розница» with a card buys at «Скидка по карте») */
+  /** the linked card gives the discount price («900…» or its owner in 1С «Максма Скидка») */
   hasCard?: boolean;
+  /** any MAXMA card is linked */
+  cardLinked?: boolean;
   /** wholesale level the admin granted ("wholesale" | "big_wholesale") */
   wholesaleAccess?: string | null;
   /** wholesale customer: the admin let him see the retail price too (product card only) */
