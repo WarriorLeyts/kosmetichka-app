@@ -237,6 +237,14 @@ export const api = {
   productsByIds(ids: number[]): Promise<{ products: Product[] }> {
     return request(`/api/catalog/products?lite=1&ids=${ids.map((n) => Math.trunc(n)).join(",")}`);
   },
+  /** under a product: «С этим берут» (together) / «Похожие» (similar) — in stock for this customer */
+  related(id: number, kind: "together" | "similar"): Promise<{ products: Product[] }> {
+    return request(`/api/catalog/products?lite=1&related=${Math.trunc(id)}&kind=${kind}`);
+  },
+  /** the two questions right after signing up; {} — «Пропустить» */
+  signupSurvey(body: { source?: string; orderedBefore?: boolean }): Promise<{ success: boolean }> {
+    return request("/api/mobile/profile/survey", { method: "POST", body: JSON.stringify(body) });
+  },
   product(id: number | string): Promise<Product> {
     return request(`/api/products/${seg(id)}`);
   },

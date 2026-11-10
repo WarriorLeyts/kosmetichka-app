@@ -78,7 +78,10 @@ export default function ProductScreen() {
   usePageTitle(productTitle(product?.name));
   const [variants, setVariants] = useState<Variant[]>([]);
   const [variantQty, setVariantQty] = useState<Record<number, number>>({});
-  const [related, setRelated] = useState<Product[]>([]);
+  // under the product: one strip, two tabs — «С этим берут» / «Похожие» (owner's choice «Б», 2026-11-10)
+  const [relTab, setRelTab] = useState<"together" | "similar">("together");
+  const [relLists, setRelLists] = useState<{ together: Product[] | null; similar: Product[] | null }>({ together: null, similar: null });
+  const related = relLists[relTab] ?? [];
   const [error, setError] = useState("");
   const [slide, setSlide] = useState(0);
   const [waitBusy, setWaitBusy] = useState(false);
@@ -113,19 +116,18 @@ export default function ProductScreen() {
       return;
     }
     // everything in parallel: the product, its variants and (when the list item gave the brand) related goods
-    const seed = takeSeed(id);
-    const loadRelated = (brandGuid: string, selfId: number) =>
+    takeSeed(id);
+    setRelLists({ together: null, similar: null });
+    for (const kind of ["together", "similar"] as const)
       api
-        .catalog({ page: 1, brandGuids: [brandGuid], sort: "name" })
-        .then((r) => setRelated(r.products.filter((x) => x.id !== selfId).slice(0, 10)))
-        .catch(() => {});
+        .related(Number(id), kind)
+        .then((r) => setRelLists((prev) => ({ ...prev, [kind]: r.products.filter((x) => x.id !== Number(id)) })))
+        .catch(() => setRelLists((prev) => ({ ...prev, [kind]: [] })));
     api.variants(Number(id)).then((r) => setVariants(r.variants ?? [])).catch(() => {});
-    if (seed?.brandGuid) loadRelated(seed.brandGuid, seed.id);
     try {
       const p = await api.product(id);
       setProduct(p);
       setLocalQty(Math.max(1, p.minOrderQty ?? 1));
-      if (p.brandGuid && p.brandGuid !== seed?.brandGuid) loadRelated(p.brandGuid, p.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка");
     }
@@ -411,12 +413,38 @@ export default function ProductScreen() {
 
   const relatedBlock = (
     <>
-        {related.length > 0 ? (
+        {(relLists.together?.length ?? 0) + (relLists.similar?.length ?? 0) > 0 ? (
           <>
-            <Text style={[styles.h, { color: c.label, marginHorizontal: 16, marginTop: 24 }]}>Ещё от {product.brand?.name ?? "бренда"}</Text>
+            {/* one strip, two tabs (a tab with nothing is not offered) */}
+            <View style={[styles.relTabs, { backgroundColor: dark ? "#352044" : "#F1EEF7" }]}>
+              {(
+                [
+                  ["together", "С этим берут"],
+                  ["similar", "Похожие"],
+                ] as const
+              )
+                .filter(([k]) => (relLists[k]?.length ?? 0) > 0)
+                .map(([k, label]) => {
+                  const on = relTab === k || (relLists[relTab]?.length ?? 0) === 0;
+                  return (
+                    <Pressable
+                      key={k}
+                      onPress={() => {
+                        tap();
+                        setRelTab(k);
+                      }}
+                      accessibilityRole="tab"
+                      accessibilityState={{ selected: on }}
+                      style={[styles.relTab, on && { backgroundColor: VIOLET }]}
+                    >
+                      <Text style={{ color: on ? "#fff" : c.label, fontWeight: "700", fontSize: 15 }}>{label}</Text>
+                    </Pressable>
+                  );
+                })}
+            </View>
             <FlatList
               horizontal
-              data={related}
+              data={(relLists[relTab]?.length ?? 0) > 0 ? related : (relLists.together?.length ? relLists.together : relLists.similar) ?? []}
               keyExtractor={(p) => String(p.id)}
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 12, gap: 10, paddingVertical: 6 }}
@@ -713,6 +741,8 @@ function GradientButton({
 }
 
 const styles = StyleSheet.create({
+  relTabs: { flexDirection: "row", marginHorizontal: 16, marginTop: 24, marginBottom: 4, borderRadius: 12, padding: 3, gap: 3 },
+  relTab: { flex: 1, alignItems: "center", justifyContent: "center", paddingVertical: 9, borderRadius: 9 },
   dWrap: { width: "100%", maxWidth: 1240, alignSelf: "center", paddingHorizontal: 24, paddingBottom: 48 },
   dTop: { flexDirection: "row", alignItems: "center", paddingVertical: 16 },
   dBack: { flexDirection: "row", alignItems: "center", gap: 2, paddingVertical: 6, paddingRight: 10 },

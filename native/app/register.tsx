@@ -195,7 +195,8 @@ export default function Register() {
       if (r.autoLogin) {
         await clearPendingLogout();
         await refresh();
-        Alert.alert("Готово!", r.message, [{ text: "Перейти в каталог", onPress: () => router.replace("/catalog") }]);
+        // signed in: two short questions (how they found us, ordered before) — a screen of their own, then the catalog
+        router.replace("/signup-survey");
       } else {
         // wholesale: account waits for the manager — no wholesale prices until approved (server side)
         Alert.alert("Заявка отправлена", r.message, [{ text: "Понятно", onPress: () => router.replace("/") }]);

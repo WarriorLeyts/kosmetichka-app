@@ -148,6 +148,9 @@ export default function Customer() {
             <KV k="Тип цен" v={x.priceTypeLabel} />
             <KV k="Доступ к опту" v={x.wholesaleAccess === "big_wholesale" ? "Крупный опт" : x.wholesaleAccess === "wholesale" ? "Опт" : "Нет"} />
             {x.showRetailPrice ? <KV k="Розничная цена" v="Видит в карточке товара" /> : null}
+            {/* asked once right after signing up in the app */}
+            {x.referralSource ? <KV k="Узнал(а) о нас" v={x.referralSource} /> : null}
+            {x.orderedBefore != null ? <KV k="Заказывал(а) раньше" v={x.orderedBefore ? "Да" : "Нет, впервые"} /> : null}
             <KV k="Менеджер 1С" v={x.manager} />
             <KV k="Код 1С" v={x.oneCId} />
             <KV k="Заказов" v={x.ordersCount} onPress={() => router.navigate({ pathname: "/orders", params: { all: "1", status: "", customer: x.phone || x.companyName || x.name || "" } })} />

@@ -187,6 +187,7 @@ function AppRoot() {
         <Stack.Screen name="scanner" options={{ title: "Сканер штрихкода", presentation: "fullScreenModal", headerShown: false }} />
         <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal", headerShown: false }} />
         <Stack.Screen name="register" options={{ title: "Регистрация", headerShown: false }} />
+        <Stack.Screen name="signup-survey" options={{ title: "Ещё 2 вопроса", headerShown: false, gestureEnabled: false }} />
         <Stack.Screen name="forgot" options={{ title: "Восстановление пароля", headerShown: false }} />
         <Stack.Screen name="loyalty-add" options={{ title: "Добавить карту", headerShown: false }} />
         <Stack.Screen name="wholesale-request" options={{ title: "Заявка на опт", headerShown: false }} />

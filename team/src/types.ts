@@ -121,7 +121,7 @@ export type CustomersPage = Paging & {
 export type CustomerDetail = {
   customer: CustomerRow & {
     address: string | null; oneCId: string | null; role: string; ordersCount: number; updatedAt: string;
-    wholesaleAccess?: string | null; showRetailPrice?: boolean; roleRequestLabel?: string | null; roleRequestedAt?: string | null;
+    wholesaleAccess?: string | null; showRetailPrice?: boolean; referralSource?: string | null; orderedBefore?: boolean | null; roleRequestLabel?: string | null; roleRequestedAt?: string | null;
     /** wholesale proof: where he resells + photos / videos (1-hour links) */
     shopType?: string | null; shopTypeLabel?: string | null; shopLink?: string | null;
     proofs?: { id: number; kind: "img" | "video"; size: number; createdAt: string; url: string }[];
