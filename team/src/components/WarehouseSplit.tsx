@@ -6,7 +6,7 @@ import { put } from "@/api";
 import { useIOS } from "@/ios";
 import { VIOLET } from "@/components/kit";
 
-export type Split = { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number };
+export type Split = { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number; onlyStock?: boolean };
 export type WarehouseLabels = { shop: string; stock: string };
 
 type Mode = "shop" | "stock" | "split";
@@ -110,6 +110,23 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
     );
   };
 
+  // 12 or fewer in the shop: only the warehouse, nothing to choose (owner, 2026-11-11)
+  if (split.onlyStock ?? split.shopQty <= 12) {
+    return (
+      <View style={styles.box}>
+        <Text style={{ color: c.secondary, fontSize: 13 }}>Брать из</Text>
+        <View style={[styles.locked, { backgroundColor: VIOLET }]} accessibilityLabel={`Брать: ${labels.stock}, есть ${split.stockQty}`}>
+          <Ionicons name="lock-closed" size={15} color="rgba(255,255,255,0.85)" />
+          <Text style={{ color: "#fff", fontWeight: "700", fontSize: 15 }}>Склад</Text>
+          <Text style={{ color: "rgba(255,255,255,0.85)", fontSize: 13.5 }}>
+            есть <Text style={{ color: "#fff", fontSize: 19, fontWeight: "800" }}>{split.stockQty}</Text>
+          </Text>
+        </View>
+        <Text style={{ color: c.secondary, fontSize: 12.5 }}>В магазине {split.shopQty} шт. — меньше 12, поэтому только со склада</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.box}>
       <View style={styles.head}>
@@ -168,6 +185,7 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
 }
 
 const styles = StyleSheet.create({
+  locked: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 54, borderRadius: 12 },
   box: { marginTop: 12, gap: 6 },
   head: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   bar: { flexDirection: "row", borderRadius: 12, padding: 3, gap: 3 },
