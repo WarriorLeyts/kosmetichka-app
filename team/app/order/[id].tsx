@@ -647,9 +647,8 @@ export default function OrderScreen() {
                 <ItemCard key={it.id} it={it} />
               ))}
               {o.removedItems?.length ? <RemovedItems items={o.removedItems} /> : null}
-              {data!.canEditItems ? (
-                <ActionButton label="Изменить состав" kind="soft" icon="create-outline" onPress={startEdit} />
-              ) : ["pending", "approved", "consultation"].includes(o.status) ? (
+              {/* the order's lines are changed in the picking («Добавить товар», 🗑) — no «Изменить состав» here */}
+              {["pending", "approved", "consultation"].includes(o.status) ? (
                 <Text style={{ color: c.secondary, fontSize: 13, textAlign: "center", marginVertical: 6 }}>
                   {o.status === "consultation" ? "Состав меняется только во время сборки — «Вернуть на сборку»" : "Состав меняется во время сборки — нажмите «Собрать заказ»"}
                 </Text>

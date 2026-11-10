@@ -159,6 +159,8 @@ export type PickerOrder = {
   order: {
     id: number; status: string; comment: string | null; total: number; createdAt: string; pickerId: number | null; picker: { id: number; name: string } | null;
     customer: CustomerShort;
+    /** the customer's price type (what «Добавить товар» shows first) */
+    priceType?: string | null;
     /** wholesale: 1С gets two documents — names of the shop and the warehouse; null for retail */
     warehouses?: { shop: string; stock: string } | null;
     items: {

@@ -14,7 +14,8 @@ import { afterSheet, pickFile } from "@/components/chat/Attach";
 import { Scanner } from "@/components/Scanner";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { useLoad } from "@/useLoad";
-import { formFile, get, imageUrl, post, request } from "@/api";
+import { formFile, get, imageUrl, post, put, request } from "@/api";
+import { ProductPicker, type Picked } from "@/components/ProductPicker";
 import { money } from "@/format";
 import { useIOS } from "@/ios";
 import { CHECK_LABELS } from "@/orderStatus";
@@ -66,8 +67,46 @@ export default function Pick() {
   const [photoFor, setPhotoFor] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  // the order's lines are changed here, during the picking (owner, 2026-11-10): «Добавить товар», 🗑 on a line
+  const [adding, setAdding] = useState(false);
+  const [changing, setChanging] = useState(false);
   const { data, error, loading, reload } = useLoad(() => get<PickerOrder>(`/api/team/picker/orders/${orderId}`), [orderId], { refocus: false, poll: 20_000 });
   const o = data?.order;
+
+  const changeItems = async (body: { items?: unknown[]; removeIds?: number[]; newItems?: unknown[] }) => {
+    if (changing) return;
+    setChanging(true);
+    try {
+      const res = await put<{ promoWarning?: string; loyaltyWarning?: string }>(`/api/admin/orders/${orderId}/items`, { items: [], removeIds: [], newItems: [], ...body });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      await reload();
+      if (res?.promoWarning) Alert.alert("Промокод снят", res.promoWarning);
+      if (res?.loyaltyWarning) Alert.alert("Бонусы", res.loyaltyWarning);
+    } catch (e) {
+      Alert.alert("Не сохранено", e instanceof Error ? e.message : "");
+    } finally {
+      setChanging(false);
+    }
+  };
+
+  /** from the catalogue: the same product (and variant) already in the order → one more piece of that line */
+  const onAdd = ({ product, variant }: Picked) => {
+    setAdding(false);
+    if (!o) return;
+    const line = o.items.find((i) => i.productId === product.id && (i.variantName ?? null) === (variant?.name ?? null));
+    if (line) {
+      void changeItems({ items: [{ id: line.id, quantity: line.quantity + 1, price: line.price, variantName: line.variantName, variantImageUrl: line.variantImageUrl }] });
+      return;
+    }
+    // the server sets the price (the order's prices) and the name from the catalogue
+    void changeItems({ newItems: [{ productId: product.id, productName: product.name, barcode: product.barcode ?? null, quantity: 1, price: 0, variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null }] });
+  };
+
+  const onRemove = (it: { id: number; productName: string; quantity: number }) =>
+    Alert.alert("Убрать из заказа?", `«${it.productName}» × ${it.quantity}. Клиенту нужно будет подтвердить изменения.`, [
+      { text: "Отмена", style: "cancel" },
+      { text: "Убрать", style: "destructive", onPress: () => void changeItems({ removeIds: [it.id] }) },
+    ]);
 
   // Marks not sent yet are kept on this device: closing the app or the screen mid-assembly no longer
   // loses them. Dropped once the check is sent.
@@ -311,9 +350,14 @@ export default function Pick() {
                   {img ? <Image source={{ uri: imageUrl(img, 320) ?? undefined }} style={{ width: "92%", height: "92%" }} contentFit="contain" /> : <Ionicons name="image-outline" size={24} color="#C7C7CC" />}
                 </Pressable>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ color: c.label, fontWeight: "600", fontSize: 15.5 }} numberOfLines={3}>
-                    {it.productName}
-                  </Text>
+                  <View style={{ flexDirection: "row", gap: 8, alignItems: "flex-start" }}>
+                    <Text style={{ flex: 1, color: c.label, fontWeight: "600", fontSize: 15.5 }} numberOfLines={3}>
+                      {it.productName}
+                    </Text>
+                    <Pressable onPress={() => onRemove(it)} disabled={changing} hitSlop={8} style={[styles.trash, { backgroundColor: dark ? "rgba(220,38,38,0.16)" : "#FEF2F2" }]} accessibilityRole="button" accessibilityLabel={`Убрать из заказа: ${it.productName}`}>
+                      <Ionicons name="trash-outline" size={18} color="#DC2626" />
+                    </Pressable>
+                  </View>
                   {it.variantName ? <Text style={{ color: VIOLET, marginTop: 2 }}>{it.variantName}</Text> : null}
                   {it.barcode ? <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>{it.barcode}</Text> : null}
                   <Text style={{ color: c.label, fontSize: 17, fontWeight: "800", marginTop: 4 }}>Нужно: {it.quantity} шт.</Text>
@@ -397,6 +441,8 @@ export default function Pick() {
       })}
       {o.removedItems?.length ? <RemovedItems items={o.removedItems} /> : null}
 
+      <ActionButton label="Добавить товар" kind="soft" icon="add-circle-outline" loading={changing} onPress={() => setAdding(true)} />
+
       <ActionButton label={all ? "Отправить проверку" : `Проверено ${checked} из ${o.items.length}`} kind={all ? "primary" : "soft"} loading={submitting} onPress={submit} icon="checkmark-done" />
 
       <SectionTitle>Чат с клиентом</SectionTitle>
@@ -404,6 +450,7 @@ export default function Pick() {
         <ChatPanel liveOrderId={orderId} load={loadChat} send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })} empty="Клиент ещё не писал" />
       </Card>
 
+      <ProductPicker open={adding} title="Добавить в заказ" actionLabel="Добавить" priceType={o.priceType ?? null} onClose={() => setAdding(false)} onPick={onAdd} />
       <Scanner
         open={scan}
         onClose={() => setScan(false)}
@@ -432,6 +479,7 @@ export default function Pick() {
 }
 
 const styles = StyleSheet.create({
+  trash: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
   progressBar: { height: 8, borderRadius: 4, backgroundColor: "rgba(139,61,255,0.15)", marginTop: 12, overflow: "hidden" },
   progressFill: { height: 8, borderRadius: 4, backgroundColor: VIOLET },
   findRow: { flexDirection: "row", gap: 10, marginBottom: 12 },
