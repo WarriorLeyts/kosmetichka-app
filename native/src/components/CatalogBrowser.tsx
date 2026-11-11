@@ -164,6 +164,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           sort: s.sort,
           onlyStock: s.onlyStock,
           quick: s.quick,
+          priceMin: s.priceMin,
+          priceMax: s.priceMax,
           nameAny: type?.q,
         };
         let r = await api.catalog(q, ctl?.signal);

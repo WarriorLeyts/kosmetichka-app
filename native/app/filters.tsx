@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -24,10 +24,16 @@ export default function Filters() {
   const [quick, setQuick] = useState<Quick[]>(s.quick);
   const [catOpen, setCatOpen] = useState(false);
   const [category, setCategory] = useState<string | null>(s.categoryGuid);
+  const [from, setFrom] = useState(s.priceMin !== null ? String(s.priceMin) : "");
+  const [to, setTo] = useState(s.priceMax !== null ? String(s.priceMax) : "");
 
   const apply = () => {
+    // «от» bigger than «до» — the customer swapped them
+    let min = from ? Number(from) : null;
+    let max = to ? Number(to) : null;
+    if (min !== null && max !== null && min > max) [min, max] = [max, min];
     // brands are chosen with «Бренд» in the catalogue, not here
-    s.set({ sort, onlyStock, quick, categoryGuid: category });
+    s.set({ sort, onlyStock, quick, categoryGuid: category, priceMin: min || null, priceMax: max || null });
     router.back();
   };
 
@@ -42,6 +48,31 @@ export default function Filters() {
             </Text>
             <Ionicons name="chevron-forward" size={18} color={colors.faint} />
           </Pressable>
+        </View>
+
+        <Text style={styles.h}>Цена, ₽</Text>
+        <View style={styles.priceRow}>
+          <TextInput
+            value={from}
+            onChangeText={(t) => setFrom(t.replace(/\D/g, "").slice(0, 7))}
+            placeholder="от"
+            placeholderTextColor={colors.faint}
+            keyboardType="number-pad"
+            returnKeyType="done"
+            accessibilityLabel="Цена от"
+            style={styles.price}
+          />
+          <Text style={styles.dash}>—</Text>
+          <TextInput
+            value={to}
+            onChangeText={(t) => setTo(t.replace(/\D/g, "").slice(0, 7))}
+            placeholder="до"
+            placeholderTextColor={colors.faint}
+            keyboardType="number-pad"
+            returnKeyType="done"
+            accessibilityLabel="Цена до"
+            style={styles.price}
+          />
         </View>
 
         <Text style={styles.h}>Сортировка</Text>
@@ -96,6 +127,8 @@ export default function Filters() {
             setOnlyStock(false);
             setQuick([]);
             setCategory(null);
+            setFrom("");
+            setTo("");
           }}
         />
         <Button title="Показать" style={{ flex: 2 }} onPress={apply} />
@@ -110,6 +143,12 @@ const styles = themed(() => ({
   row: { minHeight: 52, paddingHorizontal: 16, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   sep: { borderTopWidth: 1, borderTopColor: colors.soft },
   rowText: { fontSize: 15, color: colors.text, fontWeight: "600", flex: 1, marginRight: 8 },
+  priceRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  price: {
+    flex: 1, flexBasis: 0, minWidth: 0, height: 52, borderRadius: radius.lg, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
+    paddingHorizontal: 16, fontSize: 17, fontWeight: "600", color: colors.text,
+  },
+  dash: { fontSize: 17, color: colors.muted },
   search: {
     height: 46, borderRadius: radius.md, backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border,
     paddingHorizontal: 14, fontSize: 17, marginBottom: 10, color: colors.text,

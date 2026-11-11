@@ -172,6 +172,9 @@ export type CatalogQuery = {
   sort?: "popularity" | "price_asc" | "price_desc" | "name";
   onlyStock?: boolean;
   quick?: ("new" | "sale" | "gift")[];
+  /** price range, ₽ — by the price the customer sees */
+  priceMin?: number | null;
+  priceMax?: number | null;
   /** product type inside a subcategory: the name contains any of these fragments */
   nameAny?: string[];
 };
@@ -197,6 +200,8 @@ export const api = {
     q.brandGuids?.forEach((g) => p.append("brandGuid", g));
     if (q.sort) p.set("sort", q.sort);
     if (q.onlyStock) p.set("onlyStock", "true");
+    if (q.priceMin != null) p.set("priceMin", String(q.priceMin));
+    if (q.priceMax != null) p.set("priceMax", String(q.priceMax));
     q.quick?.forEach((x) => p.append("quick", x));
     q.nameAny?.forEach((x) => p.append("nameAny", x));
     // cards don't show the description — the server leaves it out (≈65% of the page)
@@ -210,6 +215,8 @@ export const api = {
     if (q.search) p.set("search", q.search);
     q.categoryGuids?.forEach((g) => p.append("categoryGuid", g));
     if (q.onlyStock) p.set("onlyStock", "true");
+    if (q.priceMin != null) p.set("priceMin", String(q.priceMin));
+    if (q.priceMax != null) p.set("priceMax", String(q.priceMax));
     q.quick?.forEach((x) => p.append("quick", x));
     q.nameAny?.forEach((x) => p.append("nameAny", x));
     return request(`/api/catalog/products?${p.toString()}`, signal ? { signal } : {});

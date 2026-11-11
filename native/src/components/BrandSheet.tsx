@@ -86,7 +86,7 @@ export function BrandSheet({ open, onClose, store }: { open: boolean; onClose: (
     const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
     const type = s.categoryGuid && s.typeLabel ? SUB_FILTERS[s.categoryGuid]?.find((x) => x.label === s.typeLabel) : undefined;
     api
-      .brandFacets({ search: s.search || undefined, categoryGuids: s.categoryGuidsFor(s.categoryGuid), onlyStock: s.onlyStock, quick: s.quick, nameAny: type?.q }, ctl?.signal)
+      .brandFacets({ search: s.search || undefined, categoryGuids: s.categoryGuidsFor(s.categoryGuid), onlyStock: s.onlyStock, quick: s.quick, priceMin: s.priceMin, priceMax: s.priceMax, nameAny: type?.q }, ctl?.signal)
       .then((r) => setBrands(r.brands))
       .catch((e) => {
         if (!ctl?.signal.aborted) setError(e instanceof Error ? e.message : "Не удалось загрузить бренды");
