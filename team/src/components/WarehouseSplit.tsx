@@ -15,8 +15,8 @@ type Mode = "shop" | "stock" | "split";
  * Wholesale: where a line is taken from — one switch «Магазин / Склад / Разделить» (owner's choice «Б»,
  * 2026-11-09). 1С gets two «Заказ покупателя»: the shop («Мега Косметичка», ≥ 12 must stay on its
  * shelves) and the warehouse («Склад»). «Разделить» shows a − / + for the pieces from the warehouse.
- * Until the picker touches it the server suggests the split («подсказка»): the order's main source — the one
- * that has more of the order's lines (owner, 2026-11-11) — gives what it has, the other one the rest.
+ * Until the picker touches it the server suggests the split («подсказка»): all from the shop when it has the whole
+ * order, otherwise the warehouse gives what it has and the shop the rest (owner, 2026-11-11).
  */
 export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { orderId: number; itemId: number; quantity: number; split: Split; labels: WarehouseLabels }) {
   const c = useIOS();
@@ -133,7 +133,7 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
       <View style={styles.head}>
         <Text style={{ color: c.secondary, fontSize: 13 }}>Брать из</Text>
         {suggested ? (
-          <Text style={{ color: VIOLET, fontSize: 12 }}>{split.primary === "shop" ? "подсказка: основное из магазина" : split.primary === "stock" ? "подсказка: основное со склада" : "подсказка"}</Text>
+          <Text style={{ color: VIOLET, fontSize: 12 }}>{split.primary === "shop" ? "подсказка: весь заказ есть в магазине" : split.primary === "stock" ? "подсказка: основное со склада" : "подсказка"}</Text>
         ) : saving ? (
           <Text style={{ color: c.secondary, fontSize: 12 }}>Сохраняем…</Text>
         ) : err ? (
