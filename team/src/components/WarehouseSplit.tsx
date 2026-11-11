@@ -6,7 +6,7 @@ import { put } from "@/api";
 import { useIOS } from "@/ios";
 import { VIOLET } from "@/components/kit";
 
-export type Split = { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number; onlyStock?: boolean };
+export type Split = { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number; onlyStock?: boolean; primary?: "shop" | "stock" };
 export type WarehouseLabels = { shop: string; stock: string };
 
 type Mode = "shop" | "stock" | "split";
@@ -15,7 +15,8 @@ type Mode = "shop" | "stock" | "split";
  * Wholesale: where a line is taken from — one switch «Магазин / Склад / Разделить» (owner's choice «Б»,
  * 2026-11-09). 1С gets two «Заказ покупателя»: the shop («Мега Косметичка», ≥ 12 must stay on its
  * shelves) and the warehouse («Склад»). «Разделить» shows a − / + for the pieces from the warehouse.
- * Until the picker touches it the server suggests the split by the 12-piece rule («подсказка»).
+ * Until the picker touches it the server suggests the split («подсказка»): the order's main source — the one
+ * that has more of the order's lines (owner, 2026-11-11) — gives what it has, the other one the rest.
  */
 export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { orderId: number; itemId: number; quantity: number; split: Split; labels: WarehouseLabels }) {
   const c = useIOS();
@@ -132,7 +133,7 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
       <View style={styles.head}>
         <Text style={{ color: c.secondary, fontSize: 13 }}>Брать из</Text>
         {suggested ? (
-          <Text style={{ color: VIOLET, fontSize: 12 }}>подсказка: в магазине ≥ 12</Text>
+          <Text style={{ color: VIOLET, fontSize: 12 }}>{split.primary === "shop" ? "подсказка: основное из магазина" : split.primary === "stock" ? "подсказка: основное со склада" : "подсказка"}</Text>
         ) : saving ? (
           <Text style={{ color: c.secondary, fontSize: 12 }}>Сохраняем…</Text>
         ) : err ? (
