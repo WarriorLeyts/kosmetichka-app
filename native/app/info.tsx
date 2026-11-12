@@ -1,11 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Stack } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
-import { BASE_URL } from "@/api";
+import { api, BASE_URL } from "@/api";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { tap } from "@/components/ui";
 import { useIOS } from "@/ios";
@@ -18,7 +18,11 @@ const REQUISITES: [string, string][] = [
   ["Адрес", "364037, Чеченская Республика, г. Грозный, р-н Ахматовский, ул. им. М.Н. Нурбагандова, 1А"],
 ];
 
-const LINKS: { label: string; path: string; icon: keyof typeof Ionicons.glyphMap }[] = [
+type Link = { label: string; path: string; icon: keyof typeof Ionicons.glyphMap };
+const ICONS: Record<string, keyof typeof Ionicons.glyphMap> = { contacts: "business-outline", privacy: "shield-checkmark-outline", agreement: "document-text-outline" };
+
+/** shown until the site answers (and if it doesn't): what the admin panel's «Страницы» had before */
+const LINKS: Link[] = [
   { label: "Сайт kosmetichka-opt.ru", path: "/", icon: "globe-outline" },
   { label: "Контакты и реквизиты", path: "/contacts", icon: "business-outline" },
   { label: "Политика конфиденциальности", path: "/privacy", icon: "shield-checkmark-outline" },
@@ -32,6 +36,24 @@ export default function Info() {
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const appear = useRef(new Animated.Value(0)).current;
+  // requisites and the pages' menu as edited in the admin panel (Страницы)
+  const [requisites, setRequisites] = useState<[string, string][]>(REQUISITES);
+  const [links, setLinks] = useState<Link[]>(LINKS);
+  useEffect(() => {
+    let alive = true;
+    api
+      .sitePages()
+      .then((r) => {
+        if (!alive) return;
+        const req = r.requisites.filter((x) => x.label && x.value).map((x) => [x.label, x.value] as [string, string]);
+        if (req.length) setRequisites(req);
+        if (r.menu.length) setLinks([LINKS[0], ...r.menu.map((m) => ({ label: m.title, path: m.path, icon: ICONS[m.slug] ?? "reader-outline" }))]);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     Animated.timing(appear, { toValue: 1, duration: reduce ? 0 : 240, useNativeDriver: true }).start();
@@ -51,7 +73,7 @@ export default function Info() {
             </Text>
 
             <View style={panel}>
-              {REQUISITES.map(([k, v], i) => (
+              {requisites.map(([k, v], i) => (
                 <View key={k} style={[styles.row, i > 0 && sep]}>
                   <Text style={[styles.k, { color: c.secondary }]}>{k}</Text>
                   <Text style={[styles.v, { color: c.label }]} selectable>
@@ -62,7 +84,7 @@ export default function Info() {
             </View>
 
             <View style={panel}>
-              {LINKS.map((l, i) => (
+              {links.map((l, i) => (
                 <Pressable
                   key={l.path}
                   onPress={() => {

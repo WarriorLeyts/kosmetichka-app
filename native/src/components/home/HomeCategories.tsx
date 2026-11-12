@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { iconFor } from "../CategoryDrawer";
+import { categoryIcon } from "../CategoryDrawer";
 import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import type { Category } from "../../types";
@@ -36,7 +36,7 @@ export function HomeCategories({ categories, onOpen, title = "Категории
       </View>
       <View style={styles.grid}>
         {categories.map((cat) => {
-          const icon = iconFor(cat.name);
+          const icon = categoryIcon(cat);
           return (
             <View key={cat.guid} style={[cs.cell, desktop && { width: "25%", padding: 8 }]}>
               <Pressable

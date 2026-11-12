@@ -252,12 +252,18 @@ export const api = {
   favoritesPut(items: Product[]): Promise<{ updatedAt: string }> {
     return request("/api/mobile/favorites", { method: "PUT", body: JSON.stringify({ items }) });
   },
-  catalogMeta(): Promise<{ categories: Category[]; brands: Brand[] }> {
+  /** + the quick filters as set in the admin panel (names, order, which are shown) */
+  catalogMeta(): Promise<{ categories: Category[]; brands: Brand[]; quick?: { key: "new" | "sale" | "gift"; label: string; visible: boolean }[]; quickChips?: boolean }> {
     return request("/api/mobile/catalog-meta");
   },
   /** the home page published in the admin panel (admin.kosmetichka-opt.ru); blocks: null — never published */
-  siteHome(): Promise<SiteHome> {
-    return request("/api/site/home");
+  /** page: "catalog" — the blocks above the goods of the catalog */
+  siteHome(page: "home" | "catalog" = "home"): Promise<SiteHome> {
+    return request(page === "home" ? "/api/site/home" : `/api/site/home?page=${page}`);
+  },
+  /** «О компании»: the pages for the menu and the requisites, as edited in the admin panel */
+  sitePages(): Promise<{ menu: { slug: string; title: string; path: string }[]; requisites: { label: string; value: string }[] }> {
+    return request("/api/site/pages");
   },
   homeStats(): Promise<{ totalProducts: number; totalBrands: number; totalCategories: number }> {
     return request("/api/mobile/home");

@@ -35,7 +35,8 @@ export type Product = {
 
 export type Variant = { id: number; imageId: number; imageUrl: string; name: string };
 
-export type Category = { id?: number; guid: string; name: string; parentGuid?: string | null; sortOrder?: number };
+/** imageUrl — a picture from the admin panel (else the built-in icon); hidden — not in the menus (admin panel) */
+export type Category = { id?: number; guid: string; name: string; parentGuid?: string | null; sortOrder?: number; imageUrl?: string; hidden?: boolean };
 export type Brand = { id?: number; guid: string; name: string };
 
 export type CartItem = Product & {
