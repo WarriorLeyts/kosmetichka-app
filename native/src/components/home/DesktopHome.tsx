@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { router } from "expo-router";
@@ -7,16 +6,11 @@ import { Ionicons } from "@expo/vector-icons";
 import { useIOS } from "@/ios";
 import { tap } from "@/components/ui";
 import { DESKTOP_WIDE } from "@/useDesktop";
-import { CatalogCard } from "@/components/CatalogCard";
 import { DesktopCategories } from "@/components/DesktopCategories";
 import { PendingOrderNote, type useActiveOrders } from "@/components/home/PendingOrder";
 import { useAuth } from "@/store/auth";
-import { useCartStore } from "@/store/cart";
-import { useFavorites } from "@/store/favorites";
-import { effectivePriceType } from "@/pricing";
-import { useAddToCart } from "@/useAddToCart";
 import type { Quick } from "@/store/catalog";
-import type { Category, Product } from "@/types";
+import type { Category } from "@/types";
 import type { SiteBlock } from "@/api";
 import { ArrivalsRow, HomeBlocks } from "@/components/home/HomeBlocks";
 
@@ -34,13 +28,11 @@ const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }
  */
 export function DesktopHome({
   categories,
-  fresh,
   orders,
   openCatalog,
   blocks = null,
 }: {
   categories: Category[];
-  fresh: Product[];
   orders: ReturnType<typeof useActiveOrders>;
   openCatalog: (patch: { categoryGuid?: string | null; quick?: Quick[] }) => void;
   /** home blocks published in the admin panel; null — the built-in home below */
@@ -49,14 +41,7 @@ export function DesktopHome({
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const customer = useAuth((s) => s.customer);
-  const cart = useCartStore((s) => s.items);
-  const favorites = useFavorites((s) => s.items);
-  const toggleFav = useFavorites((s) => s.toggle);
-  const addToCart = useAddToCart();
-  const active = effectivePriceType(cart, customer);
   // the grid is drawn once the column has its width (prices then fit their columns from the start)
-  const [gridW, setGridW] = useState(0);
-  const items = fresh.slice(0, 10);
 
   return (
     <View style={styles.row}>
@@ -126,41 +111,6 @@ export function DesktopHome({
         {/* «Новые поступления» (receipts / transfers from 1С, «Новинка» badges) */}
         <ArrivalsRow desktop />
 
-        {fresh.length > 0 ? (
-          <>
-            <View style={styles.sectionRow}>
-              <Text style={[styles.section, { color: c.label }]}>Новинки</Text>
-              <Pressable onPress={() => openCatalog({ quick: ["new"] })} accessibilityRole="link" style={styles.all}>
-                <Text style={[styles.allText, dark && { color: "#D7B8FF" }]}>Все новинки</Text>
-                <Ionicons name="arrow-forward" size={17} color={dark ? "#D7B8FF" : "#8b2be0"} />
-              </Pressable>
-            </View>
-            {/* the same list as the catalog (5 in a row): the prices fit their columns there */}
-            <View style={styles.grid} onLayout={(e) => setGridW(Math.round(e.nativeEvent.layout.width))}>
-              {gridW > 0 ? (
-                <FlatList
-                  data={items}
-                  numColumns={5}
-                  scrollEnabled={false}
-                  keyExtractor={(p) => String(p.id)}
-                  renderItem={({ item: p }) => (
-                    <View style={{ flex: 1 / 5 }}>
-                      <CatalogCard
-                        product={p}
-                        customer={customer}
-                        activePrice={active}
-                        inCart={cart.find((x) => x.cartKey === String(p.id))?.quantity ?? 0}
-                        isFavorite={favorites.some((f) => f.id === p.id)}
-                        onAdd={addToCart}
-                        onFavorite={toggleFav}
-                      />
-                    </View>
-                  )}
-                />
-              ) : null}
-            </View>
-          </>
-        ) : null}
           </>
         )}
 
