@@ -30,12 +30,12 @@ export function DesktopHome({
   categories,
   orders,
   openCatalog,
-  blocks = null,
+  blocks,
 }: {
   categories: Category[];
   orders: ReturnType<typeof useActiveOrders>;
   openCatalog: (patch: { categoryGuid?: string | null; quick?: Quick[] }) => void;
-  /** home blocks published in the admin panel; null — the built-in home below */
+  /** home blocks published in the admin panel; null — the built-in home below; undefined — still loading */
   blocks?: SiteBlock[] | null;
 }) {
   const c = useIOS();
@@ -51,7 +51,8 @@ export function DesktopHome({
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.main} showsVerticalScrollIndicator={false}>
         <PendingOrderNote orders={orders} wide />
 
-        {blocks ? (
+        {/* until the admin-panel home arrives — nothing (not the built-in banner flashing for a moment) */}
+        {blocks === undefined ? null : blocks ? (
           <>
         {!customer ? (
           <Pressable style={[styles.login, { backgroundColor: c.cell }]} onPress={() => router.push("/login")}>
