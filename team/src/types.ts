@@ -165,6 +165,8 @@ export type PickerOrder = {
     warehouses?: { shop: string; stock: string } | null;
     items: {
       id: number; productId: number; productName: string; barcode: string | null; quantity: number; price: number; total: number;
+      /** all barcodes of the product in 1С — the scanner matches any */
+      barcodes?: string[];
       variantName: string | null; variantImageUrl: string | null; imageUrl: string | null;
       stock?: number | null;
       stockByWarehouse?: { name: string; qty: number }[];

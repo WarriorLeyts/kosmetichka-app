@@ -233,7 +233,8 @@ export default function Pick() {
       setHl(null);
       return false;
     }
-    const found = o.items.find((i) => sameBarcode(i.barcode, v)) ?? o.items.find((i) => i.productName.toLowerCase().includes(v));
+    // any barcode of the product in 1С counts (the exchange carries one; the site sends them all)
+    const found = o.items.find((i) => sameBarcode(i.barcode, v) || (i.barcodes ?? []).some((b) => sameBarcode(b, v))) ?? o.items.find((i) => i.productName.toLowerCase().includes(v));
     if (found) {
       setHl(found.id);
       scrollRef.current?.scrollTo({ y: Math.max(0, (ys.current[found.id] ?? 0) - 120), animated: true });
