@@ -6,6 +6,7 @@ import {
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useLocalSearchParams } from "expo-router";
+import { ProductLabels } from "@/components/ProductCard";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
@@ -59,7 +60,9 @@ function volumeOf(name: string) {
 }
 
 export default function ProductScreen() {
-  const { id, pick } = useLocalSearchParams<{ id: string; pick?: string }>();
+  const { id: rawId, pick } = useLocalSearchParams<{ id: string; pick?: string }>();
+  // /product/12 и /product/12-shampun-fino (ЧПУ из админ-панели) — один товар: ключ — число в начале
+  const id = String(rawId ?? "").match(/^(\d+)(?:-[a-z0-9-]*)?$/)?.[1] ?? String(rawId ?? "");
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
@@ -409,12 +412,15 @@ export default function ProductScreen() {
     </>
   );
 
+  // описание 1С + разделы из админ-панели (краткое, особенности, применение, состав, характеристики)
+  const fullText = composeDescription(product);
   const descriptionBlock = (
     <>
+          <ProductLabels labels={product.labels} inline />
           {/* description right on the page */}
-          {product.description ? (
+          {fullText ? (
             <View style={{ marginTop: 18 }}>
-              <Description text={product.description} />
+              <Description text={fullText} />
             </View>
           ) : null}
     </>
@@ -791,3 +797,23 @@ const styles = StyleSheet.create({
   cta: { height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.35)" },
   ctaText: { color: "#fff", fontSize: 17, fontWeight: "600", flexShrink: 1 },
 });
+
+/** Описание из 1С и разделы карточки из админ-панели — одним текстом в формате Description (**Заголовок**, «- » списки) */
+export function composeDescription(p: Product): string {
+  const parts: string[] = [];
+  if (p.shortDescription?.trim()) parts.push(p.shortDescription.trim());
+  if (p.description?.trim()) parts.push(p.description.trim());
+  const sec = (title: string, text?: string | null) => {
+    if (text?.trim()) parts.push(`**${title}**\n${text.trim()}`);
+  };
+  sec("Особенности и преимущества", p.features);
+  sec("Способ применения", p.usage);
+  sec("Состав", p.composition);
+  const specs = [
+    ...(p.skinType?.trim() ? [`- Тип кожи / волос: ${p.skinType.trim()}`] : []),
+    ...(p.country?.trim() ? [`- Страна производства: ${p.country.trim()}`] : []),
+    ...(p.specs ?? []).filter((x) => x?.name && x?.value).map((x) => `- ${x.name}: ${x.value}`),
+  ];
+  if (specs.length) parts.push(`**Характеристики**\n${specs.join("\n")}`);
+  return parts.join("\n\n");
+}

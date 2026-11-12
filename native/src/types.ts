@@ -1,4 +1,4 @@
-export type ProductImage = { path: string };
+export type ProductImage = { path: string; alt?: string | null };
 
 export type Product = {
   /** «Новые поступления»: the product came to the company for the first time («Новинка») */
@@ -21,6 +21,16 @@ export type Product = {
   images?: ProductImage[];
   category?: { guid: string; name: string } | null;
   brand?: { guid?: string; name: string } | null;
+  /** admin panel (admin.kosmetichka-opt.ru): labels «Новинка» / «Хит», card sections, address */
+  labels?: string[];
+  shortDescription?: string | null;
+  features?: string | null;
+  usage?: string | null;
+  composition?: string | null;
+  skinType?: string | null;
+  country?: string | null;
+  specs?: { name: string; value: string }[] | null;
+  slug?: string | null;
 };
 
 export type Variant = { id: number; imageId: number; imageUrl: string; name: string };
