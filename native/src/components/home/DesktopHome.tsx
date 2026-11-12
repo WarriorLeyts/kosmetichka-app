@@ -108,8 +108,8 @@ export function DesktopHome({
           ))}
         </View>
 
-        {/* «Новые поступления» (receipts / transfers from 1С, «Новинка» badges) */}
-        <ArrivalsRow desktop />
+        {/* «Новинки» and «Снова в наличии» (receipts / transfers from 1С) */}
+        <ArrivalsRow desktop openCatalog={openCatalog} />
 
           </>
         )}
