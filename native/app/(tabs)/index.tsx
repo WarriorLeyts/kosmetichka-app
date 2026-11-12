@@ -20,7 +20,9 @@ import { UI_SIZES, uiScale } from "@/uiScale";
 import { FitText } from "@/components/FitText";
 import { PendingOrderNote, useActiveOrders } from "@/components/home/PendingOrder";
 import { DesktopHome } from "@/components/home/DesktopHome";
-import { ArrivalsRow, HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
+import { ArrivalsRow, HomeBlocks, PromoHero, useSiteHome } from "@/components/home/HomeBlocks";
+import { PromoStrip } from "@/components/promo/PromoStrip";
+import { saleFirst, useLivePromo } from "@/promo";
 
 const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { new: "sparkles-outline", sale: "pricetag-outline", gift: "gift-outline" };
 
@@ -34,7 +36,9 @@ export default function Home() {
   const customer = useAuth((s) => s.customer);
   const { categories, loadMeta, set: setFilters, quickFilters } = useCatalog();
   // the quick filters as set in the admin panel (names, order, which are shown)
-  const QUICK = quickFilters.filter((q) => q.visible).map((q) => ({ ...q, icon: QUICK_ICONS[q.key] }));
+  // during a promotion «Со скидкой» may go first and stand out (admin panel → Акция)
+  const promo = useLivePromo();
+  const QUICK = saleFirst(quickFilters.filter((q) => q.visible), promo).map((q) => ({ ...q, icon: QUICK_ICONS[q.key] }));
 
   const [sizeOpen, setSizeOpen] = useState(false);
   // the newest order in work: a bright card with all its stages under the search
@@ -143,6 +147,11 @@ export default function Home() {
           </Pressable>
         </View>
         )}
+        {promo?.strip ? (
+          <View style={{ marginBottom: 12 }}>
+            <PromoStrip rounded />
+          </View>
+        ) : null}
         <PendingOrderNote orders={activeOrders} />
         {/* retail without a loyalty card: how to get the discount prices */}
         <CardHintTile />
@@ -171,6 +180,9 @@ export default function Home() {
         </>
       ) : (
         <>
+          <View style={{ paddingTop: 8 }}>
+            <PromoHero desktop={false} openCatalog={openCatalog} />
+          </View>
           {tops.length > 0 && <HomeCategories categories={tops} onOpen={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />}
 
           {!customer && (
@@ -185,12 +197,15 @@ export default function Home() {
           )}
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickRow}>
-            {QUICK.map((q) => (
-              <Pressable key={q.key} style={styles.quick} onPress={() => openCatalog({ quick: [q.key] })}>
-                <Ionicons name={q.icon} size={18} color={colors.pink} />
-                <Text style={styles.quickText}>{q.label}</Text>
-              </Pressable>
-            ))}
+            {QUICK.map((q) => {
+              const hot = !!promo?.saleFirst && q.key === "sale";
+              return (
+                <Pressable key={q.key} style={[styles.quick, hot && { backgroundColor: colors.brand, borderColor: colors.brand }]} onPress={() => openCatalog({ quick: [q.key] })}>
+                  <Ionicons name={q.icon} size={18} color={hot ? "#fff" : colors.pink} />
+                  <Text style={[styles.quickText, hot && { color: "#fff" }]}>{q.label}</Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
 
           {/* «Новинки» and «Снова в наличии» (receipts / transfers from 1С) */}

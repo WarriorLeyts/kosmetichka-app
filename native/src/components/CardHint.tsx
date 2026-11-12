@@ -7,8 +7,8 @@ import { useIOS } from "../ios";
 import { tap } from "./ui";
 import { SITE_RETAIL_DISCOUNT } from "../siteMode";
 import { money } from "../format";
+import { colors } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 /**
@@ -40,7 +40,7 @@ export function CardHintTile() {
       style={({ pressed }) => [styles.tile, { backgroundColor: c.cell, opacity: pressed ? 0.85 : 1 }, !dark && styles.shadow]}
     >
       <View style={[styles.icon, { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "#F3ECFA" }]}>
-        <Ionicons name="card-outline" size={22} color={VIOLET} />
+        <Ionicons name="card-outline" size={22} color={colors.brand} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <Text style={[styles.title, { color: c.label }]}>Есть карта лояльности?</Text>
@@ -58,7 +58,7 @@ export function CardHintStrip() {
   if (!useCardHint()) return null;
   return (
     <Pressable onPress={openLink} accessibilityRole="button" accessibilityLabel="Скидка по карте — после привязки карты в профиле" style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
-      <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.strip}>
+      <LinearGradient colors={[colors.brand, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.strip}>
         <Ionicons name="card-outline" size={19} color="#fff" />
         <Text style={styles.stripText} numberOfLines={2}>
           <Text style={{ fontWeight: "800" }}>Скидка по карте</Text> — после привязки карты в профиле
@@ -86,7 +86,7 @@ export function CardHintTotal({ withCard, now }: { withCard: number; now: number
         <Text style={[styles.totalText, { color: tint, fontWeight: "800" }]}>{money(withCard)}</Text>
       </View>
       <Pressable onPress={openLink} accessibilityRole="link" hitSlop={6} style={{ alignSelf: "flex-start", marginTop: 4 }}>
-        <Text style={[styles.link, { color: dark ? "#D8B4FE" : VIOLET }]}>Привязать карту в профиле ›</Text>
+        <Text style={[styles.link, { color: dark ? "#D8B4FE" : colors.brand }]}>Привязать карту в профиле ›</Text>
       </Pressable>
     </View>
   );

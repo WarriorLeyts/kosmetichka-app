@@ -2,11 +2,11 @@ import { memo, useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useIOS } from "../ios";
+import { colors } from "@/theme";
 
 type Block = { kind: "p" | "li"; text: string };
 type Section = { title: string; blocks: Block[] };
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 /** Remove leftover markdown symbols (the site stores **Heading** and • bullets). */
@@ -101,7 +101,7 @@ function DescriptionBase({ text }: { text: string }) {
             ]}
           >
             <View style={styles.titleRow}>
-              {icon ? <Ionicons name={icon} size={22} color={tip ? PINK : VIOLET} /> : null}
+              {icon ? <Ionicons name={icon} size={22} color={tip ? PINK : colors.brand} /> : null}
               <Text style={[styles.title, { color: tip ? PINK : c.label }]} accessibilityRole="header">
                 {s.title || "О товаре"}
               </Text>
@@ -112,7 +112,7 @@ function DescriptionBase({ text }: { text: string }) {
               if (lv && ic) {
                 return (
                   <View key={bi} style={[styles.sub, { backgroundColor: dark ? "#352044" : "#F6F3FF" }]}>
-                    <Ionicons name={ic} size={26} color={bi % 2 ? VIOLET : PINK} />
+                    <Ionicons name={ic} size={26} color={bi % 2 ? colors.brand : PINK} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.subLabel, { color: c.label }]}>{lv[0]}</Text>
                       <Text style={[styles.subText, { color: c.secondary }]}>{lv[1]}</Text>

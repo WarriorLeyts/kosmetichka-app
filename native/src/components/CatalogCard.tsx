@@ -19,6 +19,7 @@ import { FitText } from "./FitText";
 import { SafeImage } from "./SafeImage";
 import { ProductLabels } from "./ProductCard";
 import { scaleStyles, useCardScale, withFonts, PHONE_CARD_SCALE } from "../cardScale";
+import { colors } from "@/theme";
 
 type Props = {
   product: Product;

@@ -9,6 +9,7 @@ import { iosText, useIOS } from "../../ios";
 import { Wordmark } from "../Wordmark";
 import { tap } from "../ui";
 import { useDesktop } from "../../useDesktop";
+import { colors } from "@/theme";
 
 /**
  * Top bar used on all tab screens: «КОСМЕТИЧКА» centred (same font and place as on the product page), bell on the right.
@@ -80,7 +81,7 @@ const wordStyle = StyleSheet.create({
 });
 
 /** Top bar for inner screens: back chevron on the left, «КОСМЕТИЧКА» centred. */
-export function BackBar({ onBack, color, tint = "#8b3dff" }: { onBack: () => void; color: string; tint?: string }) {
+export function BackBar({ onBack, color, tint = colors.brand }: { onBack: () => void; color: string; tint?: string }) {
   return (
     <View style={wordStyle.bar}>
       <BrandWord color={color} />

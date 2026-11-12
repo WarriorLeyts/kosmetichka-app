@@ -7,6 +7,7 @@ import { api } from "@/api";
 import { useAuth } from "@/store/auth";
 import { registerPush } from "@/push";
 import { WebPushCard } from "@/components/WebPushCard";
+import { colors } from "@/theme";
 
 /** Profile → «Уведомления»: promo consent and whether the phone allows push. */
 export function NotifySheet({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -58,7 +59,7 @@ export function NotifySheet({ open, onClose }: { open: boolean; onClose: () => v
             <Text style={[iosText.body, { color: c.label }]}>Акции и новости</Text>
             <Text style={[iosText.footnote, { color: c.secondary }]}>Скидки, подборки и новинки</Text>
           </View>
-          <Switch value={promo} onValueChange={toggle} trackColor={{ true: "#8b3dff" }} accessibilityLabel="Акции и новости" />
+          <Switch value={promo} onValueChange={toggle} trackColor={{ true: colors.brand }} accessibilityLabel="Акции и новости" />
         </View>
       </View>
       {Platform.OS === "android" && allowed === false ? (

@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { orderStatus } from "@/unread";
 import { onLiveHint } from "@/live";
 import { VIOLET_PINK } from "@/components/TabBar";
+import { colors } from "@/theme";
 
 /** Orders still in work (not «Выполнен» / «Отменён»), newest first, with their stage; follows live changes. */
 type Active = { id: number; status: string; needsConfirm?: boolean };
@@ -86,7 +87,7 @@ export function PendingOrderNote({ orders, wide }: { orders: Active[]; wide?: bo
       <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={st.card}>
         <View style={st.head}>
           <View style={st.icon}>
-            <Ionicons name={needsConfirm ? "hand-left" : status === "pending" ? "time" : status === "assembly" ? "cube" : status === "consultation" ? "chatbubble-ellipses" : "checkmark-circle"} size={24} color="#8b3dff" />
+            <Ionicons name={needsConfirm ? "hand-left" : status === "pending" ? "time" : status === "assembly" ? "cube" : status === "consultation" ? "chatbubble-ellipses" : "checkmark-circle"} size={24} color={colors.brand} />
           </View>
           <View style={{ flex: 1, gap: 2 }}>
             <Text style={st.title}>{title}</Text>

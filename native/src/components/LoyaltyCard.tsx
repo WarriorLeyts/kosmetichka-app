@@ -7,10 +7,10 @@ import { code128Modules, ean13Modules, runs } from "../ean13";
 import type { LoyaltyCard as Card } from "../loyalty";
 import { useIOS } from "../ios";
 import { tap } from "./ui";
+import { colors, themed } from "@/theme";
 
 const BANNER = require("../../assets/card-banner.png");
 const LOGO = require("../../assets/card-logo.png");
-const VIOLET = "#8b3dff";
 
 // geometry of the real card (measured on the 232 × 322 original); k = width / 232
 const CARD_W = 232;
@@ -58,10 +58,10 @@ export function EmptyLoyaltyCard({ width, onAdd }: { width: number; onAdd: () =>
       </Pressable>
       <Pressable onPress={press} style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]} accessibilityRole="button">
         <View style={[styles.rowIcon, { backgroundColor: "rgba(139,61,255,0.1)" }]}>
-          <Ionicons name="add" size={22} color={VIOLET} />
+          <Ionicons name="add" size={22} color={colors.brand} />
         </View>
         <Text style={styles.rowText}>Добавить карту</Text>
-        <Ionicons name="chevron-forward" size={19} color={VIOLET} />
+        <Ionicons name="chevron-forward" size={19} color={colors.brand} />
       </Pressable>
     </View>
   );
@@ -172,11 +172,11 @@ export function LoyaltyCardPanel({ card, width, onUnlink }: { card: Card; width:
 
       <Pressable onPress={toggle} style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]} accessibilityRole="button">
         <View style={[styles.rowIcon, { backgroundColor: "rgba(139,61,255,0.1)" }]}>
-          <Ionicons name="barcode-outline" size={21} color={VIOLET} />
+          <Ionicons name="barcode-outline" size={21} color={colors.brand} />
         </View>
         <Text style={styles.rowText}>{open ? "Скрыть штрихкод" : "Показать штрихкод"}</Text>
         <Animated.View style={{ transform: [{ rotate: chevron }] }}>
-          <Ionicons name="chevron-forward" size={19} color={VIOLET} />
+          <Ionicons name="chevron-forward" size={19} color={colors.brand} />
         </Animated.View>
       </Pressable>
       {card.pendingBonuses > 0 ? (
@@ -191,7 +191,7 @@ export function LoyaltyCardPanel({ card, width, onUnlink }: { card: Card; width:
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   panel: { borderRadius: 20, padding: 14, marginBottom: 16 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.07)" },
   title: { fontSize: 17, fontWeight: "600", marginBottom: 10, marginLeft: 2 },
@@ -203,6 +203,6 @@ const styles = StyleSheet.create({
   shine: { position: "absolute", top: -40, bottom: -40 },
   row: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, minHeight: 44 },
   rowIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  rowText: { flex: 1, color: VIOLET, fontSize: 17 },
+  rowText: { flex: 1, color: colors.brand, fontSize: 17 },
   pending: { fontSize: 13, textAlign: "center", marginTop: 4 },
-});
+}));

@@ -9,8 +9,8 @@ import { api } from "@/api";
 import { useAuth } from "@/store/auth";
 import type { RoleInfo, RoleOption } from "@/types";
 import { RETAIL_ENABLED } from "@/siteMode";
+import { colors } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 const LABELS: Record<string, string> = { retail: "Розница", wholesale: "Опт", big_wholesale: "Крупный опт" };
@@ -111,7 +111,7 @@ export function RoleSheet({ open, onClose }: { open: boolean; onClose: () => voi
     <Sheet open={open} onClose={onClose} title="Тип цен">
       {!info ? (
         <View style={{ height: 150, alignItems: "center", justifyContent: "center", paddingHorizontal: 24 }}>
-          {error ? <Text style={[iosText.body, { color: c.secondary, textAlign: "center" }]}>{error}</Text> : <ActivityIndicator color={VIOLET} />}
+          {error ? <Text style={[iosText.body, { color: c.secondary, textAlign: "center" }]}>{error}</Text> : <ActivityIndicator color={colors.brand} />}
         </View>
       ) : (
         <>
@@ -133,11 +133,11 @@ export function RoleSheet({ open, onClose }: { open: boolean; onClose: () => voi
                   {HINTS[o.value] ? <Text style={[iosText.footnote, { color: c.secondary, marginTop: 1 }]}>{HINTS[o.value]}</Text> : null}
                 </View>
                 {busy === o.value ? (
-                  <ActivityIndicator color={VIOLET} />
+                  <ActivityIndicator color={colors.brand} />
                 ) : o.state === "current" ? (
-                  <Ionicons name="checkmark" size={22} color={VIOLET} />
+                  <Ionicons name="checkmark" size={22} color={colors.brand} />
                 ) : o.state === "available" ? (
-                  <Text style={[iosText.subhead, { color: VIOLET, fontWeight: "600" }]}>Перейти</Text>
+                  <Text style={[iosText.subhead, { color: colors.brand, fontWeight: "600" }]}>Перейти</Text>
                 ) : o.state === "pending" ? (
                   <Text style={[iosText.subhead, { color: "#FF9500", fontWeight: "600" }]}>На рассмотрении</Text>
                 ) : (

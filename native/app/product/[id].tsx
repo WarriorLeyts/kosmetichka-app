@@ -33,11 +33,11 @@ import { BrandPlaque } from "@/components/BrandPlaque";
 import { FitText } from "@/components/FitText";
 import { SafeImage } from "@/components/SafeImage";
 import { productTitle, usePageTitle } from "@/pageTitle";
+import { colors } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 // the price panel is light in both themes: a deeper pink for the text (audit UX-01)
-const PRICE_COLORS = ["#c71f75", VIOLET];
+const PRICE_COLORS = ["#c71f75", "#8b3dff"];
 const STOCK = {
   high: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1a7a35", fgDark: "#4ade80" },
   low: { dot: "#FF9500", bg: "rgba(255,149,0,0.13)", fg: "#b35f00", fgDark: "#fbbf24" },
@@ -230,7 +230,7 @@ export default function ProductScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: bg }}>
         {topBar}
-        {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
+        {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={colors.brand} />}
       </View>
     );
   }
@@ -347,11 +347,11 @@ export default function ProductScreen() {
           </View>
           {!customer ? (
             <Pressable onPress={() => router.push("/login")} hitSlop={6} style={{ marginTop: 10 }}>
-              <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Войдите, чтобы увидеть оптовые цены</Text>
+              <Text style={{ color: colors.brand, fontSize: 15, fontWeight: "600" }}>Войдите, чтобы увидеть оптовые цены</Text>
             </Pressable>
           ) : null}
           <View style={{ marginTop: 10, gap: 3 }}>
-            {min > 1 ? <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}
+            {min > 1 ? <Text style={{ color: colors.brand, fontSize: 15, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}
             {product.article ? <Text style={{ color: c.secondary, fontSize: 13 }}>Арт. {product.article}</Text> : null}
             {codes.length ? (
               <Text selectable style={{ color: c.secondary, fontSize: 13 }}>
@@ -400,7 +400,7 @@ export default function ProductScreen() {
                           setVariantQty({ ...variantQty, [v.id]: min });
                         }}
                       >
-                        <Ionicons name="add" size={22} color={VIOLET} />
+                        <Ionicons name="add" size={22} color={colors.brand} />
                       </Pressable>
                     )}
                   </View>
@@ -450,7 +450,7 @@ export default function ProductScreen() {
                       }}
                       accessibilityRole="tab"
                       accessibilityState={{ selected: on }}
-                      style={[styles.relTab, on && { backgroundColor: VIOLET }]}
+                      style={[styles.relTab, on && { backgroundColor: colors.brand }]}
                     >
                       <Text style={{ color: on ? "#fff" : c.label, fontWeight: "700", fontSize: 15 }}>{label}</Text>
                     </Pressable>
@@ -562,8 +562,8 @@ export default function ProductScreen() {
       <ScrollView style={{ flex: 1, backgroundColor: bg }} contentContainerStyle={styles.dWrap}>
         <View style={styles.dTop}>
           <Pressable onPress={goBack} accessibilityRole="button" accessibilityLabel="Назад" style={styles.dBack}>
-            <Ionicons name="chevron-back" size={20} color={VIOLET} />
-            <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Назад</Text>
+            <Ionicons name="chevron-back" size={20} color={colors.brand} />
+            <Text style={{ color: colors.brand, fontSize: 15, fontWeight: "600" }}>Назад</Text>
           </Pressable>
         </View>
         <View style={styles.dRow}>
@@ -591,7 +591,7 @@ export default function ProductScreen() {
                     onPress={() => setSlide(i)}
                     accessibilityRole="button"
                     accessibilityLabel={`Фото ${i + 1}`}
-                    style={[styles.dThumb, { borderColor: i === slide ? VIOLET : "transparent" }]}
+                    style={[styles.dThumb, { borderColor: i === slide ? colors.brand : "transparent" }]}
                   >
                     <Image source={{ uri: previews[i] ?? u }} style={{ width: 64, height: 64 }} contentFit="contain" />
                   </Pressable>
@@ -627,7 +627,7 @@ export default function ProductScreen() {
         <View style={{ height: S }} />
         <Animated.View style={[styles.dots, !simple && anim.fadeEarly]}>
           {images.length > 1
-            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? VIOLET : dark ? "#43295A" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
+            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? colors.brand : dark ? "#43295A" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
             : null}
         </Animated.View>
 
@@ -715,7 +715,7 @@ function Qty({
         <Text style={{ fontSize: 17, fontWeight: "600", color: c.label }}>{value}</Text>
       </View>
       <Pressable onPress={onPlus} disabled={plusDisabled} hitSlop={6} accessibilityLabel="Увеличить количество" style={{ opacity: plusDisabled ? 0.4 : 1 }}>
-        <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center" }}>
+        <LinearGradient colors={[colors.brand, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: size, height: size, borderRadius: size / 2, alignItems: "center", justifyContent: "center" }}>
           <Ionicons name="add" size={24} color="#fff" />
         </LinearGradient>
       </Pressable>

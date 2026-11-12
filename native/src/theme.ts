@@ -12,6 +12,10 @@ const light = {
   pink: "#e82c87",
   pinkLight: "#ff6aaa",
   violet: "#8b3dff",
+  /** the brand violet of buttons, tabs and chips — the same in both themes; a promo can repaint it (setAccent) */
+  brand: "#8b3dff",
+  /** brand text on dark violet surfaces (contrast ≥ 5 : 1) */
+  brandOnDark: "#b58cff",
   blue: "#0036b8",
   bg: "#f6f7fb",
   card: "#ffffff",
@@ -45,6 +49,8 @@ const dark: Palette = {
   pink: "#EF419A",
   pinkLight: "#FF6FB5",
   violet: "#B57CFF",
+  brand: "#8b3dff",
+  brandOnDark: "#b58cff",
   blue: "#7C8CFF",
   bg: "#170D25",
   card: "#2B193D",
@@ -87,11 +93,67 @@ export const shadow = {
 };
 
 let version = 0;
+let accent: string | null = null;
 
-export function applyTheme(mode: ThemeMode) {
+/** Gradients of the main buttons and the active tab — live like `colors` (a promo repaints them, setAccent) */
+const BASE_GRADIENTS = {
+  button: ["#8b3dff", "#b832e0", "#e82c87"],
+  capsule: ["#c400fb", "#7a05fd", "#5a06f6", "#b80dfc"],
+  scene: ["#6a2bf0", "#b62ee6", "#f0388f"],
+};
+export const brandGradients = {
+  button: [...BASE_GRADIENTS.button] as [string, string, string],
+  capsule: [...BASE_GRADIENTS.capsule] as [string, string, string, string],
+  scene: [...BASE_GRADIENTS.scene] as [string, string, string],
+};
+
+/** hex → the same colour mixed with white (t = 0…1) */
+function tint(hex: string, t: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v + (255 - v) * t));
+  return `#${ch.map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+}
+
+function paint(mode: ThemeMode) {
   Object.assign(colors, mode === "dark" ? dark : light);
+  for (const k of Object.keys(BASE_GRADIENTS) as (keyof typeof BASE_GRADIENTS)[]) {
+    const base = BASE_GRADIENTS[k];
+    // the promo colour: light at the edges, deep in the middle — the same shape as the usual ones
+    const promo = [tint(accent ?? "#000000", 0.18), accent ?? "", tint(accent ?? "#000000", 0.18), accent ?? ""].slice(0, base.length);
+    brandGradients[k].splice(0, base.length, ...(accent ? (k === "button" ? [accent, tint(accent, 0.15), accent] : promo) : base));
+  }
+  if (accent) {
+    colors.brand = accent;
+    colors.brandOnDark = tint(accent, 0.35);
+    if (mode === "light") {
+      colors.violet = accent;
+      colors.violetSoft = tint(accent, 0.93);
+      colors.violetBorder = tint(accent, 0.85);
+    } else {
+      colors.violet = tint(accent, 0.3);
+    }
+  }
   version++;
 }
+
+let currentMode: ThemeMode = "light";
+export function applyTheme(mode: ThemeMode) {
+  currentMode = mode;
+  paint(mode);
+}
+
+/**
+ * Promo colour instead of the brand violet (null — the usual look). Returns whether anything changed;
+ * the caller re-mounts the app (see useTheme.accentKey) so every screen picks it up.
+ */
+export function setAccent(hex: string | null): boolean {
+  const next = hex && /^#[0-9a-f]{6}$/i.test(hex) && hex.toLowerCase() !== "#8b3dff" ? hex.toLowerCase() : null;
+  if (next === accent) return false;
+  accent = next;
+  paint(currentMode);
+  return true;
+}
+export const currentAccent = () => accent;
 
 /**
  * StyleSheet that is rebuilt from the current palette after a theme switch.

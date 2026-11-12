@@ -204,6 +204,17 @@ export type SiteBlock =
     }
   | { id: string; type: "info"; title: string; text: string; imageUrl: string | null; buttonText: string; link: string; tone: "light" | "accent" }
   | { id: string; type: "buttons"; title: string; items: { label: string; link: string }[] };
+/** The promotion's look (admin panel → Акция; GET /api/site/promo). Prices and discounts come from 1С as always. */
+export type SitePromo = {
+  name: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  active: boolean;
+  accent: string;
+  strip: { text: string; link: string | null; countdown: boolean } | null;
+  banners: SiteBanner[];
+  saleFirst: boolean;
+};
 export type SiteHome = { publishedAt: string | null; blocks: SiteBlock[] | null };
 
 export type CatalogPage = { products: Product[]; total: number; page: number; hasMore: boolean; nameAnyApplied?: boolean };
@@ -260,6 +271,9 @@ export const api = {
   /** page: "catalog" — the blocks above the goods of the catalog */
   siteHome(page: "home" | "catalog" = "home"): Promise<SiteHome> {
     return request(page === "home" ? "/api/site/home" : `/api/site/home?page=${page}`);
+  },
+  sitePromo(): Promise<{ promo: SitePromo | null }> {
+    return request("/api/site/promo");
   },
   /** «О компании»: the pages for the menu and the requisites, as edited in the admin panel */
   sitePages(): Promise<{ menu: { slug: string; title: string; path: string }[]; requisites: { label: string; value: string }[] }> {

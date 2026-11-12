@@ -12,6 +12,7 @@ import { useOrderUpdates } from "../unread";
 import { useIOS } from "../ios";
 import { useDesktop } from "../useDesktop";
 import { tap } from "./ui";
+import { colors, brandGradients } from "@/theme";
 
 type IconName = keyof typeof Ionicons.glyphMap;
 
@@ -24,9 +25,9 @@ const TABS: Record<string, { label: string; icon: IconName; active: IconName }> 
 };
 
 /** Brand violet → pink (exact project colors) — buttons, chips */
-export const VIOLET_PINK = ["#8b3dff", "#b832e0", "#e82c87"] as const;
+export const VIOLET_PINK = brandGradients.button;
 /** Active tab capsule — magenta at the edges, deep violet in the middle (as on the mockup) */
-const CAPSULE = ["#c400fb", "#7a05fd", "#5a06f6", "#b80dfc"] as const;
+const CAPSULE = brandGradients.capsule;
 const INACTIVE = "#515B89";
 
 const BAR_HEIGHT = 70;
@@ -127,8 +128,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
             >
               {disabled("fade") ? (
                 <View style={styles.content}>
-                  <Ionicons name={focused ? t.active : t.icon} size={25} color={focused ? "#8b3dff" : INACTIVE} />
-                  <Text numberOfLines={1} maxFontSizeMultiplier={1.15} style={[styles.label, { color: focused ? "#8b3dff" : INACTIVE }]}>
+                  <Ionicons name={focused ? t.active : t.icon} size={25} color={focused ? colors.brand : INACTIVE} />
+                  <Text numberOfLines={1} maxFontSizeMultiplier={1.15} style={[styles.label, { color: focused ? colors.brand : INACTIVE }]}>
                     {t.label}
                   </Text>
                 </View>

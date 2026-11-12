@@ -6,6 +6,7 @@ import { iosText, useIOS } from "@/ios";
 import { tap } from "@/components/ui";
 import { onNextTap } from "@/webTap";
 import { isIOSDevice, standalone } from "@/webPush";
+import { colors } from "@/theme";
 
 /**
  * Website on a phone: offer to install the site to the home screen.
@@ -14,7 +15,6 @@ import { isIOSDevice, standalone } from "@/webPush";
  * (again in 3 days if closed). Never when already installed, never on a computer.
  */
 
-const VIOLET = "#8b3dff";
 const ANDROID_KEY = "install-dismissed-at";
 const IOS_KEY = "install-ios-closed-at";
 const DAY = 24 * 3600 * 1000;
@@ -124,9 +124,9 @@ export function InstallPrompt() {
 
         <View style={[styles.steps, { backgroundColor: c.cell }]}>
           <View style={styles.step}>
-            <Text style={[styles.num, { color: VIOLET }]}>1</Text>
+            <Text style={[styles.num, { color: colors.brand }]}>1</Text>
             <View style={[styles.stepIcon, { backgroundColor: iconBg }]}>
-              <Ionicons name="share-outline" size={22} color={VIOLET} />
+              <Ionicons name="share-outline" size={22} color={colors.brand} />
             </View>
             <Text style={[iosText.subhead, styles.stepText, { color: c.label }]}>
               Нажмите «Поделиться» {shareWhere(browser)}
@@ -135,16 +135,16 @@ export function InstallPrompt() {
           </View>
           <View style={[styles.sep, { backgroundColor: c.separator }]} />
           <View style={styles.step}>
-            <Text style={[styles.num, { color: VIOLET }]}>2</Text>
+            <Text style={[styles.num, { color: colors.brand }]}>2</Text>
             <View style={[styles.stepIcon, { backgroundColor: iconBg }]}>
-              <MaterialCommunityIcons name="plus-box-outline" size={22} color={VIOLET} />
+              <MaterialCommunityIcons name="plus-box-outline" size={22} color={colors.brand} />
             </View>
             <Text style={[iosText.subhead, styles.stepText, { color: c.label }]}>Выберите «На экран „Домой“»</Text>
           </View>
         </View>
 
         <Pressable onPress={close} accessibilityRole="button" style={({ pressed }) => [styles.btn, { backgroundColor: c.cell }, pressed && { opacity: 0.7 }]}>
-          <Text style={[styles.btnText, { color: VIOLET }]}>Не сейчас</Text>
+          <Text style={[styles.btnText, { color: colors.brand }]}>Не сейчас</Text>
         </Pressable>
       </View>
     </Sheet>

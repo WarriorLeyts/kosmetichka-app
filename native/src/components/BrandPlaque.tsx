@@ -8,8 +8,8 @@ import { brandLogo } from "@/brandLogos";
 import { useCatalog } from "@/store/catalog";
 import { tap } from "@/components/ui";
 import { useIOS } from "@/ios";
+import { colors } from "@/theme";
 
-const VIOLET = "#8B3DFF";
 const counts = new Map<string, number>();
 
 /**
@@ -39,7 +39,7 @@ export function BrandPlaque({ guid, name }: { guid: string | null | undefined; n
 
   if (!guid) {
     return (
-      <Text style={[styles.plain, { color: VIOLET }]} numberOfLines={1}>
+      <Text style={[styles.plain, { color: colors.brand }]} numberOfLines={1}>
         {name.toUpperCase()}
       </Text>
     );
@@ -71,7 +71,7 @@ export function BrandPlaque({ guid, name }: { guid: string | null | undefined; n
           Все товары бренда{count != null ? ` · ${count}` : ""}
         </Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={VIOLET} />
+      <Ionicons name="chevron-forward" size={20} color={colors.brand} />
     </Pressable>
   );
 }

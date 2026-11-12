@@ -5,6 +5,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { api, imageUrl, type SiteBlock } from "@/api";
+import { useLivePromo } from "@/promo";
 import { useIOS } from "@/ios";
 import { tap } from "@/components/ui";
 import { ProductCard } from "@/components/ProductCard";
@@ -17,8 +18,8 @@ import { useFavorites } from "@/store/favorites";
 import { effectivePriceType } from "@/pricing";
 import { useAddToCart } from "@/useAddToCart";
 import type { Category, Product } from "@/types";
+import { colors } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 type OpenCatalog = (patch: { categoryGuid?: string | null; quick?: Quick[]; search?: string }) => void;
@@ -70,6 +71,13 @@ export function openSiteLink(link: string | null | undefined, openCatalog: OpenC
     return;
   }
   router.push(link as never);
+}
+
+/** The promotion's banners (admin panel → Акция) — first on the home page while it runs. */
+export function PromoHero({ desktop, openCatalog }: { desktop: boolean; openCatalog: OpenCatalog }) {
+  const promo = useLivePromo();
+  if (!promo?.banners.length) return null;
+  return <Hero b={{ id: "promo", type: "hero", banners: promo.banners, intervalSec: 5 }} desktop={desktop} openCatalog={openCatalog} />;
 }
 
 function Hero({ b, desktop, openCatalog }: { b: Extract<SiteBlock, { type: "hero" }>; desktop: boolean; openCatalog: OpenCatalog }) {
@@ -291,6 +299,7 @@ export function HomeBlocks({
   openCatalog,
   desktop = false,
   arrivals = true,
+  promo = true,
 }: {
   blocks: SiteBlock[];
   categories: Category[];
@@ -298,8 +307,20 @@ export function HomeBlocks({
   desktop?: boolean;
   /** add «Новинки» / «Снова в наличии» after the banners — unless the page has them as its own blocks */
   arrivals?: boolean;
+  /** the promotion's banners first (the home page) */
+  promo?: boolean;
 }) {
   const c = useIOS();
+  const live = useLivePromo();
+  const promoBanners = promo && live?.banners.length ? live.banners : null;
+  if (promoBanners) {
+    const ids = new Set(promoBanners.map((x) => x.id));
+    blocks = [
+      { id: "promo", type: "hero", banners: promoBanners, intervalSec: 5 },
+      // the same banners are not shown twice
+      ...blocks.map((b) => (b.type === "hero" ? { ...b, banners: b.banners.filter((x) => !ids.has(x.id)) } : b)),
+    ];
+  }
   const byGuid = new Map(categories.map((x) => [x.guid, x]));
   const autoArrivals = arrivals && !blocks.some((b) => b.type === "products" && b.query.arrivals);
   return (
@@ -330,14 +351,14 @@ export function HomeBlocks({
                 {b.text ? <Text style={[styles.infoText, { color: accent ? "rgba(255,255,255,0.92)" : c.secondary }]}>{b.text}</Text> : null}
                 {b.buttonText && b.link ? (
                   <Pressable onPress={() => openSiteLink(b.link, openCatalog)} accessibilityRole="link" style={[styles.infoBtn, { backgroundColor: accent ? "#fff" : PINK }]}>
-                    <Text style={{ color: accent ? VIOLET : "#fff", fontWeight: "800" }}>{b.buttonText}</Text>
+                    <Text style={{ color: accent ? colors.brand : "#fff", fontWeight: "800" }}>{b.buttonText}</Text>
                   </Pressable>
                 ) : null}
               </View>
             </View>
           );
           return accent ? (
-            <LinearGradient key={b.id} colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.info, !desktop && { marginHorizontal: 16 }]}>
+            <LinearGradient key={b.id} colors={[colors.brand, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.info, !desktop && { marginHorizontal: 16 }]}>
               {body}
             </LinearGradient>
           ) : (

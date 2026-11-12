@@ -16,7 +16,7 @@ import { EmptyLoyaltyCard, LoyaltyCardPanel } from "@/components/LoyaltyCard";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { RoleSheet } from "@/components/RoleSheet";
 import { NotifySheet } from "@/components/NotifySheet";
-import { useTheme, type ThemePref } from "@/theme";
+import { useTheme, type ThemePref, colors } from "@/theme";
 import { api } from "@/api";
 import type { LoyaltyCard } from "@/loyalty";
 import { RETAIL_ENABLED, SITE_RETAIL_DISCOUNT } from "@/siteMode";
@@ -30,7 +30,6 @@ import Info from "../info";
 type IconName = keyof typeof Ionicons.glyphMap;
 
 // brand colors from the project
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 const TIER: Record<string, string> = {
@@ -190,7 +189,7 @@ export default function Profile() {
               style={({ pressed }) => [styles.row, pressed && { backgroundColor: c.cellPressed }, split && it.pane === pane && { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "#F4EBFF" }]}
             >
               <View style={[styles.iconWrap, { backgroundColor: it.pink ? "rgba(232,44,135,0.1)" : "rgba(139,61,255,0.1)" }]}>
-                {it.fav ? <FavHeart size={21} /> : <Ionicons name={it.icon} size={21} color={it.pink ? PINK : VIOLET} />}
+                {it.fav ? <FavHeart size={21} /> : <Ionicons name={it.icon} size={21} color={it.pink ? PINK : colors.brand} />}
               </View>
               <Text style={[iosText.body, { color: c.label, flex: 1 }]} numberOfLines={1}>
                 {it.title}

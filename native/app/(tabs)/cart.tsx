@@ -27,8 +27,8 @@ import { FitText } from "@/components/FitText";
 import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
 import { TierProgress } from "@/components/TierProgress";
 import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
+import { colors, themed } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 /** «Скидка», «Опт» or «Кр. опт» as in the catalog cards («Опт» customer under 5 000 ₽ — «Скидочная»). */
@@ -212,7 +212,7 @@ export default function Cart() {
         </View>
         <View style={[styles.empty, { paddingBottom: bottomSpace }]}>
           <View style={[styles.emptyIcon, { backgroundColor: "rgba(139,61,255,0.1)" }]}>
-            <Ionicons name="bag-outline" size={38} color={VIOLET} />
+            <Ionicons name="bag-outline" size={38} color={colors.brand} />
           </View>
           <Text style={[iosText.title2, { color: c.label, textAlign: "center" }]}>Корзина пуста</Text>
           <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginTop: 6 }]}>
@@ -341,7 +341,7 @@ export default function Cart() {
             </Pressable>
             <Text style={[styles.deskQty, { color: c.label }]}>{item.quantity}</Text>
             <Pressable onPress={plus} disabled={atMax} accessibilityLabel="Увеличить количество" style={{ opacity: atMax ? 0.4 : 1 }}>
-              <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.deskPlus}>
+              <LinearGradient colors={[colors.brand, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.deskPlus}>
                 <Ionicons name="add" size={20} color="#fff" />
               </LinearGradient>
             </Pressable>
@@ -392,7 +392,7 @@ export default function Cart() {
                 <Text style={[li.qty, { color: c.label }]}>{item.quantity}</Text>
               </View>
               <Pressable onPress={plus} disabled={atMax} hitSlop={6} accessibilityLabel="Увеличить количество" style={{ opacity: atMax ? 0.4 : 1 }}>
-                <LinearGradient colors={[VIOLET, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={li.plus}>
+                <LinearGradient colors={[colors.brand, "#b832e0"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={li.plus}>
                   <Ionicons name="add" size={24 * lk} color="#fff" />
                 </LinearGradient>
               </Pressable>
@@ -456,8 +456,8 @@ export default function Cart() {
               <View style={{ flex: 1 }}>
                 <Text style={[iosText.body, { color: c.label, fontWeight: "600" }]}>Заберу в магазине</Text>
                 <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`} hitSlop={6}>
-                  <Text style={{ color: VIOLET, fontSize: 15, marginTop: 3, textDecorationLine: "underline" }}>
-                    <Ionicons name="location-outline" size={14} color={VIOLET} /> {SHOP_ADDRESS}
+                  <Text style={{ color: colors.brand, fontSize: 15, marginTop: 3, textDecorationLine: "underline" }}>
+                    <Ionicons name="location-outline" size={14} color={colors.brand} /> {SHOP_ADDRESS}
                   </Text>
                 </Pressable>
               </View>
@@ -467,7 +467,7 @@ export default function Cart() {
                   tap();
                   setPickup(v);
                 }}
-                trackColor={{ true: VIOLET, false: dark ? "#4A3560" : "#D1D1D6" }}
+                trackColor={{ true: colors.brand, false: dark ? "#4A3560" : "#D1D1D6" }}
                 thumbColor="#fff"
                 {...({ activeThumbColor: "#fff" } as object)}
                 accessibilityLabel="Заберу в магазине"
@@ -540,8 +540,8 @@ export default function Cart() {
                   ) : null}
                   {spend && calc.bonuses?.applied ? (
                     <View style={[styles.sumRow, { marginTop: 2 }]}>
-                      <Text style={[iosText.body, { color: VIOLET }]}>Списано бонусов</Text>
-                      <Text style={[iosText.body, { color: VIOLET }]}>−{money(calc.bonuses.applied)}</Text>
+                      <Text style={[iosText.body, { color: colors.brand }]}>Списано бонусов</Text>
+                      <Text style={[iosText.body, { color: colors.brand }]}>−{money(calc.bonuses.applied)}</Text>
                     </View>
                   ) : null}
                 </>
@@ -639,7 +639,7 @@ export default function Cart() {
           accessibilityLabel={`К оформлению, итого ${money(total)}`}
           style={[styles.jump, { bottom: bottomSpace + 6 }]}
         >
-          <LinearGradient colors={[VIOLET, "#b832e0", PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.jumpInner}>
+          <LinearGradient colors={[colors.brand, "#b832e0", PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.jumpInner}>
             <Text style={styles.jumpText}>К оформлению · {money(total)}</Text>
             <Ionicons name="arrow-down" size={18} color="#fff" />
           </LinearGradient>
@@ -673,7 +673,7 @@ function GradientButton({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   deskRow: { flex: 1, flexDirection: "row", gap: 24, width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 20, alignItems: "flex-start" },
   deskSide: { width: 400, flexGrow: 0, maxHeight: "100%", paddingTop: 96 },
   deskPanel: { borderRadius: 22, padding: 20, marginBottom: 30 },
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
   photo: { width: 112, height: 132, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   brand: { fontSize: 13, letterSpacing: 0.3, marginBottom: 3 },
   name: { fontSize: 17, lineHeight: 22 },
-  variant: { color: VIOLET, fontSize: 13, fontWeight: "600", marginTop: 3 },
+  variant: { color: colors.brand, fontSize: 13, fontWeight: "600", marginTop: 3 },
   unit: { fontSize: 15, marginTop: 6 },
   sum: { color: PINK, fontSize: 22, fontWeight: "800", marginTop: 2 },
   stepRow: { flexDirection: "row", marginTop: 10 },
@@ -721,15 +721,15 @@ const styles = StyleSheet.create({
   ctaText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, width: "100%", maxWidth: 440, alignSelf: "center" },
   emptyIcon: { width: 84, height: 84, borderRadius: 26, alignItems: "center", justifyContent: "center", marginBottom: 16 },
-});
+}));
 
 /** a cart line; on a phone the whole line card is drawn at 0.8 (cardScale.ts) */
-const lineBase = StyleSheet.create({
+const lineBase = themed(() => ({
   item: { flexDirection: "row", gap: 14, padding: 14, marginBottom: 12 },
   photo: { width: 112, height: 132, borderRadius: 14, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   brand: { fontSize: 13, letterSpacing: 0.3, marginBottom: 3 },
   name: { fontSize: 17, lineHeight: 22 },
-  variant: { color: VIOLET, fontSize: 13, fontWeight: "600", marginTop: 3 },
+  variant: { color: colors.brand, fontSize: 13, fontWeight: "600", marginTop: 3 },
   unit: { fontSize: 15, marginTop: 6 },
   sum: { color: PINK, fontSize: 22, fontWeight: "800", marginTop: 2 },
   stepRow: { flexDirection: "row", marginTop: 10 },
@@ -739,7 +739,7 @@ const lineBase = StyleSheet.create({
   qty: { fontSize: 17, fontWeight: "600" },
   plus: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", boxShadow: "0 4px 10px rgba(139,61,255,0.35)" },
   remove: { position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
-});
+}));
 /** cart lines on a phone: smaller than the catalog cards (0.7) — the owner found 0.8 still too big */
 const CART_LINE_SCALE = 0.7;
 const linePhone = StyleSheet.create(

@@ -10,6 +10,7 @@ import { TitleBar } from "@/components/iosui/TitleBar";
 import { tap } from "@/components/ui";
 import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
+import { colors } from "@/theme";
 
 const REQUISITES: [string, string][] = [
   ["Организация", "ООО «ВЕДУЧИ-1»"],
@@ -95,7 +96,7 @@ export default function Info() {
                   accessibilityLabel={l.label}
                   style={({ pressed }) => [styles.link, i > 0 && sep, pressed && { backgroundColor: c.cellPressed }]}
                 >
-                  <Ionicons name={l.icon} size={26} color="#8b3dff" />
+                  <Ionicons name={l.icon} size={26} color={colors.brand} />
                   <Text style={[styles.linkText, { color: c.label }]}>{l.label}</Text>
                   <Ionicons name="open-outline" size={20} color={c.secondary} />
                 </Pressable>

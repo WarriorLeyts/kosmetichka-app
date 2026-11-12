@@ -3,8 +3,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { money } from "../format";
 import { BIG_WHOLESALE_MIN_ORDER, cartPriceTier, rawCartTotal, resolveCustomerPriceType, WHOLESALE_MIN_ORDER, type PriceType } from "../pricing";
 import { FitText } from "./FitText";
+import { colors, themed } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const GREEN = "#16A34A";
 
 /**
@@ -59,7 +59,7 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
           </View>
           {goal.save > 0 ? (
             <Text style={[styles.save, { color: sub }]}>
-              Этот заказ станет дешевле на <Text style={{ color: VIOLET, fontWeight: "700" }}>{money(goal.save)}</Text>
+              Этот заказ станет дешевле на <Text style={{ color: colors.brand, fontWeight: "700" }}>{money(goal.save)}</Text>
             </Text>
           ) : null}
         </View>
@@ -82,7 +82,7 @@ function Steps({ tier, dark }: { tier: PriceType; dark: boolean }) {
         const on = i === at;
         const done = i < at;
         return (
-          <View key={s.t} style={[styles.step, { backgroundColor: on ? VIOLET : dark ? "rgba(255,255,255,0.08)" : "#fff", borderColor: on ? VIOLET : done ? GREEN : "rgba(139,61,255,0.25)" }]}>
+          <View key={s.t} style={[styles.step, { backgroundColor: on ? colors.brand : dark ? "rgba(255,255,255,0.08)" : "#fff", borderColor: on ? colors.brand : done ? GREEN : "rgba(139,61,255,0.25)" }]}>
             <Text style={[styles.stepName, { color: on ? "#fff" : done ? GREEN : dark ? "#fff" : "#1C1030" }]}>
               {done ? "✓ " : ""}
               {s.name}
@@ -95,16 +95,16 @@ function Steps({ tier, dark }: { tier: PriceType; dark: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   card: { borderRadius: 20, padding: 16, marginTop: 14 },
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
   reached: { flex: 1, fontSize: 17, fontWeight: "800" },
   title: { fontSize: 17, fontWeight: "800" },
   track: { height: 12, borderRadius: 6, marginTop: 10, overflow: "hidden" },
-  fill: { height: 12, borderRadius: 6, backgroundColor: VIOLET },
+  fill: { height: 12, borderRadius: 6, backgroundColor: colors.brand },
   small: { fontSize: 13 },
   save: { fontSize: 15, marginTop: 6 },
   step: { flex: 1, borderRadius: 12, borderWidth: 1.5, paddingVertical: 7, paddingHorizontal: 6, alignItems: "center" },
   stepName: { fontSize: 15, fontWeight: "800" },
   stepFrom: { fontSize: 11, marginTop: 1 },
-});
+}));

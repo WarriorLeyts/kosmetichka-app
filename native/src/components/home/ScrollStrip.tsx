@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactElement } from "react";
 import { FlatList, Pressable, StyleSheet, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { colors } from "@/theme";
 
 /**
  * A horizontal strip of products; on a computer with arrows «‹ ›» at the sides (a mouse can't swipe, and
@@ -31,12 +32,12 @@ export function ScrollStrip<T>({ data, keyOf, render, itemWidth, desktop }: { da
       />
       {desktop && canLeft ? (
         <Pressable onPress={() => go(-1)} accessibilityRole="button" accessibilityLabel="Назад" style={[styles.arrow, { left: -16 }]}>
-          <Ionicons name="chevron-back" size={22} color="#8b3dff" />
+          <Ionicons name="chevron-back" size={22} color={colors.brand} />
         </Pressable>
       ) : null}
       {desktop && canRight ? (
         <Pressable onPress={() => go(1)} accessibilityRole="button" accessibilityLabel="Дальше" style={[styles.arrow, { right: -16 }]}>
-          <Ionicons name="chevron-forward" size={22} color="#8b3dff" />
+          <Ionicons name="chevron-forward" size={22} color={colors.brand} />
         </Pressable>
       ) : null}
     </View>

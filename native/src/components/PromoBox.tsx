@@ -4,8 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { iosText, useIOS } from "../ios";
 import { money } from "../format";
 import { tap } from "./ui";
+import { colors, themed } from "@/theme";
 
-const VIOLET = "#8b3dff";
 
 /** «Промокод» in the cart — the parent checks the code with the site (MAXMA) and passes the result in. */
 export function PromoBox({
@@ -36,7 +36,7 @@ export function PromoBox({
             {error ? error : `${name ? `${name} · ` : ""}скидка ${money(discount ?? 0)}`}
           </Text>
         </View>
-        {busy ? <ActivityIndicator color={VIOLET} /> : null}
+        {busy ? <ActivityIndicator color={colors.brand} /> : null}
         <Pressable hitSlop={10} accessibilityRole="button" accessibilityLabel="Убрать промокод" onPress={() => { tap(); onRemove(); }}>
           <Ionicons name="close-circle" size={22} color={c.secondary} />
         </Pressable>
@@ -48,8 +48,8 @@ export function PromoBox({
     return (
       <View>
         <Pressable onPress={() => { tap(); setOpen(true); }} accessibilityRole="button" style={styles.toggle}>
-          <Ionicons name="pricetag-outline" size={19} color={VIOLET} />
-          <Text style={[iosText.body, { color: VIOLET }]}>Есть промокод?</Text>
+          <Ionicons name="pricetag-outline" size={19} color={colors.brand} />
+          <Text style={[iosText.body, { color: colors.brand }]}>Есть промокод?</Text>
         </Pressable>
         {error ? <Text style={[iosText.footnote, styles.err]}>{error}</Text> : null}
       </View>
@@ -108,28 +108,28 @@ export function BonusBox({
     <View style={[styles.bonus, { backgroundColor: dark ? "rgba(139,61,255,0.14)" : "rgba(139,61,255,0.07)" }]}>
       {canSpend ? (
         <View style={styles.bonusRow}>
-          <Ionicons name="gift-outline" size={20} color={VIOLET} />
+          <Ionicons name="gift-outline" size={20} color={colors.brand} />
           <View style={{ flex: 1 }}>
             <Text style={[iosText.body, { color: c.label, fontWeight: "600" }]}>Списать бонусы</Text>
             <Text style={[iosText.footnote, { color: c.secondary }]}>
               {bonuses.balance != null ? `Доступно ${bonuses.balance.toLocaleString("ru-RU")} · ` : ""}можно списать до {bonuses.maxToApply.toLocaleString("ru-RU")}
             </Text>
           </View>
-          {busy ? <ActivityIndicator color={VIOLET} style={{ marginRight: 6 }} /> : null}
+          {busy ? <ActivityIndicator color={colors.brand} style={{ marginRight: 6 }} /> : null}
           <Switch
             value={on}
             onValueChange={(v) => {
               tap();
               onToggle(v);
             }}
-            trackColor={{ true: VIOLET, false: dark ? "#4A3A5C" : "#D1D1D6" }}
+            trackColor={{ true: colors.brand, false: dark ? "#4A3A5C" : "#D1D1D6" }}
             thumbColor="#fff"
             accessibilityLabel="Списать бонусы"
           />
         </View>
       ) : bonuses.balance != null ? (
         <View style={styles.bonusRow}>
-          <Ionicons name="gift-outline" size={20} color={VIOLET} />
+          <Ionicons name="gift-outline" size={20} color={colors.brand} />
           <Text style={[iosText.subhead, { color: c.secondary, flex: 1 }]}>На карте {bonuses.balance.toLocaleString("ru-RU")} бонусов</Text>
         </View>
       ) : null}
@@ -142,15 +142,15 @@ export function BonusBox({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   toggle: { flexDirection: "row", alignItems: "center", gap: 8, minHeight: 44, marginTop: 8 },
   label: { fontSize: 20, fontWeight: "700", marginBottom: 10 },
   row: { flexDirection: "row", gap: 10 },
   input: { flex: 1, height: 52, borderRadius: 16, paddingHorizontal: 16, fontSize: 17 },
-  apply: { height: 52, borderRadius: 16, paddingHorizontal: 18, backgroundColor: VIOLET, alignItems: "center", justifyContent: "center" },
+  apply: { height: 52, borderRadius: 16, paddingHorizontal: 18, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" },
   applyText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   applied: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 16, padding: 14, marginTop: 14 },
   err: { color: "#FF3B30", marginTop: 6 },
   bonus: { borderRadius: 16, padding: 14, marginTop: 14 },
   bonusRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-});
+}));
