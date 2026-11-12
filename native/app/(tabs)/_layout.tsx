@@ -11,9 +11,10 @@ import { useDesktop } from "@/useDesktop";
 type IconName = keyof typeof Ionicons.glyphMap;
 
 function icon(active: IconName, inactive: IconName) {
-  return ({ color, focused, size }: { color: string; focused: boolean; size: number }) => (
+  const TabIcon = ({ color, focused, size }: { color: string; focused: boolean; size: number }) => (
     <Ionicons name={focused ? active : inactive} size={size} color={color} />
   );
+  return TabIcon;
 }
 
 export default function TabsLayout() {
