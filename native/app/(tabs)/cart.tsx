@@ -131,6 +131,12 @@ export default function Cart() {
   const [error, setError] = useState("");
   // a second tap before the re-render must not send the same order twice
   const submitting = useRef(false);
+  // one id per order attempt: a repeat tap after a lost answer gets the first order back, not a second one
+  // (site: lib/idempotency.ts); a changed cart is a new order
+  const requestId = useRef<string | null>(null);
+  useEffect(() => {
+    requestId.current = null;
+  }, [items]);
   // promo code and bonuses — the site calculates them with MAXMA for the current cart
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [promoErr, setPromoErr] = useState("");
@@ -236,11 +242,13 @@ export default function Cart() {
         setError(`Нельзя заказать: ${blocked.map((i) => i.name).slice(0, 3).join(", ")}${blocked.length > 3 ? "…" : ""}. Удалите эти товары из корзины.`);
         return;
       }
+      requestId.current ??= `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
       const r = await api.createOrder(
         lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
         currentComment().trim(),
-        { promocode: promoCode && calc?.promo?.code === promoCode ? promoCode : undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, pickup, address: pickup ? undefined : address.trim() || undefined }
+        { promocode: promoCode && calc?.promo?.code === promoCode ? promoCode : undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, pickup, address: pickup ? undefined : address.trim() || undefined, requestId: requestId.current }
       );
+      requestId.current = null;
       clear();
       setPromoCode(null);
       setSpend(false);

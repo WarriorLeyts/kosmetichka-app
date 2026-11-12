@@ -378,7 +378,7 @@ export const api = {
   createOrder(
     items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[],
     comment: string,
-    extra: { promocode?: string; applyBonuses?: number; pickup?: boolean; address?: string } = {}
+    extra: { promocode?: string; applyBonuses?: number; pickup?: boolean; address?: string; requestId?: string } = {}
   ) {
     return request<{ success: boolean; orderId: number; loyaltyWarning?: string }>("/api/orders", {
       method: "POST",
@@ -389,6 +389,7 @@ export const api = {
         ...(extra.applyBonuses ? { applyBonuses: extra.applyBonuses } : {}),
         ...(extra.pickup ? { pickup: true } : {}),
         ...(extra.address ? { address: extra.address } : {}),
+        ...(extra.requestId ? { requestId: extra.requestId } : {}),
       }),
     });
   },
