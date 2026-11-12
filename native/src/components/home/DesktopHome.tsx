@@ -17,6 +17,8 @@ import { effectivePriceType } from "@/pricing";
 import { useAddToCart } from "@/useAddToCart";
 import type { Quick } from "@/store/catalog";
 import type { Category, Product } from "@/types";
+import type { SiteBlock } from "@/api";
+import { HomeBlocks } from "@/components/home/HomeBlocks";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -35,11 +37,14 @@ export function DesktopHome({
   fresh,
   orders,
   openCatalog,
+  blocks = null,
 }: {
   categories: Category[];
   fresh: Product[];
   orders: ReturnType<typeof useActiveOrders>;
   openCatalog: (patch: { categoryGuid?: string | null; quick?: Quick[] }) => void;
+  /** home blocks published in the admin panel; null — the built-in home below */
+  blocks?: SiteBlock[] | null;
 }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -61,6 +66,23 @@ export function DesktopHome({
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.main} showsVerticalScrollIndicator={false}>
         <PendingOrderNote orders={orders} wide />
 
+        {blocks ? (
+          <>
+        {!customer ? (
+          <Pressable style={[styles.login, { backgroundColor: c.cell }]} onPress={() => router.push("/login")}>
+            <Ionicons name="pricetags-outline" size={22} color={VIOLET} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.loginTitle, { color: c.label }]}>Войдите, чтобы видеть оптовые цены</Text>
+              <Text style={{ color: c.secondary, marginTop: 2 }}>И оформлять заказы с подтверждением менеджера</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={VIOLET} />
+          </Pressable>
+        ) : null}
+
+            <HomeBlocks blocks={blocks} categories={categories} openCatalog={openCatalog} desktop />
+          </>
+        ) : (
+          <>
         <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroTitle}>Собираем ваш заказ</Text>
@@ -136,6 +158,8 @@ export function DesktopHome({
             </View>
           </>
         ) : null}
+          </>
+        )}
 
         <Pressable
           style={styles.contacts}
