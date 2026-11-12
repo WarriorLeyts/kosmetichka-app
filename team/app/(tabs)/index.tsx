@@ -7,6 +7,7 @@ import { get } from "@/api";
 import { money, date, time } from "@/format";
 import { useIOS } from "@/ios";
 import { ManagerLine } from "@/components/ManagerLine";
+import { Arrivals } from "@/components/Arrivals";
 import { useBadges } from "@/store/badges";
 import { useAuth } from "@/store/auth";
 import { statusColors } from "@/orderStatus";
@@ -53,6 +54,8 @@ function Dashboard() {
               );
             })}
           </View>
+
+          <Arrivals />
 
           <SectionTitle>Последние заказы</SectionTitle>
           {data.recentOrders.map((o) => (

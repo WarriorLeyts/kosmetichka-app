@@ -1,6 +1,8 @@
 export type ProductImage = { path: string };
 
 export type Product = {
+  /** «Новые поступления»: the product came to the company for the first time («Новинка») */
+  arrivalNew?: boolean;
   id: number;
   guid?: string;
   name: string;

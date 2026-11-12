@@ -266,6 +266,10 @@ export const api = {
   productsByIds(ids: number[]): Promise<{ products: Product[] }> {
     return request(`/api/catalog/products?lite=1&ids=${ids.map((n) => Math.trunc(n)).join(",")}`);
   },
+  /** «Новые поступления» for the home page: what came in the last 10 days and this customer can buy (arrivalNew → «Новинка») */
+  arrivals(): Promise<{ products: Product[] }> {
+    return request("/api/catalog/products?lite=1&arrivals=1");
+  },
   /** under a product: «С этим берут» (together) / «Похожие» (similar) — in stock for this customer */
   related(id: number, kind: "together" | "similar"): Promise<{ products: Product[] }> {
     return request(`/api/catalog/products?lite=1&related=${Math.trunc(id)}&kind=${kind}`);
