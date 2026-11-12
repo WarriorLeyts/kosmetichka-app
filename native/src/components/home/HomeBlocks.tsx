@@ -23,25 +23,25 @@ const PINK = "#e82c87";
 
 type OpenCatalog = (patch: { categoryGuid?: string | null; quick?: Quick[]; search?: string }) => void;
 
-/** The published home blocks cached for the session (one request per app start, refreshed in the background). */
-let cached: SiteBlock[] | null | undefined;
-export function useSiteHome(): SiteBlock[] | null | undefined {
-  const [blocks, setBlocks] = useState(cached);
+/** The published blocks cached for the session (one request per app start, refreshed in the background). */
+const cachedBy: Record<"home" | "catalog", SiteBlock[] | null | undefined> = { home: undefined, catalog: undefined };
+export function useSiteHome(page: "home" | "catalog" = "home"): SiteBlock[] | null | undefined {
+  const [blocks, setBlocks] = useState(cachedBy[page]);
   useEffect(() => {
     let alive = true;
     api
-      .siteHome()
+      .siteHome(page)
       .then((r) => {
-        cached = r.blocks;
+        cachedBy[page] = r.blocks;
         if (alive) setBlocks(r.blocks);
       })
       .catch(() => {
-        if (alive && cached === undefined) setBlocks(null);
+        if (alive && cachedBy[page] === undefined) setBlocks(null);
       });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [page]);
   return blocks;
 }
 
@@ -271,19 +271,33 @@ function ArrivalStrip({ kind, title, desktop, onAll }: { kind: "new" | "back"; t
  * Home page content published in the admin panel: banners, categories, product strips, info blocks,
  * buttons — in the order chosen there. The header, search and order status above stay the app's own.
  */
-export function HomeBlocks({ blocks, categories, openCatalog, desktop = false }: { blocks: SiteBlock[]; categories: Category[]; openCatalog: OpenCatalog; desktop?: boolean }) {
+export function HomeBlocks({
+  blocks,
+  categories,
+  openCatalog,
+  desktop = false,
+  arrivals = true,
+}: {
+  blocks: SiteBlock[];
+  categories: Category[];
+  openCatalog: OpenCatalog;
+  desktop?: boolean;
+  /** add «Новинки» / «Снова в наличии» after the banners — unless the page has them as its own blocks */
+  arrivals?: boolean;
+}) {
   const c = useIOS();
   const byGuid = new Map(categories.map((x) => [x.guid, x]));
+  const autoArrivals = arrivals && !blocks.some((b) => b.type === "products" && b.query.arrivals);
   return (
     <View style={{ gap: desktop ? 22 : 18, paddingTop: desktop ? 0 : 8 }}>
       {/* «Новые поступления» right after the banners (or first, when there are none) */}
-      {!blocks.some((b) => b.type === "hero" && b.banners.length) ? <ArrivalsRow desktop={desktop} openCatalog={openCatalog} /> : null}
+      {autoArrivals && !blocks.some((b) => b.type === "hero" && b.banners.length) ? <ArrivalsRow desktop={desktop} openCatalog={openCatalog} /> : null}
       {blocks.map((b, i) => {
         if (b.type === "hero")
           return b.banners.length ? (
             <View key={b.id} style={{ gap: desktop ? 22 : 18 }}>
               <Hero b={b} desktop={desktop} openCatalog={openCatalog} />
-              {blocks.findIndex((x) => x.type === "hero" && x.banners.length) === i ? <ArrivalsRow desktop={desktop} openCatalog={openCatalog} /> : null}
+              {autoArrivals && blocks.findIndex((x) => x.type === "hero" && x.banners.length) === i ? <ArrivalsRow desktop={desktop} openCatalog={openCatalog} /> : null}
             </View>
           ) : null;
         if (b.type === "categories") {

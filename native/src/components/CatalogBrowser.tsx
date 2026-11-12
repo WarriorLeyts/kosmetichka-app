@@ -28,6 +28,7 @@ import { plural } from "@/format";
 import { useAddToCart } from "@/useAddToCart";
 import { SUB_FILTERS } from "@/subFilters";
 import type { Product } from "@/types";
+import { HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
 
 const EMPTY: Product[] = [];
 const SORT_OPTIONS = (Object.keys(SORT_LABELS) as Sort[]).map((v) => ({ value: v, label: SORT_LABELS[v] }));
@@ -112,6 +113,11 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const bottomSpace = pick ? pick.bottomSpace : tabSpace;
   const { store, name: storeName } = useCatalogStore();
   const f = store();
+  // blocks above the goods (banners, product strips…) — admin panel → Каталог; only the main catalog
+  const catalogBlocks = useSiteHome("catalog");
+  const clean = !f.search && !f.categoryGuid && !f.quick.length && !f.brandGuids.length && !f.typing;
+  const showBlocks = !pick && clean && !!catalogBlocks?.length;
+  const quickChips = !pick && f.quickChips ? f.quickFilters.filter((q) => q.visible || f.quick.includes(q.key)) : [];
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const favorites = useFavorites((s) => s.items);
@@ -302,6 +308,12 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
         </Pressable>
       </View>
 
+      {showBlocks && catalogBlocks ? (
+        <View style={desktop ? { marginTop: 8, marginBottom: 6 } : { marginHorizontal: -11, marginBottom: 6 }}>
+          <HomeBlocks blocks={catalogBlocks} categories={f.categories} openCatalog={(patch) => f.set(patch)} desktop={desktop} arrivals={false} />
+        </View>
+      ) : null}
+
       {/* count + filters + sort */}
       <View style={styles.controls}>
         <Text style={[styles.count, { color: c.secondary }]} numberOfLines={1}>
@@ -340,6 +352,37 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           )}
         </Pressable>
       </View>
+
+      {/* quick filters from the admin panel («Новинки», «Со скидкой»…) as chips */}
+      {quickChips.length ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.types} style={styles.typesWrap}>
+          {quickChips.map((q) => {
+            const on = f.quick.includes(q.key);
+            return (
+              <Pressable
+                key={q.key}
+                onPress={() => {
+                  tap();
+                  f.set({ quick: on ? f.quick.filter((x) => x !== q.key) : [...f.quick, q.key] });
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={q.label}
+                style={[
+                  styles.typeChip,
+                  on
+                    ? { backgroundColor: "#8b3dff", borderColor: "#8b3dff" }
+                    : { backgroundColor: c.cell, borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(139,61,255,0.18)" },
+                ]}
+              >
+                <Text style={[styles.typeChipText, { color: on ? "#fff" : c.label }]} numberOfLines={1}>
+                  {q.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
 
       {selectedCat ? (
         <Pressable

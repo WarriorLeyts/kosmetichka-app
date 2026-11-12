@@ -2,7 +2,7 @@ import { memo, useMemo } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { iconFor } from "./CategoryDrawer";
+import { categoryIcon } from "./CategoryDrawer";
 import { useIOS } from "../ios";
 import { tap } from "./ui";
 import { childCategories, topCategories } from "../store/catalog";
@@ -64,7 +64,7 @@ function DesktopCategoriesBase({ categories, selected, onSelect }: { categories:
           const isOpen = open === t.guid;
           const on = selected === t.guid;
           const kids = isOpen ? childCategories(categories, t.guid) : [];
-          const icon = iconFor(t.name);
+          const icon = categoryIcon(t);
           return (
             <View key={t.guid}>
               <Pressable

@@ -22,11 +22,7 @@ import { PendingOrderNote, useActiveOrders } from "@/components/home/PendingOrde
 import { DesktopHome } from "@/components/home/DesktopHome";
 import { ArrivalsRow, HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
 
-const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
-  { key: "new", label: "Новинки", icon: "sparkles-outline" },
-  { key: "sale", label: "Со скидкой", icon: "pricetag-outline" },
-  { key: "gift", label: "Подарочные наборы", icon: "gift-outline" },
-];
+const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { new: "sparkles-outline", sale: "pricetag-outline", gift: "gift-outline" };
 
 export default function Home() {
   const insets = useSafeAreaInsets();
@@ -36,7 +32,9 @@ export default function Home() {
   const mode = useTheme((s) => s.mode);
   const toggleTheme = useTheme((s) => s.toggle);
   const customer = useAuth((s) => s.customer);
-  const { categories, loadMeta, set: setFilters } = useCatalog();
+  const { categories, loadMeta, set: setFilters, quickFilters } = useCatalog();
+  // the quick filters as set in the admin panel (names, order, which are shown)
+  const QUICK = quickFilters.filter((q) => q.visible).map((q) => ({ ...q, icon: QUICK_ICONS[q.key] }));
 
   const [sizeOpen, setSizeOpen] = useState(false);
   // the newest order in work: a bright card with all its stages under the search

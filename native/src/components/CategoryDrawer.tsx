@@ -42,6 +42,11 @@ const ICONS = {
   home: require("../../assets/categories/home.png"),
 };
 
+/** The category's picture: the one set in the admin panel, else the 3D icon by its name; null → an emoji. */
+export function categoryIcon(cat: { name: string; imageUrl?: string }): number | { uri: string } | null {
+  return cat.imageUrl ? { uri: cat.imageUrl } : iconFor(cat.name);
+}
+
 /** 3D icon by the meaning of the category name; null → fall back to an emoji. */
 export function iconFor(name: string): number | null {
   const n = name.toLowerCase();
@@ -163,7 +168,8 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
     return m;
   }, [categories]);
   const roots = byParent.get("") ?? [];
-  const topLevel = roots.length === 1 ? byParent.get(roots[0].guid) ?? [] : roots;
+  // categories hidden in the admin panel are not in the menu (their goods stay in search)
+  const topLevel = (roots.length === 1 ? byParent.get(roots[0].guid) ?? [] : roots).filter((c) => !c.hidden);
   const childrenOf = (guid: string) => byParent.get(guid) ?? [];
   // the selected category and all its parents — «is it in this branch» becomes a set lookup
   const selectedPath = useMemo(() => {
@@ -281,7 +287,7 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
                 {topLevel.map((cat) => {
                   const kids = childrenOf(cat.guid).length > 0;
                   const active = inBranch(cat.guid);
-                  const icon = iconFor(cat.name);
+                  const icon = categoryIcon(cat);
                   return (
                     <View key={cat.guid} style={styles.cell}>
                       <ScalePress

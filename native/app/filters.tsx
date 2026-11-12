@@ -8,17 +8,14 @@ import { SORT_LABELS, catalogStoreByName, type Quick, type Sort } from "@/store/
 import { Button, tap } from "@/components/ui";
 import { CategoryDrawer } from "@/components/CategoryDrawer";
 
-const QUICK: { key: Quick; label: string }[] = [
-  { key: "new", label: "Новинки" },
-  { key: "sale", label: "Со скидкой" },
-  { key: "gift", label: "Подарочные наборы" },
-];
 
 export default function Filters() {
   const insets = useSafeAreaInsets();
   // ?store=pick: the filters of «Добавить товар», not of the «Каталог» tab
   const { store } = useLocalSearchParams<{ store?: string }>();
   const s = catalogStoreByName(store)();
+  // names and order from the admin panel; a hidden one stays here while it is switched on
+  const QUICK = s.quickFilters.filter((q) => q.visible || s.quick.includes(q.key));
   const [sort, setSort] = useState<Sort>(s.sort);
   const [onlyStock, setOnlyStock] = useState(s.onlyStock);
   const [quick, setQuick] = useState<Quick[]>(s.quick);

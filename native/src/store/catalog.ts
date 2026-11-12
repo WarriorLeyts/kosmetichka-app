@@ -6,6 +6,14 @@ import type { Brand, Category } from "../types";
 
 export type Sort = NonNullable<CatalogQuery["sort"]>;
 export type Quick = "new" | "sale" | "gift";
+export type QuickFilter = { key: Quick; label: string; visible: boolean };
+
+/** the quick filters until the admin panel's settings arrive */
+export const QUICK_DEFAULT: QuickFilter[] = [
+  { key: "new", label: "Новинки", visible: true },
+  { key: "sale", label: "Со скидкой", visible: true },
+  { key: "gift", label: "Подарочные наборы", visible: true },
+];
 
 export const SORT_LABELS: Record<Sort, string> = {
   popularity: "Популярные",
@@ -33,6 +41,10 @@ type CatalogState = {
 
   categories: Category[];
   brands: Brand[];
+  /** names / order / shown — admin panel → Каталог → Быстрые фильтры */
+  quickFilters: QuickFilter[];
+  /** show them as chips above the goods */
+  quickChips: boolean;
   metaLoaded: boolean;
   loadMeta: () => Promise<void>;
 
@@ -48,7 +60,7 @@ const DEFAULTS = { search: "", categoryGuid: null, brandGuids: [], sort: "popula
 /** Top-level categories, like the site's sidebar (children of «Каталог», or roots). */
 export function topCategories(all: Category[]): Category[] {
   const root = all.find((c) => c.name.toLowerCase() === "каталог");
-  return all.filter((c) => c.name.toLowerCase() !== "каталог" && (root ? c.parentGuid === root.guid : !c.parentGuid));
+  return all.filter((c) => !c.hidden && c.name.toLowerCase() !== "каталог" && (root ? c.parentGuid === root.guid : !c.parentGuid));
 }
 
 export function childCategories(all: Category[], parentGuid: string): Category[] {
@@ -56,7 +68,7 @@ export function childCategories(all: Category[], parentGuid: string): Category[]
 }
 
 const META_KEY = "kosmetichka-catalog-meta";
-type Meta = { categories: Category[]; brands: Brand[] };
+type Meta = { categories: Category[]; brands: Brand[]; quick?: QuickFilter[]; quickChips?: boolean };
 // categories + brands are the same for every catalogue instance: one shared copy and one request
 let sharedMeta: Meta | null = null;
 let metaLoading: Promise<void> | null = null;
@@ -74,9 +86,9 @@ function loadSharedMeta(): Promise<void> {
     try {
       const raw = await AsyncStorage.getItem(META_KEY);
       if (raw && !sharedMeta) {
-        const cached = JSON.parse(raw) as { at: number; categories: Category[]; brands: Brand[] };
+        const cached = JSON.parse(raw) as { at: number } & Meta;
         if (Array.isArray(cached.categories) && Array.isArray(cached.brands)) {
-          publishMeta({ categories: cached.categories, brands: cached.brands });
+          publishMeta({ categories: cached.categories, brands: cached.brands, quick: cached.quick, quickChips: cached.quickChips });
           fresh = Date.now() - cached.at < 10 * 60_000;
         }
       }
@@ -85,9 +97,9 @@ function loadSharedMeta(): Promise<void> {
     }
     if (fresh) return;
     try {
-      const { categories, brands } = await api.catalogMeta();
-      publishMeta({ categories, brands });
-      AsyncStorage.setItem(META_KEY, JSON.stringify({ at: Date.now(), categories, brands })).catch(() => {});
+      const { categories, brands, quick, quickChips } = await api.catalogMeta();
+      publishMeta({ categories, brands, quick, quickChips });
+      AsyncStorage.setItem(META_KEY, JSON.stringify({ at: Date.now(), categories, brands, quick, quickChips })).catch(() => {});
     } catch {
       /* filters just stay empty (or on the cached copy) */
     }
@@ -95,6 +107,12 @@ function loadSharedMeta(): Promise<void> {
     metaLoading = null;
   });
   return metaLoading;
+}
+
+/** the admin panel's quick filters (only known keys, each once), the defaults until they come */
+function quickOf(m: Meta | null): QuickFilter[] {
+  const list = (m?.quick ?? []).filter((q, i, a) => QUICK_DEFAULT.some((d) => d.key === q.key) && a.findIndex((x) => x.key === q.key) === i && q.label);
+  return list.length ? list : QUICK_DEFAULT;
 }
 
 export type CatalogStore = UseBoundStore<StoreApi<CatalogState>>;
@@ -107,6 +125,8 @@ export function createCatalogStore(): CatalogStore {
     typing: false,
     categories: sharedMeta?.categories ?? [],
     brands: sharedMeta?.brands ?? [],
+    quickFilters: quickOf(sharedMeta),
+    quickChips: sharedMeta?.quickChips ?? true,
     metaLoaded: !!sharedMeta,
 
     loadMeta: async () => {
@@ -143,7 +163,7 @@ export function createCatalogStore(): CatalogStore {
       return out;
     },
   }));
-  metaListeners.add((m) => store.setState({ categories: m.categories, brands: m.brands, metaLoaded: true }));
+  metaListeners.add((m) => store.setState({ categories: m.categories, brands: m.brands, quickFilters: quickOf(m), quickChips: m.quickChips ?? true, metaLoaded: true }));
   return store;
 }
 
