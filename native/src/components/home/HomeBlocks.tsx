@@ -78,6 +78,12 @@ function Hero({ b, desktop, openCatalog }: { b: Extract<SiteBlock, { type: "hero
   const ref = useRef<ScrollView>(null);
   const [w, setW] = useState(0);
   const n = b.banners.length;
+  // the slider takes the shape of the first banner's picture (a 3:1 or 3:4 banner is not cropped);
+  // until it loads — the recommended 8:3 / 4:5
+  const first = imageUrl(desktop ? b.banners[0]?.imageDesktop : b.banners[0]?.imageMobile);
+  const [shape, setShape] = useState<{ src: string; ratio: number } | null>(null);
+  const [lo, hi] = desktop ? [2, 4.5] : [0.6, 1.4];
+  const ratio = shape && shape.src === first ? Math.min(hi, Math.max(lo, shape.ratio)) : desktop ? 8 / 3 : 4 / 5;
   useEffect(() => {
     if (n < 2 || !w) return;
     const t = setInterval(() => {
@@ -98,7 +104,7 @@ function Hero({ b, desktop, openCatalog }: { b: Extract<SiteBlock, { type: "hero
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={(e) => w && setI(Math.round(e.nativeEvent.contentOffset.x / w))}
       >
-        {b.banners.map((x) => {
+        {b.banners.map((x, k) => {
           const src = imageUrl(desktop ? x.imageDesktop : x.imageMobile);
           return (
             <Pressable
@@ -107,9 +113,17 @@ function Hero({ b, desktop, openCatalog }: { b: Extract<SiteBlock, { type: "hero
               disabled={!x.link}
               accessibilityRole={x.link ? "link" : "image"}
               accessibilityLabel={x.title}
-              style={{ width: w || width - 32, aspectRatio: desktop ? 8 / 3 : 4 / 5 }}
+              style={{ width: w || width - 32, aspectRatio: ratio }}
             >
-              {src ? <Image source={{ uri: src }} style={StyleSheet.absoluteFill} contentFit="cover" transition={150} /> : null}
+              {src ? (
+                <Image
+                  source={{ uri: src }}
+                  style={StyleSheet.absoluteFill}
+                  contentFit="cover"
+                  transition={150}
+                  onLoad={k === 0 ? (e) => e.source.width && e.source.height && setShape({ src, ratio: e.source.width / e.source.height }) : undefined}
+                />
+              ) : null}
               {x.subtitle || x.buttonText ? (
                 <LinearGradient colors={["transparent", "rgba(0,0,0,0.55)"]} style={styles.heroShade}>
                   {x.subtitle ? <Text style={[styles.heroText, desktop && { fontSize: 20 }]}>{x.subtitle}</Text> : null}
