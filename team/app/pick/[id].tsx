@@ -23,6 +23,7 @@ import { clientName, type PickerOrder } from "@/types";
 import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
 import { WarehouseSplit } from "@/components/WarehouseSplit";
+import { barcodeList } from "@/barcodes";
 
 type Code = "ok" | "out_of_stock" | "expired" | "bad_condition" | "insufficient_qty";
 // «Просрочен» and «Плохой вид» are not offered any more (owner); old checks with them still show their names
@@ -388,7 +389,9 @@ export default function Pick() {
                     </Pressable>
                   </View>
                   {it.variantName ? <Text style={{ color: VIOLET, marginTop: 2 }}>{it.variantName}</Text> : null}
-                  {it.barcode ? <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>{it.barcode}</Text> : null}
+                  {barcodeList(it.barcode, it.barcodes).length ? (
+                    <Text selectable style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>{barcodeList(it.barcode, it.barcodes).join(" · ")}</Text>
+                  ) : null}
                   <Text style={{ color: c.label, fontSize: 17, fontWeight: "800", marginTop: 4 }}>Нужно: {it.quantity} шт.</Text>
                   {/* wholesale: «Брать из» already shows the shop and the warehouse — no stock line here
                       (it.stock is both warehouses together, «Остаток в магазине» under it was wrong) */}

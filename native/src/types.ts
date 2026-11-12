@@ -5,6 +5,8 @@ export type Product = {
   guid?: string;
   name: string;
   barcode?: string | null;
+  /** every barcode of the product in 1С (product page) */
+  barcodes?: { barcode: string; unitName: string | null }[];
   article?: string | null;
   description?: string | null;
   stock?: number | null;

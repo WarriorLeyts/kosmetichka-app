@@ -41,7 +41,7 @@ export type ItemCheck = {
   picker: { name: string } | null; updatedAt: string;
 };
 export type OrderItem = {
-  id: number; productId: number; productName: string; barcode: string | null; quantity: number; price: number; total: number;
+  id: number; productId: number; productName: string; barcode: string | null; barcodes?: { barcode: string; unitName: string | null }[]; quantity: number; price: number; total: number;
   variantName: string | null; variantImageUrl: string | null; imagePath: string | null; imageUrl: string | null;
   /** current stock in the shop */
   stock?: number | null;

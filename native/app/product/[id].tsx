@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { api, imageUrl } from "@/api";
 import { money, stockLabel } from "@/format";
+import { barcodeList } from "@/barcodes";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import { useFavorites } from "@/store/favorites";
@@ -243,6 +244,7 @@ export default function ProductScreen() {
   const key = String(product.id);
   const inCart = cart.find((x) => x.cartKey === key)?.quantity ?? 0;
   const min = Math.max(1, product.minOrderQty ?? 1);
+  const codes = barcodeList(product.barcode, product.barcodes);
   const maxQty = typeof product.stock === "number" && product.stock > 0 ? product.stock : Infinity;
   const waiting = waitIds.includes(product.id);
   const pickedTotal = Object.values(variantQty).reduce((a, b) => a + b, 0);
@@ -348,7 +350,11 @@ export default function ProductScreen() {
           <View style={{ marginTop: 10, gap: 3 }}>
             {min > 1 ? <Text style={{ color: VIOLET, fontSize: 15, fontWeight: "600" }}>Минимальный заказ — {min} шт.</Text> : null}
             {product.article ? <Text style={{ color: c.secondary, fontSize: 13 }}>Арт. {product.article}</Text> : null}
-            {product.barcode ? <Text style={{ color: c.secondary, fontSize: 13 }}>Штрихкод {product.barcode}</Text> : null}
+            {codes.length ? (
+              <Text selectable style={{ color: c.secondary, fontSize: 13 }}>
+                {codes.length > 1 ? `Штрихкоды: ${codes.join(", ")}` : `Штрихкод ${codes[0]}`}
+              </Text>
+            ) : null}
           </View>
 
           {variants.length > 0 && !out ? (

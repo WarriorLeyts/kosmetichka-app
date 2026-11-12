@@ -24,6 +24,7 @@ import { StockLine } from "@/components/StockLine";
 import { useDesktop } from "@/useDesktop";
 import { priceOf } from "@/products";
 import { openInvoicePdf, shareInvoice } from "@/invoiceShare";
+import { barcodeList } from "@/barcodes";
 
 type Tab = "items" | "customer" | "history";
 const PROBLEM_LABELS: Record<string, string> = {
@@ -724,7 +725,9 @@ export default function OrderScreen() {
               {it.productName}
             </Text>
             {it.variantName ? <Text style={{ color: VIOLET, fontSize: 13.5, marginTop: 2 }}>{it.variantName}</Text> : null}
-            {it.barcode ? <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>{it.barcode}</Text> : null}
+            {barcodeList(it.barcode, it.barcodes).length ? (
+              <Text selectable style={{ color: c.secondary, fontSize: 12.5, marginTop: 2 }}>{barcodeList(it.barcode, it.barcodes).join(" · ")}</Text>
+            ) : null}
             <View style={[styles.row, { marginTop: 6 }]}>
               <Text style={{ color: c.secondary }}>
                 {it.quantity} × {money(it.price)}
