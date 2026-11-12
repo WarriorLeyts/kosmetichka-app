@@ -16,7 +16,7 @@ import { useLoad } from "@/useLoad";
 import { del, formFile, get, imageUrl, put, request } from "@/api";
 import { useIOS } from "@/ios";
 
-type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; stockByWarehouse?: { name: string; qty: number }[]; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
+type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; stockByWarehouse?: { name: string; qty: number }[]; barcodes?: { barcode: string; unitName: string | null }[]; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
 type Variants = { variants: { id: number; imageId: number; imageUrl: string; name: string; sortOrder: number }[]; images: { id: number; path: string; url: string }[] };
 
 const PRICE_NAMES: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
@@ -108,6 +108,16 @@ export default function ProductScreen() {
             <StockLine stock={p.stock ?? null} big byWarehouse={p.stockByWarehouse} />
             <KV k="Артикул" v={p.article} />
             <KV k="Штрихкод" v={p.barcode} />
+            {/* every barcode of the product in 1С (the exchange carries one) */}
+            {(p.barcodes ?? []).filter((b) => b.barcode !== p.barcode).length ? (
+              <KV
+                k={`Ещё штрихкоды (${(p.barcodes ?? []).filter((b) => b.barcode !== p.barcode).length})`}
+                v={(p.barcodes ?? [])
+                  .filter((b) => b.barcode !== p.barcode)
+                  .map((b) => (b.unitName ? `${b.barcode} (${b.unitName})` : b.barcode))
+                  .join("\n")}
+              />
+            ) : null}
             <KV k="Код 1С" v={p.guid} />
           </Card>
 
