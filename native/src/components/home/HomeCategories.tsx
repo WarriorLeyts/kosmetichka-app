@@ -9,7 +9,7 @@ import { useDesktop } from "../../useDesktop";
 import { PHONE_CARD_SCALE, scaleStyles, useCardScale } from "../../cardScale";
 
 /** «Категории товаров» — two-column grid as on the mockup: picture on top, white label with a chevron over its bottom. */
-export function HomeCategories({ categories, onOpen }: { categories: Category[]; onOpen: (guid: string | null) => void }) {
+export function HomeCategories({ categories, onOpen, title = "Категории товаров" }: { categories: Category[]; onOpen: (guid: string | null) => void; title?: string }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   // computer: four in a row, taller cards
@@ -20,7 +20,7 @@ export function HomeCategories({ categories, onOpen }: { categories: Category[];
   return (
     <View style={styles.wrap}>
       <View style={styles.head}>
-        <Text style={[styles.h, { color: c.label }]}>Категории товаров</Text>
+        <Text style={[styles.h, { color: c.label }]}>{title}</Text>
         <Pressable
           onPress={() => {
             tap();

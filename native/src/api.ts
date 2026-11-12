@@ -188,6 +188,24 @@ export type CheckoutCalc = {
   loyaltyError?: string;
 };
 
+/** Home blocks from the admin panel (GET /api/site/home on the site, lib/cms/home.ts there) */
+export type SiteBanner = { id: number; title: string; subtitle: string | null; buttonText: string | null; link: string | null; imageDesktop: string | null; imageMobile: string | null };
+export type SiteBlock =
+  | { id: string; type: "hero"; banners: SiteBanner[]; intervalSec: number }
+  | { id: string; type: "categories"; title: string; categories: { guid: string; name: string }[] | null; limit: number }
+  | {
+      id: string;
+      type: "products";
+      title: string;
+      limit: number;
+      moreText: string;
+      moreLink: string;
+      query: { quick?: ("new" | "sale" | "gift")[]; sort?: "popularity"; categoryGuid?: string; ids?: number[]; onlyStock?: boolean };
+    }
+  | { id: string; type: "info"; title: string; text: string; imageUrl: string | null; buttonText: string; link: string; tone: "light" | "accent" }
+  | { id: string; type: "buttons"; title: string; items: { label: string; link: string }[] };
+export type SiteHome = { publishedAt: string | null; blocks: SiteBlock[] | null };
+
 export type CatalogPage = { products: Product[]; total: number; page: number; hasMore: boolean; nameAnyApplied?: boolean };
 
 export const api = {
@@ -236,6 +254,10 @@ export const api = {
   },
   catalogMeta(): Promise<{ categories: Category[]; brands: Brand[] }> {
     return request("/api/mobile/catalog-meta");
+  },
+  /** the home page published in the admin panel (admin.kosmetichka-opt.ru); blocks: null — never published */
+  siteHome(): Promise<SiteHome> {
+    return request("/api/site/home");
   },
   homeStats(): Promise<{ totalProducts: number; totalBrands: number; totalCategories: number }> {
     return request("/api/mobile/home");

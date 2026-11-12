@@ -27,6 +27,7 @@ import type { Product } from "@/types";
 import { FitText } from "@/components/FitText";
 import { PendingOrderNote, useActiveOrders } from "@/components/home/PendingOrder";
 import { DesktopHome } from "@/components/home/DesktopHome";
+import { HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
 
 const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "new", label: "Новинки", icon: "sparkles-outline" },
@@ -55,6 +56,8 @@ export default function Home() {
   const scrollY = useRef(new Animated.Value(0)).current;
   const [sceneTop, setSceneTop] = useState<number | null>(null);
   const [fresh, setFresh] = useState<Product[]>([]);
+  // главная из админ-панели (admin.kosmetichka-opt.ru); null — ещё не публиковали: прежняя главная
+  const siteBlocks = useSiteHome();
 
   useEffect(() => {
     loadMeta();
@@ -77,7 +80,7 @@ export default function Home() {
   };
 
   // computer: categories on the left, banner and «Новинки» beside them (not the phone screen stretched)
-  if (desktop) return <DesktopHome categories={categories} fresh={fresh} orders={activeOrders} openCatalog={openCatalog} />;
+  if (desktop) return <DesktopHome categories={categories} fresh={fresh} orders={activeOrders} openCatalog={openCatalog} blocks={siteBlocks ?? null} />;
 
   return (
     <>
@@ -166,51 +169,71 @@ export default function Home() {
         <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={(headerH || insets.top + 200) + (desktop ? 72 : 0)} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
       </View>
       <View style={desktop ? { width: "100%", maxWidth: 1240, alignSelf: "center", paddingHorizontal: 12 } : undefined}>
-      {tops.length > 0 && <HomeCategories categories={tops} onOpen={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />}
-
-      {!customer && (
-        <Pressable style={styles.loginBanner} onPress={() => router.push("/login")}>
-          <Ionicons name="pricetags-outline" size={22} color={colors.violet} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.loginTitle}>Войдите, чтобы видеть оптовые цены</Text>
-            <Text style={styles.loginText}>И оформлять заказы с подтверждением менеджера</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={colors.violet} />
-        </Pressable>
-      )}
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickRow}>
-        {QUICK.map((q) => (
-          <Pressable key={q.key} style={styles.quick} onPress={() => openCatalog({ quick: [q.key] })}>
-            <Ionicons name={q.icon} size={18} color={colors.pink} />
-            <Text style={styles.quickText}>{q.label}</Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      {fresh.length > 0 && (
+      {siteBlocks ? (
         <>
-          <Text style={styles.section}>Новинки</Text>
-          <FlatList
-            horizontal
-            data={fresh}
-            keyExtractor={(p) => String(p.id)}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingHorizontal: 11 }}
-            renderItem={({ item }) => (
-              <View style={{ width: 180 }}>
-                <ProductCard
-                  product={item}
-                  customer={customer}
-                  activePrice={active}
-                  inCart={cart.find((c) => c.cartKey === String(item.id))?.quantity ?? 0}
-                  isFavorite={favorites.some((f) => f.id === item.id)}
-                  onAdd={addToCart}
-                  onFavorite={toggleFav}
-                />
+          {!customer && (
+            <Pressable style={styles.loginBanner} onPress={() => router.push("/login")}>
+              <Ionicons name="pricetags-outline" size={22} color={colors.violet} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.loginTitle}>Войдите, чтобы видеть оптовые цены</Text>
+                <Text style={styles.loginText}>И оформлять заказы с подтверждением менеджера</Text>
               </View>
-            )}
-          />
+              <Ionicons name="chevron-forward" size={20} color={colors.violet} />
+            </Pressable>
+          )}
+
+          <HomeBlocks blocks={siteBlocks} categories={categories} openCatalog={openCatalog} />
+        </>
+      ) : (
+        <>
+          {tops.length > 0 && <HomeCategories categories={tops} onOpen={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />}
+
+          {!customer && (
+            <Pressable style={styles.loginBanner} onPress={() => router.push("/login")}>
+              <Ionicons name="pricetags-outline" size={22} color={colors.violet} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.loginTitle}>Войдите, чтобы видеть оптовые цены</Text>
+                <Text style={styles.loginText}>И оформлять заказы с подтверждением менеджера</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.violet} />
+            </Pressable>
+          )}
+
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickRow}>
+            {QUICK.map((q) => (
+              <Pressable key={q.key} style={styles.quick} onPress={() => openCatalog({ quick: [q.key] })}>
+                <Ionicons name={q.icon} size={18} color={colors.pink} />
+                <Text style={styles.quickText}>{q.label}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          {fresh.length > 0 && (
+            <>
+              <Text style={styles.section}>Новинки</Text>
+              <FlatList
+                horizontal
+                data={fresh}
+                keyExtractor={(p) => String(p.id)}
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 11 }}
+                renderItem={({ item }) => (
+                  <View style={{ width: 180 }}>
+                    <ProductCard
+                      product={item}
+                      customer={customer}
+                      activePrice={active}
+                      inCart={cart.find((c) => c.cartKey === String(item.id))?.quantity ?? 0}
+                      isFavorite={favorites.some((f) => f.id === item.id)}
+                      onAdd={addToCart}
+                      onFavorite={toggleFav}
+                    />
+                  </View>
+                )}
+              />
+            </>
+          )}
+
         </>
       )}
 
