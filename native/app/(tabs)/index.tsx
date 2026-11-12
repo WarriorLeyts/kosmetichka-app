@@ -27,7 +27,7 @@ import type { Product } from "@/types";
 import { FitText } from "@/components/FitText";
 import { PendingOrderNote, useActiveOrders } from "@/components/home/PendingOrder";
 import { DesktopHome } from "@/components/home/DesktopHome";
-import { HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
+import { ArrivalsRow, HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
 
 const QUICK: { key: Quick; label: string; icon: keyof typeof Ionicons.glyphMap }[] = [
   { key: "new", label: "Новинки", icon: "sparkles-outline" },
@@ -207,6 +207,11 @@ export default function Home() {
               </Pressable>
             ))}
           </ScrollView>
+
+          {/* «Новые поступления» (receipts / transfers from 1С, «Новинка» badges) */}
+          <View style={{ marginTop: 14 }}>
+            <ArrivalsRow desktop={false} />
+          </View>
 
           {fresh.length > 0 && (
             <>

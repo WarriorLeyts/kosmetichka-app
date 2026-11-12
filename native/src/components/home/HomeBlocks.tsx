@@ -202,7 +202,7 @@ function ProductsRow({ b, openCatalog, desktop }: { b: Extract<SiteBlock, { type
  * wholesale from the warehouse and the shop (the site decides). Products that came for the first time
  * carry «Новинка». Hidden when nothing came.
  */
-function ArrivalsRow({ desktop }: { desktop: boolean }) {
+export function ArrivalsRow({ desktop }: { desktop: boolean }) {
   const c = useIOS();
   const [items, setItems] = useState<Product[]>([]);
   const customer = useAuth((s) => s.customer);
