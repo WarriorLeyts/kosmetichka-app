@@ -18,7 +18,7 @@ import { useAddToCart } from "@/useAddToCart";
 import type { Quick } from "@/store/catalog";
 import type { Category, Product } from "@/types";
 import type { SiteBlock } from "@/api";
-import { HomeBlocks } from "@/components/home/HomeBlocks";
+import { ArrivalsRow, HomeBlocks } from "@/components/home/HomeBlocks";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
@@ -122,6 +122,9 @@ export function DesktopHome({
             </Pressable>
           ))}
         </View>
+
+        {/* «Новые поступления» (receipts / transfers from 1С, «Новинка» badges) */}
+        <ArrivalsRow desktop />
 
         {fresh.length > 0 ? (
           <>
