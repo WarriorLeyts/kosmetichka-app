@@ -13,8 +13,8 @@ import { Sheet } from "@/components/iosui/Sheet";
 import { tap } from "@/components/ui";
 import { useIOS } from "@/ios";
 import type { Product, Variant } from "@/types";
+import { colors, themed } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PICK_STORE = { store: usePickCatalog, name: "pick" as const };
 
 /**
@@ -148,7 +148,7 @@ export default function OrderAddScreen() {
       {/* back to the order with what was picked */}
       <View style={[styles.bottom, { paddingBottom: bottomPad, backgroundColor: dark ? "rgba(33,16,50,0.97)" : "rgba(255,255,255,0.97)" }]}>
         <Pressable onPress={done} accessibilityRole="button" style={[styles.wrap, { paddingHorizontal: 16 }]}>
-          <LinearGradient colors={["#8b3dff", "#e82c87"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
+          <LinearGradient colors={[colors.brand, "#e82c87"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
             <Ionicons name="checkmark" size={22} color="#fff" />
             {sending ? <ActivityIndicator color="#fff" /> : null}
             <Text style={styles.ctaText}>
@@ -186,15 +186,15 @@ export default function OrderAddScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={n <= step ? `Убрать ${v.name}` : `Уменьшить ${v.name}`}
                       >
-                        <Ionicons name="remove-circle-outline" size={28} color={VIOLET} />
+                        <Ionicons name="remove-circle-outline" size={28} color={colors.brand} />
                       </Pressable>
                       <Text style={styles.vQty}>{n}</Text>
                       <Pressable hitSlop={6} onPress={plus} accessibilityRole="button" accessibilityLabel={`Добавить ещё ${v.name}`}>
-                        <Ionicons name="add-circle" size={28} color={VIOLET} />
+                        <Ionicons name="add-circle" size={28} color={colors.brand} />
                       </Pressable>
                     </View>
                   ) : (
-                    <Ionicons name="add-circle" size={28} color={VIOLET} />
+                    <Ionicons name="add-circle" size={28} color={colors.brand} />
                   )}
                 </>
               );
@@ -208,7 +208,7 @@ export default function OrderAddScreen() {
               );
             })}
             <Pressable onPress={() => setVariantFor(null)} style={{ alignSelf: "center", padding: 10 }}>
-              <Text style={{ color: VIOLET, fontSize: 17, fontWeight: "600" }}>Готово</Text>
+              <Text style={{ color: colors.brand, fontSize: 17, fontWeight: "600" }}>Готово</Text>
             </Pressable>
           </View>
         ) : null}
@@ -217,7 +217,7 @@ export default function OrderAddScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 10 },
   cta: { height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
@@ -225,5 +225,5 @@ const styles = StyleSheet.create({
   variant: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, padding: 8 },
   variantImg: { width: 44, height: 44, borderRadius: 10 },
   vStepper: { flexDirection: "row", alignItems: "center", gap: 8 },
-  vQty: { color: VIOLET, fontWeight: "800", fontSize: 17, minWidth: 22, textAlign: "center" },
-});
+  vQty: { color: colors.brand, fontWeight: "800", fontSize: 17, minWidth: 22, textAlign: "center" },
+}));

@@ -19,13 +19,12 @@ import { statusLook } from "@/orderStatus";
 import type { Order, OrdersPage } from "@/types";
 import { FitText } from "@/components/FitText";
 import { stormWatch } from "@/stormWatch";
-import { useTheme } from "@/theme";
+import { useTheme, colors } from "@/theme";
 import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
 import { EmbeddedPane } from "@/embedded";
 import OrderScreen from "../order/[id]";
 import { DESKTOP_SIDEBAR_W } from "@/components/DesktopCategories";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 // existing filters (server-side status filter)
@@ -125,7 +124,7 @@ function DeskOrderRow({ order, unread, active, onOpen }: { order: Order; unread:
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
         <View style={styles.rowLine}>
-          <Text style={[styles.rowNum, { color: active ? VIOLET : c.label }]} numberOfLines={1}>
+          <Text style={[styles.rowNum, { color: active ? colors.brand : c.label }]} numberOfLines={1}>
             №{order.id} <Text style={[styles.rowSub, { color: c.secondary, fontWeight: "400" }]}>· {dateShort(order.createdAt)}</Text>
           </Text>
           <Text style={[styles.rowSum, { color: c.label }]} numberOfLines={1}>
@@ -323,7 +322,7 @@ export default function Orders() {
                           accessibilityState={{ selected: on }}
                           style={[styles.sideChip, on ? { backgroundColor: dark ? "rgba(139,61,255,0.28)" : "#F4EBFF" } : { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#F5F3F8" }]}
                         >
-                          <Text style={[styles.sideChipText, { color: on ? VIOLET : c.secondary }, on && { fontWeight: "700" }]}>{f.label}</Text>
+                          <Text style={[styles.sideChipText, { color: on ? colors.brand : c.secondary }, on && { fontWeight: "700" }]}>{f.label}</Text>
                         </Pressable>
                       );
                     })}
@@ -332,14 +331,14 @@ export default function Orders() {
               }
               ListEmptyComponent={
                 loading ? (
-                  <ActivityIndicator style={{ margin: 30 }} color={VIOLET} />
+                  <ActivityIndicator style={{ margin: 30 }} color={colors.brand} />
                 ) : (
                   <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginVertical: 24, paddingHorizontal: 10 }]}>
                     {status ? "Заказов не найдено" : "Заказов пока нет"}
                   </Text>
                 )
               }
-              ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 14 }} color={VIOLET} /> : null}
+              ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 14 }} color={colors.brand} /> : null}
               renderItem={({ item }) => (
                 <DeskOrderRow order={item} unread={unread.has(item.id) || stageNews.has(item.id)} active={item.id === shown} onOpen={setPicked} />
               )}
@@ -352,7 +351,7 @@ export default function Orders() {
               </EmbeddedPane.Provider>
             ) : !loading && !status ? (
               <View style={[styles.empty, { backgroundColor: c.cell, marginTop: 24, alignSelf: "center", width: 420 }, !dark && styles.shadow]}>
-                <Ionicons name="receipt-outline" size={32} color={VIOLET} />
+                <Ionicons name="receipt-outline" size={32} color={colors.brand} />
                 <Text style={[iosText.headline, { color: c.label, marginTop: 12 }]}>Заказов пока нет</Text>
                 <Pressable onPress={() => router.navigate("/catalog")} style={{ marginTop: 18, alignSelf: "stretch" }}>
                   <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
@@ -373,7 +372,7 @@ export default function Orders() {
         data={orders}
         keyExtractor={(o) => String(o.id)}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top, paddingBottom: bottomSpace + 8, gap: 12, width: "100%", maxWidth: 640, alignSelf: "center" }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={VIOLET} colors={[VIOLET]} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.brand} colors={[colors.brand]} />}
         onEndReachedThreshold={0.5}
         onEndReached={() => {
           if (!loading && data && data.page < data.totalPages) load(data.page + 1, "append");
@@ -388,7 +387,7 @@ export default function Orders() {
               <View style={[styles.stats, { backgroundColor: c.cell }, !dark && styles.shadow]}>
                 <View style={styles.statHalf}>
                   <View style={[styles.statIcon, { backgroundColor: "rgba(139,61,255,0.1)" }]}>
-                    <Ionicons name="bag-handle-outline" size={26} color={VIOLET} />
+                    <Ionicons name="bag-handle-outline" size={26} color={colors.brand} />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[iosText.subhead, { color: c.secondary }]}>Заказов</Text>
@@ -445,11 +444,11 @@ export default function Orders() {
         }
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator style={{ margin: 40 }} color={VIOLET} />
+            <ActivityIndicator style={{ margin: 40 }} color={colors.brand} />
           ) : (
             <View style={[styles.empty, { backgroundColor: c.cell }, !dark && styles.shadow]}>
               <View style={[styles.statIcon, { width: 64, height: 64, borderRadius: 20, backgroundColor: "rgba(139,61,255,0.1)" }]}>
-                <Ionicons name="receipt-outline" size={32} color={VIOLET} />
+                <Ionicons name="receipt-outline" size={32} color={colors.brand} />
               </View>
               <Text style={[iosText.headline, { color: c.label, marginTop: 12 }]}>{status ? "Заказов не найдено" : "Заказов пока нет"}</Text>
               {!status ? (
@@ -465,7 +464,7 @@ export default function Orders() {
             </View>
           )
         }
-        ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={VIOLET} /> : null}
+        ListFooterComponent={loading && orders.length > 0 ? <ActivityIndicator style={{ margin: 20 }} color={colors.brand} /> : null}
         renderItem={({ item }) => (
           <OrderCard order={item} message={unread.has(item.id)} stage={stageNews.has(item.id)} />
         )}

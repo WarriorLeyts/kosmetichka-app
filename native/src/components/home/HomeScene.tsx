@@ -3,6 +3,7 @@ import { Animated, AppState, Easing, Pressable, StyleSheet, Text, View, useWindo
 import { useFocusEffect } from "expo-router";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
+import { brandGradients } from "@/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useReduceMotion } from "../../useReduceMotion";
 import { GradientText } from "../GradientText";
@@ -197,7 +198,7 @@ export function HomeScene({
             accessibilityLabel="Перейти в каталог"
             style={({ pressed }) => [{ opacity: pressed ? 0.92 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}
           >
-            <LinearGradient colors={["#6a2bf0", "#b62ee6", "#f0388f"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
+            <LinearGradient colors={brandGradients.scene} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.cta}>
               <Text style={styles.ctaText}>Перейти в каталог</Text>
               <Ionicons name="arrow-forward" size={24} color="#fff" />
             </LinearGradient>

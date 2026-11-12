@@ -35,8 +35,8 @@ import { OrderDone } from "@/components/OrderDone";
 import { markChatSeen, markStatusSeen } from "@/unread";
 import { orderTitle, usePageTitle } from "@/pageTitle";
 import type { ChatMessage, LineChange, Order, Product, RemovedOrderItem, Variant } from "@/types";
+import { colors, themed } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 type Pending = { key: string; text: string; createdAt: string; failed: boolean; sent?: boolean };
@@ -302,7 +302,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
     return (
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
         <BackBar onBack={goBack} color={c.label} />
-        {error ? <ErrorView message={error} onRetry={() => loadOrder()} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
+        {error ? <ErrorView message={error} onRetry={() => loadOrder()} /> : <ActivityIndicator style={{ flex: 1 }} color={colors.brand} />}
       </View>
     );
   }
@@ -542,18 +542,18 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
 
   const chatHead = (
       <View style={styles.chatHead}>
-              <Ionicons name="chatbubble-ellipses-outline" size={26} color={VIOLET} />
+              <Ionicons name="chatbubble-ellipses-outline" size={26} color={colors.brand} />
               <Text style={[styles.h, { color: c.label, marginBottom: 0 }]}>Чат с менеджером</Text>
             </View>
   );
   const chatList = (
     <>
             {chatLoading ? (
-              <ActivityIndicator style={{ marginVertical: 18 }} color={VIOLET} />
+              <ActivityIndicator style={{ marginVertical: 18 }} color={colors.brand} />
             ) : chatError && messages.length === 0 ? (
               <Pressable onPress={loadMessages} style={{ alignItems: "center", marginVertical: 14 }}>
                 <Text style={[iosText.subhead, { color: c.secondary }]}>Не удалось загрузить сообщения</Text>
-                <Text style={[iosText.subhead, { color: VIOLET, marginTop: 4 }]}>Повторить</Text>
+                <Text style={[iosText.subhead, { color: colors.brand, marginTop: 4 }]}>Повторить</Text>
               </Pressable>
             ) : messages.length === 0 && pending.length === 0 ? (
               <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginVertical: 14 }]}>Напишите, если есть вопросы по заказу</Text>
@@ -576,7 +576,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             )}
             {uploading ? (
               <View style={[styles.bubble, styles.mine, { backgroundColor: dark ? "#352044" : "#F3ECFA", flexDirection: "row", alignItems: "center", gap: 8 }]}>
-                <ActivityIndicator size="small" color={VIOLET} />
+                <ActivityIndicator size="small" color={colors.brand} />
                 <Text style={{ color: c.label, flexShrink: 1 }} numberOfLines={1}>
                   Отправка: {uploading}
                 </Text>
@@ -599,7 +599,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             accessibilityLabel="Прикрепить фото, видео или файл"
             style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: uploading ? 0.5 : pressed ? 0.7 : 1 }]}
           >
-            {uploading ? <ActivityIndicator size="small" color={VIOLET} /> : <Ionicons name="attach" size={26} color={VIOLET} />}
+            {uploading ? <ActivityIndicator size="small" color={colors.brand} /> : <Ionicons name="attach" size={26} color={colors.brand} />}
           </Pressable>
           {canRequest ? (
             <Pressable
@@ -612,7 +612,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               accessibilityLabel="Добавить товар в заказ"
               style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: pressed ? 0.7 : 1 }]}
             >
-              <Ionicons name="bag-add-outline" size={24} color={VIOLET} />
+              <Ionicons name="bag-add-outline" size={24} color={colors.brand} />
             </Pressable>
           ) : null}
           <TextInput
@@ -686,7 +686,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             // a bright card: the customer must not miss it
             <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.contactCard}>
               <View style={styles.contactIcon}>
-                <Ionicons name="call" size={26} color={VIOLET} />
+                <Ionicons name="call" size={26} color={colors.brand} />
               </View>
               <View style={{ flex: 1, gap: 4 }}>
                 <Text style={styles.contactTitle}>Менеджер свяжется с вами</Text>
@@ -701,8 +701,8 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               <Text style={[styles.h, { color: c.label }]}>{editing ? "Изменение заказа" : "Товары в заказе"}</Text>
               {order.editable && !editing ? (
                 <Pressable onPress={startEdit} hitSlop={8} accessibilityRole="button" style={styles.editLink}>
-                  <Ionicons name="create-outline" size={18} color={VIOLET} />
-                  <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "600" }}>Изменить</Text>
+                  <Ionicons name="create-outline" size={18} color={colors.brand} />
+                  <Text style={{ color: colors.brand, fontSize: 16, fontWeight: "600" }}>Изменить</Text>
                 </Pressable>
               ) : null}
             </View>
@@ -735,7 +735,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                   </View>
                   <View style={{ flex: 1, gap: 6 }}>
                     <Text style={{ fontSize: 16, lineHeight: 21, color: c.label, textDecorationLine: gone ? "line-through" : "none" }}>{it.productName}</Text>
-                    {it.variantName ? <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>{it.variantName}</Text> : null}
+                    {it.variantName ? <Text style={{ color: colors.brand, fontSize: 13, fontWeight: "600" }}>{it.variantName}</Text> : null}
                     {editing ? (
                       gone ? (
                         <Pressable
@@ -750,8 +750,8 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                           accessibilityRole="button"
                           style={styles.restore}
                         >
-                          <Ionicons name="arrow-undo-outline" size={16} color={VIOLET} />
-                          <Text style={{ color: VIOLET, fontWeight: "600" }}>Вернуть</Text>
+                          <Ionicons name="arrow-undo-outline" size={16} color={colors.brand} />
+                          <Text style={{ color: colors.brand, fontWeight: "600" }}>Вернуть</Text>
                         </Pressable>
                       ) : (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
@@ -805,7 +805,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                           <Text style={[styles.badgeText, { color: "#1f8a3b" }]}>Новый</Text>
                         </View>
                         <Text style={{ fontSize: 16, lineHeight: 21, color: c.label }}>{l.product.name}</Text>
-                        {l.variantName ? <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>{l.variantName}</Text> : null}
+                        {l.variantName ? <Text style={{ color: colors.brand, fontSize: 13, fontWeight: "600" }}>{l.variantName}</Text> : null}
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                           <Stepper value={l.quantity} onChange={(n) => editStore.setQty(l.key, n)} />
                           <Text style={{ color: c.secondary, fontSize: 14 }}>× {money(priceFor(l.product, priceType))}</Text>
@@ -836,8 +836,8 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                 accessibilityRole="button"
                 style={[styles.addRow, { borderColor: dark ? "rgba(200,160,255,0.35)" : "rgba(139,61,255,0.35)" }]}
               >
-                <Ionicons name="add-circle-outline" size={22} color={VIOLET} />
-                <Text style={{ color: VIOLET, fontSize: 16, fontWeight: "600" }}>Добавить товары</Text>
+                <Ionicons name="add-circle-outline" size={22} color={colors.brand} />
+                <Text style={{ color: colors.brand, fontSize: 16, fontWeight: "600" }}>Добавить товары</Text>
               </Pressable>
             ) : null}
             {editing ? (
@@ -873,8 +873,8 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             ) : null}
             {order.bonusesApplied ? (
               <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
-                <Text style={[iosText.subhead, { color: "#8b3dff", flex: 1 }]}>Списано бонусов</Text>
-                <Text style={[iosText.subhead, { color: "#8b3dff" }]}>−{money(order.bonusesApplied)}</Text>
+                <Text style={[iosText.subhead, { color: colors.brand, flex: 1 }]}>Списано бонусов</Text>
+                <Text style={[iosText.subhead, { color: colors.brand }]}>−{money(order.bonusesApplied)}</Text>
               </View>
             ) : null}
             <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
@@ -898,7 +898,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               <Text style={[iosText.footnote, { color: c.secondary }]}>{order.deliveryType === "pickup" ? "Заберу в магазине" : "Доставка"}</Text>
               {order.deliveryType === "pickup" ? (
                 <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`}>
-                  <Text style={{ color: VIOLET, fontSize: 16, marginTop: 4, textDecorationLine: "underline" }}>{SHOP_ADDRESS}</Text>
+                  <Text style={{ color: colors.brand, fontSize: 16, marginTop: 4, textDecorationLine: "underline" }}>{SHOP_ADDRESS}</Text>
                 </Pressable>
               ) : (
                 <Text style={{ color: c.label, fontSize: 16, marginTop: 4 }}>{order.deliveryAddress || "Адрес уточнит менеджер"}</Text>
@@ -942,7 +942,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               accessibilityLabel="Счёт"
               style={({ pressed }) => [styles.outline, { backgroundColor: c.cell, opacity: pressed ? 0.8 : 1 }]}
             >
-              <Ionicons name="document-text-outline" size={22} color={VIOLET} />
+              <Ionicons name="document-text-outline" size={22} color={colors.brand} />
               <Text style={styles.outlineText}>Счёт</Text>
             </Pressable>
           </View>
@@ -1026,7 +1026,7 @@ function Stepper({ value, onChange }: { value: number; onChange: (n: number) => 
         accessibilityLabel="Больше"
         style={styles.stepBtn}
       >
-        <Ionicons name="add" size={20} color={VIOLET} />
+        <Ionicons name="add" size={20} color={colors.brand} />
       </Pressable>
     </View>
   );
@@ -1109,7 +1109,7 @@ function GradientButton({ title, icon, onPress, loading }: { title: string; icon
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   contactCard: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 22, padding: 18, marginTop: 14, boxShadow: "0 8px 22px rgba(139,61,255,0.35)" },
   contactIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" },
   contactTitle: { color: "#fff", fontSize: 19, fontWeight: "800" },
@@ -1133,14 +1133,14 @@ const styles = StyleSheet.create({
   restore: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "flex-start", paddingVertical: 4 },
   addRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, height: 50, borderRadius: 16, borderWidth: 1.5, borderStyle: "dashed", marginTop: 10 },
   pricePill: { alignSelf: "flex-start", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
-  priceText: { color: VIOLET, fontSize: 16, fontWeight: "600" },
+  priceText: { color: colors.brand, fontSize: 16, fontWeight: "600" },
   totalRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 2 },
   total: { color: PINK, fontSize: 22, fontWeight: "700" },
   actions: { flexDirection: "row", gap: 12, marginTop: 16 },
   cta: { height: 54, borderRadius: 27, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9, paddingHorizontal: 12, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
   ctaText: { color: "#fff", fontSize: 17, fontWeight: "600", flexShrink: 1 },
-  outline: { flex: 1, height: 54, borderRadius: 27, borderWidth: 1.5, borderColor: VIOLET, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
-  outlineText: { color: VIOLET, fontSize: 17, fontWeight: "600" },
+  outline: { flex: 1, height: 54, borderRadius: 27, borderWidth: 1.5, borderColor: colors.brand, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 9 },
+  outlineText: { color: colors.brand, fontSize: 17, fontWeight: "600" },
   cancel: { alignSelf: "center", paddingVertical: 12, paddingHorizontal: 16, marginTop: 4 },
   chatHead: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 10 },
   bubble: { maxWidth: "84%", borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9, marginTop: 8 },
@@ -1161,6 +1161,6 @@ const styles = StyleSheet.create({
   videoText: { color: "#fff", fontSize: 13, fontWeight: "600" },
   file: { flexDirection: "row", alignItems: "center", gap: 10, maxWidth: 240 },
   fileIcon: { width: 44, height: 44, borderRadius: 10, backgroundColor: "rgba(139,61,255,0.16)", alignItems: "center", justifyContent: "center" },
-  fileExt: { color: VIOLET, fontSize: 11, fontWeight: "800" },
+  fileExt: { color: colors.brand, fontSize: 11, fontWeight: "800" },
   send: { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center", boxShadow: "0 6px 14px rgba(139,61,255,0.35)" },
-});
+}));

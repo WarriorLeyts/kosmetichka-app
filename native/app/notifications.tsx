@@ -10,16 +10,16 @@ import { WebPushCard } from "@/components/WebPushCard";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { useIOS } from "@/ios";
 import type { AppNotification } from "@/types";
+import { colors } from "@/theme";
 
-const VIOLET = "#8b3dff";
 type IconName = keyof typeof Ionicons.glyphMap;
 
 const KIND: Record<AppNotification["kind"], { icon: IconName; color: string }> = {
-  order: { icon: "cube-outline", color: VIOLET },
+  order: { icon: "cube-outline", color: colors.brand },
   chat: { icon: "chatbubble-ellipses-outline", color: "#e82c87" },
   restock: { icon: "checkmark-circle-outline", color: "#1f8a3b" },
   bonus: { icon: "gift-outline", color: "#e82c87" },
-  role: { icon: "pricetags-outline", color: VIOLET },
+  role: { icon: "pricetags-outline", color: colors.brand },
   promo: { icon: "sparkles-outline", color: "#e82c87" },
 };
 
@@ -102,7 +102,7 @@ export default function NotificationsScreen() {
       <TitleBar title="Уведомления" />
       {items && items.some((x) => !x.read) ? (
         <Pressable onPress={readAll} hitSlop={8} accessibilityRole="button" style={styles.readAll}>
-          <Text style={{ color: VIOLET, fontSize: 17, fontWeight: "500" }}>Прочитать все</Text>
+          <Text style={{ color: colors.brand, fontSize: 17, fontWeight: "500" }}>Прочитать все</Text>
         </Pressable>
       ) : null}
       {/* website only: browser push for this device */}
@@ -116,7 +116,7 @@ export default function NotificationsScreen() {
     return (
       <View style={{ flex: 1, paddingTop: insets.top, paddingHorizontal: 16 }}>
         {header}
-        {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
+        {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={colors.brand} />}
       </View>
     );
   }
@@ -136,16 +136,16 @@ export default function NotificationsScreen() {
             setRefreshing(true);
             load();
           }}
-          tintColor={VIOLET}
-          colors={[VIOLET]}
+          tintColor={colors.brand}
+          colors={[colors.brand]}
         />
       }
       ListHeaderComponent={header}
-      ListFooterComponent={loadingMore ? <ActivityIndicator color={VIOLET} style={{ marginTop: 8 }} /> : null}
+      ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.brand} style={{ marginTop: 8 }} /> : null}
       ListEmptyComponent={
         <View style={[styles.wrap, styles.empty, { backgroundColor: c.cell }, !dark && styles.shadow]}>
           <View style={styles.emptyIcon}>
-            <Ionicons name="notifications-outline" size={34} color={VIOLET} />
+            <Ionicons name="notifications-outline" size={34} color={colors.brand} />
           </View>
           <Text style={[styles.emptyTitle, { color: c.label }]}>Уведомлений пока нет</Text>
           <Text style={[styles.emptyText, { color: c.secondary }]}>

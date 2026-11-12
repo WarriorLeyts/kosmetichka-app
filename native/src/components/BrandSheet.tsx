@@ -25,11 +25,11 @@ import { tap } from "@/components/ui";
 import { plural } from "@/format";
 import { SUB_FILTERS } from "@/subFilters";
 import type { useCatalogStore } from "@/store/catalog";
+import { colors, themed } from "@/theme";
 
 type Facet = { guid: string; name: string; count: number };
 type Store = ReturnType<typeof useCatalogStore>["store"];
 
-const VIOLET = "#8b3dff";
 /** a computer / tablet: a window in the middle; a phone: a sheet from the bottom */
 const WIDE = 700;
 
@@ -173,7 +173,7 @@ export function BrandSheet({ open, onClose, store }: { open: boolean; onClose: (
   const body =
     brands === null && !error ? (
       <View style={styles.state}>
-        <ActivityIndicator color={VIOLET} />
+        <ActivityIndicator color={colors.brand} />
       </View>
     ) : error ? (
       <View style={styles.state}>
@@ -307,8 +307,8 @@ const BrandCard = memo(function BrandCard({
           styles.card,
           { height },
           dark
-            ? { backgroundColor: on ? "rgba(139,61,255,0.22)" : "#2B193D", borderColor: on ? VIOLET : "rgba(200,160,255,0.18)" }
-            : { backgroundColor: on ? "#F5EEFF" : "#FFFFFF", borderColor: on ? VIOLET : hovered ? "#D9C8F5" : "#ECE4F8" },
+            ? { backgroundColor: on ? "rgba(139,61,255,0.22)" : "#2B193D", borderColor: on ? colors.brand : "rgba(200,160,255,0.18)" }
+            : { backgroundColor: on ? "#F5EEFF" : "#FFFFFF", borderColor: on ? colors.brand : hovered ? "#D9C8F5" : "#ECE4F8" },
           on && { borderWidth: 1.5 },
           hovered && !on && { boxShadow: "0 6px 18px rgba(103,47,190,0.12)" },
           st.pressed && { transform: [{ scale: 0.985 }] },
@@ -345,7 +345,7 @@ const BrandCard = memo(function BrandCard({
   );
 });
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   bottom: { flex: 1, justifyContent: "flex-end" },
   sheet: { borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingTop: 8, overflow: "hidden" },
   grabber: { alignSelf: "center", width: 38, height: 5, borderRadius: 3, backgroundColor: "rgba(127,127,127,0.35)", marginBottom: 8 },
@@ -353,14 +353,14 @@ const styles = StyleSheet.create({
   dialog: { borderRadius: 24, overflow: "hidden", boxShadow: "0 24px 70px rgba(40,10,80,0.28)" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 },
   title: { fontWeight: "800" },
-  counter: { minWidth: 26, height: 24, borderRadius: 12, paddingHorizontal: 8, backgroundColor: VIOLET, alignItems: "center", justifyContent: "center" },
+  counter: { minWidth: 26, height: 24, borderRadius: 12, paddingHorizontal: 8, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" },
   counterText: { color: "#fff", fontSize: 13, fontWeight: "700" },
   close: { width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center" },
   search: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 14, paddingLeft: 14, paddingRight: 6 },
   input: { flex: 1, minWidth: 0, fontSize: 16, height: "100%" },
   card: { borderRadius: 14, borderWidth: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 10, paddingTop: 12, paddingBottom: 10 },
   check: { position: "absolute", top: 8, right: 8, width: 22, height: 22, borderRadius: 7, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
-  checkOn: { backgroundColor: VIOLET, borderColor: VIOLET },
+  checkOn: { backgroundColor: colors.brand, borderColor: colors.brand },
   logoBox: { alignItems: "center", justifyContent: "center", marginBottom: 8 },
   wordmark: { fontSize: 13, fontWeight: "800", letterSpacing: 1.2, textAlign: "center", paddingHorizontal: 4 },
   name: { fontSize: 14, fontWeight: "600", maxWidth: "100%" },
@@ -370,5 +370,5 @@ const styles = StyleSheet.create({
   stateText: { fontSize: 14.5, textAlign: "center" },
   foot: { flexDirection: "row", alignItems: "center", gap: 10, paddingTop: 12, borderTopWidth: 1 },
   reset: { height: 52, paddingHorizontal: 20, borderRadius: 26, borderWidth: 1.5, alignItems: "center", justifyContent: "center" },
-  resetText: { color: VIOLET, fontSize: 16, fontWeight: "600" },
-});
+  resetText: { color: colors.brand, fontSize: 16, fontWeight: "600" },
+}));

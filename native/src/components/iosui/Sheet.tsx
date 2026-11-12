@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { iosText, useIOS } from "../../ios";
 import { tap } from "../ui";
+import { colors } from "@/theme";
 
 /** iOS-style bottom sheet with a grabber; on a wide screen (computer) — a window in the middle. */
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
@@ -97,7 +98,7 @@ export function SheetOptions<T extends string>({
           ]}
         >
           <Text style={[iosText.body, { color: c.label, flex: 1 }]}>{o.label}</Text>
-          {o.value === value ? <Ionicons name="checkmark" size={22} color="#8b3dff" /> : null}
+          {o.value === value ? <Ionicons name="checkmark" size={22} color={colors.brand} /> : null}
         </Pressable>
       ))}
     </View>

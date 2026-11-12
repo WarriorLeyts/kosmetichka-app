@@ -14,10 +14,10 @@ import { VIOLET_PINK } from "@/components/TabBar";
 import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
 import type { Product } from "@/types";
+import { colors, themed } from "@/theme";
 
 type Row = Product & { notified: boolean };
 
-const VIOLET = "#8b3dff";
 
 /** One waitlist card: fades in, fades out on delete. */
 function WaitCard({ item, index, onRemoved }: { item: Row; index: number; onRemoved: (id: number) => void }) {
@@ -130,7 +130,7 @@ export default function Waitlist() {
     return (
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
         {header}
-        {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={VIOLET} />}
+        {error ? <ErrorView message={error} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={colors.brand} />}
       </View>
     );
   }
@@ -149,15 +149,15 @@ export default function Waitlist() {
               setRefreshing(true);
               load();
             }}
-            tintColor={VIOLET}
-            colors={[VIOLET]}
+            tintColor={colors.brand}
+            colors={[colors.brand]}
           />
         }
         ListHeaderComponent={header}
         ListEmptyComponent={
           <View style={[styles.wrap, styles.empty, { backgroundColor: c.cell }, !dark && styles.shadow]}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="time-outline" size={34} color={VIOLET} />
+              <Ionicons name="time-outline" size={34} color={colors.brand} />
             </View>
             <Text style={[styles.emptyTitle, { color: c.label }]}>Лист ожидания пуст</Text>
             <Text style={[styles.emptyText, { color: c.secondary }]}>
@@ -180,12 +180,12 @@ export default function Waitlist() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   card: { flexDirection: "row", alignItems: "center", gap: 14, borderRadius: 22, padding: 12 },
   photo: { width: 96, height: 112, borderRadius: 16, alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  brand: { color: VIOLET, fontSize: 13, fontWeight: "600", letterSpacing: 0.3 },
+  brand: { color: colors.brand, fontSize: 13, fontWeight: "600", letterSpacing: 0.3 },
   name: { fontSize: 17, lineHeight: 22, fontWeight: "500" },
   pill: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", borderRadius: 16, paddingHorizontal: 12, paddingVertical: 6, marginTop: 4 },
   pillText: { fontSize: 15, fontWeight: "500" },
@@ -196,4 +196,4 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, textAlign: "center", marginTop: 6, lineHeight: 21 },
   cta: { height: 52, borderRadius: 26, alignItems: "center", justifyContent: "center" },
   ctaText: { color: "#fff", fontSize: 17, fontWeight: "600" },
-});
+}));

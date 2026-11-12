@@ -4,8 +4,8 @@ import * as ImagePicker from "expo-image-picker";
 import { tap } from "@/components/ui";
 import { iosText, useIOS } from "@/ios";
 import { api } from "@/api";
+import { colors } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 
 export type ProofFile = { uri: string; name: string; mime: string; video: boolean };
@@ -26,13 +26,13 @@ export function WholesaleTerms() {
         Вы регистрируетесь как оптовый клиент. Чтобы мы подтвердили аккаунт, нужно показать, что вы покупаете товар для перепродажи. Для этого подойдут фотографии или видео вашего магазина или онлайн-заказов.
       </Text>
       <View style={st.rule}>
-        <Ionicons name="cart-outline" size={18} color={VIOLET} />
+        <Ionicons name="cart-outline" size={18} color={colors.brand} />
         <Text style={[st.termsText, { color: c.label, flex: 1 }]}>
           Минимальный оптовый заказ — <Text style={st.b}>5 000 ₽</Text>, эту сумму нужно набирать в каждом заказе.
         </Text>
       </View>
       <View style={st.rule}>
-        <Ionicons name="business-outline" size={18} color={VIOLET} />
+        <Ionicons name="business-outline" size={18} color={colors.brand} />
         <Text style={[st.termsText, { color: c.label, flex: 1 }]}>
           Крупный опт — от <Text style={st.b}>50 000 ₽</Text>, эту сумму тоже нужно набирать каждый раз.
         </Text>
@@ -122,10 +122,10 @@ export function WholesaleProofForm({
               }}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
-              style={[st.type, { borderColor: on ? VIOLET : c.separator, backgroundColor: on ? (dark ? "rgba(139,61,255,0.22)" : "rgba(139,61,255,0.08)") : "transparent" }]}
+              style={[st.type, { borderColor: on ? colors.brand : c.separator, backgroundColor: on ? (dark ? "rgba(139,61,255,0.22)" : "rgba(139,61,255,0.08)") : "transparent" }]}
             >
-              <Ionicons name={t.icon} size={20} color={on ? VIOLET : c.secondary} />
-              <Text style={[st.typeText, { color: on ? VIOLET : c.label }]}>{t.label}</Text>
+              <Ionicons name={t.icon} size={20} color={on ? colors.brand : c.secondary} />
+              <Text style={[st.typeText, { color: on ? colors.brand : c.label }]}>{t.label}</Text>
             </Pressable>
           );
         })}
@@ -139,7 +139,7 @@ export function WholesaleProofForm({
           <View key={f.uri + i} style={[st.thumb, { backgroundColor: c.cellPressed }]}>
             {f.video ? (
               <View style={st.videoThumb}>
-                <Ionicons name="videocam" size={26} color={VIOLET} />
+                <Ionicons name="videocam" size={26} color={colors.brand} />
                 <Text style={{ color: c.secondary, fontSize: 13 }}>видео</Text>
               </View>
             ) : (
@@ -161,10 +161,10 @@ export function WholesaleProofForm({
             onPress={add}
             accessibilityRole="button"
             accessibilityLabel="Добавить фото или видео"
-            style={[st.thumb, st.addBtn, { borderColor: errors.proofs ? "#ff3b30" : VIOLET }]}
+            style={[st.thumb, st.addBtn, { borderColor: errors.proofs ? "#ff3b30" : colors.brand }]}
           >
-            <Ionicons name="add" size={28} color={VIOLET} />
-            <Text style={{ color: VIOLET, fontSize: 13, fontWeight: "600" }}>Добавить</Text>
+            <Ionicons name="add" size={28} color={colors.brand} />
+            <Text style={{ color: colors.brand, fontSize: 13, fontWeight: "600" }}>Добавить</Text>
           </Pressable>
         ) : null}
       </View>

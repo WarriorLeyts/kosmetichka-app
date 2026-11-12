@@ -9,8 +9,8 @@ import { IOSField } from "@/components/iosui/Field";
 import { GradientButton } from "@/components/iosui/Buttons";
 import { AuthBackdrop } from "@/components/iosui/AuthBackdrop";
 import { useIOS } from "@/ios";
+import { colors } from "@/theme";
 
-const VIOLET = "#8B3DFF";
 
 /** «Как вы узнали о нас?» — «Другое» opens a field for the customer's own answer */
 const SOURCES: { value: string; label: string }[] = [
@@ -59,7 +59,7 @@ export default function SignupSurvey() {
       }}
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
-      style={[styles.chip, { borderColor: on ? VIOLET : dark ? "#43295A" : "#E4E2EC", backgroundColor: on ? VIOLET : c.cell }]}
+      style={[styles.chip, { borderColor: on ? colors.brand : dark ? "#43295A" : "#E4E2EC", backgroundColor: on ? colors.brand : c.cell }]}
     >
       <Text style={{ color: on ? "#fff" : c.label, fontSize: 15, fontWeight: "600" }} numberOfLines={1}>
         {label}

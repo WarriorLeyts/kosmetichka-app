@@ -4,8 +4,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { iosText, useIOS } from "@/ios";
 import { tap } from "@/components/ui";
 import { disableWebPush, enableWebPush, isIOSDevice, useWebPush, type WebPushState } from "@/webPush";
+import { colors, themed } from "@/theme";
 
-const VIOLET = "#8b3dff";
 
 const IOS_HOME = "Чтобы получать уведомления на iPhone, добавьте сайт на экран «Домой»: Поделиться → На экран «Домой», и откройте его оттуда";
 
@@ -57,16 +57,16 @@ export function WebPushCard() {
     <View style={[styles.card, { backgroundColor: c.cell }, !dark && styles.shadow]}>
       <View style={styles.row}>
         <View style={[styles.icon, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : "rgba(139,61,255,0.08)" }]}>
-          <Ionicons name={state === "on" ? "notifications" : "notifications-outline"} size={22} color={VIOLET} />
+          <Ionicons name={state === "on" ? "notifications" : "notifications-outline"} size={22} color={colors.brand} />
         </View>
         <Text style={[styles.title, { color: c.label }]}>Уведомления на этом устройстве</Text>
         {busy ? (
-          <ActivityIndicator color={VIOLET} />
+          <ActivityIndicator color={colors.brand} />
         ) : state === "on" ? (
           <Switch
             value={state === "on"}
             onValueChange={run}
-            trackColor={{ true: VIOLET, false: undefined }}
+            trackColor={{ true: colors.brand, false: undefined }}
             accessibilityLabel="Уведомления на этом устройстве"
           />
         ) : null}
@@ -82,13 +82,13 @@ export function WebPushCard() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   card: { width: "100%", maxWidth: 640, alignSelf: "center", borderRadius: 20, padding: 14, gap: 10 },
   shadow: { boxShadow: "0 4px 18px rgba(31,41,55,0.06)" },
   row: { flexDirection: "row", alignItems: "center", gap: 12 },
   icon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, fontSize: 17, lineHeight: 22, fontWeight: "600" },
   text: { ...iosText.footnote, lineHeight: 19 },
-  btn: { height: 44, borderRadius: 22, backgroundColor: VIOLET, alignItems: "center", justifyContent: "center" },
+  btn: { height: 44, borderRadius: 22, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center" },
   btnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
-});
+}));

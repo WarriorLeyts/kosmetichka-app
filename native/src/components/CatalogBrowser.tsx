@@ -29,6 +29,9 @@ import { useAddToCart } from "@/useAddToCart";
 import { SUB_FILTERS } from "@/subFilters";
 import type { Product } from "@/types";
 import { HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
+import { PromoStrip } from "@/components/promo/PromoStrip";
+import { saleFirst, useLivePromo } from "@/promo";
+import { colors, themed } from "@/theme";
 
 const EMPTY: Product[] = [];
 const SORT_OPTIONS = (Object.keys(SORT_LABELS) as Sort[]).map((v) => ({ value: v, label: SORT_LABELS[v] }));
@@ -117,7 +120,8 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const catalogBlocks = useSiteHome("catalog");
   const clean = !f.search && !f.categoryGuid && !f.quick.length && !f.brandGuids.length && !f.typing;
   const showBlocks = !pick && clean && !!catalogBlocks?.length;
-  const quickChips = !pick && f.quickChips ? f.quickFilters.filter((q) => q.visible || f.quick.includes(q.key)) : [];
+  const promo = useLivePromo();
+  const quickChips = !pick && f.quickChips ? saleFirst(f.quickFilters.filter((q) => q.visible || f.quick.includes(q.key)), promo) : [];
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const favorites = useFavorites((s) => s.items);
@@ -284,6 +288,13 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
         </>
       )}
 
+      {/* the promotion strip (on a computer it is above the header for every page) */}
+      {!desktop && !pick && promo?.strip ? (
+        <View style={{ marginBottom: 10 }}>
+          <PromoStrip rounded />
+        </View>
+      ) : null}
+
       {/* search */}
       <View style={[styles.search, { backgroundColor: c.blurTint === "dark" ? "#2B193D" : "rgba(118,118,128,0.12)" }]}>
         {desktop ? <View style={{ width: 8 }} /> : (
@@ -293,7 +304,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           accessibilityLabel="Все категории"
           style={[styles.scan, { backgroundColor: c.cell }]}
         >
-          <Ionicons name="apps-outline" size={20} color="#8b3dff" />
+          <Ionicons name="apps-outline" size={20} color={colors.brand} />
         </Pressable>
         )}
         <Ionicons name="search-outline" size={21} color={c.secondary} />
@@ -304,13 +315,13 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           accessibilityLabel="Сканировать штрихкод"
           style={[styles.scan, { backgroundColor: c.cell }]}
         >
-          <Ionicons name="scan-outline" size={21} color="#8b3dff" />
+          <Ionicons name="scan-outline" size={21} color={colors.brand} />
         </Pressable>
       </View>
 
       {showBlocks && catalogBlocks ? (
         <View style={desktop ? { marginTop: 8, marginBottom: 6 } : { marginHorizontal: -11, marginBottom: 6 }}>
-          <HomeBlocks blocks={catalogBlocks} categories={f.categories} openCatalog={(patch) => f.set(patch)} desktop={desktop} arrivals={false} />
+          <HomeBlocks blocks={catalogBlocks} categories={f.categories} openCatalog={(patch) => f.set(patch)} desktop={desktop} arrivals={false} promo={false} />
         </View>
       ) : null}
 
@@ -371,7 +382,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
                 style={[
                   styles.typeChip,
                   on
-                    ? { backgroundColor: "#8b3dff", borderColor: "#8b3dff" }
+                    ? { backgroundColor: colors.brand, borderColor: colors.brand }
                     : { backgroundColor: c.cell, borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(139,61,255,0.18)" },
                 ]}
               >
@@ -392,7 +403,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           style={styles.catChip}
         >
           <Text style={styles.catChipText} numberOfLines={1}>{selectedCat.name}</Text>
-          <Ionicons name="close" size={15} color="#8b3dff" />
+          <Ionicons name="close" size={15} color={colors.brand} />
         </Pressable>
       ) : null}
       {/* retail without a loyalty card: what «Скидка по карте» needs */}
@@ -421,7 +432,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
                 style={[
                   styles.typeChip,
                   on
-                    ? { backgroundColor: "#8b3dff", borderColor: "#8b3dff" }
+                    ? { backgroundColor: colors.brand, borderColor: colors.brand }
                     : { backgroundColor: c.cell, borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(139,61,255,0.18)" },
                 ]}
               >
@@ -476,10 +487,10 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
             // not during a refresh (after login): the next page would cancel the list being reloaded
             if (!loading && !refreshing && !busy && hasMore && products.length > 0) load(page + 1, "append");
           }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor="#8b3dff" />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(1, "refresh")} tintColor={colors.brand} />}
           ListEmptyComponent={
             busy || loading ? (
-              <ActivityIndicator style={{ marginTop: 60 }} color="#8b3dff" size="large" />
+              <ActivityIndicator style={{ marginTop: 60 }} color={colors.brand} size="large" />
             ) : (
               <Empty
                 icon="search-outline"
@@ -490,7 +501,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
               />
             )
           }
-          ListFooterComponent={loading && !busy && products.length > 0 ? <ActivityIndicator style={{ margin: 24 }} color="#8b3dff" /> : null}
+          ListFooterComponent={loading && !busy && products.length > 0 ? <ActivityIndicator style={{ margin: 24 }} color={colors.brand} /> : null}
         />
         </View>
       )}
@@ -530,14 +541,14 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   toTop: {
     position: "absolute",
     right: 18,
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "#8b3dff",
+    backgroundColor: colors.brand,
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "0 6px 18px rgba(139,61,255,0.38)",
@@ -563,7 +574,7 @@ const styles = StyleSheet.create({
     minWidth: 17,
     height: 17,
     borderRadius: 9,
-    backgroundColor: "#8b3dff",
+    backgroundColor: colors.brand,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 4,
@@ -581,9 +592,9 @@ const styles = StyleSheet.create({
   },
   sortText: { fontSize: 15, flexShrink: 1 },
   sortBtnIcon: { width: 38, paddingHorizontal: 0, justifyContent: "center" },
-  sortDot: { position: "absolute", top: 2, right: 2, width: 9, height: 9, borderRadius: 5, backgroundColor: "#8b3dff" },
+  sortDot: { position: "absolute", top: 2, right: 2, width: 9, height: 9, borderRadius: 5, backgroundColor: colors.brand },
   brandBtn: { flexDirection: "row", alignItems: "center", gap: 5, height: 38, borderRadius: 19, paddingHorizontal: 13, flexShrink: 0, boxShadow: "0 1px 6px rgba(0,0,0,0.07)" },
-  brandBtnOn: { backgroundColor: "#8b3dff" },
+  brandBtnOn: { backgroundColor: colors.brand },
   catChip: {
     flexDirection: "row",
     alignItems: "center",
@@ -597,5 +608,5 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(139,61,255,0.1)",
     maxWidth: "90%",
   },
-  catChipText: { color: "#8b3dff", fontSize: 15, fontWeight: "500", flexShrink: 1 },
-});
+  catChipText: { color: colors.brand, fontSize: 15, fontWeight: "500", flexShrink: 1 },
+}));

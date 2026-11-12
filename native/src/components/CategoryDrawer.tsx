@@ -9,8 +9,8 @@ import { Image } from "expo-image";
 import { useIOS } from "../ios";
 import { tap } from "./ui";
 import type { Category } from "../types";
+import { colors } from "@/theme";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 const GRADIENT = ["#a020f0", "#c21ae8", "#e82c87"] as const;
 
@@ -252,7 +252,7 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
     <View style={styles.header}>
       {stack.length ? (
         <Pressable onPress={back} hitSlop={8} accessibilityRole="button" accessibilityLabel="Назад" style={[styles.round, { backgroundColor: dark ? "#352044" : "rgba(139,61,255,0.08)" }]}>
-          <Ionicons name="chevron-back" size={24} color={VIOLET} />
+          <Ionicons name="chevron-back" size={24} color={colors.brand} />
         </Pressable>
       ) : null}
       <Text style={[styles.title, { color: c.label }]} numberOfLines={2} accessibilityRole="header">
@@ -294,7 +294,7 @@ function CategoryDrawerBase({ open, onClose, categories, selected, onSelect }: P
                         onPress={() => (kids ? push(cat.guid) : select(cat.guid))}
                         label={cat.name}
                         reduce={reduce}
-                        style={[styles.tile, { backgroundColor: active ? (dark ? "rgba(232,44,135,0.16)" : "#FDF0F8") : tileBg, borderColor: active ? VIOLET : "transparent" }, shadow]}
+                        style={[styles.tile, { backgroundColor: active ? (dark ? "rgba(232,44,135,0.16)" : "#FDF0F8") : tileBg, borderColor: active ? colors.brand : "transparent" }, shadow]}
                       >
                         {icon ? (
                           <Image source={icon} style={styles.icon} contentFit="contain" />
@@ -364,7 +364,7 @@ function SubCard({
         ]}
       >
         <Animated.Text style={[styles.subText, { color: a.interpolate({ inputRange: [0, 1], outputRange: [textColor, PINK] }) }]}>{label}</Animated.Text>
-        <Ionicons name="chevron-forward" size={20} color={VIOLET} />
+        <Ionicons name="chevron-forward" size={20} color={colors.brand} />
       </Animated.View>
     </ScalePress>
   );

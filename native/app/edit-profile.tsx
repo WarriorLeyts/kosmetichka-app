@@ -14,6 +14,7 @@ import { VIOLET_PINK } from "@/components/TabBar";
 import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
 import type { Customer } from "@/types";
+import { colors, themed } from "@/theme";
 
 const FIELDS: { key: keyof Customer & string; label: string; placeholder: string; keyboard?: "email-address" | "phone-pad" }[] = [
   { key: "name", label: "Имя", placeholder: "Иван Иванов" },
@@ -103,7 +104,7 @@ export default function EditProfile() {
     return (
       <View style={{ flex: 1, backgroundColor: bg, paddingTop: insets.top, paddingHorizontal: 16 }}>
         <TitleBar title="Мои данные" />
-        {loadError ? <ErrorView message={loadError} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color="#8b3dff" />}
+        {loadError ? <ErrorView message={loadError} onRetry={load} /> : <ActivityIndicator style={{ flex: 1 }} color={colors.brand} />}
       </View>
     );
   }
@@ -320,8 +321,8 @@ export default function EditProfile() {
   );
 }
 
-const styles = StyleSheet.create({
-  codeBtn: { height: 44, borderRadius: 12, backgroundColor: "#8b3dff", alignItems: "center", justifyContent: "center", marginBottom: 10 },
+const styles = themed(() => ({
+  codeBtn: { height: 44, borderRadius: 12, backgroundColor: colors.brand, alignItems: "center", justifyContent: "center", marginBottom: 10 },
   codeBtnText: { color: "#fff", fontSize: 17, fontWeight: "600" },
   wrap: { width: "100%", maxWidth: 640, alignSelf: "center" },
   panel: { borderRadius: 22, padding: 16, paddingBottom: 4, marginTop: 10 },
@@ -331,4 +332,4 @@ const styles = StyleSheet.create({
   bottom: { position: "absolute", left: 0, right: 0, bottom: 0, paddingTop: 10, paddingHorizontal: 16 },
   cta: { height: 52, borderRadius: 26, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, boxShadow: "0 8px 20px rgba(139,61,255,0.3)" },
   ctaText: { color: "#fff", fontSize: 17, fontWeight: "600" },
-});
+}));

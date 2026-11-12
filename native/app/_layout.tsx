@@ -22,6 +22,8 @@ import { colors, useTheme } from "@/theme";
 import { PageLayout } from "@/components/PageBackdrop";
 import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { DesktopHeader } from "@/components/DesktopHeader";
+import { PromoStrip } from "@/components/promo/PromoStrip";
+import { startPromo, usePromo } from "@/promo";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { stormWatch } from "@/stormWatch";
 import { useDesktop } from "@/useDesktop";
@@ -118,12 +120,14 @@ function AppRoot() {
   const loading = useAuth((s) => s.loading);
   // re-mount the whole UI when the theme changes so every screen re-reads the palette
   const mode = useTheme((s) => s.mode);
+  // the promotion's colour (admin panel → Акция) also re-mounts it (src/promo.ts)
+  const accentKey = usePromo((s) => s.accentKey);
   // website: the page under the app (behind the iPhone status bar / home indicator, bounce) in the theme's colour, not white
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.documentElement.style.backgroundColor = colors.bg;
     if (document.body) document.body.style.backgroundColor = colors.bg;
-  }, [mode]);
+  }, [mode, accentKey]);
   // Inter is the Android stand-in for Apple's SF Pro in iOS-style screens (iPhone uses the system font)
   useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
 
@@ -134,6 +138,7 @@ function AppRoot() {
   useEffect(() => {
     startCartSync();
     startFavoritesSync();
+    startPromo();
   }, []);
   // the whole app mounting again and again (a loop) is reported with the theme / size (src/stormWatch.ts)
   useEffect(() => {
@@ -163,9 +168,10 @@ function AppRoot() {
       onTouchStart={inExpoGo ? () => console.log("[kos] touch") : undefined}
     >
       <StatusBar style={colors.statusBar} />
-      {desktop ? <DesktopHeader key={`dh-${mode}`} /> : null}
+      {desktop ? <PromoStrip /> : null}
+      {desktop ? <DesktopHeader key={`dh-${mode}-${accentKey}`} /> : null}
       <Stack
-        key={mode}
+        key={`${mode}-${accentKey}`}
         screenLayout={disabled("layout") ? undefined : ({ children }) => <PageLayout>{children}</PageLayout>}
         screenOptions={{
           headerTintColor: colors.text,

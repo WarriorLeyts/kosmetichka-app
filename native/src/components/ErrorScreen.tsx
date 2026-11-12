@@ -1,5 +1,6 @@
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { colors } from "@/theme";
 
 /** Fallback when a screen crashed (see ErrorBoundary in app/_layout.tsx). Plain colors: the theme may be the broken part. */
 export function ErrorScreen({ onRetry }: { onRetry: () => void }) {
@@ -13,7 +14,7 @@ export function ErrorScreen({ onRetry }: { onRetry: () => void }) {
       <Pressable
         onPress={onRetry}
         accessibilityRole="button"
-        style={({ pressed }) => ({ marginTop: 24, backgroundColor: "#8b3dff", borderRadius: 28, minHeight: 52, paddingHorizontal: 32, justifyContent: "center", opacity: pressed ? 0.85 : 1 })}
+        style={({ pressed }) => ({ marginTop: 24, backgroundColor: colors.brand, borderRadius: 28, minHeight: 52, paddingHorizontal: 32, justifyContent: "center", opacity: pressed ? 0.85 : 1 })}
       >
         <Text style={{ color: "#fff", fontSize: 17, fontWeight: "600" }}>Повторить</Text>
       </Pressable>

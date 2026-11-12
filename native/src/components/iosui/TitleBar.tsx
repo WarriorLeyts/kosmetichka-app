@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useIOS } from "../../ios";
 import { useEmbedded } from "../../embedded";
+import { colors } from "@/theme";
 
 /** Inner screen header: violet back chevron + large title on one row (as on the mockups). */
 export function TitleBar({ title, onBack }: { title: string; onBack?: () => void }) {
@@ -13,7 +14,7 @@ export function TitleBar({ title, onBack }: { title: string; onBack?: () => void
     <View style={styles.row}>
       {embedded ? null : (
       <Pressable onPress={back} hitSlop={10} accessibilityRole="button" accessibilityLabel="Назад" style={styles.back}>
-        <Ionicons name="chevron-back" size={30} color="#8b3dff" />
+        <Ionicons name="chevron-back" size={30} color={colors.brand} />
       </Pressable>
       )}
       <Text style={[styles.title, { color: c.label }]} numberOfLines={2} accessibilityRole="header">

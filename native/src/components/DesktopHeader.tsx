@@ -12,14 +12,12 @@ import { useCatalog } from "@/store/catalog";
 import { cartPriceTier, rawCartTotal } from "@/pricing";
 import { money } from "@/format";
 import { useIOS } from "@/ios";
-import { useTheme } from "@/theme";
+import { useTheme, colors, themed } from "@/theme";
 import { DESKTOP_WIDE } from "@/useDesktop";
 import { ClearX } from "@/components/ClearX";
 
 /** violet text on the dark theme's violet backgrounds: #8b3dff gives 2.6–3.4 : 1, this one ≥ 5 : 1 (audit UX-01) */
-const VIOLET_ON_DARK = "#b58cff";
 
-const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 type IconName = keyof typeof Ionicons.glyphMap;
 /** react-native-web adds `hovered` to the pressable state */
@@ -45,7 +43,7 @@ function IconBtn({ icon, label, badge, onPress, active }: { icon: IconName; labe
         pressed && { opacity: 0.8 },
       ]}
     >
-      <Ionicons name={icon} size={23} color={active ? (dark ? VIOLET_ON_DARK : VIOLET) : c.label} />
+      <Ionicons name={icon} size={23} color={active ? (dark ? colors.brandOnDark : colors.brand) : c.label} />
       {badge ? (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{badge > 99 ? "99+" : badge}</Text>
@@ -98,7 +96,7 @@ export function DesktopHeader() {
                 accessibilityRole="link"
                 style={({ hovered }: Hover) => [styles.navItem, on && { backgroundColor: "rgba(139,61,255,0.12)" }, hovered && !on && { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "rgba(139,61,255,0.06)" }]}
               >
-                <Text style={[styles.navText, { color: on ? (dark ? VIOLET_ON_DARK : VIOLET) : c.label, fontWeight: on ? "700" : "500" }]}>{n.label}</Text>
+                <Text style={[styles.navText, { color: on ? (dark ? colors.brandOnDark : colors.brand) : c.label, fontWeight: on ? "700" : "500" }]}>{n.label}</Text>
                 {n.href === "/orders" && orderNews > 0 ? (
                   <View style={[styles.badge, { top: 2, right: -4 }]}>
                     <Text style={styles.badgeText}>{orderNews > 99 ? "99+" : orderNews}</Text>
@@ -156,7 +154,7 @@ export function DesktopHeader() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   bar: { height: 72, borderBottomWidth: StyleSheet.hairlineWidth, justifyContent: "center", zIndex: 10 },
   inner: { width: "100%", maxWidth: DESKTOP_WIDE, alignSelf: "center", paddingHorizontal: 24, flexDirection: "row", alignItems: "center" },
   nav: { flexDirection: "row", gap: 4, marginRight: 20 },
@@ -168,8 +166,8 @@ const styles = StyleSheet.create({
   icon: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
   badge: { position: "absolute", top: 4, right: 2, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: PINK, alignItems: "center", justifyContent: "center", paddingHorizontal: 4 },
   badgeText: { color: "#fff", fontSize: 11, fontWeight: "700" },
-  cart: { flexDirection: "row", alignItems: "center", gap: 8, height: 44, borderRadius: 22, paddingHorizontal: 16, backgroundColor: VIOLET, marginHorizontal: 4 },
+  cart: { flexDirection: "row", alignItems: "center", gap: 8, height: 44, borderRadius: 22, paddingHorizontal: 16, backgroundColor: colors.brand, marginHorizontal: 4 },
   cartText: { color: "#fff", fontSize: 15, fontWeight: "600" },
   cartCount: { minWidth: 22, height: 22, borderRadius: 11, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", paddingHorizontal: 5 },
-  cartCountText: { color: VIOLET, fontSize: 13, fontWeight: "700" },
-});
+  cartCountText: { color: colors.brand, fontSize: 13, fontWeight: "700" },
+}));

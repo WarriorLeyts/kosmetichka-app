@@ -9,6 +9,7 @@ import { IOSField } from "@/components/iosui/Field";
 import { GradientButton } from "@/components/iosui/Buttons";
 import { useIOS } from "@/ios";
 import { useAuth } from "@/store/auth";
+import { colors } from "@/theme";
 
 /**
  * «Добавить карту»: phone or card number → MAXMA texts a code to the card owner's phone →
@@ -126,7 +127,7 @@ export default function LoyaltyAdd() {
                     setSentTo(undefined);
                     setError("");
                   }}
-                  style={[styles.link, { color: "#8b3dff" }]}
+                  style={[styles.link, { color: colors.brand }]}
                   accessibilityRole="button"
                 >
                   Изменить номер или отправить код ещё раз

@@ -3,6 +3,7 @@ import { Animated, Pressable, StyleSheet, Text, TextInput, View, type TextInputP
 import { Ionicons } from "@expo/vector-icons";
 import { useIOS } from "../../ios";
 import { useReduceMotion } from "../../useReduceMotion";
+import { colors } from "@/theme";
 
 type Props = TextInputProps & { label: string; error?: string; password?: boolean };
 
@@ -23,7 +24,7 @@ export const IOSField = forwardRef<TextInput, Props>(function IOSField({ label, 
   const idle = dark ? "#43295A" : "#E4E2EC";
   const borderColor = error
     ? "#FF3B30"
-    : focus.interpolate({ inputRange: [0, 1], outputRange: [idle, "#8b3dff"] });
+    : focus.interpolate({ inputRange: [0, 1], outputRange: [idle, colors.brand] });
 
   return (
     <View style={{ marginBottom: 14 }}>
