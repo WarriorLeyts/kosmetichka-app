@@ -17,6 +17,7 @@ import { FavHeart } from "./FavHeart";
 import { useCartStore } from "../store/cart";
 import { FitText } from "./FitText";
 import { SafeImage } from "./SafeImage";
+import { ProductLabels } from "./ProductCard";
 import { scaleStyles, useCardScale, withFonts, PHONE_CARD_SCALE } from "../cardScale";
 
 type Props = {
@@ -85,6 +86,8 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
         ) : (
           <Ionicons name="image-outline" size={34 * k} color="#C7C7CC" />
         )}
+        {/* «Новинка» / «Хит» / «Снова в наличии» */}
+        <ProductLabels labels={product.labels} />
         <Pressable
           hitSlop={10}
           accessibilityRole="button"
