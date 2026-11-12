@@ -64,7 +64,7 @@ export default function Home() {
   };
 
   // computer: categories on the left, banner and «Новинки» beside them (not the phone screen stretched)
-  if (desktop) return <DesktopHome categories={categories} orders={activeOrders} openCatalog={openCatalog} blocks={siteBlocks ?? null} />;
+  if (desktop) return <DesktopHome categories={categories} orders={activeOrders} openCatalog={openCatalog} blocks={siteBlocks} />;
 
   return (
     <>
@@ -153,7 +153,8 @@ export default function Home() {
         <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={(headerH || insets.top + 200) + (desktop ? 72 : 0)} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
       </View>
       <View style={desktop ? { width: "100%", maxWidth: 1240, alignSelf: "center", paddingHorizontal: 12 } : undefined}>
-      {siteBlocks ? (
+      {/* until the admin-panel home arrives — nothing (not the built-in home flashing for a moment) */}
+      {siteBlocks === undefined ? null : siteBlocks ? (
         <>
           {!customer && (
             <Pressable style={styles.loginBanner} onPress={() => router.push("/login")}>
