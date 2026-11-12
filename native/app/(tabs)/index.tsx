@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Alert, Animated, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
@@ -7,23 +7,16 @@ import { useDesktop } from "@/useDesktop";
 import { BRAND_PINK, BRAND_VIOLET, Wordmark } from "@/components/Wordmark";
 import { FavHeart } from "@/components/FavHeart";
 import { Ionicons } from "@expo/vector-icons";
-import { api } from "@/api";
 import { colors, gradient, radius, themed, useTheme } from "@/theme";
 import { topCategories, useCatalog, type Quick } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
-import { useCartStore } from "@/store/cart";
-import { useFavorites } from "@/store/favorites";
-import { effectivePriceType } from "@/pricing";
-import { ProductCard } from "@/components/ProductCard";
 import { tap } from "@/components/ui";
-import { useAddToCart } from "@/useAddToCart";
 import { HomeScene } from "@/components/home/HomeScene";
 import { HomeCategories } from "@/components/home/HomeCategories";
 import { CardHintTile } from "@/components/CardHint";
 import { useTabBarSpace } from "@/components/TabBar";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { UI_SIZES, uiScale } from "@/uiScale";
-import type { Product } from "@/types";
 import { FitText } from "@/components/FitText";
 import { PendingOrderNote, useActiveOrders } from "@/components/home/PendingOrder";
 import { DesktopHome } from "@/components/home/DesktopHome";
@@ -43,11 +36,7 @@ export default function Home() {
   const mode = useTheme((s) => s.mode);
   const toggleTheme = useTheme((s) => s.toggle);
   const customer = useAuth((s) => s.customer);
-  const cart = useCartStore((s) => s.items);
-  const favorites = useFavorites((s) => s.items);
-  const toggleFav = useFavorites((s) => s.toggle);
   const { categories, loadMeta, set: setFilters } = useCatalog();
-  const addToCart = useAddToCart();
 
   const [sizeOpen, setSizeOpen] = useState(false);
   // the newest order in work: a bright card with all its stages under the search
@@ -55,16 +44,13 @@ export default function Home() {
   const [headerH, setHeaderH] = useState(0); // the scene fills exactly the screen below the header
   const scrollY = useRef(new Animated.Value(0)).current;
   const [sceneTop, setSceneTop] = useState<number | null>(null);
-  const [fresh, setFresh] = useState<Product[]>([]);
   // главная из админ-панели (admin.kosmetichka-opt.ru); null — ещё не публиковали: прежняя главная
   const siteBlocks = useSiteHome();
 
   useEffect(() => {
     loadMeta();
-    api.catalog({ page: 1, quick: ["new"], onlyStock: true }).then((r) => setFresh(r.products.slice(0, 12))).catch(() => {});
   }, [loadMeta]);
 
-  const active = effectivePriceType(cart, customer);
   const dark = mode === "dark";
   const iconColor = dark ? "#E7D9FF" : BRAND_VIOLET;
   const glass = dark ? styles.glassDark : styles.glassLight;
@@ -80,7 +66,7 @@ export default function Home() {
   };
 
   // computer: categories on the left, banner and «Новинки» beside them (not the phone screen stretched)
-  if (desktop) return <DesktopHome categories={categories} fresh={fresh} orders={activeOrders} openCatalog={openCatalog} blocks={siteBlocks ?? null} />;
+  if (desktop) return <DesktopHome categories={categories} orders={activeOrders} openCatalog={openCatalog} blocks={siteBlocks ?? null} />;
 
   return (
     <>
@@ -213,31 +199,6 @@ export default function Home() {
             <ArrivalsRow desktop={false} />
           </View>
 
-          {fresh.length > 0 && (
-            <>
-              <Text style={styles.section}>Новинки</Text>
-              <FlatList
-                horizontal
-                data={fresh}
-                keyExtractor={(p) => String(p.id)}
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 11 }}
-                renderItem={({ item }) => (
-                  <View style={{ width: 180 }}>
-                    <ProductCard
-                      product={item}
-                      customer={customer}
-                      activePrice={active}
-                      inCart={cart.find((c) => c.cartKey === String(item.id))?.quantity ?? 0}
-                      isFavorite={favorites.some((f) => f.id === item.id)}
-                      onAdd={addToCart}
-                      onFavorite={toggleFav}
-                    />
-                  </View>
-                )}
-              />
-            </>
-          )}
 
         </>
       )}
