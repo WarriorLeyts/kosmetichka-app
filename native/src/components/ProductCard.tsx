@@ -46,6 +46,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
         ) : (
           <Ionicons name="image-outline" size={34} color={colors.faint} />
         )}
+        <ProductLabels labels={product.labels} />
         <Pressable
           hitSlop={10}
           onPress={() => {
@@ -87,6 +88,29 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
 }
 
 export const ProductCard = memo(ProductCardBase);
+
+const LABEL_TEXT: Record<string, string> = { new: "Новинка", hit: "Хит" };
+
+/** «Новинка» / «Хит» — метки из админ-панели (admin.kosmetichka-opt.ru), в левом верхнем углу фото */
+export function ProductLabels({ labels, big = false, inline = false }: { labels?: string[] | null; big?: boolean; inline?: boolean }) {
+  const list = (labels ?? []).filter((l) => LABEL_TEXT[l]);
+  if (!list.length) return null;
+  return (
+    <View style={[labelStyles.wrap, big && { top: 12, left: 12 }, inline && { position: "relative", top: 0, left: 0, marginTop: 10 }]} pointerEvents="none">
+      {list.map((l) => (
+        <View key={l} style={[labelStyles.pill, { backgroundColor: l === "hit" ? "#e82c87" : "#8b3dff" }, big && { paddingHorizontal: 10, paddingVertical: 4 }]}>
+          <Text style={[labelStyles.text, big && { fontSize: 13 }]}>{LABEL_TEXT[l]}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const labelStyles = StyleSheet.create({
+  wrap: { position: "absolute", top: 8, left: 8, flexDirection: "row", gap: 4 },
+  pill: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
+  text: { color: "#fff", fontSize: 11, fontWeight: "800" },
+});
 
 /** Site's .stock-high / .stock-low / .stock-out */
 const STOCK_PILL = {
