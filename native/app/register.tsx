@@ -77,6 +77,36 @@ function TypeCard({ t, selected, onPress }: { t: (typeof TYPES)[number]; selecte
   );
 }
 
+/** «Как вы узнали о нас?» — «Другое» opens a field for the customer's own answer */
+const SOURCES: { value: string; label: string }[] = [
+  { value: "Instagram", label: "📸 Instagram" },
+  { value: "WhatsApp", label: "💬 WhatsApp" },
+  { value: "Друзья, знакомые", label: "👭 Друзья" },
+  { value: "Увидел(а) магазин", label: "🏬 Магазин" },
+  { value: "2ГИС / Яндекс", label: "🗺 2ГИС/Яндекс" },
+  { value: "Другое", label: "Другое" },
+];
+
+function Chip({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) {
+  const c = useIOS();
+  const dark = c.blurTint === "dark";
+  return (
+    <Pressable
+      onPress={() => {
+        tap();
+        onPress();
+      }}
+      accessibilityRole="radio"
+      accessibilityState={{ checked: on }}
+      style={[styles.chip, { borderColor: on ? VIOLET : dark ? "#43295A" : "#E4E2EC", backgroundColor: on ? VIOLET : c.bg }]}
+    >
+      <Text style={{ color: on ? "#fff" : c.label, fontSize: 15, fontWeight: "600" }} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 export default function Register() {
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -94,6 +124,10 @@ export default function Register() {
   const [smsCode, setSmsCode] = useState("");
   const [cooldown, setCooldown] = useState(0);
   const [consent, setConsent] = useState(false);
+  // «Как вы узнали о нас?» / «Вы уже заказывали у нас?» — part of the form now (optional)
+  const [refSource, setRefSource] = useState<string | null>(null);
+  const [refOther, setRefOther] = useState("");
+  const [orderedBefore, setOrderedBefore] = useState<boolean | null>(null);
   const [busy, setBusy] = useState<"" | "sms" | "submit">("");
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState("");
@@ -173,6 +207,8 @@ export default function Register() {
         priceType,
         ...(wholesale && shopType ? { shopType } : {}),
         ...(RETAIL_ENABLED ? {} : { source: "site" as const }),
+        ...(refSource ? { referralSource: refSource === "Другое" && refOther.trim() ? `Другое: ${refOther.trim()}` : refSource } : {}),
+        ...(orderedBefore !== null ? { orderedBefore } : {}),
       });
       // the application is saved — now the photos / videos (the pass is valid 3 days)
       if (wholesale && r.proofToken && proofs.length) {
@@ -195,8 +231,8 @@ export default function Register() {
       if (r.autoLogin) {
         await clearPendingLogout();
         await refresh();
-        // signed in: two short questions (how they found us, ordered before) — a screen of their own, then the catalog
-        router.replace("/signup-survey");
+        // the two survey questions were answered in the form — straight to the catalog
+        router.replace("/catalog");
       } else {
         // wholesale: account waits for the manager — no wholesale prices until approved (server side)
         Alert.alert("Заявка отправлена", r.message, [{ text: "Понятно", onPress: () => router.replace("/") }]);
@@ -357,6 +393,32 @@ export default function Register() {
             {smsSent ? <Text style={[styles.sub, { color: "#1f8a3b", marginTop: -6, marginBottom: 10 }]}>Код отправлен на {f.phone}</Text> : null}
           </View>
 
+          {/* two short questions (optional) — staff see the answers on the customer's card in Team */}
+          <View style={[panel, { marginTop: 16, paddingBottom: 16 }]}>
+            <Text style={[styles.h2, { color: c.label }]}>Как вы узнали о нас?</Text>
+            <View style={[styles.grid, { marginTop: 10 }]} accessibilityRole="radiogroup">
+              {SOURCES.map((s) => (
+                <View key={s.value} style={styles.cell}>
+                  <Chip on={refSource === s.value} label={s.label} onPress={() => setRefSource(refSource === s.value ? null : s.value)} />
+                </View>
+              ))}
+            </View>
+            {refSource === "Другое" ? (
+              <View style={{ marginTop: 10 }}>
+                <IOSField label="Откуда?" value={refOther} onChangeText={setRefOther} maxLength={100} placeholder="Например, реклама в Telegram" />
+              </View>
+            ) : null}
+            <Text style={[styles.h2, { color: c.label, marginTop: 18 }]}>Вы уже заказывали у нас?</Text>
+            <View style={[styles.qrow, { marginTop: 10 }]} accessibilityRole="radiogroup">
+              <View style={{ flex: 1 }}>
+                <Chip on={orderedBefore === true} label="Да" onPress={() => setOrderedBefore(orderedBefore === true ? null : true)} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Chip on={orderedBefore === false} label="Нет, впервые" onPress={() => setOrderedBefore(orderedBefore === false ? null : false)} />
+              </View>
+            </View>
+          </View>
+
           {/* consent; documents open separately */}
           <Pressable
             onPress={() => {
@@ -425,5 +487,9 @@ const styles = StyleSheet.create({
   consentText: { flex: 1, fontSize: 17, lineHeight: 24 },
   link: { color: VIOLET, textDecorationLine: "underline" },
   err: { color: "#FF3B30", fontSize: 13 },
+  grid: { flexDirection: "row", flexWrap: "wrap", marginHorizontal: -4 },
+  cell: { width: "50%", padding: 4 },
+  qrow: { flexDirection: "row", gap: 8 },
+  chip: { minHeight: 46, borderRadius: 14, borderWidth: 1.5, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 },
   errorBox: { flexDirection: "row", gap: 8, alignItems: "center", backgroundColor: "rgba(255,59,48,0.08)", borderRadius: 12, padding: 12, marginBottom: 10 },
 });

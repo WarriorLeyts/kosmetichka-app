@@ -282,7 +282,7 @@ export const api = {
   register(body: {
     name: string; companyName?: string; address?: string; phone: string; email: string; password: string;
     captchaToken: string; smsCode: string; priceType: string; source?: "site";
-    shopType?: string; shopLink?: string;
+    shopType?: string; shopLink?: string; referralSource?: string; orderedBefore?: boolean;
   }) {
     // proofToken: wholesale applicant — 3 days to upload the shop photos / videos (uploadProof)
     return request<{ success: boolean; autoLogin: boolean; message: string; proofToken?: string }>("/api/auth/register", {
