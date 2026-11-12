@@ -194,9 +194,9 @@ export default function Home() {
             ))}
           </ScrollView>
 
-          {/* «Новые поступления» (receipts / transfers from 1С, «Новинка» badges) */}
+          {/* «Новинки» and «Снова в наличии» (receipts / transfers from 1С) */}
           <View style={{ marginTop: 14 }}>
-            <ArrivalsRow desktop={false} />
+            <ArrivalsRow desktop={false} openCatalog={openCatalog} />
           </View>
 
 

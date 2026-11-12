@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FlatList, Linking, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
@@ -9,6 +9,7 @@ import { useIOS } from "@/ios";
 import { tap } from "@/components/ui";
 import { ProductCard } from "@/components/ProductCard";
 import { HomeCategories } from "@/components/home/HomeCategories";
+import { ScrollStrip } from "@/components/home/ScrollStrip";
 import { topCategories, type Quick } from "@/store/catalog";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
@@ -173,24 +174,21 @@ function ProductsRow({ b, openCatalog, desktop }: { b: Extract<SiteBlock, { type
           </Pressable>
         ) : null}
       </View>
-      <FlatList
-        horizontal
+      <ScrollStrip
         data={items}
-        keyExtractor={(p) => String(p.id)}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: desktop ? 0 : 11 }}
-        renderItem={({ item }) => (
-          <View style={{ width: desktop ? 210 : 180 }}>
-            <ProductCard
-              product={item}
-              customer={customer}
-              activePrice={active}
-              inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
-              isFavorite={favorites.some((f) => f.id === item.id)}
-              onAdd={addToCart}
-              onFavorite={toggleFav}
-            />
-          </View>
+        desktop={desktop}
+        itemWidth={desktop ? 210 : 180}
+        keyOf={(p) => String(p.id)}
+        render={(item) => (
+          <ProductCard
+            product={item}
+            customer={customer}
+            activePrice={active}
+            inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
+            isFavorite={favorites.some((f) => f.id === item.id)}
+            onAdd={addToCart}
+            onFavorite={toggleFav}
+          />
         )}
       />
     </View>
@@ -198,12 +196,22 @@ function ProductsRow({ b, openCatalog, desktop }: { b: Extract<SiteBlock, { type
 }
 
 /**
- * «Новые поступления»: what came in the last 10 days and this customer can buy — retail from the shop,
- * wholesale from the warehouse and the shop (the site decides). Products that came for the first time
- * carry «Новинка». Hidden when nothing came.
+ * What came in the last 10 days and this customer can buy (retail — the shop, wholesale — the warehouse and
+ * the shop; the site decides), as two strips: «Новинки» — came to the company for the first time,
+ * «Снова в наличии» — brought again. A strip with nothing in it is hidden.
  */
-export function ArrivalsRow({ desktop }: { desktop: boolean }) {
+export function ArrivalsRow({ desktop, openCatalog }: { desktop: boolean; openCatalog?: OpenCatalog }) {
+  return (
+    <View style={{ gap: desktop ? 22 : 18 }}>
+      <ArrivalStrip kind="new" title="Новинки" desktop={desktop} onAll={openCatalog ? () => openCatalog({ quick: ["new"] }) : undefined} />
+      <ArrivalStrip kind="back" title="Снова в наличии" desktop={desktop} />
+    </View>
+  );
+}
+
+function ArrivalStrip({ kind, title, desktop, onAll }: { kind: "new" | "back"; title: string; desktop: boolean; onAll?: () => void }) {
   const c = useIOS();
+  const dark = c.blurTint === "dark";
   const [items, setItems] = useState<Product[]>([]);
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
@@ -215,50 +223,40 @@ export function ArrivalsRow({ desktop }: { desktop: boolean }) {
   useEffect(() => {
     let alive = true;
     api
-      .arrivals()
+      .arrivals(kind)
       .then((r) => alive && setItems(r.products.slice(0, 24)))
       .catch(() => {});
     return () => {
       alive = false;
     };
-  }, [who]);
+  }, [who, kind]);
   if (!items.length) return null;
-  const fresh = items.filter((p) => p.arrivalNew).length;
   return (
     <View>
       <View style={[styles.sectionRow, !desktop && { marginHorizontal: 16 }]}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, flexShrink: 1 }}>
-          <Text style={[styles.section, { color: c.label }]}>Новые поступления</Text>
-          {fresh ? (
-            <View style={styles.newCount}>
-              <Text style={styles.newCountText}>{fresh} новинок</Text>
-            </View>
-          ) : null}
-        </View>
+        <Text style={[styles.section, { color: c.label }]}>{title}</Text>
+        {onAll ? (
+          <Pressable onPress={onAll} accessibilityRole="link" hitSlop={8} style={styles.all}>
+            <Text style={[styles.allText, dark && { color: "#D7B8FF" }]}>Все</Text>
+            <Ionicons name="arrow-forward" size={17} color={dark ? "#D7B8FF" : "#8b2be0"} />
+          </Pressable>
+        ) : null}
       </View>
-      <FlatList
-        horizontal
+      <ScrollStrip
         data={items}
-        keyExtractor={(p) => String(p.id)}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: desktop ? 0 : 11 }}
-        renderItem={({ item }) => (
-          <View style={{ width: desktop ? 210 : 180 }}>
-            <ProductCard
-              product={item}
-              customer={customer}
-              activePrice={active}
-              inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
-              isFavorite={favorites.some((f) => f.id === item.id)}
-              onAdd={addToCart}
-              onFavorite={toggleFav}
-            />
-            {item.arrivalNew ? (
-              <LinearGradient colors={[VIOLET, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.newBadge} pointerEvents="none">
-                <Text style={styles.newBadgeText}>Новинка</Text>
-              </LinearGradient>
-            ) : null}
-          </View>
+        desktop={desktop}
+        itemWidth={desktop ? 210 : 180}
+        keyOf={(p) => String(p.id)}
+        render={(item) => (
+          <ProductCard
+            product={item}
+            customer={customer}
+            activePrice={active}
+            inCart={cart.find((x) => x.cartKey === String(item.id))?.quantity ?? 0}
+            isFavorite={favorites.some((f) => f.id === item.id)}
+            onAdd={addToCart}
+            onFavorite={toggleFav}
+          />
         )}
       />
     </View>
@@ -275,13 +273,13 @@ export function HomeBlocks({ blocks, categories, openCatalog, desktop = false }:
   return (
     <View style={{ gap: desktop ? 22 : 18, paddingTop: desktop ? 0 : 8 }}>
       {/* «Новые поступления» right after the banners (or first, when there are none) */}
-      {!blocks.some((b) => b.type === "hero" && b.banners.length) ? <ArrivalsRow desktop={desktop} /> : null}
+      {!blocks.some((b) => b.type === "hero" && b.banners.length) ? <ArrivalsRow desktop={desktop} openCatalog={openCatalog} /> : null}
       {blocks.map((b, i) => {
         if (b.type === "hero")
           return b.banners.length ? (
             <View key={b.id} style={{ gap: desktop ? 22 : 18 }}>
               <Hero b={b} desktop={desktop} openCatalog={openCatalog} />
-              {blocks.findIndex((x) => x.type === "hero" && x.banners.length) === i ? <ArrivalsRow desktop={desktop} /> : null}
+              {blocks.findIndex((x) => x.type === "hero" && x.banners.length) === i ? <ArrivalsRow desktop={desktop} openCatalog={openCatalog} /> : null}
             </View>
           ) : null;
         if (b.type === "categories") {
@@ -346,10 +344,6 @@ const styles = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.6)" },
   dotOn: { width: 16, backgroundColor: "#fff" },
   sectionRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 10 },
-  newCount: { backgroundColor: "#FCE7F3", borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 },
-  newCountText: { color: PINK, fontWeight: "800", fontSize: 12.5 },
-  newBadge: { position: "absolute", top: 13, left: 13, borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4 },
-  newBadgeText: { color: "#fff", fontWeight: "800", fontSize: 12, letterSpacing: 0.2 },
   section: { fontSize: 20, fontWeight: "900" },
   all: { flexDirection: "row", alignItems: "center", gap: 4 },
   allText: { color: "#8b2be0", fontWeight: "800", fontSize: 14 },
