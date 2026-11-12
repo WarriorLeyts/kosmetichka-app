@@ -86,7 +86,7 @@ export function Row({
       </View>
       {value ? <Text style={[iosText.body, { color: c.secondary, marginRight: 6 }]}>{value}</Text> : null}
       {toggle !== undefined ? (
-        <Switch value={toggle} onValueChange={onToggle} trackColor={{ true: "#34C759", false: undefined }} />
+        <Switch value={toggle} onValueChange={onToggle} accessibilityLabel={title} trackColor={{ true: "#34C759", false: undefined }} />
       ) : chevron && onPress && !center && !destructive ? (
         <Ionicons name="chevron-forward" size={18} color={c.chevron} />
       ) : null}

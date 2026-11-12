@@ -420,6 +420,7 @@ export default function Pick() {
                     <Pressable
                       key={code}
                       onPress={() => toggle(it.id, code)}
+                      hitSlop={6}
                       style={[styles.code, { backgroundColor: on ? (okc ? "#16A34A" : "#EA580C") : dark ? "#352044" : "#F3F1F8" }]}
                       accessibilityRole="checkbox"
                       accessibilityState={{ checked: on }}

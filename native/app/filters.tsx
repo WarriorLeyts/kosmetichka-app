@@ -89,7 +89,7 @@ export default function Filters() {
         <View style={styles.box}>
           <View style={styles.row}>
             <Text style={styles.rowText}>Только в наличии</Text>
-            <Switch value={onlyStock} onValueChange={setOnlyStock} trackColor={{ true: colors.pink, false: colors.border }} thumbColor="#fff" />
+            <Switch value={onlyStock} onValueChange={setOnlyStock} accessibilityLabel="Только в наличии" trackColor={{ true: colors.pink, false: colors.border }} thumbColor="#fff" />
           </View>
           {QUICK.map((q) => {
             const on = quick.includes(q.key);
@@ -98,6 +98,7 @@ export default function Filters() {
                 <Text style={styles.rowText}>{q.label}</Text>
                 <Switch
                   value={on}
+                  accessibilityLabel={q.label}
                   onValueChange={(v) => setQuick(v ? [...quick, q.key] : quick.filter((x) => x !== q.key))}
                   trackColor={{ true: colors.pink, false: colors.border }}
                   thumbColor="#fff"

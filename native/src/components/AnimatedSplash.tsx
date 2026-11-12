@@ -160,7 +160,7 @@ function Scene({ onEnd }: { onEnd: () => void }) {
   const fontSize = 25;
 
   return (
-    <View ref={root} collapsable={false} style={[StyleSheet.absoluteFill, { zIndex: 1000, elevation: 1000 }]} pointerEvents={target ? "none" : "auto"}>
+    <View ref={root} collapsable={false} style={[StyleSheet.absoluteFill, { zIndex: 1000, elevation: 1000, overflow: "hidden" }]} pointerEvents={target ? "none" : "auto"}>
       {/* background — fades out to the home screen */}
       <Animated.View style={[StyleSheet.absoluteFill, { opacity: bg }]}>
         {dark ? (

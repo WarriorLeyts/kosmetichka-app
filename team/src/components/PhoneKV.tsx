@@ -25,6 +25,7 @@ export function PhoneKV({ phone }: { phone: string | null | undefined }) {
           onPress={() => Linking.openURL(`tel:${tel}`).catch(() => {})}
           accessibilityRole="button"
           accessibilityLabel={`Позвонить ${phone}`}
+          hitSlop={5}
           style={({ pressed }) => [styles.btn, { backgroundColor: "rgba(139,61,255,0.12)", opacity: pressed ? 0.7 : 1 }]}
         >
           <Ionicons name="call" size={16} color="#8b3dff" />
@@ -35,6 +36,7 @@ export function PhoneKV({ phone }: { phone: string | null | undefined }) {
             onPress={() => Linking.openURL(`https://wa.me/${wa}`).catch(() => {})}
             accessibilityRole="link"
             accessibilityLabel={`Написать в WhatsApp ${phone}`}
+            hitSlop={5}
             style={({ pressed }) => [styles.btn, { backgroundColor: "rgba(37,211,102,0.14)", opacity: pressed ? 0.7 : 1 }]}
           >
             <Ionicons name="logo-whatsapp" size={17} color="#128C4A" />
