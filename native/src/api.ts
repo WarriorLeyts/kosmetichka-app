@@ -200,7 +200,7 @@ export type SiteBlock =
       limit: number;
       moreText: string;
       moreLink: string;
-      query: { quick?: ("new" | "sale" | "gift")[]; sort?: "popularity"; categoryGuid?: string; ids?: number[]; onlyStock?: boolean };
+      query: { quick?: ("new" | "sale" | "gift")[]; sort?: "popularity"; categoryGuid?: string; ids?: number[]; onlyStock?: boolean; arrivals?: "new" | "back" };
     }
   | { id: string; type: "info"; title: string; text: string; imageUrl: string | null; buttonText: string; link: string; tone: "light" | "accent" }
   | { id: string; type: "buttons"; title: string; items: { label: string; link: string }[] };
