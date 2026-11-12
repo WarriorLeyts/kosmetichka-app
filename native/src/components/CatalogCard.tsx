@@ -38,12 +38,13 @@ type Props = {
 };
 
 // price columns: 1st pink, 2nd violet, 3rd dark (brand colors from the project)
-const PRICE_COLORS = ["#e82c87", "#8b3dff"];
+// text on the light price panel: a deeper pink than the brand #e82c87 (3.7 : 1 → 5 : 1, audit UX-01)
+const PRICE_COLORS = ["#c71f75", "#8b3dff"];
 
 const STOCK = {
-  high: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1f8a3b" },
-  low: { dot: "#FF9500", bg: "rgba(255,149,0,0.13)", fg: "#b35f00" },
-  out: { dot: "#FF3B30", bg: "rgba(255,59,48,0.1)", fg: "#c4271d" },
+  high: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1a7a35", fgDark: "#4ade80" },
+  low: { dot: "#FF9500", bg: "rgba(255,149,0,0.13)", fg: "#b35f00", fgDark: "#fbbf24" },
+  out: { dot: "#FF3B30", bg: "rgba(255,59,48,0.1)", fg: "#c4271d", fgDark: "#ff7a70" },
 };
 
 /** Product card for the iOS-style catalog grid (fixed-height blocks keep rows aligned). */
@@ -56,9 +57,17 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
   const reduce = useReduceMotion();
   const heart = useRef(new Animated.Value(1)).current;
   const stock = stockLabel(product.stock);
-  const st = STOCK[stock.tone];
+  const st0 = STOCK[stock.tone];
+  const st = { ...st0, fg: dark ? st0.fgDark : st0.fg };
   const out = stock.tone === "out";
   const rows = priceRows(product, customer, activePrice).slice(0, 3);
+  // three prices side by side need ~180 px; a narrower card lists them one per line
+  const [pricesW, setPricesW] = useState(0);
+  const narrowPrices = k === 1 && rows.length >= 3 && pricesW > 0 && pricesW < 180;
+  const onPricesLayout = (e: { nativeEvent: { layout: { width: number } } }) => {
+    const w = Math.round(e.nativeEvent.layout.width);
+    if (Math.abs(w - pricesW) > 2) setPricesW(w);
+  };
 
   return (
     <Pressable
@@ -109,7 +118,23 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       </View>
 
       {/* light panel in both themes: pink/violet prices stay readable in the dark theme */}
-      <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
+      {narrowPrices ? (
+        // a narrow card (the home carousel on a computer): three columns cut the prices to «149…» —
+        // one price per line instead (audit BUG-03)
+        <View onLayout={onPricesLayout} style={[styles.pricesList, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
+          {rows.map((r, i) => (
+            <View key={r.label} style={styles.priceLine}>
+              <Text numberOfLines={1} style={[styles.priceLabel, { color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B", textAlign: "left", flexShrink: 1 }]}>
+                {r.label}
+              </Text>
+              <FitText minimumFontScale={0.75} style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: 13, marginTop: 0 }]}>
+                {money(r.value)}
+              </FitText>
+            </View>
+          ))}
+        </View>
+      ) : (
+      <View onLayout={onPricesLayout} style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
         {rows.map((r, i) => (
           <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
             <FitText minimumFontScale={0.55} style={[styles.priceLabel, { color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B" }]}>
@@ -124,6 +149,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           </View>
         ))}
       </View>
+      )}
 
       <View style={{ flex: 1 }} />
       {pickMode && picked > 0 ? (
@@ -330,6 +356,8 @@ const baseStyles = StyleSheet.create({
   stockText: { fontSize: 13, fontWeight: "500" },
   prices: { flexDirection: "row", borderRadius: 14, paddingVertical: 7, marginTop: 9, height: 54 },
   priceCol: { flex: 1, paddingHorizontal: 6, justifyContent: "center", alignItems: "center" },
+  pricesList: { borderRadius: 14, paddingVertical: 6, paddingHorizontal: 10, marginTop: 9, gap: 2 },
+  priceLine: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 6 },
   priceLabel: { fontSize: 11, textAlign: "center" },
   priceValue: { fontWeight: "700", marginTop: 1, textAlign: "center" },
   button: { height: 44, borderRadius: 22, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, marginTop: 10 },

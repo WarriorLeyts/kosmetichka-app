@@ -34,11 +34,12 @@ import { productTitle, usePageTitle } from "@/pageTitle";
 
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
-const PRICE_COLORS = [PINK, VIOLET];
+// the price panel is light in both themes: a deeper pink for the text (audit UX-01)
+const PRICE_COLORS = ["#c71f75", VIOLET];
 const STOCK = {
-  high: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1f8a3b" },
-  low: { dot: "#FF9500", bg: "rgba(255,149,0,0.13)", fg: "#b35f00" },
-  out: { dot: "#FF3B30", bg: "rgba(255,59,48,0.1)", fg: "#c4271d" },
+  high: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1a7a35", fgDark: "#4ade80" },
+  low: { dot: "#FF9500", bg: "rgba(255,149,0,0.13)", fg: "#b35f00", fgDark: "#fbbf24" },
+  out: { dot: "#FF3B30", bg: "rgba(255,59,48,0.1)", fg: "#c4271d", fgDark: "#ff7a70" },
 };
 
 // geometry of the collapsing header
@@ -236,7 +237,8 @@ export default function ProductScreen() {
   // the catalog card already loaded the 480 px copy — show it at once while the big one loads
   const previews = imgPaths.map((pth) => imageUrl(pth, 480));
   const stock = stockLabel(product.stock);
-  const st = STOCK[stock.tone];
+  const st0 = STOCK[stock.tone];
+  const st = { ...st0, fg: dark ? st0.fgDark : st0.fg };
   const out = stock.tone === "out";
   const key = String(product.id);
   const inCart = cart.find((x) => x.cartKey === key)?.quantity ?? 0;

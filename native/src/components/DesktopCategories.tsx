@@ -9,6 +9,8 @@ import { childCategories, topCategories } from "../store/catalog";
 import type { Category } from "../types";
 
 const VIOLET = "#8b3dff";
+/** active text on the dark theme's violet highlight (audit UX-01) */
+const VIOLET_ON_DARK = "#b58cff";
 const PINK = "#e82c87";
 
 /** width of the left column on the computer (home and catalog) */
@@ -54,7 +56,7 @@ function DesktopCategoriesBase({ categories, selected, onSelect }: { categories:
           <View style={[styles.iconBox, { backgroundColor: dark ? "rgba(139,61,255,0.2)" : "#F3ECFA" }]}>
             <Ionicons name="grid-outline" size={17} color={VIOLET} />
           </View>
-          <Text style={[styles.topText, { color: !selected ? VIOLET : c.label }]} numberOfLines={1}>
+          <Text style={[styles.topText, { color: !selected ? (dark ? VIOLET_ON_DARK : VIOLET) : c.label }]} numberOfLines={1}>
             Все товары
           </Text>
         </Pressable>
@@ -73,7 +75,7 @@ function DesktopCategoriesBase({ categories, selected, onSelect }: { categories:
                 style={(st: { pressed: boolean; hovered?: boolean }) => [styles.top, (on || isOpen) && { backgroundColor: activeBg }, st.hovered && !on && !isOpen ? { backgroundColor: dark ? "rgba(255,255,255,0.05)" : "#FAF6FE" } : null]}
               >
                 {icon ? <Image source={icon} style={styles.icon} contentFit="contain" /> : <View style={styles.icon} />}
-                <Text style={[styles.topText, { color: isOpen ? VIOLET : c.label }]} numberOfLines={2}>
+                <Text style={[styles.topText, { color: isOpen ? (dark ? VIOLET_ON_DARK : VIOLET) : c.label }]} numberOfLines={2}>
                   {t.name}
                 </Text>
                 <Ionicons name={isOpen ? "chevron-down" : "chevron-forward"} size={15} color={isOpen ? VIOLET : c.chevron} />

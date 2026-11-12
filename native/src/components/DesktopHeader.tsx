@@ -16,6 +16,9 @@ import { useTheme } from "@/theme";
 import { DESKTOP_WIDE } from "@/useDesktop";
 import { ClearX } from "@/components/ClearX";
 
+/** violet text on the dark theme's violet backgrounds: #8b3dff gives 2.6–3.4 : 1, this one ≥ 5 : 1 (audit UX-01) */
+const VIOLET_ON_DARK = "#b58cff";
+
 const VIOLET = "#8b3dff";
 const PINK = "#e82c87";
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -42,7 +45,7 @@ function IconBtn({ icon, label, badge, onPress, active }: { icon: IconName; labe
         pressed && { opacity: 0.8 },
       ]}
     >
-      <Ionicons name={icon} size={23} color={active ? VIOLET : c.label} />
+      <Ionicons name={icon} size={23} color={active ? (dark ? VIOLET_ON_DARK : VIOLET) : c.label} />
       {badge ? (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{badge > 99 ? "99+" : badge}</Text>
@@ -95,7 +98,7 @@ export function DesktopHeader() {
                 accessibilityRole="link"
                 style={({ hovered }: Hover) => [styles.navItem, on && { backgroundColor: "rgba(139,61,255,0.12)" }, hovered && !on && { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "rgba(139,61,255,0.06)" }]}
               >
-                <Text style={[styles.navText, { color: on ? VIOLET : c.label, fontWeight: on ? "700" : "500" }]}>{n.label}</Text>
+                <Text style={[styles.navText, { color: on ? (dark ? VIOLET_ON_DARK : VIOLET) : c.label, fontWeight: on ? "700" : "500" }]}>{n.label}</Text>
                 {n.href === "/orders" && orderNews > 0 ? (
                   <View style={[styles.badge, { top: 2, right: -4 }]}>
                     <Text style={styles.badgeText}>{orderNews > 99 ? "99+" : orderNews}</Text>
