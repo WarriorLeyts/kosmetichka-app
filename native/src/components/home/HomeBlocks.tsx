@@ -145,11 +145,15 @@ function ProductsRow({ b, openCatalog, desktop }: { b: Extract<SiteBlock, { type
   const toggleFav = useFavorites((s) => s.toggle);
   const addToCart = useAddToCart();
   const active = effectivePriceType(cart, customer);
-  const key = JSON.stringify(b.query);
+  // arrivals depend on who is signed in (retail — the shop, wholesale — also the warehouse)
+  const key = JSON.stringify(b.query) + (b.query.arrivals ? `:${customer?.id ?? 0}` : "");
   useEffect(() => {
     let alive = true;
     const q = b.query;
-    const load = q.ids?.length
+    // «Новинки» / «Снова в наличии» from the admin panel: the customer's own arrivals (as on the standard home)
+    const load = q.arrivals
+      ? api.arrivals(q.arrivals).then((r) => r.products)
+      : q.ids?.length
       ? api.productsByIds(q.ids).then((r) => {
           const byId = new Map(r.products.map((p) => [p.id, p]));
           return q.ids!.map((id) => byId.get(id)).filter((p): p is Product => !!p);
