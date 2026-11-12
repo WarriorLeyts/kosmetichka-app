@@ -89,16 +89,20 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
 
 export const ProductCard = memo(ProductCardBase);
 
-const LABEL_TEXT: Record<string, string> = { new: "Новинка", hit: "Хит" };
+const LABEL_TEXT: Record<string, string> = { new: "Новинка", hit: "Хит", back: "Снова в наличии" };
+const LABEL_BG: Record<string, string> = { new: "#8b3dff", hit: "#e82c87", back: "#16a34a" };
 
-/** «Новинка» / «Хит» — метки из админ-панели (admin.kosmetichka-opt.ru), в левом верхнем углу фото */
+/**
+ * Метки в левом верхнем углу фото: «Новинка» / «Хит» из админ-панели, и от сайта по 1С — «Новинка» (впервые
+ * пришло за 10 дней) и «Снова в наличии» (довезли)
+ */
 export function ProductLabels({ labels, big = false, inline = false }: { labels?: string[] | null; big?: boolean; inline?: boolean }) {
   const list = (labels ?? []).filter((l) => LABEL_TEXT[l]);
   if (!list.length) return null;
   return (
-    <View style={[labelStyles.wrap, big && { top: 12, left: 12 }, inline && { position: "relative", top: 0, left: 0, marginTop: 10 }]} pointerEvents="none">
+    <View style={[labelStyles.wrap, big && { top: 12, left: 12 }, inline && { position: "relative", top: 0, left: 0, right: undefined, marginTop: 10 }]} pointerEvents="none">
       {list.map((l) => (
-        <View key={l} style={[labelStyles.pill, { backgroundColor: l === "hit" ? "#e82c87" : "#8b3dff" }, big && { paddingHorizontal: 10, paddingVertical: 4 }]}>
+        <View key={l} style={[labelStyles.pill, { backgroundColor: LABEL_BG[l] ?? "#8b3dff" }, big && { paddingHorizontal: 10, paddingVertical: 4 }]}>
           <Text style={[labelStyles.text, big && { fontSize: 13 }]}>{LABEL_TEXT[l]}</Text>
         </View>
       ))}
@@ -107,7 +111,7 @@ export function ProductLabels({ labels, big = false, inline = false }: { labels?
 }
 
 const labelStyles = StyleSheet.create({
-  wrap: { position: "absolute", top: 8, left: 8, flexDirection: "row", gap: 4 },
+  wrap: { position: "absolute", top: 8, left: 8, right: 46, flexDirection: "row", flexWrap: "wrap", gap: 4 },
   pill: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
   text: { color: "#fff", fontSize: 11, fontWeight: "800" },
 });
