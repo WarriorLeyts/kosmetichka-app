@@ -71,3 +71,20 @@ describe("compact promotion comparison", () => {
     expect(wholesalePriceComparison(product, { priceType: "retail" }, during)).toBeNull();
   });
 });
+
+describe("retail campaign in the wholesale card-price column", () => {
+  it("compares the VT card price with its actual retail promotion", () => {
+    const p=wholesalePriceComparison({...product,promoRetailPrice:1699,
+      promoWholesalePrice:1168,promoBigWholesalePrice:1168,
+      regularPrices:{retailPrice:2090,discountPrice:1880,wholesalePrice:1400,bigWholesalePrice:1260}},opt,during)!;
+    expect(p.cells.map(c=>[c.value,c.oldValue,c.saving])).toEqual([[1699,1880,181],[1168,1400,232],[1168,1260,92]]);
+  });
+  it("keeps the ordinary card price if the retail promotion is absent", () => {
+    expect(wholesalePriceComparison(product,opt,during)?.cells[0]).toMatchObject({value:440,oldValue:null,saving:0});
+  });
+  it("shows a retail-only promotion to wholesalers without inventing wholesale promotions", () => {
+    const p=wholesalePriceComparison({...product,promoRetailPrice:399,promoWholesalePrice:null,promoBigWholesalePrice:null},opt,during)!;
+    expect(p.onSale).toBe(true);
+    expect(p.cells.map(c=>[c.value,c.oldValue,c.saving])).toEqual([[399,440,41],[190,null,0],[180,null,0]]);
+  });
+});

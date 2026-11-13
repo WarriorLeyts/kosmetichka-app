@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { money } from "../format";
-import { bigWholesaleMinOrder, cartItemPromotionalPrice, cartPriceTier, cartTotalForCustomer, resolveCustomerPriceType, WHOLESALE_MIN_ORDER, type PriceType } from "../pricing";
+import { bigWholesaleMinOrder, cartPriceTier, rawCartTotal, resolveCustomerPriceType, WHOLESALE_MIN_ORDER, type PriceType } from "../pricing";
 import { FitText } from "./FitText";
 import { colors, themed } from "@/theme";
 
@@ -14,8 +14,7 @@ const GREEN = "#16A34A";
 export function TierProgress({ items, customer, dark }: { items: { quantity: number }[]; customer: { priceType?: string | null } | null; dark: boolean }) {
   if (!customer || resolveCustomerPriceType(customer) !== "wholesale" || items.length === 0) return null;
   const tier = cartPriceTier(items, customer);
-  const sum = (t: PriceType) => cartTotalForCustomer(items, t, customer);
-  const hasShock = items.some(item => cartItemPromotionalPrice(item, tier, customer) !== null);
+  const sum = (t: PriceType) => rawCartTotal(items, t);
   const discount = sum("discount");
 
   // what to aim at: wholesale (in wholesale prices) → big wholesale (in big wholesale prices) → nothing more
@@ -36,9 +35,6 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
   return (
     <View style={[styles.card, { backgroundColor: bg }]} accessibilityRole="summary">
       <Steps tier={tier} dark={dark} />
-      {hasShock ? <Text style={{ color: sub, fontSize: 12, lineHeight: 16, marginBottom: 10 }}>
-        Акционные цены действуют при любой сумме заказа. Порог относится к обычным товарам.
-      </Text> : null}
 
       {reached ? (
         <View style={styles.row}>

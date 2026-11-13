@@ -15,7 +15,7 @@ import { CardHintTotal } from "@/components/CardHint";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
-  calculateCart, cartItemPrice, cartItemPromotionalPrice, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
+  calculateCart, priceFor, promotionalPrice, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
 } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -201,10 +201,10 @@ export default function Cart() {
   const checkoutTotal = calc?.total ?? total;
   const campaign = calc?.wholesalePromo ?? (pricing.percent > 0 ? { name:"Светлая пятница + ОПТ", percent:pricing.percent, discount:pricing.discount } : null);
   const wholesaleCustomer = resolveCustomerPriceType(customer) === "wholesale";
-  const hasShock = items.some(item => cartItemPromotionalPrice(item, active, customer) !== null);
-  const allShock = items.every(item => cartItemPromotionalPrice(item, active, customer) !== null);
+  const hasShock = items.some(item => promotionalPrice(item, active) !== null);
+  const allShock = items.every(item => promotionalPrice(item, active) !== null);
   const cartPriceLabel = wholesaleCustomer && active === "discount" && hasShock
-    ? allShock ? "Акция опт" : "Скидочная + акция" : shortLabel(active, wholesaleCustomer);
+    ? allShock ? "Акция розница" : "Скидочная + акция" : shortLabel(active, wholesaleCustomer);
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
   const bg = "transparent";
@@ -299,8 +299,8 @@ export default function Cart() {
     const li = k === 1 ? lineBase : linePhone;
     const lk = k === 1 ? 1 : CART_LINE_SCALE;
     const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
-    const price = cartItemPrice(item, active, customer);
-    const shock = cartItemPromotionalPrice(item, active, customer);
+    const price = priceFor(item, active);
+    const shock = promotionalPrice(item, active);
     const min = Math.max(1, item.minOrderQty ?? 1);
     const stock = typeof item.stock === "number" && item.stock > 0 ? item.stock : null;
     const atMax = stock !== null && item.quantity >= stock;

@@ -2,7 +2,7 @@ import { Text, View } from "react-native";
 import { colors } from "../theme";
 import { BRAND_GRADIENT, GradientText } from "./GradientText";
 import { money } from "../format";
-import { priceFor, resolveCustomerPriceType, type PriceType } from "../pricing";
+import { bigWholesaleMinOrder, priceFor, resolveCustomerPriceType, type PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
 
 type Row = { label: string; value: number; active: boolean; color?: string; hint?: string };
@@ -17,7 +17,7 @@ export function priceRows(product: Product, customer: Customer | null, active: P
     // the price depends on the order sum: under 5 000 ₽ — discount, from 5 000 — wholesale, from 50 000 — big
     rows.push({ label: "Скидка", hint: "до 5 000 ₽", value: priceFor(product, "discount"), active: active === "discount", color: "#6B4E8A" });
     rows.push({ label: "Опт", hint: "от 5 000 ₽", value: priceFor(product, "wholesale"), active: active === "wholesale", color: "#c71f75" });
-    rows.push({ label: "Кр. опт", hint: "от 50 000 ₽", value: priceFor(product, "big_wholesale"), active: active === "big_wholesale", color: "#8b3dff" });
+    rows.push({ label: "Кр. опт", hint: `от ${money(bigWholesaleMinOrder())}`, value: priceFor(product, "big_wholesale"), active: active === "big_wholesale", color: "#8b3dff" });
   } else if (base === "big_wholesale") {
     rows.push({ label: "Опт", value: priceFor(product, "wholesale"), active: active === "wholesale", color: "#c71f75" });
     rows.push({ label: "Кр. опт", value: priceFor(product, "big_wholesale"), active: active === "big_wholesale", color: "#8b3dff" });
