@@ -475,9 +475,11 @@ export default function Pick() {
       })}
       {o.removedItems?.length ? <RemovedItems items={o.removedItems} /> : null}
 
-      <ActionButton label="Добавить товар" kind="soft" icon="add-circle-outline" loading={changing} onPress={() => setAdding(true)} />
+      <View style={{ gap: 12 }}>
+        <ActionButton label="Добавить товар" kind="soft" icon="add-circle-outline" loading={changing} onPress={() => setAdding(true)} />
 
-      <ActionButton label={all ? "Отправить проверку" : `Проверено ${checked} из ${o.items.length}`} kind={all ? "primary" : "soft"} loading={submitting} onPress={submit} icon="checkmark-done" />
+        <ActionButton label={all ? "Отправить проверку" : `Проверено ${checked} из ${o.items.length}`} kind={all ? "primary" : "soft"} loading={submitting} onPress={submit} icon="checkmark-done" />
+      </View>
 
       <SectionTitle>Чат с клиентом</SectionTitle>
       <Card>
