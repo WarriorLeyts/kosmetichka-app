@@ -168,7 +168,7 @@ function AppRoot() {
       onTouchStart={inExpoGo ? () => console.log("[kos] touch") : undefined}
     >
       <StatusBar style={colors.statusBar} />
-      {desktop ? <PromoStrip /> : null}
+      {desktop && pathname !== "/" && !pathname.startsWith("/catalog") ? <PromoStrip /> : null}
       {desktop ? <DesktopHeader key={`dh-${mode}-${accentKey}`} /> : null}
       <Stack
         key={`${mode}-${accentKey}`}

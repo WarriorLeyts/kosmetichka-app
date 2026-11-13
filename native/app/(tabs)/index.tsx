@@ -22,7 +22,6 @@ import { FitText } from "@/components/FitText";
 import { PendingOrderNote, useActiveOrders } from "@/components/home/PendingOrder";
 import { DesktopHome } from "@/components/home/DesktopHome";
 import { ArrivalsRow, HomeBlocks, PromoHero, useSiteHome } from "@/components/home/HomeBlocks";
-import { PromoStrip } from "@/components/promo/PromoStrip";
 import { saleFirst, useLivePromo } from "@/promo";
 
 const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { promo:"flash-outline", new: "sparkles-outline", sale: "pricetag-outline", gift: "gift-outline" };
@@ -148,11 +147,6 @@ export default function Home() {
           </Pressable>
         </View>
         )}
-        {promo?.strip ? (
-          <View style={{ marginBottom: 12 }}>
-            <PromoStrip rounded />
-          </View>
-        ) : null}
         <PendingOrderNote orders={activeOrders} />
         {/* retail without a loyalty card: how to get the discount prices */}
         <CardHintTile />

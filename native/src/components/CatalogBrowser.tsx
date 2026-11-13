@@ -29,7 +29,6 @@ import { useAddToCart } from "@/useAddToCart";
 import { SUB_FILTERS } from "@/subFilters";
 import type { Product } from "@/types";
 import { HomeBlocks, useSiteHome } from "@/components/home/HomeBlocks";
-import { PromoStrip } from "@/components/promo/PromoStrip";
 import { saleFirst, useLivePromo } from "@/promo";
 import { colors, themed } from "@/theme";
 
@@ -287,13 +286,6 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           </Text>
         </>
       )}
-
-      {/* the promotion strip (on a computer it is above the header for every page) */}
-      {!desktop && !pick && promo?.strip ? (
-        <View style={{ marginBottom: 10 }}>
-          <PromoStrip rounded />
-        </View>
-      ) : null}
 
       {/* search */}
       <View style={[styles.search, { backgroundColor: c.blurTint === "dark" ? "#2B193D" : "rgba(118,118,128,0.12)" }]}>
