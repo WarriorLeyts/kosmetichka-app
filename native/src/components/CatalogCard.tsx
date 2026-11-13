@@ -1,3 +1,4 @@
+import { wholesalePriceComparison } from "../wholesalePricePanels";
 import { memo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -89,7 +90,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           <Ionicons name="image-outline" size={34 * k} color="#C7C7CC" />
         )}
         {/* «Новинка» / «Хит» / «Снова в наличии» */}
-        <ProductLabels labels={product.labels} />
+        <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale} labels={product.labels} />
         <Pressable
           hitSlop={10}
           accessibilityRole="button"

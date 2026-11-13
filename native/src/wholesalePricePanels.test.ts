@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { wholesalePricePanels } from "./wholesalePricePanels";
+import { wholesalePricePanels, wholesalePriceComparison } from "./wholesalePricePanels";
 import type { Product } from "./types";
 
 const during = Date.parse("2026-11-15T12:00:00+03:00");
@@ -46,5 +46,28 @@ describe("wholesale old and promotional price pills", () => {
     const p = wholesalePricePanels({ id: 2, name: "Legacy", retailPrice: 490 }, opt, during)!;
     expect(p.regular.map(r => r.value)).toEqual([490, 490, 490]);
     expect(p.promotion).toBeNull();
+  });
+});
+
+describe("compact promotion comparison", () => {
+  it("shows exact Ollin savings and leaves the discount tariff unchanged", () => {
+    const p = wholesalePriceComparison({ ...product, promoWholesalePrice: 426, promoBigWholesalePrice: 426,
+      regularPrices: { discountPrice: 580, wholesalePrice: 473, bigWholesalePrice: 460 } }, opt, during)!;
+    expect(p.onSale).toBe(true);
+    expect(p.cells.map(c => [c.value, c.oldValue, c.saving])).toEqual([[580, null, 0], [426, 473, 47], [426, 460, 34]]);
+  });
+  it("uses the ordinary tariff when its promo is absent, without invented savings", () => {
+    const p = wholesalePriceComparison({ ...product, promoBigWholesalePrice: null }, opt, during)!;
+    expect(p.cells[2]).toMatchObject({ value: 180, oldValue: null, saving: 0 });
+  });
+  it("does not claim a discount for equal, increased, or missing ordinary prices", () => {
+    const p = wholesalePriceComparison({ ...product, promoWholesalePrice: 190, promoBigWholesalePrice: 200 }, opt, during)!;
+    expect(p.onSale).toBe(false);
+    expect(p.cells.every(c => c.oldValue === null && c.saving === 0)).toBe(true);
+    expect(wholesalePriceComparison({ id: 2, name: "Test", promoWholesalePrice: 99 }, opt, during)?.onSale).toBe(false);
+  });
+  it("hides savings outside campaign dates and from retail customers", () => {
+    expect(wholesalePriceComparison(product, opt, Date.parse("2026-12-01T00:00:00+03:00"))?.onSale).toBe(false);
+    expect(wholesalePriceComparison(product, { priceType: "retail" }, during)).toBeNull();
   });
 });
