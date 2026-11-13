@@ -40,3 +40,18 @@ export function wholesalePricePanels(
     { ...COLUMNS[2], label: "Акция крупный опт", value: big },
   ] };
 }
+
+export type WholesaleComparisonCell = WholesalePriceCell & { oldValue: number | null; saving: number };
+/** Compare each tariff with its own ordinary price; never invent savings. */
+export function wholesalePriceComparison(
+  product: Product, customer: Pick<Customer, "priceType" | "hasCard"> | null, now = Date.now()
+): { cells: WholesaleComparisonCell[]; onSale: boolean } | null {
+  const panels = wholesalePricePanels(product, customer, now);
+  if (!panels) return null;
+  const cells = panels.regular.map((regular, i) => {
+    const value = panels.promotion?.[i]?.value ?? regular.value;
+    const saving = regular.value !== null && value !== null ? Math.max(0, regular.value - value) : 0;
+    return { ...regular, value, saving, oldValue: saving > 0 ? regular.value : null };
+  });
+  return { cells, onSale: cells.some(cell => cell.saving > 0) };
+}

@@ -1,3 +1,4 @@
+import { wholesalePriceComparison } from "@/wholesalePricePanels";
 import { useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -426,7 +427,7 @@ export default function ProductScreen() {
   const fullText = composeDescription(product);
   const descriptionBlock = (
     <>
-          <ProductLabels labels={product.labels} inline />
+          <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale} labels={product.labels} inline />
           {/* description right on the page */}
           {fullText ? (
             <View style={{ marginTop: 18 }}>
