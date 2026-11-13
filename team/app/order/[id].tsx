@@ -292,19 +292,19 @@ export default function OrderScreen() {
     }
   };
 
-  const onPicked = async ({ product, variant }: Picked) => {
+  const onPicked = async ({ product, variant, quantity }: Picked) => {
     const mode = catalog;
     setCatalog(null);
     if (mode === "order") {
-      // the same product (and variant) already in the list → one more piece in that line, not a second line
+      // the same product (and variant) already in the list → add the selected quantity to that line, not a second line
       const same = (x: Draft) => !x.removed && x.productId === product.id && (x.variantName ?? null) === (variant?.name ?? null);
       if (edit?.some(same)) {
-        setEdit((d) => d!.map((x) => (same(x) ? { ...x, quantity: x.quantity + 1 } : x)));
+        setEdit((d) => d!.map((x) => (same(x) ? { ...x, quantity: x.quantity + quantity } : x)));
         return;
       }
       setEdit((d) => [
         ...(d ?? []),
-        { productId: product.id, productName: product.name, barcode: product.barcode, quantity: 1, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null, stockByWarehouse: product.stockByWarehouse },
+        { productId: product.id, productName: product.name, barcode: product.barcode, quantity, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null, stockByWarehouse: product.stockByWarehouse },
       ]);
       return;
     }
@@ -709,7 +709,7 @@ export default function OrderScreen() {
           {main}
         </>
       )}
-      <ProductPicker open={catalog !== null} title={catalog === "order" ? "Добавить в заказ" : "Отправить товар"} actionLabel={catalog === "order" ? "Добавить" : "Отправить"} priceType={o.customer.priceTier ?? o.customer.priceType} onClose={() => setCatalog(null)} onPick={onPicked} />
+      <ProductPicker chooseQuantity={catalog === "order"} open={catalog !== null} title={catalog === "order" ? "Добавить в заказ" : "Отправить товар"} actionLabel={catalog === "order" ? "Добавить" : "Отправить"} priceType={o.customer.priceTier ?? o.customer.priceType} onClose={() => setCatalog(null)} onPick={onPicked} />
     </Screen>
   );
 
