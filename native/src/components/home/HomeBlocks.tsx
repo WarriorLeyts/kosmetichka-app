@@ -57,7 +57,7 @@ export function openSiteLink(link: string | null | undefined, openCatalog: OpenC
   const [path, query = ""] = link.split("?");
   if (path === "/catalog" || path === "/catalog/") {
     const q = new URLSearchParams(query);
-    const quick = q.getAll("quick").filter((x): x is Quick => x === "new" || x === "sale" || x === "gift");
+    const quick = q.getAll("quick").filter((x): x is Quick => x === "new" || x === "sale" || x === "gift" || x === "promo");
     openCatalog({
       ...(quick.length ? { quick } : {}),
       ...(q.get("categoryGuid") ? { categoryGuid: q.get("categoryGuid") } : {}),

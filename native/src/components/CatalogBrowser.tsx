@@ -121,7 +121,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
   const clean = !f.search && !f.categoryGuid && !f.quick.length && !f.brandGuids.length && !f.typing;
   const showBlocks = !pick && clean && !!catalogBlocks?.length;
   const promo = useLivePromo();
-  const quickChips = !pick && f.quickChips ? saleFirst(f.quickFilters.filter((q) => q.visible || f.quick.includes(q.key)), promo) : [];
+  const quickChips = !pick ? [{key:"promo" as const,label:"Акции",visible:true}, ...saleFirst(f.quickFilters.filter((q) => q.key!=="promo" && (q.visible || f.quick.includes(q.key))), promo).filter(()=>f.quickChips)] : [];
   const customer = useAuth((s) => s.customer);
   const cart = useCartStore((s) => s.items);
   const favorites = useFavorites((s) => s.items);
@@ -375,6 +375,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
                 onPress={() => {
                   tap();
                   f.set({ quick: on ? f.quick.filter((x) => x !== q.key) : [...f.quick, q.key] });
+                  if(q.key==="promo")router.setParams({quick:on?undefined:"promo"});
                 }}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}

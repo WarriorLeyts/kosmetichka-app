@@ -5,11 +5,12 @@ import { api, type CatalogQuery } from "../api";
 import type { Brand, Category } from "../types";
 
 export type Sort = NonNullable<CatalogQuery["sort"]>;
-export type Quick = "new" | "sale" | "gift";
+export type Quick = "new" | "sale" | "gift" | "promo";
 export type QuickFilter = { key: Quick; label: string; visible: boolean };
 
 /** the quick filters until the admin panel's settings arrive */
 export const QUICK_DEFAULT: QuickFilter[] = [
+  { key:"promo", label:"Акции", visible:true },
   { key: "new", label: "Новинки", visible: true },
   { key: "sale", label: "Со скидкой", visible: true },
   { key: "gift", label: "Подарочные наборы", visible: true },
@@ -112,7 +113,7 @@ function loadSharedMeta(): Promise<void> {
 /** the admin panel's quick filters (only known keys, each once), the defaults until they come */
 function quickOf(m: Meta | null): QuickFilter[] {
   const list = (m?.quick ?? []).filter((q, i, a) => QUICK_DEFAULT.some((d) => d.key === q.key) && a.findIndex((x) => x.key === q.key) === i && q.label);
-  return list.length ? list : QUICK_DEFAULT;
+  return [{key:"promo",label:"Акции",visible:true}, ...(list.length ? list : QUICK_DEFAULT).filter(q=>q.key!=="promo")];
 }
 
 export type CatalogStore = UseBoundStore<StoreApi<CatalogState>>;
