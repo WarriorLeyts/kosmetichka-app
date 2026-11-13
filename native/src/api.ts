@@ -171,7 +171,7 @@ export type CatalogQuery = {
   brandGuids?: string[];
   sort?: "popularity" | "price_asc" | "price_desc" | "name";
   onlyStock?: boolean;
-  quick?: ("new" | "sale" | "gift")[];
+  quick?: ("new" | "sale" | "gift" | "promo")[];
   /** price range, ₽ — by the price the customer sees */
   priceMin?: number | null;
   priceMax?: number | null;
@@ -202,7 +202,7 @@ export type SiteBlock =
       limit: number;
       moreText: string;
       moreLink: string;
-      query: { quick?: ("new" | "sale" | "gift")[]; sort?: "popularity"; categoryGuid?: string; ids?: number[]; onlyStock?: boolean; arrivals?: "new" | "back" };
+      query: { quick?: ("new" | "sale" | "gift" | "promo")[]; sort?: "popularity"; categoryGuid?: string; ids?: number[]; onlyStock?: boolean; arrivals?: "new" | "back" };
     }
   | { id: string; type: "info"; title: string; text: string; imageUrl: string | null; buttonText: string; link: string; tone: "light" | "accent" }
   | { id: string; type: "buttons"; title: string; items: { label: string; link: string }[] };

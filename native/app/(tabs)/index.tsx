@@ -1,3 +1,4 @@
+import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -24,7 +25,7 @@ import { ArrivalsRow, HomeBlocks, PromoHero, useSiteHome } from "@/components/ho
 import { PromoStrip } from "@/components/promo/PromoStrip";
 import { saleFirst, useLivePromo } from "@/promo";
 
-const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { new: "sparkles-outline", sale: "pricetag-outline", gift: "gift-outline" };
+const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { promo:"flash-outline", new: "sparkles-outline", sale: "pricetag-outline", gift: "gift-outline" };
 
 export default function Home() {
   const insets = useSafeAreaInsets();
@@ -157,6 +158,7 @@ export default function Home() {
         <CardHintTile />
       </View>
 
+      <View style={{marginHorizontal:16,marginBottom:16}}><CampaignBanner /></View>
       {/* new home content: scroll-driven box scene + categories with images */}
       <View onLayout={(e) => setSceneTop(e.nativeEvent.layout.y)}>
         <HomeScene scrollY={scrollY} sectionTop={sceneTop} topInset={(headerH || insets.top + 200) + (desktop ? 72 : 0)} bottomSpace={bottomSpace} onCatalog={() => openCatalog({})} />
