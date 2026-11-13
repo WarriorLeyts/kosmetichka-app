@@ -90,17 +90,17 @@ export default function Pick() {
     }
   };
 
-  /** from the catalogue: the same product (and variant) already in the order → one more piece of that line */
-  const onAdd = ({ product, variant }: Picked) => {
+  /** from the catalogue: the same product (and variant) already in the order → add the selected quantity to that line */
+  const onAdd = ({ product, variant, quantity }: Picked) => {
     setAdding(false);
     if (!o) return;
     const line = o.items.find((i) => i.productId === product.id && (i.variantName ?? null) === (variant?.name ?? null));
     if (line) {
-      void changeItems({ items: [{ id: line.id, quantity: line.quantity + 1, price: line.price, variantName: line.variantName, variantImageUrl: line.variantImageUrl }] });
+      void changeItems({ items: [{ id: line.id, quantity: line.quantity + quantity, price: line.price, variantName: line.variantName, variantImageUrl: line.variantImageUrl }] });
       return;
     }
     // the server sets the price (the order's prices) and the name from the catalogue
-    void changeItems({ newItems: [{ productId: product.id, productName: product.name, barcode: product.barcode ?? null, quantity: 1, price: 0, variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null }] });
+    void changeItems({ newItems: [{ productId: product.id, productName: product.name, barcode: product.barcode ?? null, quantity, price: 0, variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null }] });
   };
 
   // «Добавить в заказ» on the customer's product card in the chat below (as on the order's page)
