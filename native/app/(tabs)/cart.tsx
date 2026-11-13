@@ -15,7 +15,7 @@ import { CardHintTotal } from "@/components/CardHint";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
-  cartPriceTier, priceFor, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
+  calculateCart, cartItemPrice, cartItemPromotionalPrice, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
 } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -158,6 +158,7 @@ export default function Cart() {
       setCalc(null);
       return;
     }
+    setCalc(null);
     const my = ++calcSeq.current;
     setCalcBusy(true);
     const t = setTimeout(async () => {
@@ -194,9 +195,16 @@ export default function Cart() {
   }, [customer?.id, priceType, customer?.hasCard, cartKey, promoCode, spend]);
 
   // «Опт»: the price by the order sum — less than 5 000 ₽ discount, from 5 000 wholesale, from 50 000 big wholesale
-  const active = cartPriceTier(items, customer);
-  const total = rawCartTotal(items, active);
+  const pricing = calculateCart(items, customer);
+  const active = pricing.tier;
+  const total = pricing.total;
+  const checkoutTotal = calc?.total ?? total;
+  const campaign = calc?.wholesalePromo ?? (pricing.percent > 0 ? { name:"Светлая пятница + ОПТ", percent:pricing.percent, discount:pricing.discount } : null);
   const wholesaleCustomer = resolveCustomerPriceType(customer) === "wholesale";
+  const hasShock = items.some(item => cartItemPromotionalPrice(item, active, customer) !== null);
+  const allShock = items.every(item => cartItemPromotionalPrice(item, active, customer) !== null);
+  const cartPriceLabel = wholesaleCustomer && active === "discount" && hasShock
+    ? allShock ? "Акция опт" : "Скидочная + акция" : shortLabel(active, wholesaleCustomer);
   const count = items.reduce((s, i) => s + i.quantity, 0);
 
   const bg = "transparent";
@@ -291,7 +299,8 @@ export default function Cart() {
     const li = k === 1 ? lineBase : linePhone;
     const lk = k === 1 ? 1 : CART_LINE_SCALE;
     const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
-    const price = priceFor(item, active);
+    const price = cartItemPrice(item, active, customer);
+    const shock = cartItemPromotionalPrice(item, active, customer);
     const min = Math.max(1, item.minOrderQty ?? 1);
     const stock = typeof item.stock === "number" && item.stock > 0 ? item.stock : null;
     const atMax = stock !== null && item.quantity >= stock;
@@ -328,7 +337,7 @@ export default function Cart() {
               </Text>
             </Pressable>
             {item.variantName ? <Text style={lineBase.variant}>{item.variantName}</Text> : null}
-            <Text style={{ color: c.secondary, fontSize: 13, marginTop: 3 }}>{money(price)} за шт.</Text>
+            <Text style={{ color: c.secondary, fontSize: 13, marginTop: 3 }}>{shock !== null ? "Акция · " : ""}{money(price)} за шт.</Text>
             {unavailable ? (
               <Text style={[styles.stockHint, { color: "#E5484D", fontWeight: "600" }]}>{unavailable}</Text>
             ) : showStock ? (
@@ -378,7 +387,7 @@ export default function Cart() {
           <Text style={[li.name, { color: c.label }]} numberOfLines={k === 1 ? undefined : 2}>{item.name}</Text>
           {item.variantName ? <Text style={li.variant}>{item.variantName}</Text> : null}
           <Text style={[li.unit, { color: c.secondary }]}>
-            {money(price)} × {item.quantity}
+            {shock !== null ? "Акция · " : ""}{money(price)} × {item.quantity}
           </Text>
           <FitText style={li.sum}>
             {money(price * item.quantity)}
@@ -523,22 +532,28 @@ export default function Cart() {
                   {count} {plural(count, "товар", "товара", "товаров")}
                 </Text>
                 <Text style={[iosText.subhead, { color: c.secondary }]}>
-                  Цена: <Text style={{ color: PINK }}>{shortLabel(active, wholesaleCustomer)}</Text>
+                  Цена: <Text style={{ color: PINK }}>{cartPriceLabel}</Text>
                 </Text>
               </View>
-              {calc && (calc.promo || (spend && calc.bonuses?.applied)) ? (
+              {(campaign?.discount ?? 0) > 0 || (calc && (calc.promo || (spend && calc.bonuses?.applied))) ? (
                 <>
                   <View style={[styles.sumRow, { marginTop: 6 }]}>
                     <Text style={[iosText.body, { color: c.label }]}>Сумма</Text>
-                    <Text style={[iosText.body, { color: c.label }]}>{money(calc.subtotal)}</Text>
+                    <Text style={[iosText.body, { color: c.label }]}>{money(calc?.subtotal ?? pricing.subtotal)}</Text>
                   </View>
-                  {calc.promo ? (
+                  {campaign && campaign.discount > 0 ? (
+                    <View style={[styles.sumRow, { marginTop: 2 }]}>
+                      <Text style={[iosText.body, { color: "#1f8a3b" }]}>{campaign.name} · {campaign.percent}%</Text>
+                      <Text style={[iosText.body, { color: "#1f8a3b" }]}>−{money(campaign.discount)}</Text>
+                    </View>
+                  ) : null}
+                  {calc?.promo ? (
                     <View style={[styles.sumRow, { marginTop: 2 }]}>
                       <Text style={[iosText.body, { color: "#1f8a3b" }]}>Скидка по промокоду</Text>
                       <Text style={[iosText.body, { color: "#1f8a3b" }]}>−{money(calc.promo.discount)}</Text>
                     </View>
                   ) : null}
-                  {spend && calc.bonuses?.applied ? (
+                  {spend && calc?.bonuses?.applied ? (
                     <View style={[styles.sumRow, { marginTop: 2 }]}>
                       <Text style={[iosText.body, { color: colors.brand }]}>Списано бонусов</Text>
                       <Text style={[iosText.body, { color: colors.brand }]}>−{money(calc.bonuses.applied)}</Text>
@@ -549,7 +564,7 @@ export default function Cart() {
               <View style={[styles.sumRow, { marginTop: 4 }]}>
                 <Text style={[styles.totalLabel, { color: c.label }]}>Итого</Text>
                 <FitText style={styles.total}>
-                  {money(calc && (calc.promo || (spend && calc.bonuses?.applied)) ? calc.total : total)}
+                  {money(checkoutTotal)}
                 </FitText>
               </View>
               {/* retail without a loyalty card: the same cart with the card */}
@@ -636,11 +651,11 @@ export default function Cart() {
             listRef.current?.scrollToEnd({ animated: true });
           }}
           accessibilityRole="button"
-          accessibilityLabel={`К оформлению, итого ${money(total)}`}
+          accessibilityLabel={`К оформлению, итого ${money(checkoutTotal)}`}
           style={[styles.jump, { bottom: bottomSpace + 6 }]}
         >
           <LinearGradient colors={[colors.brand, "#b832e0", PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.jumpInner}>
-            <Text style={styles.jumpText}>К оформлению · {money(total)}</Text>
+            <Text style={styles.jumpText}>К оформлению · {money(checkoutTotal)}</Text>
             <Ionicons name="arrow-down" size={18} color="#fff" />
           </LinearGradient>
         </Pressable>

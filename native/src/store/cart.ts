@@ -1,3 +1,4 @@
+import { cartProductSnapshot as slim, mergeCartProductPrices as withPrices } from "../cartProductSnapshot";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { persistStorage } from "./storage";
@@ -26,30 +27,6 @@ type CartState = {
   /** `checked` — ids that were asked for: the ones missing from `fresh` are marked as no longer sold */
   refreshProducts: (fresh: Map<number, Product>, checked?: Set<number>) => void;
 };
-
-/** Keep only what the cart needs — product objects from the API can be large. */
-function slim(p: Product): Product {
-  return {
-    id: p.id,
-    name: p.name,
-    barcode: p.barcode,
-    article: p.article,
-    stock: p.stock,
-    minOrderQty: p.minOrderQty,
-    retailPrice: p.retailPrice,
-    discountPrice: p.discountPrice,
-    wholesalePrice: p.wholesalePrice,
-    bigWholesalePrice: p.bigWholesalePrice,
-    images: p.images?.slice(0, 1),
-    brand: p.brand ? { name: p.brand.name } : null,
-  };
-}
-
-/** fresh product data, but a price the card doesn't have (a guest's catalogue hides wholesale) keeps the known one */
-function withPrices(fresh: Product, known: Product): Product {
-  const keep = (k: "retailPrice" | "discountPrice" | "wholesalePrice" | "bigWholesalePrice") => (Number(fresh[k] ?? 0) > 0 ? fresh[k] : known[k]);
-  return { ...fresh, retailPrice: keep("retailPrice"), discountPrice: keep("discountPrice"), wholesalePrice: keep("wholesalePrice"), bigWholesalePrice: keep("bigWholesalePrice") };
-}
 
 export const useCartStore = create<CartState>()(
   persist(

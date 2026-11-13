@@ -1,3 +1,5 @@
+import { retailPricePromotion } from "@/retailPricePromotion";
+import { RetailPriceComparison } from "@/components/RetailPriceComparison";
 import { wholesalePriceComparison } from "@/wholesalePricePanels";
 import { useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -255,6 +257,7 @@ export default function ProductScreen() {
   const pickedTotal = Object.values(variantQty).reduce((a, b) => a + b, 0);
   const tierRows = priceRows(product, customer, active);
   // a wholesale customer the admin allowed it: the retail price first (only here, not in the catalog)
+  const retailPromotion = retailPricePromotion(product, customer);
   const retail = priceFor(product, "retail");
   const rows =
     customer?.showRetailPrice && tierRows.every((r) => r.label !== "Розница") && retail > 0
@@ -341,6 +344,8 @@ export default function ProductScreen() {
               ) : null}
               <WholesalePriceComparison product={product} customer={customer} large dark={dark} />
             </>
+          ) : retailPromotion ? (
+            <RetailPriceComparison promotion={retailPromotion} large dark={dark} />
           ) : (
           <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#FDF2F8" }]}>
             {rows.map((r, i) => (
@@ -427,7 +432,7 @@ export default function ProductScreen() {
   const fullText = composeDescription(product);
   const descriptionBlock = (
     <>
-          <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale} labels={product.labels} inline />
+          <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale || !!retailPromotion} labels={product.labels} inline />
           {/* description right on the page */}
           {fullText ? (
             <View style={{ marginTop: 18 }}>

@@ -180,6 +180,8 @@ export type CatalogQuery = {
 };
 
 export type CheckoutCalc = {
+  priceTier?: import("./pricing").PriceType;
+  wholesalePromo?: { name:string; percent:number; eligibleSubtotal:number; discount:number } | null;
   subtotal: number;
   promo: { code: string; name: string | null; discount: number } | null;
   promoError?: string;
