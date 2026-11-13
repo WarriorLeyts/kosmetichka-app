@@ -7,6 +7,7 @@ import { Appearance, AppState, StyleSheet } from "react-native";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { persistStorage } from "./store/storage";
+import { lazyStyles } from "./lazyStyles";
 
 const light = {
   pink: "#e82c87",
@@ -160,17 +161,7 @@ export const currentAccent = () => accent;
  * Use exactly like StyleSheet.create: `const styles = themed(() => ({ ... }))`.
  */
 export function themed<T extends StyleSheet.NamedStyles<T> | StyleSheet.NamedStyles<any>>(make: () => T & StyleSheet.NamedStyles<any>): T {
-  let cache: T | null = null;
-  let built = -1;
-  return new Proxy({} as T, {
-    get(_t, prop) {
-      if (!cache || built !== version) {
-        cache = StyleSheet.create(make());
-        built = version;
-      }
-      return (cache as any)[prop];
-    },
-  });
+  return lazyStyles(() => StyleSheet.create(make()), () => version);
 }
 
 /** «Как в телефоне» (default) or a theme the customer picked in the app. */
