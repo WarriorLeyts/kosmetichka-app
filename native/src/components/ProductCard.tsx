@@ -1,3 +1,5 @@
+import { retailPricePromotion } from "../retailPricePromotion";
+import { RetailPriceComparison } from "./RetailPriceComparison";
 import { wholesalePriceComparison } from "../wholesalePricePanels";
 import { memo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -28,6 +30,7 @@ type Props = {
 };
 
 function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite }: Props) {
+  const retailPromotion = retailPricePromotion(product, customer);
   const img = imageUrl(product.images?.[0]?.path, 480);
   const stock = stockLabel(product.stock);
   const out = stock.tone === "out";
@@ -48,7 +51,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
         ) : (
           <Ionicons name="image-outline" size={34} color={colors.faint} />
         )}
-        <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale} labels={product.labels} />
+        <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale || !!retailPromotion} labels={product.labels} />
         <Pressable
           hitSlop={10}
           onPress={() => {
@@ -70,6 +73,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
         <View style={{ flex: 1 }} />
         {customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale"
           ? <WholesalePriceComparison product={product} customer={customer} />
+          : retailPromotion ? <RetailPriceComparison promotion={retailPromotion} />
           : <PriceRows rows={priceRows(product, customer, activePrice)} />}
         <Pressable
           disabled={out}

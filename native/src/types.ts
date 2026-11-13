@@ -18,6 +18,7 @@ export type Product = {
   discountPrice?: number | null;
   wholesalePrice?: number | null;
   bigWholesalePrice?: number | null;
+  promoRetailPrice?: number | null;
   promoWholesalePrice?: number | null;
   promoBigWholesalePrice?: number | null;
   regularPrices?: {

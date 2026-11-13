@@ -31,11 +31,12 @@ export function wholesalePricePanels(
   const ordinary = product.regularPrices ?? product;
   const regular = COLUMNS.map((c) => ({ ...c, value: positive(priceFor(ordinary, c.key as PriceType)) }));
   if (now < START || now >= END) return { regular, promotion: null };
+  const retail = positive(product.promoRetailPrice);
   const opt = positive(product.promoWholesalePrice);
   const big = positive(product.promoBigWholesalePrice);
-  if (opt === null && big === null) return { regular, promotion: null };
+  if (retail === null && opt === null && big === null) return { regular, promotion: null };
   return { regular, promotion: [
-    { ...COLUMNS[0], value: regular[0].value },
+    { ...COLUMNS[0], value: retail ?? regular[0].value },
     { ...COLUMNS[1], label: "Акция опт", value: opt },
     { ...COLUMNS[2], label: "Акция крупный опт", value: big },
   ] };

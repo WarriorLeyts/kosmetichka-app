@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { money } from "../format";
-import { BIG_WHOLESALE_MIN_ORDER, cartPriceTier, rawCartTotal, resolveCustomerPriceType, WHOLESALE_MIN_ORDER, type PriceType } from "../pricing";
+import { bigWholesaleMinOrder, cartPriceTier, rawCartTotal, resolveCustomerPriceType, WHOLESALE_MIN_ORDER, type PriceType } from "../pricing";
 import { FitText } from "./FitText";
 import { colors, themed } from "@/theme";
 
@@ -22,7 +22,7 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
     tier === "discount"
       ? { label: "оптовых цен", min: WHOLESALE_MIN_ORDER, have: sum("wholesale"), save: discount - sum("wholesale") }
       : tier === "wholesale"
-        ? { label: "крупного опта", min: BIG_WHOLESALE_MIN_ORDER, have: sum("big_wholesale"), save: sum("wholesale") - sum("big_wholesale") }
+        ? { label: "крупного опта", min: bigWholesaleMinOrder(), have: sum("big_wholesale"), save: sum("wholesale") - sum("big_wholesale") }
         : null;
   const reached =
     tier === "wholesale" ? { title: "Оптовые цены", save: discount - sum("wholesale") } : tier === "big_wholesale" ? { title: "Крупнооптовые цены", save: discount - sum("big_wholesale") } : null;
@@ -73,7 +73,7 @@ function Steps({ tier, dark }: { tier: PriceType; dark: boolean }) {
   const steps: { t: PriceType; name: string; from: string }[] = [
     { t: "discount", name: "Скидка", from: "до 5 000 ₽" },
     { t: "wholesale", name: "Опт", from: "от 5 000 ₽" },
-    { t: "big_wholesale", name: "Кр. опт", from: "от 50 000 ₽" },
+    { t: "big_wholesale", name: "Кр. опт", from: `от ${money(bigWholesaleMinOrder())}` },
   ];
   const at = steps.findIndex((s) => s.t === tier);
   return (

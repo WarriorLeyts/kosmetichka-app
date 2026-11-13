@@ -1,3 +1,5 @@
+import { retailPricePromotion } from "../retailPricePromotion";
+import { RetailPriceComparison } from "./RetailPriceComparison";
 import { wholesalePriceComparison } from "../wholesalePricePanels";
 import { memo, useRef, useState } from "react";
 import { ActivityIndicator, Animated, Pressable, StyleSheet, Text, View } from "react-native";
@@ -64,6 +66,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
   const st0 = STOCK[stock.tone];
   const st = { ...st0, fg: dark ? st0.fgDark : st0.fg };
   const out = stock.tone === "out";
+  const retailPromotion = retailPricePromotion(product, customer);
   const rows = priceRows(product, customer, activePrice).slice(0, 3);
   // three prices side by side need ~180 px; a narrower card lists them one per line
   const [pricesW, setPricesW] = useState(0);
@@ -90,7 +93,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
           <Ionicons name="image-outline" size={34 * k} color="#C7C7CC" />
         )}
         {/* «Новинка» / «Хит» / «Снова в наличии» */}
-        <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale} labels={product.labels} />
+        <ProductLabels promotion={wholesalePriceComparison(product, customer)?.onSale || !!retailPromotion} labels={product.labels} />
         <Pressable
           hitSlop={10}
           accessibilityRole="button"
@@ -126,6 +129,8 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       {/* light panel in both themes: pink/violet prices stay readable in the dark theme */}
       {customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale" ? (
         <WholesalePriceComparison product={product} customer={customer} dark={dark} />
+      ) : retailPromotion ? (
+        <RetailPriceComparison promotion={retailPromotion} dark={dark} />
       ) : narrowPrices ? (
         // a narrow card (the home carousel on a computer): three columns cut the prices to «149…» —
         // one price per line instead (audit BUG-03)
