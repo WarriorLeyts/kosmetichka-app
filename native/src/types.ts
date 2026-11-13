@@ -18,6 +18,14 @@ export type Product = {
   discountPrice?: number | null;
   wholesalePrice?: number | null;
   bigWholesalePrice?: number | null;
+  promoWholesalePrice?: number | null;
+  promoBigWholesalePrice?: number | null;
+  regularPrices?: {
+    retailPrice?: number | null;
+    discountPrice?: number | null;
+    wholesalePrice?: number | null;
+    bigWholesalePrice?: number | null;
+  };
   images?: ProductImage[];
   category?: { guid: string; name: string } | null;
   brand?: { guid?: string; name: string } | null;

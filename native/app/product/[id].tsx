@@ -19,6 +19,7 @@ import { useFavorites } from "@/store/favorites";
 import { useWaitlistStore } from "@/store/waitlist";
 import { effectivePriceType, priceFor } from "@/pricing";
 import { priceRows } from "@/components/Price";
+import { WholesalePriceComparison } from "@/components/WholesalePriceComparison";
 import { CatalogCard } from "@/components/CatalogCard";
 import { Description } from "@/components/Description";
 import { Wordmark } from "@/components/Wordmark";
@@ -332,6 +333,14 @@ export default function ProductScreen() {
           </View>
 
           {/* prices — existing pricing rules */}
+          {customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale" ? (
+            <>
+              {customer.showRetailPrice && retail > 0 ? (
+                <Text style={{ color: c.secondary, marginTop: 14 }}>Розница: {money(retail)}</Text>
+              ) : null}
+              <WholesalePriceComparison product={product} customer={customer} large dark={dark} />
+            </>
+          ) : (
           <View style={[styles.prices, { backgroundColor: dark ? "#FBF3FA" : "#FDF2F8" }]}>
             {rows.map((r, i) => (
               <View key={r.label} style={[styles.priceCol, i > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "rgba(139,61,255,0.18)" }]}>
@@ -345,6 +354,7 @@ export default function ProductScreen() {
               </View>
             ))}
           </View>
+          )}
           {!customer ? (
             <Pressable onPress={() => router.push("/login")} hitSlop={6} style={{ marginTop: 10 }}>
               <Text style={{ color: colors.brand, fontSize: 15, fontWeight: "600" }}>Войдите, чтобы увидеть оптовые цены</Text>

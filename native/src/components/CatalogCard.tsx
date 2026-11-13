@@ -8,6 +8,7 @@ import { seedProduct } from "../productSeed";
 import { money, stockLabel } from "../format";
 import { useIOS } from "../ios";
 import { priceRows } from "./Price";
+import { WholesalePriceComparison } from "./WholesalePriceComparison";
 import { VIOLET_PINK } from "./TabBar";
 import { tap } from "./ui";
 import { useReduceMotion } from "../useReduceMotion";
@@ -122,7 +123,9 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       </View>
 
       {/* light panel in both themes: pink/violet prices stay readable in the dark theme */}
-      {narrowPrices ? (
+      {customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale" ? (
+        <WholesalePriceComparison product={product} customer={customer} dark={dark} />
+      ) : narrowPrices ? (
         // a narrow card (the home carousel on a computer): three columns cut the prices to «149…» —
         // one price per line instead (audit BUG-03)
         <View onLayout={onPricesLayout} style={[styles.pricesList, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>

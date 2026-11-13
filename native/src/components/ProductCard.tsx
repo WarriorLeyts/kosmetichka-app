@@ -9,6 +9,7 @@ import { seedProduct } from "../productSeed";
 import { colors, radius, themed } from "../theme";
 import { stockLabel } from "../format";
 import { priceRows, PriceRows } from "./Price";
+import { WholesalePriceComparison } from "./WholesalePriceComparison";
 import { tap } from "./ui";
 import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
@@ -66,7 +67,9 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
           <Text style={[styles.stockText, { color: STOCK_PILL[stock.tone].fg }]}>{stock.text}</Text>
         </View>
         <View style={{ flex: 1 }} />
-        <PriceRows rows={priceRows(product, customer, activePrice)} />
+        {customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale"
+          ? <WholesalePriceComparison product={product} customer={customer} />
+          : <PriceRows rows={priceRows(product, customer, activePrice)} />}
         <Pressable
           disabled={out}
           onPress={() => {
