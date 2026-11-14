@@ -4,6 +4,7 @@
  * customers without a card in MAXMA see nothing.
  */
 export type LoyaltyCard = {
+  balanceUnavailable?: boolean;
   level: string | null; // MAXMA level name, e.g. «VIP»
   name: string; // customer's name on the card
   cashback: string | null; // «5%» — by level, configured on the site

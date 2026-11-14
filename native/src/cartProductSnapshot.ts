@@ -4,7 +4,7 @@ import type { Product } from "./types";
 /** Keep every price needed to reprice and expire a persisted cart. */
 export function cartProductSnapshot(p: Product): Product {
   const metadata = cleanPromoSnapshot(p) as Pick<Product, "regularPrices" | "promoRetailPrice" | "promoWholesalePrice" | "promoBigWholesalePrice">;
-  return { id:p.id, name:p.name, barcode:p.barcode, article:p.article, stock:p.stock, minOrderQty:p.minOrderQty,
+  return { cardRegistration:p.cardRegistration, id:p.id, name:p.name, barcode:p.barcode, article:p.article, stock:p.stock, minOrderQty:p.minOrderQty,
     retailPrice:p.retailPrice, discountPrice:p.discountPrice, wholesalePrice:p.wholesalePrice,
     bigWholesalePrice:p.bigWholesalePrice, ...metadata,
     images:p.images?.slice(0,1), brand:p.brand ? { name:p.brand.name } : null };

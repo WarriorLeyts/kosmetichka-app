@@ -1,5 +1,6 @@
+import { cardPricingCustomer } from "@/cardPurchase";
 import { scaleStyles, useCardScale, withFonts } from "@/cardScale";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -123,6 +124,8 @@ export default function Cart() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [priceKey, items.length]);
+  const cardInCart = items.find((i) => i.cardRegistration);
+  const cartCustomer = cardPricingCustomer(items, customer);
   const setQty = useCartStore((s) => s.setQuantity);
   const remove = useCartStore((s) => s.remove);
   const clear = useCartStore((s) => s.clear);
@@ -144,7 +147,7 @@ export default function Cart() {
   const [calc, setCalc] = useState<CheckoutCalc | null>(null);
   const [calcBusy, setCalcBusy] = useState(false);
   const calcSeq = useRef(0);
-  const cartKey = JSON.stringify(items.map((i) => [i.id, i.quantity, i.variantName ?? null]));
+  const cartKey = JSON.stringify(items.map((i) => [i.id, i.quantity, i.variantName ?? null, i.cardRegistration ?? null]));
   const maxRef = useRef(0);
   maxRef.current = calc?.bonuses?.maxToApply ?? maxRef.current;
   // price type switched in the profile (retail ↔ wholesale): bonuses are retail-only — start over
@@ -166,7 +169,7 @@ export default function Cart() {
         const lines = useCartStore
           .getState()
           .items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0)
-          .map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null }));
+          .map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, cardRegistration: i.cardRegistration }));
         // «Списать бонусы» on: ask for the last known maximum — the site re-asks MAXMA if it changed
         const want = spend ? Math.max(1, maxRef.current || calc?.bonuses?.balance || 1) : 0;
         const r = await api.checkoutCalc({ items: lines, promocode: promoCode ?? undefined, applyBonuses: want });
@@ -190,12 +193,12 @@ export default function Cart() {
       }
     }, 450);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     // hasCard: on the website a linked / unlinked card changes the prices
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customer?.id, priceType, customer?.hasCard, cartKey, promoCode, spend]);
 
   // «Опт»: the price by the order sum — less than 5 000 ₽ discount, from 5 000 wholesale, from 50 000 big wholesale
-  const pricing = calculateCart(items, customer);
+  const pricing = calculateCart(items, cartCustomer);
   const active = pricing.tier;
   const total = pricing.total;
   const checkoutTotal = calc?.total ?? total;
@@ -245,6 +248,9 @@ export default function Cart() {
       // the latest cart from the store (not this render's copy), whole positive quantities only
       const lines = useCartStore.getState().items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0);
       if (lines.length === 0) return;
+      if (customer.hasCard && lines.some((i) => i.cardRegistration)) {
+        setError("Скидочная карта уже оформлена. Уберите карту из корзины — скидочные цены сохранятся."); return;
+      }
       const blocked = lines.filter((i) => i.gone || i.stock === 0);
       if (blocked.length) {
         setError(`Нельзя заказать: ${blocked.map((i) => i.name).slice(0, 3).join(", ")}${blocked.length > 3 ? "…" : ""}. Удалите эти товары из корзины.`);
@@ -252,7 +258,7 @@ export default function Cart() {
       }
       requestId.current ??= `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
       const r = await api.createOrder(
-        lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null })),
+        lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null, cardRegistration: i.cardRegistration })),
         currentComment().trim(),
         { promocode: promoCode && calc?.promo?.code === promoCode ? promoCode : undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, pickup, address: pickup ? undefined : address.trim() || undefined, requestId: requestId.current }
       );
@@ -295,6 +301,14 @@ export default function Cart() {
   };
 
   const renderItem = ({ item }: { item: CartItem }) => {
+    if (item.cardRegistration) return (
+      <View style={[styles.card, { backgroundColor: c.cell, padding: 18, marginBottom: 12, gap: 8 }]}>
+        <Text style={{ color: c.label, fontSize: 18, fontWeight: "700" }}>Карта «Косметичка» · 990 ₽</Text>
+        <Text style={{ color: c.secondary }}>{item.cardRegistration.fullName} · {item.cardRegistration.birthDate}</Text>
+        <Text style={{ color: c.secondary }}>Скидочные цены применены к товарам этого заказа. Карту оформит сотрудник на кассе.</Text>
+        <Pressable onPress={() => remove(item.cartKey)} accessibilityRole="button" accessibilityLabel="Убрать карту из корзины" style={{ paddingVertical: 10 }}><Text style={{ color: PINK }}>Убрать карту из корзины</Text></Pressable>
+      </View>
+    );
     // the line card: 0.8 on a phone (cardScale.ts)
     const li = k === 1 ? lineBase : linePhone;
     const lk = k === 1 ? 1 : CART_LINE_SCALE;
@@ -568,7 +582,7 @@ export default function Cart() {
                 </FitText>
               </View>
               {/* retail without a loyalty card: the same cart with the card */}
-              <CardHintTotal withCard={rawCartTotal(items, "discount")} now={total} />
+              {!cardInCart ? <CardHintTotal withCard={rawCartTotal(items, "discount")} now={total} /> : null}
             </View>
 
             {error ? (

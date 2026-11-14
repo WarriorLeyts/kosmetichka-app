@@ -84,6 +84,7 @@ export const useCartStore = create<CartState>()(
       refreshProducts: (fresh, checked) =>
         set({
           items: get().items.map((i) => {
+            if (i.cardRegistration) return i;
             const p = fresh.get(i.id);
             // asked about but not found: the product was removed from the catalogue
             if (!p) return checked?.has(i.id) ? { ...i, gone: true } : i;
