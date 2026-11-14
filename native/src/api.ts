@@ -346,6 +346,7 @@ export const api = {
   loyalty(): Promise<{
     card: {
       number: string;
+      balanceUnavailable?: boolean;
       name: string;
       level: string | null;
       cashback: string | null;
@@ -357,6 +358,10 @@ export const api = {
     return request("/api/mobile/loyalty");
   },
   /** «Добавить карту», step 1: phone or card number → MAXMA texts a code to the card owner */
+  loyaltyProduct(): Promise<{ product: Product }> {
+    return request("/api/mobile/loyalty/product");
+  },
+
   loyaltyFind(query: string): Promise<{ sent: boolean; phone: string | null }> {
     return request("/api/mobile/loyalty/link", { method: "POST", body: json({ query }) });
   },
@@ -424,7 +429,7 @@ export const api = {
 
   // ── Orders ──
   createOrder(
-    items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null }[],
+    items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null; cardRegistration?: { fullName: string; birthDate: string } }[],
     comment: string,
     extra: { promocode?: string; applyBonuses?: number; pickup?: boolean; address?: string; requestId?: string } = {}
   ) {
@@ -442,7 +447,7 @@ export const api = {
     });
   },
   /** Cart total with MAXMA: promo code, bonuses to spend, bonuses to be accrued (nothing is reserved yet). */
-  checkoutCalc(body: { items: { id: number; quantity: number; variantName?: string | null }[]; promocode?: string; applyBonuses?: number }) {
+  checkoutCalc(body: { items: { id: number; quantity: number; variantName?: string | null; cardRegistration?: { fullName: string; birthDate: string } }[]; promocode?: string; applyBonuses?: number }) {
     return request<CheckoutCalc>("/api/checkout/calc", { method: "POST", body: json(body) });
   },
   /** Promo code from MAXMA: the server prices the cart and asks MAXMA for the discount (nothing is reserved yet). */

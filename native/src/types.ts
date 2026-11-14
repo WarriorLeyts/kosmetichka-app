@@ -1,6 +1,7 @@
 export type ProductImage = { path: string; alt?: string | null };
 
 export type Product = {
+  cardRegistration?: { fullName: string; birthDate: string };
   /** «Новые поступления»: the product came to the company for the first time («Новинка») */
   arrivalNew?: boolean;
   id: number;

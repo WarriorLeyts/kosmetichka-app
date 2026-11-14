@@ -251,3 +251,11 @@ setOnUnauthorized((path) => {
       router.push("/login");
     });
 });
+
+// Refresh card/price status while the app is in use; 1С can issue a card without any action in the app.
+if (typeof setInterval === "function") {
+  const timer = setInterval(() => {
+    if (useAuth.getState().customer && AppState.currentState !== "background") void useAuth.getState().reloadCustomer();
+  }, 60_000);
+  (timer as unknown as { unref?: () => void }).unref?.();
+}

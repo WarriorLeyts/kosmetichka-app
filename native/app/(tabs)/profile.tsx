@@ -55,7 +55,7 @@ export default function Profile() {
   // MAXMA card by phone: refreshed when the tab opens (the site caches it for a minute)
   const [card, setCard] = useState<LoyaltyCard | null>(null);
   // «Добавить карту» only once the site's MAXMA connection is set up
-  const [canLink, setCanLink] = useState(false);
+
   const customerId = customer?.id;
   const wholesale = customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale";
   // the price type / data may have been changed by a manager meanwhile
@@ -68,23 +68,29 @@ export default function Profile() {
     useCallback(() => {
       if (!customerId) {
         setCard(null);
-        setCanLink(false);
+
         return;
       }
       let alive = true;
-      api
+      const loadCard = () => api
         .loyalty()
         .then((r) => {
           if (!alive) return;
           const c = r.card;
-          setCanLink(r.reason !== "not_configured");
-          setCard(c ? { level: c.level, name: c.name, cashback: c.cashback, bonuses: c.bonuses, pendingBonuses: c.pendingBonuses, barcode: c.number } : null);
+
+          setCard(c ? { level: c.level, name: c.name, cashback: c.cashback, bonuses: c.bonuses, pendingBonuses: c.pendingBonuses, barcode: c.number, balanceUnavailable: c.balanceUnavailable } : null);
         })
         .catch(() => {
           /* keep what is shown; no card on a failed first load */
         });
+      void loadCard();
+      const timer = setInterval(() => {
+        void useAuth.getState().reloadCustomer();
+        void loadCard();
+      }, 30_000);
       return () => {
         alive = false;
+        clearInterval(timer);
       };
     }, [customerId])
   );
@@ -171,9 +177,16 @@ export default function Profile() {
               ])
             }
           />
-        ) : customer && canLink ? (
-          <EmptyLoyaltyCard width={cardW} onAdd={() => router.push("/loyalty-add")} />
+        ) : customer && !customer.hasCard ? (
+          <EmptyLoyaltyCard width={cardW} onAdd={() => router.push("/loyalty-order")} />
         ) : null}
+
+        {customer?.priceType === "retail" && !customer.hasCard && card ? (
+          <Pressable onPress={() => router.push("/loyalty-order")} accessibilityRole="button" style={{ padding: 16, marginBottom: 12, backgroundColor: c.cell, borderRadius: 16 }}>
+            <Text style={{ color: colors.brand, fontWeight: "700", fontSize: 17 }}>Перейти на скидочную карту · 990 ₽</Text>
+          </Pressable>
+        ) : null}
+        {customer && !wholesale ? <Pressable onPress={() => router.push("/loyalty-add")} accessibilityRole="button" style={{ padding: 12 }}><Text style={{ color: c.secondary }}>Уже есть карта? Привязать</Text></Pressable> : null}
 
         {/* one rounded menu block */}
         <View style={[styles.block, { backgroundColor: c.cell }, !dark && styles.shadow]}>

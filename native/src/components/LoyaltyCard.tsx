@@ -52,7 +52,7 @@ export function EmptyLoyaltyCard({ width, onAdd }: { width: number; onAdd: () =>
           <Image source={BANNER} style={{ width, height: 90 * k }} contentFit="cover" />
           <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 * k }}>
             <Ionicons name="add-circle" size={16 * k} color="#fff" />
-            <Text style={[styles.small, { fontSize: 11 * k }]}>ДОБАВИТЬ КАРТУ</Text>
+            <Text style={[styles.small, { fontSize: 11 * k }]}>ОФОРМИТЬ КАРТУ</Text>
           </View>
         </View>
       </Pressable>
@@ -60,7 +60,7 @@ export function EmptyLoyaltyCard({ width, onAdd }: { width: number; onAdd: () =>
         <View style={[styles.rowIcon, { backgroundColor: "rgba(139,61,255,0.1)" }]}>
           <Ionicons name="add" size={22} color={colors.brand} />
         </View>
-        <Text style={styles.rowText}>Добавить карту</Text>
+        <Text style={styles.rowText}>Оформить карту · 990 ₽</Text>
         <Ionicons name="chevron-forward" size={19} color={colors.brand} />
       </Pressable>
     </View>
@@ -133,7 +133,7 @@ export function LoyaltyCardPanel({ card, width, onUnlink }: { card: Card; width:
             )}
             <View style={{ alignItems: "flex-end" }}>
               <Text style={[styles.small, { fontSize: 7 * k }]}>БОНУСЫ</Text>
-              <Text style={[styles.value, { fontSize: 12.5 * k, marginTop: 1 * k }]}>{card.bonuses.toLocaleString("ru-RU")}</Text>
+              <Text style={[styles.value, { fontSize: 12.5 * k, marginTop: 1 * k }]}>{card.balanceUnavailable ? "—" : card.bonuses.toLocaleString("ru-RU")}</Text>
             </View>
           </View>
 
@@ -179,6 +179,7 @@ export function LoyaltyCardPanel({ card, width, onUnlink }: { card: Card; width:
           <Ionicons name="chevron-forward" size={19} color={colors.brand} />
         </Animated.View>
       </Pressable>
+      {card.balanceUnavailable ? <Text style={{ color: c.secondary, textAlign: "center", marginTop: 8 }}>Баланс бонусов временно недоступен</Text> : null}
       {card.pendingBonuses > 0 ? (
         <Text style={[styles.pending, { color: c.secondary }]}>Ещё {card.pendingBonuses.toLocaleString("ru-RU")} бонусов скоро станут доступны</Text>
       ) : null}

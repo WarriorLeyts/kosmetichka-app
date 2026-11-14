@@ -73,20 +73,21 @@ export function CardHintStrip() {
 export function CardHintTotal({ withCard, now }: { withCard: number; now: number }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
-  const show = useCardHint();
-  if (!show || !(withCard > 0 && withCard < now)) return null;
+  const customer = useAuth((s) => s.customer);
+  if (customer?.priceType !== "retail" || customer.hasCard) return null;
   const tint = dark ? "#C9A8FF" : "#6B2BD9";
   return (
     <View style={{ marginTop: 6 }}>
       <View style={styles.totalRow}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 }}>
           <Ionicons name="card-outline" size={17} color={tint} />
-          <Text style={[styles.totalText, { color: tint }]} numberOfLines={1}>С картой лояльности</Text>
+          <Text style={[styles.totalText, { color: tint }]}>Оформите карту «Косметичка»</Text>
         </View>
-        <Text style={[styles.totalText, { color: tint, fontWeight: "800" }]}>{money(withCard)}</Text>
+        <Text style={[styles.totalText, { color: tint, fontWeight: "800" }]}>{money(withCard + 990)}</Text>
       </View>
-      <Pressable onPress={openLink} accessibilityRole="link" hitSlop={6} style={{ alignSelf: "flex-start", marginTop: 4 }}>
-        <Text style={[styles.link, { color: dark ? "#D8B4FE" : colors.brand }]}>Привязать карту в профиле ›</Text>
+      <Text style={{ color: c.secondary, marginTop: 6 }}>Товары по карте: {money(withCard)}. Карта: 990 ₽.{withCard + 990 < now ? ` Экономия с учётом карты: ${money(now - withCard - 990)}.` : ""}</Text>
+      <Pressable onPress={() => router.push("/loyalty-order")} accessibilityRole="button" hitSlop={6} style={{ alignSelf: "flex-start", marginTop: 4 }}>
+        <Text style={[styles.link, { color: dark ? "#D8B4FE" : colors.brand }]}>Оформить за 990 ₽ ›</Text>
       </Pressable>
     </View>
   );
