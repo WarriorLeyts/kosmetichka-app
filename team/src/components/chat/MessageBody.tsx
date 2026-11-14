@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { chatFileUrl, imageUrl, safeOpenUrl } from "../../api";
 import { money } from "../../format";
 import { createContext, useContext, useState } from "react";
+import { VoicePlayer } from "../voice/VoicePlayer";
 
 /** «Добавить товар» cards from the customer: what the order screen can do with them (no provider → no button) */
 export type ProductRequest = { messageId: number | null; added: boolean; id: number; name: string; variantName: string | null; imagePath: string | null; quantity: number; price: number };
@@ -87,6 +88,7 @@ export function messagePreview(text: string): string {
     if (o?._t === "video") return "🎬 Видео";
     if (o?._t === "file") return `📎 ${o.name ?? "Файл"}`;
     if (o?._t === "product") return `📦 ${o.name ?? "Товар"}`;
+    if (o?._t === "audio") return "🎤 Голосовое сообщение";
     if (o?._t === "product-problem") return `⚠️ ${o.name ?? "Проблема с товаром"}`;
     if (o?._t === "order-change") return `✏️ ${o.title ?? "Заказ изменён"}`;
   } catch {}
@@ -99,9 +101,10 @@ export function MessageBody({ id, text, color }: { id?: number; text: string; co
     const o = JSON.parse(text);
     // attachment links from other people's messages: our upload paths only (no phishing / foreign hosts)
     const file = o && typeof o === "object" ? chatFileUrl(o.url) : null;
-    if ((o?._t === "img" || o?._t === "video" || o?._t === "file") && !file) {
+    if ((o?._t === "img" || o?._t === "video" || o?._t === "audio" || o?._t === "file") && !file) {
       return <Text style={{ color, fontSize: 15, fontStyle: "italic", opacity: 0.75 }}>Вложение недоступно</Text>;
     }
+    if (o?._t === "audio" && file) return <VoicePlayer uri={file} duration={Number(o.duration) || 0} color={color} />;
     if (o?._t === "img" && file) {
       return (
         <Pressable onPress={() => openChatFile(file)} accessibilityRole="imagebutton" accessibilityLabel="Фото, открыть">

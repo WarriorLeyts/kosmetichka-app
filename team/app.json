@@ -23,11 +23,10 @@
         "backgroundImage": "./assets/adaptive-background.png"
       },
       "permissions": [
-        "android.permission.CAMERA"
-      ],
-      "blockedPermissions": [
+        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "blockedPermissions": []
     },
     "plugins": [
       "expo-router",
@@ -70,6 +69,13 @@
           "icon": "./assets/notification-icon.png",
           "color": "#8b3dff",
           "defaultChannel": "staff"
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Микрофон нужен, чтобы записывать голосовые сообщения в чате заказа.",
+          "recordAudioAndroid": true
         }
       ]
     ],

@@ -176,7 +176,7 @@ export function safeOpenUrl(path?: string | null): string | null {
   return u && u.startsWith("https://") ? u : null;
 }
 
-export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: string; size: number; mime: string };
+export type ChatUpload = { url: string; kind: "img" | "video" | "audio" | "file"; name: string; size: number; mime: string };
 
 /** photo / video / file for chats (site endpoint /api/uploads/chat accepts staff cookies) */
 export async function uploadChat(file: { uri: string; name: string; mime: string }): Promise<ChatUpload> {

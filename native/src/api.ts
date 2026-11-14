@@ -58,7 +58,7 @@ function calmGet<T>(url: string): Promise<T> {
 
 export const BASE_URL = Platform.OS === "web" ? "" : "https://kosmetichka-opt.ru";
 
-export type ChatUpload = { url: string; kind: "img" | "video" | "file"; name: string; size: number; mime: string };
+export type ChatUpload = { url: string; kind: "img" | "video" | "audio" | "file"; name: string; size: number; mime: string };
 
 export class ApiError extends Error {
   status: number;

@@ -12,6 +12,7 @@ import { Sheet, SheetOptions } from "../iosui/Sheet";
 import { MessageBody } from "./MessageBody";
 import { ATTACH_OPTIONS, afterSheet, pickFile, prepareForUpload, type AttachHow } from "./Attach";
 import { onLiveHint } from "../../live";
+import { VoiceComposer } from "../voice/VoiceComposer";
 
 const VIOLET = "#8b3dff";
 const GRAD = ["#8b3dff", "#b832e0", "#e82c87"] as const;
@@ -41,6 +42,7 @@ export function ChatPanel({
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const alive = useRef(true);
   const seq = useRef(0);
 
@@ -189,12 +191,18 @@ export function ChatPanel({
           maxLength={4000}
           style={[styles.input, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", color: c.label }]}
         />
-        <Pressable onPress={sendText} disabled={!text.trim() || sending} accessibilityRole="button" accessibilityLabel="Отправить" style={{ opacity: text.trim() ? 1 : 0.45 }}>
+        <Pressable onPress={text.trim() ? sendText : () => setVoiceOpen(true)} disabled={sending || !!uploading} accessibilityRole="button" accessibilityLabel={text.trim() ? "Отправить" : "Записать голосовое сообщение"}>
           <LinearGradient colors={GRAD} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.round}>
-            {sending ? <ActivityIndicator color="#fff" /> : <Ionicons name="paper-plane-outline" size={22} color="#fff" />}
+            {sending ? <ActivityIndicator color="#fff" /> : <Ionicons name={text.trim() ? "paper-plane-outline" : "mic-outline"} size={22} color="#fff" />}
           </LinearGradient>
         </Pressable>
       </View>
+
+      {voiceOpen ? <VoiceComposer dark={dark} onClose={() => setVoiceOpen(false)} onSend={async (file) => {
+        const up = await uploadChat(file);
+        await send(JSON.stringify({ _t: "audio", url: up.url, name: up.name, size: up.size, duration: file.duration }));
+        await refresh();
+      }} /> : null}
 
       <Sheet open={sheet} onClose={() => setSheet(false)} title="Отправить">
         <SheetOptions

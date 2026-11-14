@@ -17,6 +17,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { OrderChangeCard } from "@/components/OrderChangeCard";
+import { VoiceComposer } from "@/components/voice/VoiceComposer";
+import { VoicePlayer } from "@/components/voice/VoicePlayer";
 import { api, ApiError, BASE_URL, imageUrl } from "@/api";
 import { dateLong, money, time } from "@/format";
 import { orderCache } from "@/orderCache";
@@ -73,6 +75,7 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
     // attachments: from either side, but only files uploaded to our own server
     const fileUrl = chatFileUrl(obj?.url);
     const own = fileUrl !== null;
+    if (own && obj._t === "audio") return <VoicePlayer uri={fileUrl} duration={Number(obj.duration) || 0} color={color} />;
     if (own && obj._t === "img") {
       return (
         <Pressable onPress={() => openAttachment(obj.url)} accessibilityRole="imagebutton" accessibilityLabel="Фото, открыть">
@@ -184,6 +187,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
   const [repeating, setRepeating] = useState(false);
   const [kb, setKb] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null); // name of the file being sent
   // taps that arrive before the re-render (double tap) must not add the order to the cart twice
   const repeatBusy = useRef(false);
@@ -624,9 +628,9 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             multiline
             maxLength={2000}
           />
-          <Pressable onPress={() => send(text)} disabled={!text.trim()} accessibilityRole="button" accessibilityLabel="Отправить" style={{ opacity: text.trim() ? 1 : 0.45 }}>
+          <Pressable onPress={text.trim() ? () => send(text) : () => setVoiceOpen(true)} disabled={!!uploading} accessibilityRole="button" accessibilityLabel={text.trim() ? "Отправить" : "Записать голосовое сообщение"}>
             <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.send}>
-              <Ionicons name="paper-plane-outline" size={22} color="#fff" />
+              <Ionicons name={text.trim() ? "paper-plane-outline" : "mic-outline"} size={22} color="#fff" />
             </LinearGradient>
           </Pressable>
         </View>
@@ -982,6 +986,12 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
       ) : null}
       </View>
       {split ? null : composer}
+      {voiceOpen ? <VoiceComposer dark={dark} onClose={() => setVoiceOpen(false)} onSend={async (file) => {
+        const up = await api.uploadChat(file);
+        await api.sendMessage(orderId, JSON.stringify({ _t: "audio", url: up.url, name: up.name, size: up.size, duration: file.duration }));
+        await loadMessages();
+        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 80);
+      }} /> : null}
       <Sheet open={attachOpen} onClose={() => setAttachOpen(false)} title="Отправить менеджеру">
         <SheetOptions
           options={[
