@@ -476,12 +476,11 @@ export default function Cart() {
     <>
             {/* how the order is received: «Заберу в магазине» or an address for the delivery */}
             <View style={[styles.pickup, { backgroundColor: dark ? "#2B193D" : "#EEEEF3" }]}>
-              <View style={{ flex: 1 }}>
+              <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={[iosText.body, { color: c.label, fontWeight: "600" }]}>Заберу в магазине</Text>
-                <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`} hitSlop={6}>
-                  <Text style={{ color: colors.brand, fontSize: 15, marginTop: 3, textDecorationLine: "underline" }}>
-                    <Ionicons name="location-outline" size={14} color={colors.brand} /> {SHOP_ADDRESS}
-                  </Text>
+                <Pressable onPress={() => Linking.openURL(SHOP_MAP_URL).catch(() => {})} accessibilityRole="link" accessibilityLabel={`${SHOP_ADDRESS}, открыть на карте`} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }}>
+                  <Ionicons name="location-outline" size={14} color={colors.brand} />
+                  <FitText minimumFontScale={0.65} style={{ flex: 1, minWidth: 0, color: colors.brand, fontSize: 14, textDecorationLine: "underline" }}>{SHOP_ADDRESS}</FitText>
                 </Pressable>
               </View>
               <Switch
