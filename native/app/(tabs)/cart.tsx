@@ -305,7 +305,7 @@ export default function Cart() {
       <View style={[styles.card, { backgroundColor: c.cell, padding: 18, marginBottom: 12, gap: 8 }]}>
         <Text style={{ color: c.label, fontSize: 18, fontWeight: "700" }}>Карта «Косметичка» · 990 ₽</Text>
         <Text style={{ color: c.secondary }}>{item.cardRegistration.fullName} · {item.cardRegistration.birthDate}</Text>
-        <Text style={{ color: c.secondary }}>Скидочные цены применены к товарам этого заказа. Карту оформит сотрудник на кассе.</Text>
+        <Text style={{ color: c.secondary }}>Скидочные цены применены к товарам этого заказа.</Text>
         <Pressable onPress={() => remove(item.cartKey)} accessibilityRole="button" accessibilityLabel="Убрать карту из корзины" style={{ paddingVertical: 10 }}><Text style={{ color: PINK }}>Убрать карту из корзины</Text></Pressable>
       </View>
     );
