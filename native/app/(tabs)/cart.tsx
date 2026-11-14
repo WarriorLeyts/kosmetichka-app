@@ -691,6 +691,7 @@ function GradientButton({
   const off = loading || disabled;
   return (
     <Pressable
+      disabled={off}
       onPress={() => {
         if (off) return;
         tap();
