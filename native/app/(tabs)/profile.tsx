@@ -1,11 +1,11 @@
 import { LoyaltyActions } from "@/components/LoyaltyActions";
 import { useCallback, useState } from "react";
-import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { Platform, Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "@/store/auth";
+import { useAuth, applyCardState } from "@/store/auth";
 import { useFavorites } from "@/store/favorites";
 import { useWaitlistStore } from "@/store/waitlist";
 import { iosText, useIOS } from "@/ios";
@@ -161,22 +161,23 @@ export default function Profile() {
           <LoyaltyCardPanel
             card={card}
             width={cardW}
-            onUnlink={() =>
-              Alert.alert("Отвязать карту?", "Её можно будет добавить снова по номеру телефона или карты.", [
+            onUnlink={() => {
+              const unlink = async () => {
+                const current = useAuth.getState().customer;
+                try {
+                  await api.loyaltyUnlink();
+                  setCard(null);
+                  if (current) applyCardState(current.id, { hasCard: false, cardLinked: false, cardType: null });
+                  await useAuth.getState().reloadCustomer();
+                } catch (e) { Alert.alert("Не получилось", e instanceof Error ? e.message : ""); }
+              };
+              if (Platform.OS === "web") {
+                if (window.confirm("Отвязать карту? Цены в корзине пересчитаются. Карту можно будет добавить снова вручную.")) void unlink();
+              } else Alert.alert("Отвязать карту?", "Цены в корзине пересчитаются. Карту можно будет добавить снова вручную.", [
                 { text: "Отмена", style: "cancel" },
-                {
-                  text: "Отвязать",
-                  style: "destructive",
-                  onPress: () => {
-                    api.loyaltyUnlink().then(() => {
-                      setCard(null);
-                      // the card decides the website prices — the cart recounts at once
-                      void useAuth.getState().reloadCustomer();
-                    }).catch((e) => Alert.alert("Не получилось", e instanceof Error ? e.message : ""));
-                  },
-                },
-              ])
-            }
+                { text: "Отвязать", style: "destructive", onPress: () => void unlink() },
+              ]);
+            }}
           />
         ) : customer && !customer.hasCard && !customer.cardLinked ? (
           <EmptyLoyaltyCard width={cardW} onAdd={() => router.push("/loyalty-add")} />

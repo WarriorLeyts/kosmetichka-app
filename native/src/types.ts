@@ -74,6 +74,7 @@ export type Customer = {
   hasCard?: boolean;
   /** any MAXMA card is linked */
   cardLinked?: boolean;
+  cardType?: "discount" | "bonus" | null;
   /** wholesale level the admin granted ("wholesale" | "big_wholesale") */
   wholesaleAccess?: string | null;
   /** wholesale customer: the admin let him see the retail price too (product card only) */

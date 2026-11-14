@@ -259,3 +259,11 @@ if (typeof setInterval === "function") {
   }, 60_000);
   (timer as unknown as { unref?: () => void }).unref?.();
 }
+
+/** Apply a confirmed link/unlink before navigation, and invalidate stale profile reads. */
+export function applyCardState(customerId: number, patch: { hasCard: boolean; cardLinked: boolean; cardType: "discount" | "bonus" | null }) {
+  const customer = useAuth.getState().customer;
+  if (!customer || customer.id !== customerId) return;
+  epoch++;
+  useAuth.getState().setCustomer({ ...customer, ...patch });
+}

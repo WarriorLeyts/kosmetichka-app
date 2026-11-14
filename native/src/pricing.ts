@@ -53,7 +53,7 @@ export function resolveCustomerPriceType(
   if (!customer) return "guest";
   if (customer.priceType === "big_wholesale") return "big_wholesale";
   if (customer.priceType === "wholesale") return "wholesale";
-  if (customer.priceType === "retail") return SITE_RETAIL_DISCOUNT && customer.hasCard ? "discount" : "retail";
+  if (customer.priceType === "retail" || customer.priceType === "discount") return SITE_RETAIL_DISCOUNT && customer.hasCard ? "discount" : "retail";
   return "discount";
 }
 

@@ -366,7 +366,7 @@ export const api = {
     return request("/api/mobile/loyalty/link", { method: "POST", body: json({ query }) });
   },
   /** step 2: the code from the SMS → the card is linked to this account */
-  loyaltyConfirm(code: string): Promise<{ card: { number: string; name: string; level: string | null; cashback: string | null; bonuses: number; pendingBonuses: number } }> {
+  loyaltyConfirm(code: string): Promise<{ hasCard: boolean; cardLinked: boolean; cardType: "discount" | "bonus" | null; card: { number: string; name: string; level: string | null; cashback: string | null; bonuses: number; pendingBonuses: number } }> {
     return request("/api/mobile/loyalty/link", { method: "POST", body: json({ code }) });
   },
   loyaltyUnlink(): Promise<{ ok: boolean }> {

@@ -21,6 +21,12 @@ describe("retail minimum and a standalone loyalty card", () => {
 });
 
 describe("the customer's price type", () => {
+  it("a linked discount card changes prices; a bonus card or unlink keeps retail prices, including legacy accounts", () => {
+    const goods = p({ retailPrice: 2000, discountPrice: 1500 });
+    expect(priceFor(goods, resolveCustomerPriceType({ priceType: "retail", hasCard: true }))).toBe(1500);
+    expect(priceFor(goods, resolveCustomerPriceType({ priceType: "retail", hasCard: false }))).toBe(2000);
+    expect(priceFor(goods, resolveCustomerPriceType({ priceType: "discount", hasCard: false }))).toBe(2000);
+  });
   it("guest, retail with / without a card, wholesale, big wholesale", () => {
     expect(resolveCustomerPriceType(null)).toBe("guest");
     expect(resolveCustomerPriceType({ priceType: "retail" })).toBe("retail");

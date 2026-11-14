@@ -24,7 +24,7 @@ export default function LoyaltyOrder() {
   const add = async () => {
     if (busy.current) return;
     if (!customer) { router.push("/login"); return; }
-    if (customer.hasCard || customer.priceType !== "retail") { setError("Оформление доступно розничным клиентам без скидочной карты"); return; }
+    if (customer.hasCard || !["retail", "discount"].includes(customer.priceType ?? "")) { setError("Оформление доступно розничным клиентам без скидочной карты"); return; }
     if (!customer.phone) { setError("Сначала укажите телефон в профиле"); return; }
     if (fullName.trim().split(/\s+/).length < 2) { setError("Укажите ФИО"); return; }
     if (!/^\d{2}\.\d{2}\.\d{4}$/.test(birthDate)) { setError("Укажите дату рождения в формате ДД.ММ.ГГГГ"); return; }
