@@ -1,3 +1,4 @@
+import { FitText } from "./FitText";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
@@ -79,11 +80,11 @@ export function CardHintTotal({ withCard, now }: { withCard: number; now: number
   return (
     <View style={{ marginTop: 6 }}>
       <View style={styles.totalRow}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
           <Ionicons name="card-outline" size={17} color={tint} />
-          <Text style={[styles.totalText, { color: tint }]}>Оформите карту «Косметичка»</Text>
+          <FitText minimumFontScale={0.6} style={[styles.totalText, { color: tint, flex: 1, minWidth: 0 }]}>Оформите карту «Косметичка»</FitText>
         </View>
-        <Text style={[styles.totalText, { color: tint, fontWeight: "800" }]}>{money(withCard + 990)}</Text>
+        <FitText minimumFontScale={0.75} style={[styles.totalText, { color: tint, fontWeight: "800", flexShrink: 0, maxWidth: "38%", textAlign: "right" }]}>{money(withCard + 990).replace(/ /g, "\u00a0")}</FitText>
       </View>
       <Text style={{ color: c.secondary, marginTop: 6 }}>Товары по карте: {money(withCard)}. Карта: 990 ₽.{withCard + 990 < now ? ` Экономия с учётом карты: ${money(now - withCard - 990)}.` : ""}</Text>
       <Pressable onPress={() => router.push("/loyalty-order")} accessibilityRole="button" hitSlop={6} style={{ alignSelf: "flex-start", marginTop: 4 }}>
