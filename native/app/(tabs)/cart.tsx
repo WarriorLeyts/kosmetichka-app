@@ -23,7 +23,7 @@ import { BrandHeader } from "@/components/iosui/BrandHeader";
 import { useTabBarSpace, VIOLET_PINK } from "@/components/TabBar";
 import { tap } from "@/components/ui";
 import type { CartItem, Product } from "@/types";
-import { BONUS_SPEND, RETAIL_ENABLED } from "@/siteMode";
+import { BONUS_SPEND } from "@/siteMode";
 import { FitText } from "@/components/FitText";
 import { SHOP_ADDRESS, SHOP_MAP_URL } from "@/shop";
 import { TierProgress } from "@/components/TierProgress";
@@ -155,7 +155,7 @@ export default function Cart() {
   useEffect(() => {
     setSpend(false);
     maxRef.current = 0;
-  }, [priceType]);
+  }, [priceType, customer?.id, customer?.cardLinked]);
   useEffect(() => {
     if (!customer || items.length === 0) {
       setCalc(null);
@@ -195,7 +195,7 @@ export default function Cart() {
     return () => clearTimeout(t);
     // hasCard: on the website a linked / unlinked card changes the prices
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customer?.id, priceType, customer?.hasCard, cartKey, promoCode, spend]);
+  }, [customer?.id, priceType, customer?.hasCard, customer?.cardLinked, cartKey, promoCode, spend]);
 
   // «Опт»: the price by the order sum — less than 5 000 ₽ discount, from 5 000 wholesale, from 50 000 big wholesale
   const pricing = calculateCart(items, cartCustomer);
@@ -537,7 +537,7 @@ export default function Cart() {
                 }}
               />
             ) : null}
-            {customer && calc?.bonuses && RETAIL_ENABLED && BONUS_SPEND ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
+            {customer && calc?.bonuses && BONUS_SPEND ? <BonusBox bonuses={calc.bonuses} on={spend} onToggle={setSpend} busy={calcBusy && spend} /> : null}
 
             {/* «Опт»: the price by the order sum — how much more to the next price, right above «Оформить заказ» */}
             <TierProgress items={items} customer={customer} dark={dark} />

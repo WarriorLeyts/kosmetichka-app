@@ -14,5 +14,5 @@ export const RETAIL_ENABLED = Platform.OS !== "web";
  */
 export const SITE_RETAIL_DISCOUNT = true;
 
-/** Bonuses are collected, not spent (owner's decision) — the «Списать бонусы» switch is hidden everywhere. */
-export const BONUS_SPEND = false;
+/** Linked retail bonus and discount cards may accrue and spend bonuses in the cart. */
+export const BONUS_SPEND = true;
