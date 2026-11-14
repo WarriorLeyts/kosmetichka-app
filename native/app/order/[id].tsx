@@ -873,7 +873,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             ) : null}
             {order.bonusesApplied ? (
               <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
-                <Text style={[iosText.subhead, { color: colors.brand, flex: 1 }]}>Списано бонусов</Text>
+                <Text style={[iosText.subhead, { color: colors.brand, flex: 1 }]}>{order.status === "cancelled" ? "В заказе было списано бонусов" : "Списано бонусов"}</Text>
                 <Text style={[iosText.subhead, { color: colors.brand }]}>−{money(order.bonusesApplied)}</Text>
               </View>
             ) : null}
@@ -881,7 +881,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               <Text style={[iosText.headline, { color: c.label }]}>Итого</Text>
               <Text style={styles.total}>{money(order.total)}</Text>
             </View>
-            {order.bonusesCollected ? (
+            {order.bonusesCollected && order.status !== "cancelled" ? (
               <Text style={[iosText.footnote, { color: c.secondary, marginTop: 6 }]}>
                 {order.status === "exported" ? "Начислено" : "Начислится после выполнения"}: {order.bonusesCollected.toLocaleString("ru-RU")} бонусов
               </Text>
