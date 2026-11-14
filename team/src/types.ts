@@ -30,7 +30,7 @@ export type OrderListItem = {
 export type ChatMarks = { lastCustomerMessageId?: number | null; lastCustomerMessageAt?: string | null; lastStaffMessageId?: number | null };
 export type OrdersPage = Paging & {
   orders: OrderListItem[];
-  filters: { date: string; businessToday: string; customer: string; status: string };
+  filters: { date: string; businessToday: string; customer: string; status: string; customerType?: string };
   todayCounts: { total: number; byStatus: StatusCount[] };
   /** the chosen day (or all dates) and search: count and sum per stage; `confirmed` — «На проверке» the customer confirmed */
   counts?: { total: number; sum: number; confirmed: number; byStatus: { status: string; label: string; count: number; sum: number }[] };
