@@ -1,3 +1,4 @@
+import { LoyaltyActions } from "@/components/LoyaltyActions";
 import { useCallback, useState } from "react";
 import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -178,15 +179,11 @@ export default function Profile() {
             }
           />
         ) : customer && !customer.hasCard ? (
-          <EmptyLoyaltyCard width={cardW} onAdd={() => router.push("/loyalty-order")} />
+          <EmptyLoyaltyCard width={cardW} onAdd={() => router.push("/loyalty-add")} />
         ) : null}
 
-        {customer?.priceType === "retail" && !customer.hasCard && card ? (
-          <Pressable onPress={() => router.push("/loyalty-order")} accessibilityRole="button" style={{ padding: 16, marginBottom: 12, backgroundColor: c.cell, borderRadius: 16 }}>
-            <Text style={{ color: colors.brand, fontWeight: "700", fontSize: 17 }}>Перейти на скидочную карту · 990 ₽</Text>
-          </Pressable>
-        ) : null}
-        {customer && !wholesale ? <Pressable onPress={() => router.push("/loyalty-add")} accessibilityRole="button" style={{ padding: 12 }}><Text style={{ color: c.secondary }}>Уже есть карта? Привязать</Text></Pressable> : null}
+        {customer?.priceType === "retail" && !customer.hasCard && card ? <LoyaltyActions /> : null}
+        {customer && !wholesale && customer.hasCard ? <Pressable onPress={() => router.push("/loyalty-add")} accessibilityRole="button" style={{ padding: 12 }}><Text style={{ color: colors.brand }}>Привязать другую карту</Text></Pressable> : null}
 
         {/* one rounded menu block */}
         <View style={[styles.block, { backgroundColor: c.cell }, !dark && styles.shadow]}>

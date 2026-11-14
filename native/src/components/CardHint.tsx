@@ -36,16 +36,16 @@ export function CardHintTile() {
     <Pressable
       onPress={openLink}
       accessibilityRole="button"
-      accessibilityLabel="Есть карта лояльности? Привяжите её и покупайте по скидочным ценам"
+      accessibilityLabel="Карта Косметичка — привязать свою или оформить за 990 рублей"
       style={({ pressed }) => [styles.tile, { backgroundColor: c.cell, opacity: pressed ? 0.85 : 1 }, !dark && styles.shadow]}
     >
       <View style={[styles.icon, { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "#F3ECFA" }]}>
         <Ionicons name="card-outline" size={22} color={colors.brand} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={[styles.title, { color: c.label }]}>Есть карта лояльности?</Text>
+        <Text style={[styles.title, { color: c.label }]}>Карта «Косметичка»</Text>
         <Text style={[styles.sub, { color: c.secondary }]}>
-          Привяжите её — и покупайте по <Text style={{ color: PINK, fontWeight: "700" }}>скидочным ценам</Text>
+          Привяжите свою или <Text style={{ color: PINK, fontWeight: "700" }}>оформите за 990 ₽</Text>
         </Text>
       </View>
       <Ionicons name="chevron-forward" size={18} color={c.chevron} />
@@ -57,11 +57,11 @@ export function CardHintTile() {
 export function CardHintStrip() {
   if (!useCardHint()) return null;
   return (
-    <Pressable onPress={openLink} accessibilityRole="button" accessibilityLabel="Скидка по карте — после привязки карты в профиле" style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
+    <Pressable onPress={openLink} accessibilityRole="button" accessibilityLabel="Карта Косметичка — привязать или оформить" style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }]}>
       <LinearGradient colors={[colors.brand, PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.strip}>
         <Ionicons name="card-outline" size={19} color="#fff" />
         <Text style={styles.stripText} numberOfLines={2}>
-          <Text style={{ fontWeight: "800" }}>Скидка по карте</Text> — после привязки карты в профиле
+          <Text style={{ fontWeight: "800" }}>Карта «Косметичка»</Text> — привязать или оформить за 990 ₽
         </Text>
         <Ionicons name="chevron-forward" size={17} color="#fff" />
       </LinearGradient>

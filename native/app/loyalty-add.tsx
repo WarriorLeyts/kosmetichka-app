@@ -1,3 +1,4 @@
+import { LoyaltyActions } from "@/components/LoyaltyActions";
 import { useRef, useState } from "react";
 import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
@@ -20,7 +21,8 @@ export default function LoyaltyAdd() {
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();
   const customer = useAuth((s) => s.customer);
-  const [query, setQuery] = useState(customer?.phone ?? "");
+  const [lookup, setQuery] = useState<string | null>(null);
+  const query = lookup ?? customer?.phone ?? "";
   const [code, setCode] = useState("");
   const [sentTo, setSentTo] = useState<string | null | undefined>(undefined); // undefined = step 1
   const [loading, setLoading] = useState(false);
@@ -71,7 +73,8 @@ export default function LoyaltyAdd() {
       >
         <View style={styles.wrap}>
           <TitleBar title="" />
-          <Text style={[styles.h1, { color: c.label }]}>Добавить карту</Text>
+          <Text style={[styles.h1, { color: c.label }]}>Карта «Косметичка»</Text>
+          <LoyaltyActions active="link" disabled={loading} />
           <Text style={[styles.lead, { color: c.secondary }]}>
             {step2
               ? `Мы отправили код в СМС${sentTo ? ` на ${sentTo}` : " на телефон, указанный в карте"}.`
@@ -120,7 +123,7 @@ export default function LoyaltyAdd() {
                   returnKeyType="done"
                   onSubmitEditing={confirm}
                 />
-                <GradientButton title="Добавить карту" loading={loading} onPress={confirm} style={{ marginBottom: 8 }} />
+                <GradientButton title="Привязать карту" loading={loading} onPress={confirm} style={{ marginBottom: 8 }} />
                 <Text
                   onPress={() => {
                     if (loading) return;
