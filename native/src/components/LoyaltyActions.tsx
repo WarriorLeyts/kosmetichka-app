@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useIOS } from "@/ios";
 import { colors } from "@/theme";
+import { useAuth } from "@/store/auth";
 
 const actions = [
   { key: "link", label: "Привязать свою карту", detail: "По телефону или номеру карты", icon: "link-outline", href: "/loyalty-add" },
@@ -12,8 +13,9 @@ const actions = [
 /** The same two visible choices in the profile and in both card forms. */
 export function LoyaltyActions({ active, disabled = false }: { active?: "link" | "order"; disabled?: boolean }) {
   const c = useIOS();
+  const linked = useAuth((s) => Boolean(s.customer?.cardLinked));
   return <View style={{ gap: 10, marginVertical: 14 }}>
-    {actions.map((action) => {
+    {actions.filter((action) => !linked || action.key !== "link").map((action) => {
       const selected = active === action.key;
       return <Pressable
         key={action.key}
