@@ -157,6 +157,29 @@ export default function OrderScreen() {
     ]);
   };
 
+  const refuse = async (confirmed = false) => {
+    const save = async () => {
+      if (running.current) return;
+      running.current = true;
+      setBusy("refuse");
+      try {
+        await post(`/api/admin/orders/${orderId}/refuse`, {});
+        await reload();
+      } catch (e) {
+        Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+        await reload();
+      } finally { running.current = false; setBusy(""); }
+    };
+    if (confirmed) { await save(); return; }
+    const details = `Заказ № ${orderId} будет отменён. Списанные бонусы (${o?.bonusesApplied ?? 0}) вернутся на карту, начисление за заказ (${o?.bonusesCollected ?? 0}) будет отменено после подтверждения MAXMA.${o?.oneCExportedAt || o?.oneCNumber ? " Документы и оплату в 1С нужно обработать отдельно." : ""}`;
+    if (Platform.OS === "web") {
+      if (window.confirm(`Клиент отказался от заказа?\n\n${details}`)) await save();
+    } else Alert.alert("Клиент отказался от заказа?", details, [
+      { text: "Назад", style: "cancel" },
+      { text: "Подтвердить отказ", style: "destructive", onPress: () => void save() },
+    ]);
+  };
+
   // MAXMA (promo code / bonuses) didn't sync — try again now, as «Повторить» on the site
   const retryMaxma = async () => {
     if (running.current) return;
@@ -352,7 +375,7 @@ export default function OrderScreen() {
     ]);
   const waitingCustomer = !!o && (!!o.awaitingConfirmationSince || (o.status === "consultation" && !o.customerConfirmed));
   const actions = useMemo(
-    () => (o ? (STATUS_ACTIONS[o.status] ?? []).filter((a) => !(a.to === "payment" && (o.awaitingConfirmationSince || !o.customerConfirmed))) : []),
+    () => (o ? (STATUS_ACTIONS[o.status] ?? []).filter((a) => a.to !== "cancelled" && !(a.to === "payment" && (o.awaitingConfirmationSince || !o.customerConfirmed))) : []),
     [o]
   );
   const editTotal = edit?.filter((d) => !d.removed).reduce((s, d) => s + d.quantity * d.price, 0) ?? 0;
@@ -391,8 +414,15 @@ export default function OrderScreen() {
           </View>
         ) : null}
         {o.bonusesApplied ? (
-          <Text style={{ color: "#8b3dff", marginTop: 6, fontWeight: "600" }}>Списано бонусов: {money(o.bonusesApplied)}</Text>
+          <Text style={{ color: "#8b3dff", marginTop: 6, fontWeight: "600" }}>{o.status === "cancelled" ? "В заказе было списано бонусов" : "Списано бонусов"}: {money(o.bonusesApplied)}</Text>
         ) : null}
+        {o.bonusCancellation ? <View style={{ marginTop: 10, gap: 8 }}>
+          <Text style={{ color: o.bonusCancellation.status === "done" ? "#15803D" : "#B45309", fontWeight: "600" }}>
+            {o.bonusCancellation.status === "done" ? "MAXMA подтвердила возврат списанных бонусов и отмену начисления за заказ." : o.bonusCancellation.status === "pending" ? "Возврат бонусов и отмена начисления ещё не подтверждены. Сайт повторит запрос автоматически." : "Возврат бонусов и отмена начисления не подтверждены. Нажмите «Повторить возврат бонусов»."}
+          </Text>
+          {["failed", "missing"].includes(o.bonusCancellation.status) ? <ActionButton label="Повторить возврат бонусов" kind="soft" loading={busy === "refuse"} onPress={() => void refuse(true)} /> : null}
+        </View> : null}
+        {o.status === "cancelled" && (o.oneCExportedAt || o.oneCNumber) ? <Text style={{ color: "#B45309", marginTop: 8 }}>Заказ отменён на сайте. Документы и оплату в 1С нужно обработать отдельно.</Text> : null}
         {o.promoCode && o.discount ? (
           <Text style={{ color: "#1f8a3b", marginTop: 6, fontWeight: "600" }}>
             Промокод {o.promoCode} · скидка {money(o.discount)}
@@ -449,6 +479,9 @@ export default function OrderScreen() {
             ))}
           </View>
         ) : null}
+        {o.status !== "cancelled" ? <View style={{ marginTop: 12 }}>
+          <ActionButton label="Клиент отказался от заказа" kind="danger" disabled={!!edit || !!busy} loading={busy === "refuse"} onPress={() => void refuse()} />
+        </View> : null}
         {/* invoice: PDF to open / send (phones: the file into the share sheet) */}
         <View style={[styles.actions, { marginTop: 10 }]}>
           {Platform.OS === "web" ? (

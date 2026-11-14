@@ -71,6 +71,7 @@ export type OrderDetail = {
     /** MAXMA promo code and its discount (₽); total is after the discount */
     promoCode?: string | null; discount?: number;
     bonusesApplied?: number; bonusesCollected?: number;
+    bonusCancellation?: { status: string; returned: number; withdrawn: number } | null;
     /** something for this order didn't reach MAXMA for over an hour (it keeps retrying) */
     maxmaStuck?: boolean; maxmaError?: string;
     changesSnapshot: null | {
