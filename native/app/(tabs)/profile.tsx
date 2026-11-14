@@ -178,12 +178,11 @@ export default function Profile() {
               ])
             }
           />
-        ) : customer && !customer.hasCard ? (
+        ) : customer && !customer.hasCard && !customer.cardLinked ? (
           <EmptyLoyaltyCard width={cardW} onAdd={() => router.push("/loyalty-add")} />
         ) : null}
 
         {customer?.priceType === "retail" && !customer.hasCard && card ? <LoyaltyActions /> : null}
-        {customer && !wholesale && customer.hasCard ? <Pressable onPress={() => router.push("/loyalty-add")} accessibilityRole="button" style={{ padding: 12 }}><Text style={{ color: colors.brand }}>Привязать другую карту</Text></Pressable> : null}
 
         {/* one rounded menu block */}
         <View style={[styles.block, { backgroundColor: c.cell }, !dark && styles.shadow]}>
