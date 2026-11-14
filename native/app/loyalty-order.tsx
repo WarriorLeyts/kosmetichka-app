@@ -1,3 +1,4 @@
+import { LoyaltyActions } from "@/components/LoyaltyActions";
 import { useRef, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
@@ -41,7 +42,8 @@ export default function LoyaltyOrder() {
     finally { busy.current = false; setLoading(false); }
   };
   return <ScrollView contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 20, paddingBottom: insets.bottom + 30, width: "100%", maxWidth: 600, alignSelf: "center" }} keyboardShouldPersistTaps="handled" automaticallyAdjustKeyboardInsets>
-    <TitleBar title="Оформить карту" />
+    <TitleBar title="Карта «Косметичка»" />
+    <LoyaltyActions active="order" disabled={loading} />
     <View style={{ padding: 18, borderRadius: 20, backgroundColor: c.cell, gap: 12 }}>
       <Text style={{ color: c.label, fontSize: 23, fontWeight: "700" }}>Карта «Косметичка» — 990 ₽</Text>
       <Text style={{ color: c.secondary, fontSize: 16 }}>Скидочные цены и бонусы. Карту можно заказать отдельно или вместе с товарами. Товары в этом заказе сразу пересчитаются по скидочным ценам.</Text>

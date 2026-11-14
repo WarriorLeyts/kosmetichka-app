@@ -1,3 +1,4 @@
+import { LoyaltyActions } from "./LoyaltyActions";
 import { useEffect, useRef, useState } from "react";
 import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
@@ -42,7 +43,7 @@ export function EmptyLoyaltyCard({ width, onAdd }: { width: number; onAdd: () =>
   return (
     <View style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}>
       <Text style={[styles.title, { color: c.label }]}>Моя карта</Text>
-      <Pressable onPress={press} accessibilityRole="button" accessibilityLabel="Добавить карту лояльности">
+      <Pressable onPress={press} accessibilityRole="button" accessibilityLabel="Привязать или оформить карту лояльности">
         <View style={[styles.card, { width, height: COLLAPSED_H * k, borderRadius: 9 * k }]}>
           <LinearGradient colors={["#024697", "#004290"]} style={StyleSheet.absoluteFill} />
           <View style={{ height: 41 * k, flexDirection: "row", alignItems: "center", paddingHorizontal: 9 * k }}>
@@ -52,17 +53,11 @@ export function EmptyLoyaltyCard({ width, onAdd }: { width: number; onAdd: () =>
           <Image source={BANNER} style={{ width, height: 90 * k }} contentFit="cover" />
           <View style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 * k }}>
             <Ionicons name="add-circle" size={16 * k} color="#fff" />
-            <Text style={[styles.small, { fontSize: 11 * k }]}>ОФОРМИТЬ КАРТУ</Text>
+            <Text style={[styles.small, { fontSize: 11 * k }]}>КАРТА ЛОЯЛЬНОСТИ</Text>
           </View>
         </View>
       </Pressable>
-      <Pressable onPress={press} style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]} accessibilityRole="button">
-        <View style={[styles.rowIcon, { backgroundColor: "rgba(139,61,255,0.1)" }]}>
-          <Ionicons name="add" size={22} color={colors.brand} />
-        </View>
-        <Text style={styles.rowText}>Оформить карту · 990 ₽</Text>
-        <Ionicons name="chevron-forward" size={19} color={colors.brand} />
-      </Pressable>
+      <LoyaltyActions />
     </View>
   );
 }
