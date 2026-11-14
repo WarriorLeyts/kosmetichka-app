@@ -8,7 +8,7 @@ const path = require("path");
 
 const WANT = [
   "@expo/vector-icons", "@react-native-async-storage/async-storage", "expo-build-properties", "expo-camera",
-  "expo-constants", "expo-haptics", "expo-image", "expo-linear-gradient", "expo-linking", "expo-router",
+  "expo-audio", "expo-constants", "expo-haptics", "expo-image", "expo-linear-gradient", "expo-linking", "expo-router",
   "expo-splash-screen", "expo-status-bar", "expo-updates", "expo-web-browser", "react", "react-native",
   "@react-native-masked-view/masked-view", "expo-blur", "expo-font",
   "react-native-safe-area-context", "react-native-screens", "react-native-webview", "expo-image-picker", "expo-document-picker",
