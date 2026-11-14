@@ -1,8 +1,24 @@
 import { describe, expect, it } from "vitest";
-import { cartPriceTier, nextPriceTier, priceFor, resolveCustomerPriceType } from "./pricing";
+import { cartPriceTier, nextPriceTier, priceFor, resolveCustomerPriceType, minOrderFor, amountUntilMinOrder } from "./pricing";
 
 // The site prices the order with the same rules (lib/pricing.ts, lib/orderPricing.ts) — keep them identical
 const p = (o: Partial<Record<"retailPrice" | "discountPrice" | "wholesalePrice" | "bigWholesalePrice", number>>, quantity = 1) => ({ ...o, quantity });
+
+describe("retail minimum and a standalone loyalty card", () => {
+  const card = { quantity: 1, cardRegistration: { fullName: "Анна Иванова", birthDate: "15.03.1995" } };
+  it.each(["retail", "discount"])("%s requires 1000 with goods, but permits one card at 990", (priceType) => {
+    expect(minOrderFor({ priceType }, [p({ retailPrice: 999 })])).toBe(1000);
+    expect(minOrderFor({ priceType }, [card])).toBe(0);
+    expect(minOrderFor({ priceType }, [card, p({ retailPrice: 1 })])).toBe(1000);
+    expect(minOrderFor({ priceType }, [{ ...card, quantity: 2 }])).toBe(1000);
+  });
+  it("counts the remainder and leaves wholesale without a minimum", () => {
+    expect(amountUntilMinOrder([p({ retailPrice: 999 })], { priceType: "retail" })).toBe(1);
+    expect(amountUntilMinOrder([p({ retailPrice: 1000 })], { priceType: "retail" })).toBe(0);
+    expect(minOrderFor({ priceType: "wholesale" })).toBe(0);
+    expect(minOrderFor({ priceType: "big_wholesale" })).toBe(0);
+  });
+});
 
 describe("the customer's price type", () => {
   it("guest, retail with / without a card, wholesale, big wholesale", () => {

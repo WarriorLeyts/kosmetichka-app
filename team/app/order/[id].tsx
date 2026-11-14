@@ -487,7 +487,7 @@ export default function OrderScreen() {
         {/* where to send the order — shown even when empty, so a missing address is seen at once */}
         <KV k="Адрес" v={cust.address?.trim() ? cust.address : "не указан"} />
         <KV k="ИНН" v={cust.inn} />
-        {me?.role === "admin" ? (
+        {me?.role === "admin" && ["wholesale", "big_wholesale"].includes(cust.priceType) ? (
           <KV k="Менеджер 1С" v={groupBusy ? "передаём…" : `${cust.manager || "не выбран"}  ›`} onPress={groupBusy ? undefined : openGroups} />
         ) : (
           <KV k="Менеджер 1С" v={cust.manager} />

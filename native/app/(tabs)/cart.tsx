@@ -16,7 +16,7 @@ import { CardHintTotal } from "@/components/CardHint";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
-  calculateCart, priceFor, promotionalPrice, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
+  calculateCart, minOrderFor, priceFor, promotionalPrice, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
 } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -202,6 +202,8 @@ export default function Cart() {
   const active = pricing.tier;
   const total = pricing.total;
   const checkoutTotal = calc?.total ?? total;
+  const orderMinimum = minOrderFor(customer, items);
+  const minimumShortfall = Math.max(0, orderMinimum - checkoutTotal);
   const campaign = calc?.wholesalePromo ?? (pricing.percent > 0 ? { name:"Светлая пятница + ОПТ", percent:pricing.percent, discount:pricing.discount } : null);
   const wholesaleCustomer = resolveCustomerPriceType(customer) === "wholesale";
   const hasShock = items.some(item => promotionalPrice(item, active) !== null);
@@ -241,6 +243,7 @@ export default function Cart() {
       router.push("/login");
       return;
     }
+    if (minimumShortfall > 0) { setError(`Минимальная сумма розничного заказа — ${money(orderMinimum)}. Добавьте товары ещё на ${money(minimumShortfall)}.`); return; }
     submitting.current = true;
     setLoading(true);
     setError("");
@@ -590,13 +593,18 @@ export default function Cart() {
                 <Text style={[iosText.subhead, { color: "#FF3B30", flex: 1 }]}>{error}</Text>
               </View>
             ) : null}
+            {minimumShortfall > 0 ? <View style={{ borderRadius: 14, padding: 14, marginBottom: 12, backgroundColor: pinkSoft }} accessibilityRole="alert">
+              <Text style={{ color: c.label, fontWeight: "700" }}>Розничный заказ — от {money(orderMinimum)}</Text>
+              <Text style={{ color: c.secondary, marginTop: 4 }}>Добавьте товары ещё на {money(minimumShortfall)}.</Text>
+            </View> : null}
             {!customer ? (
               <Text style={[iosText.footnote, { color: c.secondary, textAlign: "center", marginBottom: 8 }]}>
                 Чтобы оформить заказ, войдите в аккаунт
               </Text>
             ) : null}
             <GradientButton
-              title={customer ? "Оформить заказ" : "Войти и оформить"}
+              disabled={minimumShortfall > 0}
+              title={minimumShortfall > 0 ? `Добавьте ещё на ${money(minimumShortfall)}` : customer ? "Оформить заказ" : "Войти и оформить"}
               icon={customer ? undefined : "log-in-outline"}
               loading={loading || (calcBusy && (!!promoCode || spend))}
               onPress={() => {
@@ -683,6 +691,7 @@ function GradientButton({
   const off = loading || disabled;
   return (
     <Pressable
+      disabled={off}
       onPress={() => {
         if (off) return;
         tap();
