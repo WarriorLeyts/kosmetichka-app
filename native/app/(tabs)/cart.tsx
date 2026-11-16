@@ -169,7 +169,7 @@ export default function Cart() {
         const lines = useCartStore
           .getState()
           .items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0)
-          .map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, cardRegistration: i.cardRegistration }));
+          .map((i) => ({ id: i.id, quantity: i.quantity, variantId: i.variantId, variantName: i.variantName ?? null, cardRegistration: i.cardRegistration }));
         // «Списать бонусы» on: ask for the last known maximum — the site re-asks MAXMA if it changed
         const want = spend ? Math.max(1, maxRef.current || calc?.bonuses?.balance || 1) : 0;
         const r = await api.checkoutCalc({ items: lines, promocode: promoCode ?? undefined, applyBonuses: want });
@@ -261,7 +261,7 @@ export default function Cart() {
       }
       requestId.current ??= `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
       const r = await api.createOrder(
-        lines.map((i) => ({ id: i.id, quantity: i.quantity, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null, cardRegistration: i.cardRegistration })),
+        lines.map((i) => ({ id: i.id, quantity: i.quantity, variantId: i.variantId, variantName: i.variantName ?? null, variantImageUrl: i.variantImageUrl ?? null, cardRegistration: i.cardRegistration })),
         currentComment().trim(),
         { promocode: promoCode && calc?.promo?.code === promoCode ? promoCode : undefined, applyBonuses: spend && !noBonuses ? calc?.bonuses?.applied ?? 0 : 0, pickup, address: pickup ? undefined : address.trim() || undefined, requestId: requestId.current }
       );
@@ -318,9 +318,10 @@ export default function Cart() {
     const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
     const price = priceFor(item, active);
     const shock = promotionalPrice(item, active);
-    const min = Math.max(1, item.minOrderQty ?? 1);
+    const min = item.assortmentEnabled || item.variantId ? 1 : Math.max(1, item.minOrderQty ?? 1);
     const stock = typeof item.stock === "number" && item.stock > 0 ? item.stock : null;
-    const atMax = stock !== null && item.quantity >= stock;
+    const totalForProduct = items.filter(i => i.id === item.id).reduce((s, i) => s + i.quantity, 0);
+    const atMax = stock !== null && totalForProduct >= stock;
     // a guest's stock is only a label value (10 = «мало», 9999 = «больше 10»): no exact number shown
     const showStock = atMax && !!customer;
     // can't be ordered: removed from the catalogue, or none left

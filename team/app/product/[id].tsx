@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View, Switch } from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,11 +13,11 @@ import { afterSheet, pickFile } from "@/components/chat/Attach";
 import { openUrl } from "@/components/chat/MessageBody";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { useLoad } from "@/useLoad";
-import { del, formFile, get, imageUrl, put, request } from "@/api";
+import { del, formFile, get, put, request } from "@/api";
 import { useIOS } from "@/ios";
 
 type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; stockByWarehouse?: { name: string; qty: number }[]; barcodes?: { barcode: string; unitName: string | null }[]; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
-type Variants = { variants: { id: number; imageId: number; imageUrl: string; name: string; sortOrder: number }[]; images: { id: number; path: string; url: string }[] };
+type Variants = { enabled: boolean; variants: { id: number; imageId: number; imageUrl: string; name: string; sortOrder: number; available: boolean }[]; images: { id: number; path: string; url: string }[] };
 
 const PRICE_NAMES: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
 
@@ -25,9 +25,11 @@ const PRICE_NAMES: Record<string, string> = { retail: "Розница", discount
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const c = useIOS();
-  const dark = c.blurTint === "dark";
   const [sheet, setSheet] = useState(false);
   const [busy, setBusy] = useState("");
+  const [enabled, setEnabled] = useState(false);
+  const [selected, setSelected] = useState<number[]>([]);
+  const [availability, setAvailability] = useState<Record<number, boolean>>({});
   const [names, setNames] = useState<Record<number, string>>({});
   const { data, error, loading, reload } = useLoad(async () => {
     const [p, v] = await Promise.all([get<{ product: Product }>(`/api/admin/products/${id}`), get<Variants>(`/api/admin/products/${id}/variants`)]);
@@ -39,6 +41,9 @@ export default function ProductScreen() {
     const n: Record<number, string> = {};
     for (const img of data.images) n[img.id] = data.variants.find((v) => v.imageId === img.id)?.name ?? "";
     setNames(n);
+    setEnabled(data.enabled);
+    setSelected(data.variants.map(v => v.imageId));
+    setAvailability(Object.fromEntries(data.variants.map(v => [v.imageId, v.available])));
   }, [data]);
 
   const p = data?.product;
@@ -87,8 +92,8 @@ export default function ProductScreen() {
     if (!data) return;
     setBusy("variants");
     try {
-      const variants = data.images.filter((img) => names[img.id]?.trim()).map((img, i) => ({ imageId: img.id, name: names[img.id].trim(), sortOrder: i }));
-      await put(`/api/admin/products/${id}/variants`, { variants });
+      const variants = selected.map((imageId, i) => ({ imageId, name: names[imageId]?.trim() || `Вариант ${i + 1}`, available: availability[imageId] !== false, sortOrder: i }));
+      await put(`/api/admin/products/${id}/variants`, { enabled, variants });
       await reload();
       Alert.alert("Сохранено", variants.length ? `Вариантов: ${variants.length}` : "Варианты убраны");
     } catch (e) {
@@ -155,26 +160,30 @@ export default function ProductScreen() {
             <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 8 }}>Новое фото заменяет все текущие — так же, как в админке сайта</Text>
           </Card>
 
-          {data.images.length > 1 ? (
-            <>
-              <SectionTitle>Варианты (цвет, оттенок)</SectionTitle>
-              <Card>
-                {data.images.map((img) => (
-                  <View key={img.id} style={styles.variant}>
+          <SectionTitle>Ассортимент по фото</SectionTitle>
+          <Card>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 }}><Switch accessibilityLabel="Ассортимент — выбор по фото" value={enabled} onValueChange={setEnabled} /><Text style={{ flex: 1, color: c.label }}>Ассортимент — выбор по фото</Text></View>
+            <Text style={{ color: c.secondary, marginBottom: 12 }}>Одна номенклатура, общая цена и остаток. Наличие выбранных видов подтверждается при сборке.</Text>
+            {enabled && <>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 12 }}><ActionButton label="Отметить все фото" onPress={() => setSelected(data.images.map(img => img.id))} /><ActionButton label="Снять выделение" onPress={() => setSelected([])} /></View>
+              {[...data.images].sort((a, b) => { const ai = selected.indexOf(a.id), bi = selected.indexOf(b.id); return (ai < 0 ? 9999 : ai) - (bi < 0 ? 9999 : bi); }).map(img => {
+                const index = selected.indexOf(img.id);
+                return <View key={img.id} style={{ marginBottom: 16 }}>
+                  <View style={styles.variant}>
+                    <Pressable accessibilityRole="checkbox" accessibilityLabel={`Выбрать фото ${img.id}`} accessibilityState={{ checked: index >= 0 }} aria-checked={index >= 0} onPress={() => setSelected(ids => index >= 0 ? ids.filter(x => x !== img.id) : [...ids, img.id])} style={{ padding: 8 }}><Ionicons name={index >= 0 ? "checkbox" : "square-outline"} size={24} color={VIOLET} /></Pressable>
                     <Image source={{ uri: img.url }} style={styles.vImg} contentFit="contain" />
-                    <TextInput
-                      value={names[img.id] ?? ""}
-                      onChangeText={(t) => setNames((n) => ({ ...n, [img.id]: t }))}
-                      placeholder="Название варианта"
-                      placeholderTextColor={c.tertiary}
-                      style={[styles.vInput, { color: c.label, backgroundColor: dark ? "#2B193D" : "#F8F7FB" }]}
-                    />
+                    <TextInput value={names[img.id] ?? ""} onChangeText={t => setNames(n => ({ ...n, [img.id]: t }))} placeholder={index >= 0 ? `Вариант ${index + 1}` : "Название вида"} placeholderTextColor={c.tertiary} style={[styles.vInput, { color: c.label, backgroundColor: c.cell }]} />
                   </View>
-                ))}
-                <ActionButton label="Сохранить варианты" loading={busy === "variants"} onPress={saveVariants} />
-              </Card>
-            </>
-          ) : null}
+                  {index >= 0 && <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+                    <Switch accessibilityLabel={`Доступен ${names[img.id] || `Вариант ${index + 1}`}`} value={availability[img.id] !== false} onValueChange={value => setAvailability(a => ({ ...a, [img.id]: value }))} /><Text style={{ color: c.secondary }}>Доступен</Text>
+                    {index > 0 && <ActionButton label="Выше" onPress={() => setSelected(ids => { const next = [...ids]; [next[index - 1], next[index]] = [next[index], next[index - 1]]; return next; })} />}
+                    {index < selected.length - 1 && <ActionButton label="Ниже" onPress={() => setSelected(ids => { const next = [...ids]; [next[index + 1], next[index]] = [next[index], next[index + 1]]; return next; })} />}
+                  </View>}
+                </View>;
+              })}
+            </>}
+            <ActionButton label="Сохранить ассортимент" loading={busy === "variants"} onPress={saveVariants} />
+          </Card>
           {busy === "photo" ? <ActivityIndicator color={VIOLET} /> : null}
         </>
       )}

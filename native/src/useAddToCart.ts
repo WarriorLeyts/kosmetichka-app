@@ -1,34 +1,12 @@
+import { Alert } from "react-native";
+import { useAssortmentPicker } from "./components/AssortmentPicker";
 import { useCallback } from "react";
-import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { api } from "./api";
 import { useCartStore } from "./store/cart";
 import type { Product } from "./types";
-import { seedProduct } from "./productSeed";
 
-/** Variant cache so a second tap doesn't hit the network again. */
-const variantCount = new Map<number, number>();
-const inFlight = new Map<number, Promise<number | null>>();
-
-/** Number of variants; null when the request failed (not cached, so it is retried next time). */
-function variantsOf(id: number): Promise<number | null> {
-  const known = variantCount.get(id);
-  if (known !== undefined) return Promise.resolve(known);
-  let p = inFlight.get(id);
-  if (!p) {
-    p = api
-      .variants(id)
-      .then((r) => {
-        const n = r.variants?.length ?? 0;
-        variantCount.set(id, n);
-        return n;
-      })
-      .catch(() => null)
-      .finally(() => inFlight.delete(id));
-    inFlight.set(id, p);
-  }
-  return p;
-}
+const inFlight = new Set<number>();
 
 /**
  * Add from a list card: products with variants (shades, sizes) open the product
@@ -40,15 +18,17 @@ export function useAddToCart() {
     async (product: Product) => {
       // a second fast tap while the first one is still checking does nothing
       if (inFlight.has(product.id)) return;
-      const n = await variantsOf(product.id);
-      if (n === null || n > 0) {
-        // has variants (or we couldn't check) — choose on the product screen
-        seedProduct(product);
-        router.push(`/product/${product.id}?pick=1`);
-        return;
-      }
-      add(product);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      inFlight.add(product.id);
+      try {
+        const [fresh, result] = await Promise.all([api.product(product.id), api.variants(product.id)]);
+        if (fresh.assortmentEnabled || result.variants.length) {
+          useAssortmentPicker.getState().open(fresh, result.variants);
+          return;
+        }
+        add(fresh);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      } catch { Alert.alert("Не удалось загрузить товар", "Проверьте подключение и попробуйте ещё раз."); }
+      finally { inFlight.delete(product.id); }
     },
     [add]
   );

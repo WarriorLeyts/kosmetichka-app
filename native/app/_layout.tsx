@@ -1,3 +1,4 @@
+import { AssortmentPicker } from "@/components/AssortmentPicker";
 import "@/webAlert";
 import "@/webIOS";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -206,6 +207,7 @@ function AppRoot() {
         <Stack.Screen name="notifications" options={{ title: "Уведомления", headerShown: false }} />
         <Stack.Screen name="delete-account" options={{ title: "Удалить аккаунт", headerShown: false }} />
       </Stack>
+      <AssortmentPicker />
       <ThemeFade mode={mode} />
       {inExpoGo || desktop ? null : <AnimatedSplash onReady={onSplashReady} />}
       {/* website on a phone: «установите приложение» */}

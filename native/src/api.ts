@@ -432,7 +432,7 @@ export const api = {
 
   // ── Orders ──
   createOrder(
-    items: { id: number; quantity: number; variantName?: string | null; variantImageUrl?: string | null; cardRegistration?: { fullName: string; birthDate: string } }[],
+    items: { id: number; quantity: number; variantId?: number; variantName?: string | null; variantImageUrl?: string | null; cardRegistration?: { fullName: string; birthDate: string } }[],
     comment: string,
     extra: { promocode?: string; applyBonuses?: number; pickup?: boolean; address?: string; requestId?: string } = {}
   ) {
@@ -450,11 +450,11 @@ export const api = {
     });
   },
   /** Cart total with MAXMA: promo code, bonuses to spend, bonuses to be accrued (nothing is reserved yet). */
-  checkoutCalc(body: { items: { id: number; quantity: number; variantName?: string | null; cardRegistration?: { fullName: string; birthDate: string } }[]; promocode?: string; applyBonuses?: number }) {
+  checkoutCalc(body: { items: { id: number; quantity: number; variantId?: number; variantName?: string | null; cardRegistration?: { fullName: string; birthDate: string } }[]; promocode?: string; applyBonuses?: number }) {
     return request<CheckoutCalc>("/api/checkout/calc", { method: "POST", body: json(body) });
   },
   /** Promo code from MAXMA: the server prices the cart and asks MAXMA for the discount (nothing is reserved yet). */
-  promoCheck(code: string, items: { id: number; quantity: number; variantName?: string | null }[]) {
+  promoCheck(code: string, items: { id: number; quantity: number; variantId?: number; variantName?: string | null }[]) {
     return request<{ ok: true; code: string; name?: string; subtotal: number; discount: number; total: number }>("/api/promo/check", {
       method: "POST",
       body: json({ code, items }),

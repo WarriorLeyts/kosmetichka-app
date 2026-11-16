@@ -1,3 +1,4 @@
+import { useAssortmentPicker } from "@/components/AssortmentPicker";
 import { retailPricePromotion } from "@/retailPricePromotion";
 import { RetailPriceComparison } from "@/components/RetailPriceComparison";
 import { wholesalePriceComparison } from "@/wholesalePricePanels";
@@ -376,7 +377,7 @@ export default function ProductScreen() {
             ) : null}
           </View>
 
-          {variants.length > 0 && !out ? (
+          {variants.length > 0 && !out && !product.assortmentEnabled ? (
             <View
               style={[styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow]}
               onLayout={(e) => {
@@ -507,6 +508,8 @@ export default function ProductScreen() {
               loading={waitBusy}
               onPress={onWait}
             />
+          ) : product.assortmentEnabled ? (
+            <GradientButton title="Выбрать виды" icon="bag-add-outline" onPress={() => useAssortmentPicker.getState().open(product, variants)} />
           ) : variants.length > 0 ? (
             <GradientButton
               title={pickedTotal > 0 ? `Добавить ${pickedTotal} шт.` : "Выберите варианты выше"}
