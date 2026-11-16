@@ -6,7 +6,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, Chips, ErrorState, KV, Loading, SectionTitle } from "@/components/kit";
 import { useLoad } from "@/useLoad";
-import { BASE_URL, get, post, put } from "@/api";
+import { BASE_URL, del, get, post, put } from "@/api";
 import { date } from "@/format";
 import { useIOS } from "@/ios";
 import { CustomerBadge } from "@/components/CustomerBadge";
@@ -25,6 +25,28 @@ export default function Customer() {
   const running = useRef(false);
   const { data, error, loading, reload } = useLoad(() => get<CustomerDetail>(`/api/team/customers/${id}`), [id]);
   const x = data?.customer;
+
+  const deleteCustomer = () => {
+    if (!canEdit || !x || x.ordersCount > 0 || running.current) return;
+    Alert.alert(`Удалить клиента «${x.displayName}»?`, "Аккаунт на сайте будет удалён без возможности восстановления. Данные в 1С и MAXMA сохранятся.", [
+      { text: "Отмена", style: "cancel" },
+      { text: "Удалить", style: "destructive", onPress: async () => {
+        if (running.current) return;
+        running.current = true;
+        setBusy("delete");
+        try {
+          await del(`/api/admin/customers/${id}`);
+          router.replace("/(tabs)/customers");
+        } catch (e) {
+          Alert.alert("Не удалось удалить", e instanceof Error ? e.message : "Попробуйте ещё раз");
+          await reload();
+        } finally {
+          running.current = false;
+          setBusy("");
+        }
+      } },
+    ]);
+  };
 
   const act = (kind: "approve" | "block") => {
     const title = kind === "approve" ? "Подтвердить клиента?" : "Снять подтверждение?";
@@ -233,9 +255,11 @@ export default function Customer() {
             {!x.isApproved && x.isActive ? <ActionButton label="Подтвердить" kind="success" loading={busy === "approve"} onPress={() => act("approve")} /> : null}
             {x.isApproved && x.isActive ? <ActionButton label="Снять подтверждение" kind="danger" loading={busy === "block"} onPress={() => act("block")} /> : null}
             {signupOpen || roleOpen ? <ActionButton label="В неактуальные" kind="soft" loading={busy === "stale"} onPress={() => setStale(true)} /> : null}
-            {(signupOpen || roleOpen) ? <ActionButton label="Заблокировать" kind="danger" loading={busy === "lock"} onPress={() => setBlocked(true)} /> : null}
+            {x.isActive ? <ActionButton label="Заблокировать" kind="danger" loading={busy === "lock"} onPress={() => setBlocked(true)} /> : null}
+            {x.ordersCount === 0 ? <ActionButton label="Удалить клиента" kind="danger" icon="trash-outline" loading={busy === "delete"} disabled={!!busy} onPress={deleteCustomer} /> : null}
             {!x.isActive ? <ActionButton label="Разблокировать" kind="success" loading={busy === "unlock"} onPress={() => setBlocked(false)} /> : null}
           </View>}
+          {canEdit && x.ordersCount > 0 ? <Text style={{ color: c.secondary, fontSize: 13 }}>У клиента есть заказы — доступна блокировка, удаление запрещено.</Text> : null}
           {!canEdit ? null : form ? (
             <CustomerForm
               form={form}
