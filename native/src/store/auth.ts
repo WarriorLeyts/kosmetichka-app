@@ -84,6 +84,7 @@ function normalizeLogin(v: string) {
   const t = v.trim();
   if (t.includes("@")) return t.toLowerCase();
   const d = t.replace(/\D/g, "");
+  if (t.startsWith("+") && !t.startsWith("+7")) return "+" + d;
   if (d.length === 11 && d.startsWith("7")) return "8" + d.slice(1);
   if (d.length === 10) return "8" + d;
   return d || t;

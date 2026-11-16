@@ -327,9 +327,12 @@ export const api = {
   sendSms(phone: string) {
     return request<{ success?: boolean }>("/api/auth/sms/send", { method: "POST", body: json({ phone }) });
   },
+  sendRegistrationEmail(email: string, phone: string) {
+    return request<{ success: boolean; challengeId: string }>("/api/auth/email/send", { method: "POST", body: json({ email, phone }) });
+  },
   register(body: {
     name: string; companyName?: string; address?: string; phone: string; email: string; password: string;
-    captchaToken: string; smsCode: string; priceType: string; source?: "site";
+    captchaToken: string; smsCode: string; foreignPhone?: boolean; emailCode?: string; emailChallengeId?: string; priceType: string; source?: "site";
     shopType?: string; shopLink?: string; referralSource?: string; orderedBefore?: boolean;
   }) {
     // proofToken: wholesale applicant — 3 days to upload the shop photos / videos (uploadProof)

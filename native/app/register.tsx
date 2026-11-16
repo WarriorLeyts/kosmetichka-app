@@ -120,6 +120,8 @@ export default function Register() {
   const [uploading, setUploading] = useState("");
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
+  const [foreignPhone, setForeignPhone] = useState(false);
+  const [emailChallengeId, setEmailChallengeId] = useState("");
   const [smsSent, setSmsSent] = useState(false);
   const [smsCode, setSmsCode] = useState("");
   const [cooldown, setCooldown] = useState(0);
@@ -145,6 +147,9 @@ export default function Register() {
   // change started from the same old form and the last one wiped the others
   const upd = (k: keyof typeof f) => (v: string) => {
     setF((prev) => ({ ...prev, [k]: v }));
+    if (k === "phone" || (k === "email" && foreignPhone)) {
+      setSmsSent(false); setSmsCode(""); setEmailChallengeId(""); setCooldown(0);
+    }
     setErrors((prev) => (prev[k as keyof Errors] ? { ...prev, [k]: undefined } : prev));
   };
   const wholesale = priceType === "wholesale" || priceType === "big_wholesale";
@@ -153,8 +158,9 @@ export default function Register() {
     if (smsBusy.current) return; // a double tap would send two SMS (the second one fails with «wait 60 s»)
     const e: Errors = {};
     if (!captcha) e.captcha = "Сначала отметьте «Я не робот»";
-    if (f.phone.replace(/\D/g, "").length < 10) e.phone = "Введите номер телефона";
-    if (e.captcha || e.phone) {
+    if (foreignPhone ? !/^\+[1-9]\d{6,14}$/.test(f.phone.replace(/[\s().-]/g, "")) || f.phone.trim().startsWith("+7") : f.phone.replace(/\D/g, "").length < 10) e.phone = foreignPhone ? "Введите иностранный номер с + и кодом страны" : "Введите номер телефона";
+    if (foreignPhone && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = "Укажите email для получения кода";
+    if (e.captcha || e.phone || e.email) {
       setErrors({ ...errors, ...e });
       return;
     }
@@ -162,11 +168,14 @@ export default function Register() {
     setBusy("sms");
     setError("");
     try {
-      await api.sendSms(f.phone);
+      if (foreignPhone) {
+        const result = await api.sendRegistrationEmail(f.email.trim(), f.phone);
+        setEmailChallengeId(result.challengeId);
+      } else await api.sendSms(f.phone);
       setSmsSent(true);
       setCooldown(60);
     } catch (err) {
-      setErrors({ ...errors, phone: err instanceof Error ? err.message : "Не удалось отправить SMS" });
+      setErrors({ ...errors, [foreignPhone ? "email" : "phone"]: err instanceof Error ? err.message : "Не удалось отправить код" });
     } finally {
       smsBusy.current = false;
       setBusy("");
@@ -184,10 +193,10 @@ export default function Register() {
     if (!f.email.trim()) e.email = "Укажите email";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = "Проверьте email";
     if (f.password.length < 6) e.password = "Пароль должен быть не короче 6 символов";
-    if (f.phone.replace(/\D/g, "").length < 10) e.phone = "Введите номер телефона";
+    if (foreignPhone ? !/^\+[1-9]\d{6,14}$/.test(f.phone.replace(/[\s().-]/g, "")) || f.phone.trim().startsWith("+7") : f.phone.replace(/\D/g, "").length < 10) e.phone = foreignPhone ? "Введите иностранный номер с + и кодом страны" : "Введите номер телефона";
     if (!captcha) e.captcha = "Отметьте «Я не робот»";
-    if (!smsSent) e.smsCode = "Получите код по SMS";
-    else if (smsCode.trim().length < 4) e.smsCode = "Введите код из SMS";
+    if (!smsSent) e.smsCode = foreignPhone ? "Получите код на почту" : "Получите код по SMS";
+    else if (smsCode.trim().length !== 6) e.smsCode = foreignPhone ? "Введите 6 цифр из письма" : "Введите код из SMS";
     if (!consent) e.consent = "Нужно согласие с документами";
     setErrors(e);
     if (Object.keys(e).length) {
@@ -203,7 +212,8 @@ export default function Register() {
         ...f,
         address: wholesale ? f.address.trim() : undefined,
         captchaToken: captcha ?? "",
-        smsCode: smsCode.trim(),
+        smsCode: foreignPhone ? "" : smsCode.trim(),
+        ...(foreignPhone ? { foreignPhone: true, emailCode: smsCode.trim(), emailChallengeId } : {}),
         priceType,
         ...(wholesale && shopType ? { shopType } : {}),
         ...(RETAIL_ENABLED ? {} : { source: "site" as const }),
@@ -324,6 +334,7 @@ export default function Register() {
               placeholder="mail@example.com"
               value={f.email}
               onChangeText={upd("email")}
+              editable={!busy}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
@@ -342,13 +353,28 @@ export default function Register() {
             />
             <IOSField
               label="Телефон"
-              placeholder="+7 900 000 00 00"
+              placeholder={foreignPhone ? "+995 555 123 456" : "+7 900 000 00 00"}
               value={f.phone}
               onChangeText={upd("phone")}
+              editable={!busy}
               keyboardType="phone-pad"
               autoComplete="tel"
               error={errors.phone}
             />
+            <Pressable
+              accessibilityRole="checkbox"
+              accessibilityLabel="Иностранный номер"
+              accessibilityState={{ checked: foreignPhone, disabled: !!busy }}
+              disabled={!!busy}
+              onPress={() => {
+                setForeignPhone(!foreignPhone); setSmsSent(false); setSmsCode(""); setEmailChallengeId(""); setCooldown(0); setErrors({}); setError("");
+              }}
+              style={{ flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12 }}
+            >
+              <Ionicons name={foreignPhone ? "checkbox" : "square-outline"} size={24} color={VIOLET} />
+              <Text style={{ color: c.label, fontSize: 16 }}>Иностранный номер</Text>
+            </Pressable>
+            {foreignPhone ? <Text style={[styles.sub, { color: c.secondary, marginBottom: 16 }]}>Код подтверждения придёт на вашу электронную почту. Телефон нужен для связи в WhatsApp — укажите его с кодом страны.</Text> : null}
             {/* real Yandex SmartCaptcha (same key as the site) */}
             <Captcha
               key={captchaKey}
@@ -363,13 +389,13 @@ export default function Register() {
 
           {/* phone confirmation (existing SMS flow) */}
           <View style={[panel, { marginTop: 16 }]}>
-            <Text style={[styles.h2, { color: c.label }]}>Подтверждение телефона</Text>
-            <Text style={[styles.sub, { color: c.secondary }]}>На ваш номер будет отправлен код из SMS</Text>
+            <Text style={[styles.h2, { color: c.label }]}>{foreignPhone ? "Подтверждение почты" : "Подтверждение телефона"}</Text>
+            <Text style={[styles.sub, { color: c.secondary }]}>{foreignPhone ? "На ваш email будет отправлен код подтверждения" : "На ваш номер будет отправлен код из SMS"}</Text>
             <View style={styles.smsRow}>
               <View style={{ flex: 1 }}>
                 <IOSField
-                  label="Код из SMS"
-                  placeholder="Код из SMS"
+                  label={foreignPhone ? "Код из письма" : "Код из SMS"}
+                  placeholder={foreignPhone ? "6 цифр из письма" : "Код из SMS"}
                   value={smsCode}
                   onChangeText={(v) => {
                     setSmsCode(v);
@@ -385,12 +411,12 @@ export default function Register() {
               <OutlineButton
                 title={cooldown > 0 ? `Ещё раз · ${cooldown} с` : smsSent ? "Ещё раз" : "Получить код"}
                 loading={busy === "sms"}
-                disabled={cooldown > 0}
+                disabled={cooldown > 0 || !!busy}
                 onPress={sendSms}
                 style={{ marginTop: 29, minWidth: 140 }}
               />
             </View>
-            {smsSent ? <Text style={[styles.sub, { color: "#1f8a3b", marginTop: -6, marginBottom: 10 }]}>Код отправлен на {f.phone}</Text> : null}
+            {smsSent ? <Text style={[styles.sub, { color: "#1f8a3b", marginTop: -6, marginBottom: 10 }]}>Код отправлен на {foreignPhone ? f.email : f.phone}</Text> : null}
           </View>
 
           {/* two short questions (optional) — staff see the answers on the customer's card in Team */}
