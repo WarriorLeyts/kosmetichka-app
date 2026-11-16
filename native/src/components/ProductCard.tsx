@@ -1,3 +1,4 @@
+import { AssortmentPhoto } from "./AssortmentPhoto";
 import { retailPricePromotion } from "../retailPricePromotion";
 import { RetailPriceComparison } from "./RetailPriceComparison";
 import { wholesalePriceComparison } from "../wholesalePricePanels";
@@ -10,7 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { imageUrl } from "../api";
 import { seedProduct } from "../productSeed";
 import { colors, radius, themed } from "../theme";
-import { stockLabel } from "../format";
+import { stockLabel, plural } from "../format";
 import { priceRows, PriceRows } from "./Price";
 import { WholesalePriceComparison } from "./WholesalePriceComparison";
 import { tap } from "./ui";
@@ -46,7 +47,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
       style={({ pressed }) => [styles.card, pressed && { opacity: 0.92 }]}
     >
       <View style={styles.imageWrap}>
-        {img ? (
+        {product.assortmentEnabled && product.variants?.length ? <AssortmentPhoto product={product} /> : img ? (
           <SafeImage uri={img} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} iconColor={colors.faint} />
         ) : (
           <Ionicons name="image-outline" size={34} color={colors.faint} />
@@ -65,6 +66,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
       </View>
 
       <View style={{ padding: 10, flex: 1 }}>
+        {product.assortmentEnabled ? <Text style={{ color: colors.violet, fontSize: 11, fontWeight: "700", marginBottom: 5 }}>Ассортимент · {product.variants?.length ?? 0} {plural(product.variants?.length ?? 0, "вид", "вида", "видов")}</Text> : null}
         {product.brand?.name ? <Text style={styles.brand} numberOfLines={1}>{product.brand.name}</Text> : null}
         <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
         <View style={[styles.stock, { backgroundColor: STOCK_PILL[stock.tone].bg }]}>
@@ -86,7 +88,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
           <LinearGradient colors={BRAND_GRADIENT} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.add}>
             <Ionicons name="cart-outline" size={16} color="#fff" />
             <Text style={styles.addText}>
-              {out ? "Нет в наличии" : inCart > 0 ? `В корзине: ${inCart}` : "В корзину"}
+              {out ? "Нет в наличии" : product.assortmentEnabled ? "Выбрать виды" : inCart > 0 ? `В корзине: ${inCart}` : "В корзину"}
             </Text>
           </LinearGradient>
         </Pressable>

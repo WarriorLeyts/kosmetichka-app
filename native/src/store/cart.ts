@@ -52,8 +52,11 @@ export const useCartStore = create<CartState>()(
 
       addVariants: (product, entries) => {
         const items = [...get().items];
-        for (const { variant, quantity } of entries) {
-          if (quantity <= 0) continue;
+        let remaining = Math.max(0, (product.stock == null ? 9999 : Math.floor(product.stock)) - items.filter(i => i.id === product.id).reduce((s, i) => s + i.quantity, 0));
+        for (const { variant, quantity: requested } of entries) {
+          const quantity = Math.min(remaining, Math.max(0, Math.floor(requested)));
+          if (!Number.isFinite(quantity) || quantity <= 0) continue;
+          remaining -= quantity;
           const key = `${product.id}_v${variant.id}`;
           const idx = items.findIndex((i) => i.cartKey === key);
           if (idx >= 0) items[idx] = { ...items[idx], quantity: items[idx].quantity + quantity };
@@ -77,7 +80,12 @@ export const useCartStore = create<CartState>()(
           set({ items: get().items.filter((i) => i.cartKey !== cartKey) });
           return;
         }
-        set({ items: get().items.map((i) => (i.cartKey === cartKey ? { ...i, quantity } : i)) });
+        const current = get().items.find(i => i.cartKey === cartKey);
+        if (current?.stock != null) {
+          const others = get().items.filter(i => i.id === current.id && i.cartKey !== cartKey).reduce((s, i) => s + i.quantity, 0);
+          quantity = Math.min(quantity, Math.max(0, Math.floor(current.stock) - others));
+        }
+        set({ items: get().items.map((i) => (i.cartKey === cartKey ? { ...i, quantity } : i)).filter(i => i.quantity > 0) });
       },
 
       remove: (cartKey) => set({ items: get().items.filter((i) => i.cartKey !== cartKey) }),

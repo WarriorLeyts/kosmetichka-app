@@ -1,3 +1,4 @@
+import { AssortmentPhoto } from "./AssortmentPhoto";
 import { retailPricePromotion } from "../retailPricePromotion";
 import { RetailPriceComparison } from "./RetailPriceComparison";
 import { wholesalePriceComparison } from "../wholesalePricePanels";
@@ -8,7 +9,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { imageUrl } from "../api";
 import { seedProduct } from "../productSeed";
-import { money, stockLabel } from "../format";
+import { money, stockLabel, plural } from "../format";
 import { useIOS } from "../ios";
 import { priceRows } from "./Price";
 import { WholesalePriceComparison } from "./WholesalePriceComparison";
@@ -87,7 +88,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       style={({ pressed }) => [styles.card, { backgroundColor: c.cell }, dark && { boxShadow: undefined }, pressed && { transform: [{ scale: 0.985 }] }]}
     >
       <View style={styles.photo}>
-        {img ? (
+        {product.assortmentEnabled && product.variants?.length ? <AssortmentPhoto product={product} /> : img ? (
           <SafeImage uri={img} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} />
         ) : (
           <Ionicons name="image-outline" size={34 * k} color="#C7C7CC" />
@@ -115,7 +116,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       </View>
 
       <Text numberOfLines={1} style={[styles.brand, { color: c.secondary }]}>
-        {product.brand?.name?.toUpperCase() ?? " "}
+        {product.assortmentEnabled ? `Ассортимент · ${product.variants?.length ?? 0} ${plural(product.variants?.length ?? 0, "вид", "вида", "видов")}` : product.brand?.name?.toUpperCase() ?? " "}
       </Text>
       <Text numberOfLines={2} style={[styles.name, { color: c.label }]}>
         {product.name}
@@ -167,9 +168,9 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       <View style={{ flex: 1 }} />
       {pickMode && picked > 0 ? (
         <PickRow product={product} qty={picked} out={out} dark={dark} label={c.label} onStep={onPickStep} />
-      ) : !pickMode && inCart > 0 && !out && cartStepper ? (
+      ) : !pickMode && !product.assortmentEnabled && inCart > 0 && !out && cartStepper ? (
         <QtyRow product={product} qty={inCart} dark={dark} label={c.label} />
-      ) : !pickMode && inCart > 0 && !out ? (
+      ) : !pickMode && !product.assortmentEnabled && inCart > 0 && !out ? (
         // «Избранное»: the cart quantity is changed in the cart, not here
         <Pressable
           accessibilityRole="button"
@@ -191,7 +192,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
         <Pressable
           disabled={out || picking}
           accessibilityRole="button"
-          accessibilityLabel={out ? "Нет в наличии" : pickMode ? `Добавить ${product.name}` : "Добавить в корзину"}
+          accessibilityLabel={out ? "Нет в наличии" : pickMode ? `Добавить ${product.name}` : product.assortmentEnabled ? "Выбрать виды" : "Добавить в корзину"}
           onPress={() => {
             tap();
             onAdd(product);
@@ -210,7 +211,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
               <Ionicons name={pickMode && !out ? "add" : "cart-outline"} size={(pickMode && !out ? 20 : 18) * k} color="#fff" />
             )}
             <Text numberOfLines={1} style={styles.buttonText}>
-              {out ? "Нет в наличии" : pickMode ? "Добавить" : "В корзину"}
+              {out ? "Нет в наличии" : pickMode ? "Добавить" : product.assortmentEnabled ? "Выбрать виды" : "В корзину"}
             </Text>
           </LinearGradient>
         </Pressable>
