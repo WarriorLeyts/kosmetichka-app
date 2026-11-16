@@ -5,6 +5,11 @@ import { KV } from "./kit";
 /** 8 900 123-45-67 / +7 (900) … / 9001234567 → 79001234567 (for wa.me); null when it isn't a phone */
 export function waNumber(phone: string | null | undefined): string | null {
   // «доб. 12» / «ext 12» is not part of the number
+  const explicit = (phone ?? "").trim().startsWith("+");
+  if (explicit) {
+    const digits = (phone ?? "").split(/доб|ext|#|,/i)[0].replace(/\D/g, "");
+    return /^[1-9]\d{6,14}$/.test(digits) ? digits : null;
+  }
   let d = (phone ?? "").split(/доб|ext|#|,/i)[0].replace(/\D/g, "");
   if (d.length > 11 && /^[78]/.test(d)) d = d.slice(0, 11);
   if (d.length === 11 && d.startsWith("8")) d = "7" + d.slice(1);
