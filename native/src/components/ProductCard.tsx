@@ -1,3 +1,4 @@
+import { RestockButton } from "./RestockButton";
 import { ProductLabels } from "./ProductLabels";
 import { useCampaign } from "@/useCampaign";
 import { AssortmentPhoto } from "./AssortmentPhoto";
@@ -83,7 +84,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
           ? <WholesalePriceComparison product={product} customer={customer} />
           : retailPromotion ? <RetailPriceComparison promotion={retailPromotion} />
           : <PriceRows rows={priceRows(product, customer, activePrice)} />}
-        <Pressable
+        {out ? <RestockButton productId={product.id} /> : <Pressable
           disabled={out}
           onPress={() => {
             tap();
@@ -97,7 +98,7 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
               {out ? "Нет в наличии" : product.assortmentEnabled ? "Выбрать виды" : inCart > 0 ? `В корзине: ${inCart}` : "В корзину"}
             </Text>
           </LinearGradient>
-        </Pressable>
+        </Pressable>}
       </View>
     </Pressable>
   );

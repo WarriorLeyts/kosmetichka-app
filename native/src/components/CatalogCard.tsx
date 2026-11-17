@@ -1,3 +1,4 @@
+import { RestockButton } from "./RestockButton";
 import { useCampaign } from "@/useCampaign";
 import { AssortmentPhoto } from "./AssortmentPhoto";
 import { AssortmentBadge } from "./AssortmentBadge";
@@ -26,7 +27,6 @@ import { FitText } from "./FitText";
 import { SafeImage } from "./SafeImage";
 import { ProductLabels } from "./ProductCard";
 import { scaleStyles, useCardScale, withFonts, PHONE_CARD_SCALE } from "../cardScale";
-import { colors } from "@/theme";
 
 type Props = {
   product: Product;
@@ -169,7 +169,9 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
       )}
 
       <View style={{ flex: 1 }} />
-      {pickMode && picked > 0 ? (
+      {out && !pickMode ? (
+        <RestockButton productId={product.id} />
+      ) : pickMode && picked > 0 ? (
         <PickRow product={product} qty={picked} out={out} dark={dark} label={c.label} onStep={onPickStep} />
       ) : !pickMode && !product.assortmentEnabled && inCart > 0 && !out && cartStepper ? (
         <QtyRow product={product} qty={inCart} dark={dark} label={c.label} />
