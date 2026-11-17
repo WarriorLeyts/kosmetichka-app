@@ -1,4 +1,5 @@
 import { AssortmentPhoto } from "./AssortmentPhoto";
+import { AssortmentBadge } from "./AssortmentBadge";
 import { retailPricePromotion } from "../retailPricePromotion";
 import { RetailPriceComparison } from "./RetailPriceComparison";
 import { wholesalePriceComparison } from "../wholesalePricePanels";
@@ -11,7 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { imageUrl } from "../api";
 import { seedProduct } from "../productSeed";
 import { colors, radius, themed } from "../theme";
-import { stockLabel, plural } from "../format";
+import { stockLabel } from "../format";
 import { priceRows, PriceRows } from "./Price";
 import { WholesalePriceComparison } from "./WholesalePriceComparison";
 import { tap } from "./ui";
@@ -66,8 +67,8 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
       </View>
 
       <View style={{ padding: 10, flex: 1 }}>
-        {product.assortmentEnabled ? <Text style={{ color: colors.violet, fontSize: 11, fontWeight: "700", marginBottom: 5 }}>Ассортимент · {product.variants?.length ?? 0} {plural(product.variants?.length ?? 0, "вид", "вида", "видов")}</Text> : null}
-        {product.brand?.name ? <Text style={styles.brand} numberOfLines={1}>{product.brand.name}</Text> : null}
+        <AssortmentBadge product={product} />
+        {!product.assortmentEnabled && product.brand?.name ? <Text style={styles.brand} numberOfLines={1}>{product.brand.name}</Text> : null}
         <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
         <View style={[styles.stock, { backgroundColor: STOCK_PILL[stock.tone].bg }]}>
           <Text style={[styles.stockText, { color: STOCK_PILL[stock.tone].fg }]}>{stock.text}</Text>

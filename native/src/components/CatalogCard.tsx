@@ -1,4 +1,5 @@
 import { AssortmentPhoto } from "./AssortmentPhoto";
+import { AssortmentBadge } from "./AssortmentBadge";
 import { retailPricePromotion } from "../retailPricePromotion";
 import { RetailPriceComparison } from "./RetailPriceComparison";
 import { wholesalePriceComparison } from "../wholesalePricePanels";
@@ -9,7 +10,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { imageUrl } from "../api";
 import { seedProduct } from "../productSeed";
-import { money, stockLabel, plural } from "../format";
+import { money, stockLabel } from "../format";
 import { useIOS } from "../ios";
 import { priceRows } from "./Price";
 import { WholesalePriceComparison } from "./WholesalePriceComparison";
@@ -115,9 +116,9 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
         </Pressable>
       </View>
 
-      <Text numberOfLines={1} style={[styles.brand, { color: c.secondary }]}>
-        {product.assortmentEnabled ? `Ассортимент · ${product.variants?.length ?? 0} ${plural(product.variants?.length ?? 0, "вид", "вида", "видов")}` : product.brand?.name?.toUpperCase() ?? " "}
-      </Text>
+      {product.assortmentEnabled ? <AssortmentBadge product={product} /> : <Text numberOfLines={1} style={[styles.brand, { color: c.secondary }]}>
+        {product.brand?.name?.toUpperCase() ?? " "}
+      </Text>}
       <Text numberOfLines={2} style={[styles.name, { color: c.label }]}>
         {product.name}
       </Text>
