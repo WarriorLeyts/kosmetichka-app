@@ -62,7 +62,10 @@ async function fetchText(url: string, init: RequestInit): Promise<{ res: Respons
   }, READ_TIMEOUT_MS);
   const outer = init.signal;
   const onOuter = () => ctl.abort();
-  if (outer) outer.aborted ? ctl.abort() : outer.addEventListener("abort", onOuter);
+  if (outer) {
+    if (outer.aborted) ctl.abort();
+    else outer.addEventListener("abort", onOuter);
+  }
   try {
     const res = await fetch(url, { ...init, signal: ctl.signal });
     return { res, text: await res.text() };
@@ -95,10 +98,15 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
   }
   let data: any = null;
+  let validJson = false;
   try {
     data = text ? JSON.parse(text) : null;
+    validJson = Boolean(text);
   } catch {
     data = null;
+  }
+  if (res.ok && res.status !== 204 && !validJson) {
+    throw new ApiError("Сервер вернул некорректный ответ. Попробуйте ещё раз.", 502);
   }
   // session ended (the login token lives 7 days) → back to the sign-in screen
   if (res.status === 401 && !path.startsWith("/api/admin/login")) onUnauthorized?.();

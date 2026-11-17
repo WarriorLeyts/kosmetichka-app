@@ -86,6 +86,7 @@ jobs:
     runs-on: macos-15
     env:
       HAS_SIGNING: ${{ secrets.APPSTORE_API_KEY_P8 != '' }}
+      IOS_DISTRIBUTION: ${{ secrets.APPSTORE_API_KEY_P8 != '' && 'app-store' || 'sideload' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

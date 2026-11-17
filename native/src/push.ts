@@ -9,7 +9,8 @@ import { useNotifications } from "./store/notifications";
 /**
  * Push notifications. Android: real push via FCM (Expo push service) once the app has
  * google-services.json. iPhone: the app is installed without a paid Apple account, so no system
- * push — «Уведомления» (bell) works on both. Nothing here may break the app: every call is guarded.
+ * push in sideload builds; official App Store builds enable APNs explicitly.
+ * «Уведомления» (bell) works on both. Every call is guarded.
  */
 
 const TOKEN_KEY = "push-token";
@@ -45,7 +46,7 @@ async function channels() {
  * dialog) and sends this phone's token to the site. Silent when push isn't available.
  */
 export async function registerPush(opts: { promoAsked?: (yes: boolean) => void } = {}) {
-  if (Platform.OS !== "android") return;
+  if (Platform.OS !== "android" && !(Platform.OS === "ios" && Constants.expoConfig?.extra?.iosPushEnabled === true)) return;
   try {
     await channels();
     let perm = await Notifications.getPermissionsAsync();

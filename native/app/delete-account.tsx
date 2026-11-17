@@ -32,7 +32,7 @@ export default function DeleteAccount() {
             await api.deleteAccount(password);
             await logout();
             if (router.canDismiss()) router.dismissAll();
-            Alert.alert("Аккаунт удалён", "Ваши данные удалены. Спасибо, что были с нами.");
+            Alert.alert("Аккаунт удалён", "Ваш профиль удалён. Войти в него больше нельзя.");
           } catch (e) {
             setError(e instanceof Error ? e.message : "Не удалось удалить аккаунт");
           } finally {
@@ -55,7 +55,7 @@ export default function DeleteAccount() {
             Будут удалены ваши имя, телефон, e-mail, адрес и привязанная карта лояльности. Войти в этот аккаунт больше не получится.
           </Text>
           <Text style={{ color: c.secondary, fontSize: 15, lineHeight: 21, marginTop: 10 }}>
-            Оформленные заказы останутся у магазина для учёта, но без ваших данных. Бонусы на карте MAXMA сохраняются — карта остаётся у вас.
+            Удалятся также корзина, избранное и материалы заявки на опт. История заказов, адреса доставки и переписка по заказам сохраняются отдельно для исполнения заказов и учёта. Карта MAXMA не удаляется из программы лояльности — из приложения удаляется её привязка.
           </Text>
           <View style={{ height: 16 }} />
           <IOSField
@@ -70,6 +70,9 @@ export default function DeleteAccount() {
             autoCapitalize="none"
             error={error || undefined}
           />
+          <Pressable accessibilityRole="link" onPress={() => router.push("/forgot")} style={{ paddingVertical: 16 }}>
+            <Text style={{ color: c.label, fontSize: 15 }}>Не помню пароль</Text>
+          </Pressable>
         </View>
         <Pressable
           onPress={remove}

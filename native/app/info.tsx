@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Stack } from "expo-router";
+import { Animated, Linking, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as WebBrowser from "expo-web-browser";
 import Constants from "expo-constants";
+import { SUPPORT, publicInfoMenu, publicSupport } from "@/publicSupport";
 import { api, BASE_URL } from "@/api";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { tap } from "@/components/ui";
@@ -40,15 +40,17 @@ export default function Info() {
   // requisites and the pages' menu as edited in the admin panel (Страницы)
   const [requisites, setRequisites] = useState<[string, string][]>(REQUISITES);
   const [links, setLinks] = useState<Link[]>(LINKS);
+  const [support, setSupport] = useState(SUPPORT);
   useEffect(() => {
     let alive = true;
     api
       .sitePages()
       .then((r) => {
         if (!alive) return;
+        setSupport(publicSupport(r.contactGroups));
         const req = r.requisites.filter((x) => x.label && x.value).map((x) => [x.label, x.value] as [string, string]);
         if (req.length) setRequisites(req);
-        if (r.menu.length) setLinks([LINKS[0], ...r.menu.map((m) => ({ label: m.title, path: m.path, icon: ICONS[m.slug] ?? "reader-outline" }))]);
+        setLinks([LINKS[0], ...publicInfoMenu(r.menu).map((m) => ({ label: m.title, path: m.path, icon: ICONS[m.slug] ?? "reader-outline" }))]);
       })
       .catch(() => {});
     return () => {
@@ -70,8 +72,19 @@ export default function Info() {
           <TitleBar title="О компании" />
           <Animated.View style={{ opacity: appear, transform: [{ translateY: appear.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }] }}>
             <Text style={[styles.lead, { color: c.secondary }]}>
-              По вопросам заказов и сотрудничества обращайтесь к вашему менеджеру — в чате любого заказа или в личном кабинете.
+              Напишите или позвоните в поддержку — регистрация не требуется. По существующим заказам можно также обратиться к менеджеру в чате заказа.
             </Text>
+
+            <View style={panel}>
+              <Pressable accessibilityRole="link" accessibilityLabel={`Написать в поддержку: ${support.email}`} onPress={() => Linking.openURL(`mailto:${support.email}`).catch(() => {})} style={styles.link}>
+                <Ionicons name="mail-outline" size={26} color={colors.brand} />
+                <Text selectable style={[styles.linkText, { color: c.label }]}>{support.email}</Text>
+              </Pressable>
+              <Pressable accessibilityRole="link" accessibilityLabel={`Позвонить в поддержку: ${support.displayPhone}`} onPress={() => Linking.openURL(`tel:${support.phone}`).catch(() => {})} style={[styles.link, sep]}>
+                <Ionicons name="call-outline" size={26} color={colors.brand} />
+                <Text selectable style={[styles.linkText, { color: c.label }]}>{support.displayPhone}</Text>
+              </Pressable>
+            </View>
 
             <View style={panel}>
               {requisites.map(([k, v], i) => (
