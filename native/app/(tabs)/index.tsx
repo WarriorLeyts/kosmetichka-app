@@ -24,7 +24,7 @@ import { DesktopHome } from "@/components/home/DesktopHome";
 import { ArrivalsRow, HomeBlocks, PromoHero, useSiteHome } from "@/components/home/HomeBlocks";
 import { saleFirst, useLivePromo } from "@/promo";
 
-const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { promo:"flash-outline", new: "sparkles-outline", sale: "pricetag-outline", gift: "gift-outline" };
+const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { promo:"flash-outline", new: "sparkles-outline", back: "refresh-outline", sale: "pricetag-outline", gift: "gift-outline" };
 
 export default function Home() {
   const insets = useSafeAreaInsets();

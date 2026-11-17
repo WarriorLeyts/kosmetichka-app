@@ -59,7 +59,7 @@ export function openSiteLink(link: string | null | undefined, openCatalog: OpenC
   const [path, query = ""] = link.split("?");
   if (path === "/catalog" || path === "/catalog/") {
     const q = new URLSearchParams(query);
-    const quick = q.getAll("quick").filter((x): x is Quick => x === "new" || x === "sale" || x === "gift" || x === "promo");
+    const quick = q.getAll("quick").filter((x): x is Quick => x === "new" || x === "back" || x === "sale" || x === "gift" || x === "promo");
     openCatalog({
       ...(quick.length ? { quick } : {}),
       ...(q.get("categoryGuid") ? { categoryGuid: q.get("categoryGuid") } : {}),
@@ -233,7 +233,7 @@ export function ArrivalsRow({ desktop, openCatalog }: { desktop: boolean; openCa
   return (
     <View style={{ gap: desktop ? 22 : 18 }}>
       <ArrivalStrip kind="new" title="Новинки" desktop={desktop} onAll={openCatalog ? () => openCatalog({ quick: ["new"] }) : undefined} />
-      <ArrivalStrip kind="back" title="Снова в наличии" desktop={desktop} />
+      <ArrivalStrip kind="back" title="Снова в наличии" desktop={desktop} onAll={openCatalog ? () => openCatalog({ quick: ["back"] }) : undefined} />
     </View>
   );
 }

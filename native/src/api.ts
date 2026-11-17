@@ -172,7 +172,7 @@ export type CatalogQuery = {
   brandGuids?: string[];
   sort?: "popularity" | "price_asc" | "price_desc" | "name";
   onlyStock?: boolean;
-  quick?: ("new" | "sale" | "gift" | "promo")[];
+  quick?: ("new" | "back" | "sale" | "gift" | "promo")[];
   /** price range, ₽ — by the price the customer sees */
   priceMin?: number | null;
   priceMax?: number | null;
@@ -203,7 +203,7 @@ export type SiteBlock =
       limit: number;
       moreText: string;
       moreLink: string;
-      query: { quick?: ("new" | "sale" | "gift" | "promo")[]; sort?: "popularity"; categoryGuid?: string; ids?: number[]; onlyStock?: boolean; arrivals?: "new" | "back" };
+      query: { quick?: ("new" | "back" | "sale" | "gift" | "promo")[]; sort?: "popularity"; categoryGuid?: string; ids?: number[]; onlyStock?: boolean; arrivals?: "new" | "back" };
     }
   | { id: string; type: "info"; title: string; text: string; imageUrl: string | null; buttonText: string; link: string; tone: "light" | "accent" }
   | { id: string; type: "buttons"; title: string; items: { label: string; link: string }[] };
@@ -267,7 +267,7 @@ export const api = {
     return request("/api/mobile/favorites", { method: "PUT", body: JSON.stringify({ items }) });
   },
   /** + the quick filters as set in the admin panel (names, order, which are shown) */
-  catalogMeta(): Promise<{ categories: Category[]; brands: Brand[]; quick?: { key: "new" | "sale" | "gift"; label: string; visible: boolean }[]; quickChips?: boolean }> {
+  catalogMeta(): Promise<{ categories: Category[]; brands: Brand[]; quick?: { key: "new" | "back" | "sale" | "gift"; label: string; visible: boolean }[]; quickChips?: boolean }> {
     return request("/api/mobile/catalog-meta");
   },
   /** the home page published in the admin panel (admin.kosmetichka-opt.ru); blocks: null — never published */
