@@ -3,16 +3,10 @@ import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, radius, themed } from "../theme";
-import { SORT_LABELS, useCatalogMeta, type CatalogStore, type Quick, type Sort } from "../catalog";
+import { ARRIVAL_FILTERS, toggleArrival, SORT_LABELS, useCatalogMeta, type CatalogStore, type Quick, type Sort } from "../catalog";
 import { useDesktop } from "../useDesktop";
 import { Button, tap } from "./ui";
 import { CategoryDrawer } from "./CategoryDrawer";
-
-const QUICK: { key: Quick; label: string }[] = [
-  { key: "new", label: "Новинки" },
-  { key: "sale", label: "Со скидкой" },
-  { key: "gift", label: "Подарочные наборы" },
-];
 
 /** «Фильтры» of the customer app (category, sorting, in stock, quick filters; brands — «Бренд») as a full-screen panel. */
 export function CatalogFilters({ open, onClose, store }: { open: boolean; onClose: () => void; store: CatalogStore }) {
@@ -79,14 +73,14 @@ export function CatalogFilters({ open, onClose, store }: { open: boolean; onClos
               <Text style={styles.rowText}>Только в наличии</Text>
               <Switch value={onlyStock} onValueChange={setOnlyStock} trackColor={{ true: colors.pink, false: colors.border }} thumbColor="#fff" />
             </View>
-            {QUICK.map((q) => {
+            {ARRIVAL_FILTERS.map((q) => {
               const on = quick.includes(q.key);
               return (
                 <View key={q.key} style={[styles.row, styles.sep]}>
                   <Text style={styles.rowText}>{q.label}</Text>
                   <Switch
                     value={on}
-                    onValueChange={(v) => setQuick(v ? [...quick, q.key] : quick.filter((x) => x !== q.key))}
+                    onValueChange={() => setQuick(toggleArrival(quick, q.key))}
                     trackColor={{ true: colors.pink, false: colors.border }}
                     thumbColor="#fff"
                   />

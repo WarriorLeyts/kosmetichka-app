@@ -1,10 +1,13 @@
 name: iOS IPA (unsigned)
 
 # Unsigned .ipa for installing with SideStore / AltStore (they sign it with your free Apple ID
-# and refresh the signature every 7 days). Run manually: Actions → «iOS IPA (unsigned)» → Run.
+# and refresh the signature every 7 days). Builds on native changes in main, or manually.
 # The file is published to the release "ios-ipa-latest".
 
 on:
+  push:
+    branches: [main]
+    paths: ['native/**', '.github/workflows/ios-ipa.yml']
   workflow_dispatch:
 
 permissions:
