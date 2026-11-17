@@ -5,9 +5,11 @@ import { wholesalePriceComparison } from "@/wholesalePricePanels";
 import { useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  AccessibilityInfo, ActivityIndicator, Alert, Animated, FlatList, ScrollView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View,
+  AccessibilityInfo, ActivityIndicator, Alert, Animated, AppState, FlatList, ScrollView, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View,
 } from "react-native";
 import { Image } from "expo-image";
+import { useIsFocused } from "@react-navigation/native";
+import { AssortmentBadge } from "@/components/AssortmentBadge";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { ProductLabels } from "@/components/ProductCard";
@@ -95,6 +97,11 @@ export default function ProductScreen() {
   const related = relLists[relTab] ?? [];
   const [error, setError] = useState("");
   const [slide, setSlide] = useState(0);
+  const [autoplay, setAutoplay] = useState(true);
+  const galleryRef = useRef<FlatList<string>>(null);
+  const draggingGallery = useRef(false);
+  const galleryVisible = useRef(true);
+  const focused = useIsFocused();
   const [waitBusy, setWaitBusy] = useState(false);
   const [qty, setLocalQty] = useState(1);
   const [titleBox, setTitleBox] = useState<{ y: number; h: number } | null>(null);
@@ -151,6 +158,32 @@ export default function ProductScreen() {
   // ---- collapsing header geometry (all driven by scroll position on the native thread) ----
   const T = insets.top + BAR; // top of the compact row
   const S = Math.round(Math.min(W - 48, H * 0.46, 460)); // big photo (square)
+  const imgPaths = useMemo(() => (product?.images ?? []).map(i => i.path).filter(Boolean), [product?.images]);
+  const images = useMemo(() => imgPaths.map(p => imageUrl(p, 800)).filter(Boolean) as string[], [imgPaths]);
+  const previews = useMemo(() => imgPaths.map(p => imageUrl(p, 480)), [imgPaths]);
+  const showSlide = useCallback((index: number) => {
+    const next = (index + images.length) % Math.max(1, images.length);
+    setSlide(next);
+    if (!desktop) galleryRef.current?.scrollToOffset({ offset: next * S, animated: !reduceMotion });
+  }, [images.length, desktop, S, reduceMotion]);
+  useEffect(() => {
+    setSlide(0);
+    setAutoplay(true);
+    galleryVisible.current = true;
+    galleryRef.current?.scrollToOffset({ offset: 0, animated: false });
+  }, [id, images.length]);
+  useEffect(() => {
+    if (!desktop) galleryRef.current?.scrollToOffset({ offset: slide * S, animated: false });
+    // Keep the selected photo aligned when the screen changes orientation/layout.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [S, desktop]);
+  useEffect(() => {
+    if (!focused || !autoplay || reduceMotion || images.length < 2) return;
+    const timer = setInterval(() => {
+      if (!draggingGallery.current && galleryVisible.current && AppState.currentState === "active" && (typeof document === "undefined" || !document.hidden)) showSlide(slide + 1);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [focused, autoplay, reduceMotion, images.length, showSlide, slide]);
   const PHOTO_TOP = T;
   const thumbCenterY = T + (COMPACT - THUMB) / 2 + THUMB / 2;
   const D = Math.max(60, PHOTO_TOP + S / 2 - thumbCenterY); // scroll distance of the transition
@@ -241,10 +274,6 @@ export default function ProductScreen() {
   }
 
   const active = effectivePriceType(cart, customer);
-  const imgPaths = (product.images ?? []).map((i) => i.path).filter(Boolean);
-  const images = imgPaths.map((pth) => imageUrl(pth, 800)).filter(Boolean) as string[];
-  // the catalog card already loaded the 480 px copy — show it at once while the big one loads
-  const previews = imgPaths.map((pth) => imageUrl(pth, 480));
   const stock = stockLabel(product.stock);
   const st0 = STOCK[stock.tone];
   const st = { ...st0, fg: dark ? st0.fgDark : st0.fg };
@@ -296,12 +325,18 @@ export default function ProductScreen() {
   const gallery =
     images.length > 0 ? (
       <FlatList
+        ref={galleryRef}
         data={images}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         keyExtractor={(u, i) => u + i}
-        onMomentumScrollEnd={(e) => setSlide(Math.round(e.nativeEvent.contentOffset.x / S))}
+        getItemLayout={(_, index) => ({ length: S, offset: S * index, index })}
+        initialNumToRender={2}
+        windowSize={3}
+        onScrollBeginDrag={() => { draggingGallery.current = true; }}
+        onScrollEndDrag={() => { draggingGallery.current = false; }}
+        onMomentumScrollEnd={(e) => { draggingGallery.current = false; setSlide(Math.max(0, Math.min(images.length - 1, Math.round(e.nativeEvent.contentOffset.x / S)))); }}
         renderItem={({ item, index }) => (
           <View style={{ width: S, height: S, alignItems: "center", justifyContent: "center" }}>
             <SafeImage
@@ -573,12 +608,25 @@ export default function ProductScreen() {
 
   const titleStyle = [styles.title, { color: c.label, width: TW }];
   const bottomH = 76 + Math.max(insets.bottom, 10);
+  const thumbnailStart = Math.max(0, Math.min(slide - 3, images.length - 7));
+  const galleryControls = images.length > 1 ? <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 12, minHeight: 48 }}>
+    <Pressable accessibilityRole="button" accessibilityLabel="Предыдущее фото товара" onPress={() => showSlide(slide - 1)} style={{ padding: 12 }}>
+      <Ionicons name="chevron-back" size={20} color={colors.brand} />
+    </Pressable>
+    <Text accessibilityLabel={`Фото ${slide + 1} из ${images.length}`} style={{ color: c.label, fontSize: 14, fontWeight: "600", minWidth: 82, textAlign: "center" }}>{slide + 1} из {images.length}</Text>
+    <Pressable accessibilityRole="button" accessibilityLabel="Следующее фото товара" onPress={() => showSlide(slide + 1)} style={{ padding: 12 }}>
+      <Ionicons name="chevron-forward" size={20} color={colors.brand} />
+    </Pressable>
+    {!reduceMotion && <Pressable accessibilityRole="button" accessibilityLabel={autoplay ? "Приостановить слайд-шоу" : "Включить слайд-шоу"} onPress={() => setAutoplay(v => !v)} style={{ padding: 12 }}>
+      <Ionicons name={autoplay ? "pause" : "play"} size={18} color={colors.brand} />
+    </Pressable>}
+  </View> : null;
 
   if (desktop) {
     // website on a computer: photo on the left, everything about the product on the right
     const big = images[slide] ?? images[0];
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: bg }} contentContainerStyle={styles.dWrap}>
+      <ScrollView style={{ flex: 1, backgroundColor: bg }} contentContainerStyle={styles.dWrap} onScroll={e => { galleryVisible.current = e.nativeEvent.contentOffset.y < 440; }} scrollEventThrottle={100}>
         <View style={styles.dTop}>
           <Pressable onPress={goBack} accessibilityRole="button" accessibilityLabel="Назад" style={styles.dBack}>
             <Ionicons name="chevron-back" size={20} color={colors.brand} />
@@ -602,23 +650,27 @@ export default function ProductScreen() {
                 <FavHeart size={26} active={isFav} />
               </Pressable>
             </View>
+            {galleryControls}
             {images.length > 1 ? (
               <View style={styles.dThumbs}>
-                {images.map((u, i) => (
+                {images.slice(thumbnailStart, thumbnailStart + 7).map((u, offset) => {
+                  const i = thumbnailStart + offset;
+                  return (
                   <Pressable
                     key={u + i}
-                    onPress={() => setSlide(i)}
+                    onPress={() => showSlide(i)}
                     accessibilityRole="button"
                     accessibilityLabel={`Фото ${i + 1}`}
                     style={[styles.dThumb, { borderColor: i === slide ? colors.brand : "transparent" }]}
                   >
-                    <Image source={{ uri: previews[i] ?? u }} style={{ width: 64, height: 64 }} contentFit="contain" />
+                    <Image source={{ uri: previews[i] ?? u }} style={{ width: 56, height: 56 }} contentFit="contain" />
                   </Pressable>
-                ))}
+                ); })}
               </View>
             ) : null}
           </View>
           <View style={{ flex: 1, minWidth: 0 }}>
+            <AssortmentBadge product={product} />
             {product.brand?.name ? <BrandPlaque guid={product.brandGuid ?? product.brand.guid} name={product.brand.name} /> : null}
             <Text style={[styles.dTitle, { color: c.label }]} accessibilityRole="header">
               {product.name}
@@ -637,20 +689,19 @@ export default function ProductScreen() {
     <View style={{ flex: 1, backgroundColor: bg }}>
       <Animated.ScrollView
         ref={scrollRef as never}
-        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true, listener: (e: { nativeEvent: { contentOffset: { y: number } } }) => { galleryVisible.current = e.nativeEvent.contentOffset.y < S; } })}
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingTop: PHOTO_TOP, paddingBottom: bottomH + 24 }}
       >
         {/* place for the big photo (the photo itself is drawn above, see below) */}
         <View style={{ height: S }} />
-        <Animated.View style={[styles.dots, !simple && anim.fadeEarly]}>
-          {images.length > 1
-            ? images.map((_, i) => <View key={i} style={[styles.dot, { backgroundColor: i === slide ? colors.brand : dark ? "#43295A" : "#E1DDF0" }, i === slide && styles.dotActive]} />)
-            : null}
+        <Animated.View style={[!simple && anim.fadeEarly]}>
+          {galleryControls}
         </Animated.View>
 
         <View style={styles.pad}>
+          <AssortmentBadge product={product} />
           {/* the brand: a plaque with its logo — a tap opens all its products */}
           {product.brand?.name ? <BrandPlaque guid={product.brandGuid ?? product.brand.guid} name={product.brand.name} /> : null}
         </View>
@@ -776,17 +827,14 @@ const styles = StyleSheet.create({
   dRow: { flexDirection: "row", gap: 48, alignItems: "flex-start" },
   dPhoto: { width: 520, height: 520, borderRadius: 28, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   dFav: { position: "absolute", top: 16, right: 16, width: 44, height: 44, borderRadius: 22, backgroundColor: "rgba(255,255,255,0.9)", alignItems: "center", justifyContent: "center" },
-  dThumbs: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 14 },
-  dThumb: { width: 76, height: 76, borderRadius: 14, borderWidth: 2, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  dThumbs: { flexDirection: "row", gap: 8, marginTop: 14 },
+  dThumb: { width: 66, height: 66, borderRadius: 14, borderWidth: 2, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   dTitle: { fontSize: 30, lineHeight: 37, fontWeight: "700", marginTop: 4, marginBottom: 14 },
   dActions: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 20, maxWidth: 520 },
   topBar: { position: "absolute", left: 0, right: 0, top: 0, flexDirection: "row", alignItems: "center", paddingHorizontal: 12 },
   barBtn: { width: 44, height: 44, justifyContent: "center" },
   brandWord: { flex: 1, textAlign: "center", fontSize: 20, letterSpacing: 3.2 },
   pad: { paddingHorizontal: 16 },
-  dots: { flexDirection: "row", justifyContent: "center", gap: 7, height: 26, alignItems: "center" },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  dotActive: { width: 8 },
   brand: { fontSize: 15, letterSpacing: 0.4, marginBottom: 4 },
   title: { fontSize: TITLE_FONT, lineHeight: TITLE_LINE, fontWeight: "700" },
   compactTitle: { fontSize: SMALL_FONT, lineHeight: TITLE_LINE * (SMALL_FONT / TITLE_FONT), fontWeight: "700" },

@@ -20,7 +20,7 @@ export function AssortmentPhoto({ product }: { product: Product }) {
     }
     const timer = setInterval(() => {
       if (!reduce && visible.current && AppState.currentState === "active" && (typeof document === "undefined" || !document.hidden)) setIndex(i => (i + 1) % Math.max(1, photos.length));
-    }, 3000);
+    }, 5000);
     return () => { clearInterval(timer); subscription.remove(); observer?.disconnect(); };
   }, [product.id, photos.length]);
   return <View ref={node} style={{ width: "100%", height: "100%", alignItems: "center", justifyContent: "center" }}>
