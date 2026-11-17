@@ -43,8 +43,13 @@ function Picker({ product, variants }: { product: Product; variants: Variant[] }
     } catch (e) { Alert.alert("Не удалось добавить", e instanceof Error ? e.message : "Попробуйте ещё раз"); }
     finally { setBusy(false); }
   };
-  return <Sheet open onClose={close} title="Выберите виды">
-    <ScrollView style={{ maxHeight: 500 }} contentContainerStyle={{ padding: 16, gap: 14 }}>
+  return <Sheet open onClose={close} title="Выберите виды" footer={
+    <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8, borderTopWidth: 1, borderTopColor: c.separator, backgroundColor: c.bg, flexShrink: 0 }}>
+      {min > 1 && <Text style={{ color: c.secondary }}>Минимум по всем видам вместе: {min} шт.</Text>}
+      <GradientButton title={`Добавить в корзину · ${selected} шт.`} loading={busy} disabled={!selected || selected + have < min || selected + have > cap} onPress={add} />
+    </View>
+  }>
+    <ScrollView style={{ maxHeight: 500, flexShrink: 1 }} contentContainerStyle={{ padding: 16, gap: 14 }}>
       <Text style={{ color: c.label, fontSize: 18, fontWeight: "700" }}>{product.name}</Text>
       <Text style={{ color: c.secondary }}>{customer ? `Общий остаток: ${product.stock == null ? "уточняется" : `${cap} шт.`}` : stockLabel(product.stock).text}{have ? ` · В корзине: ${have} шт.` : ""}</Text>
       <Text style={{ color: c.secondary, fontSize: 13 }}>Цена за 1 шт.</Text>
@@ -62,8 +67,7 @@ function Picker({ product, variants }: { product: Product; variants: Variant[] }
       </View>
       {!variants.length && <Text style={{ color: c.secondary }}>Сейчас нет доступных видов.</Text>}
       <Text style={{ color: c.secondary, fontSize: 13 }}>Наличие выбранных видов уточним при подтверждении заказа. Замену согласуем с вами.</Text>
-      {min > 1 && <Text style={{ color: c.secondary }}>Минимум по всем видам вместе: {min} шт.</Text>}
-      <GradientButton title={`Добавить в корзину · ${selected} шт.`} loading={busy} disabled={!selected || selected + have < min || selected + have > cap} onPress={add} />
+
     </ScrollView>
   </Sheet>;
 }
