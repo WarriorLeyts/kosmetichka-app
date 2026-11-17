@@ -25,13 +25,17 @@ export const useWaitlistStore = create<WaitState>((set, get) => ({
     }
   },
   toggle: async (productId) => {
+    const my = gen;
     const { added } = await api.wishlistToggle(productId);
+    if (my !== gen) return added;
     const ids = get().ids.filter((x) => x !== productId);
     set({ ids: added ? [...ids, productId] : ids });
     return added;
   },
   remove: async (productId) => {
+    const my = gen;
     await api.wishlistRemove(productId);
+    if (my !== gen) return;
     set({ ids: get().ids.filter((x) => x !== productId) });
   },
   reset: () => {
