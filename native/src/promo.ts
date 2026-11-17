@@ -1,3 +1,5 @@
+import { LEGACY_CAMPAIGN, type Campaign } from "./campaign";
+import { setPricingCampaign } from "./campaignRuntime";
 /**
  * The promotion's look (admin panel → Акция): its colour instead of the brand violet, a strip on top,
  * its banners first on the home page and «Со скидкой» first. It switches itself on and off by the dates
@@ -19,6 +21,7 @@ export { promoLeft, promoLive, saleFirst } from "@/promoRules";
 
 type PromoState = {
   promo: SitePromo | null;
+  campaign: Campaign;
   /** runs right now (by the dates) */
   live: boolean;
   /** changes when the colour changes — part of the app's re-mount key */
@@ -26,13 +29,13 @@ type PromoState = {
 };
 
 export const usePromo = create<PromoState>()(
-  persist(() => ({ promo: null, live: false, accentKey: "base" }) as PromoState, {
+  persist(() => ({ promo: null, campaign: LEGACY_CAMPAIGN, live: false, accentKey: "base" }) as PromoState, {
     name: "kosmetichka-promo",
     version: 1,
     storage: persistStorage,
-    partialize: (s) => ({ promo: s.promo }) as PromoState,
+    partialize: (s) => ({ promo: s.promo, campaign: s.campaign }) as PromoState,
     onRehydrateStorage: () => (state) => {
-      if (state) refresh(state.promo, true);
+      if (state) { setPricingCampaign(state.campaign ?? LEGACY_CAMPAIGN); refresh(state.promo, true); }
     },
   })
 );
@@ -44,6 +47,7 @@ const startedAt = Date.now();
 let pendingColour = false;
 
 function refresh(promo: SitePromo | null, colourNow = false) {
+  setPricingCampaign(usePromo.getState().campaign ?? LEGACY_CAMPAIGN);
   const live = promoLive(promo);
   const want = live && promo ? promo.accent : null;
   // a re-mount right after start is harmless (nothing typed yet); later it waits for a return to the app
@@ -64,6 +68,7 @@ async function load() {
   lastFetch = Date.now();
   try {
     const r = await api.sitePromo();
+    if (r.campaign) { setPricingCampaign(r.campaign); usePromo.setState({ campaign: r.campaign }); }
     refresh(r.promo);
   } catch {
     // offline: keep what was saved, the dates still switch it
@@ -76,9 +81,10 @@ export function startPromo() {
   started = true;
   load();
   setInterval(() => {
-    if (Date.now() - lastFetch > 10 * 60_000) load();
+    if (Date.now() - lastFetch > 60_000) load();
     else refresh(usePromo.getState().promo);
   }, 30_000);
+  if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
   AppState.addEventListener("change", (st) => {
     if (st !== "active") return;
     if (pendingColour) refresh(usePromo.getState().promo, true);

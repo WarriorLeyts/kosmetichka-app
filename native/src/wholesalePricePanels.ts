@@ -1,4 +1,5 @@
-import { priceFor, resolveCustomerPriceType, type PriceType } from "./pricing";
+import { getPricingCampaign } from "./campaignRuntime";
+import { pricingCampaignActive, priceFor, resolveCustomerPriceType, type PriceType } from "./pricing";
 import type { Customer, Product } from "./types";
 
 export type WholesalePriceCell = {
@@ -9,8 +10,6 @@ export type WholesalePriceCell = {
 };
 export type WholesalePricePanels = { regular: WholesalePriceCell[]; promotion: WholesalePriceCell[] | null };
 
-const START = Date.parse("2026-11-13T00:00:00+03:00");
-const END = Date.parse("2026-12-01T00:00:00+03:00");
 const COLUMNS = [
   { key: "discount", label: "Скидка", color: "#6B4E8A" },
   { key: "wholesale", label: "Опт", color: "#c71f75" },
@@ -29,8 +28,8 @@ export function wholesalePricePanels(
   const type = resolveCustomerPriceType(customer);
   if (type !== "wholesale" && type !== "big_wholesale") return null;
   const ordinary = product.regularPrices ?? product;
-  const regular = COLUMNS.map((c) => ({ ...c, value: positive(priceFor(ordinary, c.key as PriceType)) }));
-  if (now < START || now >= END) return { regular, promotion: null };
+  const regular = COLUMNS.map((c) => ({ ...c, value: positive(priceFor(ordinary, c.key as PriceType, now, {...getPricingCampaign(),usePromoPrices:false})) }));
+  if (!pricingCampaignActive(now) || !getPricingCampaign().usePromoPrices) return { regular, promotion: null };
   const retail = positive(product.promoRetailPrice);
   const opt = positive(product.promoWholesalePrice);
   const big = positive(product.promoBigWholesalePrice);

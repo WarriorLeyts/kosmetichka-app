@@ -1,3 +1,4 @@
+import { useCampaign } from "@/useCampaign";
 import { useState } from "react";
 import { Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { Image } from "expo-image";
@@ -18,6 +19,7 @@ export function AssortmentPicker() {
   return data ? <Picker key={data.product.id} {...data} /> : null;
 }
 function Picker({ product, variants }: { product: Product; variants: Variant[] }) {
+  useCampaign();
   const c = useIOS();
   const customer = useAuth(s => s.customer);
   const close = useAssortmentPicker(s => s.close);

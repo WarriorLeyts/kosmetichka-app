@@ -1,3 +1,5 @@
+import { campaignActive } from "@/campaign";
+import { useCampaign } from "@/useCampaign";
 import { cardPricingCustomer } from "@/cardPurchase";
 import { scaleStyles, useCardScale, withFonts } from "@/cardScale";
 import { useEffect, useRef, useState } from "react";
@@ -79,6 +81,8 @@ function CommentInput({ style, placeholderColor }: { style: object; placeholderC
 
 /** Cart — iOS style, same look as the catalog and profile. Pricing, thresholds and checkout are the existing logic. */
 export default function Cart() {
+  const pricingCampaign = useCampaign();
+  const pricingPolicyKey = JSON.stringify([pricingCampaign, campaignActive(pricingCampaign)]);
   const c = useIOS();
   const k = useCardScale();
   const dark = c.blurTint === "dark";
@@ -195,7 +199,7 @@ export default function Cart() {
     return () => clearTimeout(t);
     // hasCard: on the website a linked / unlinked card changes the prices
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customer?.id, priceType, customer?.hasCard, customer?.cardLinked, cartKey, promoCode, spend]);
+  }, [customer?.id, priceType, customer?.hasCard, customer?.cardLinked, cartKey, promoCode, spend, pricingPolicyKey]);
 
   // «Опт»: the price by the order sum — less than 5 000 ₽ discount, from 5 000 wholesale, from 50 000 big wholesale
   const pricing = calculateCart(items, cartCustomer);
@@ -204,7 +208,7 @@ export default function Cart() {
   const checkoutTotal = calc?.total ?? total;
   const orderMinimum = minOrderFor(customer, items);
   const minimumShortfall = Math.max(0, orderMinimum - checkoutTotal);
-  const campaign = calc?.wholesalePromo ?? (pricing.percent > 0 ? { name:"Светлая пятница + ОПТ", percent:pricing.percent, discount:pricing.discount } : null);
+  const campaign = calc?.wholesalePromo ?? (pricing.percent > 0 ? { name:pricingCampaign.name, percent:pricing.percent, discount:pricing.discount } : null);
   const wholesaleCustomer = resolveCustomerPriceType(customer) === "wholesale";
   const hasShock = items.some(item => promotionalPrice(item, active) !== null);
   const allShock = items.every(item => promotionalPrice(item, active) !== null);

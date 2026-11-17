@@ -1,3 +1,4 @@
+import { useCampaign } from "@/useCampaign";
 import { AssortmentPhoto } from "./AssortmentPhoto";
 import { AssortmentBadge } from "./AssortmentBadge";
 import { retailPricePromotion } from "../retailPricePromotion";
@@ -32,6 +33,7 @@ type Props = {
 };
 
 function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite }: Props) {
+  useCampaign();
   const retailPromotion = retailPricePromotion(product, customer);
   const img = imageUrl(product.images?.[0]?.path, 480);
   const stock = stockLabel(product.stock);

@@ -1,3 +1,4 @@
+import { useCampaign } from "@/useCampaign";
 import { useAssortmentPicker } from "@/components/AssortmentPicker";
 import { retailPricePromotion } from "@/retailPricePromotion";
 import { RetailPriceComparison } from "@/components/RetailPriceComparison";
@@ -67,6 +68,7 @@ function volumeOf(name: string) {
 }
 
 export default function ProductScreen() {
+  useCampaign();
   const { id: rawId, pick } = useLocalSearchParams<{ id: string; pick?: string }>();
   // /product/12 и /product/12-shampun-fino (ЧПУ из админ-панели) — один товар: ключ — число в начале
   const id = String(rawId ?? "").match(/^(\d+)(?:-[a-z0-9-]*)?$/)?.[1] ?? String(rawId ?? "");
