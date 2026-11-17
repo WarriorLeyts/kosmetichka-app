@@ -1,7 +1,7 @@
 import { CardHintStrip } from "./CardHint";
 import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
+import { ActivityIndicator, AppState, FlatList, Platform, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, useWindowDimensions, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -208,6 +208,19 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
     load(1, "replace");
   }, [f.version, needMeta, load]);
+
+  // A manager can enable an assortment while this catalogue remains open.
+  // Refresh the cards when returning to the app/tab so the old plain card is replaced.
+  useEffect(() => {
+    const refresh = () => { if (!needMeta) void load(1, "refresh"); };
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
+      document.addEventListener("visibilitychange", onVisible);
+      return () => document.removeEventListener("visibilitychange", onVisible);
+    }
+    const subscription = AppState.addEventListener("change", state => { if (state === "active") refresh(); });
+    return () => subscription.remove();
+  }, [needMeta, load]);
 
   // signed in / out / another price type: the list again (a guest's list has no wholesale prices)
   // (only once the account is known: the start of the app sets the saved account — not a change)

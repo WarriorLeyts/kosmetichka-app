@@ -28,6 +28,8 @@ export const useFavorites = create<FavState>()(
         }
         const slim: Product = {
           id: p.id,
+          assortmentEnabled: p.assortmentEnabled,
+          variants: p.variants,
           name: p.name,
           stock: p.stock,
           retailPrice: p.retailPrice,
@@ -49,7 +51,7 @@ export const useFavorites = create<FavState>()(
           items: get().items.map((i) => {
             const p = fresh.get(i.id);
             return p
-              ? { ...i, stock: p.stock, minOrderQty: p.minOrderQty, retailPrice: p.retailPrice, discountPrice: p.discountPrice, wholesalePrice: p.wholesalePrice, bigWholesalePrice: p.bigWholesalePrice }
+              ? { ...i, assortmentEnabled: p.assortmentEnabled, variants: p.variants, stock: p.stock, minOrderQty: p.minOrderQty, retailPrice: p.retailPrice, discountPrice: p.discountPrice, wholesalePrice: p.wholesalePrice, bigWholesalePrice: p.bigWholesalePrice }
               : i;
           }),
         }),

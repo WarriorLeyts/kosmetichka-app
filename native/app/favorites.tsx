@@ -50,17 +50,18 @@ export default function Favorites() {
   const active = effectivePriceType(cart, customer);
   const [leaving, setLeaving] = useState<Set<number>>(new Set());
 
-  // signed in: today's prices / stock of the favourites (saved copies may be a guest's or old)
+  // Refresh old snapshots for guests too, including assortment metadata.
   const priceKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
+  const favoriteIdsKey = items.map(i => i.id).join(",");
   useEffect(() => {
-    if (!customer || items.length === 0) return;
+    if (!favoriteIdsKey) return;
     let alive = true;
     (async () => {
-      const ids = [...new Set(items.map((i) => i.id))].slice(0, 120);
+      const ids = [...new Set(favoriteIdsKey.split(",").map(Number))];
       const fresh = new Map<number, Product>();
-      for (let k = 0; k < ids.length; k += 6) {
-        const got = await Promise.all(ids.slice(k, k + 6).map((id) => api.product(id).catch(() => null)));
-        got.forEach((p, j) => p && fresh.set(ids[k + j], p));
+      for (let k = 0; k < ids.length; k += 120) {
+        const got = await api.productsByIds(ids.slice(k, k + 120)).catch(() => null);
+        got?.products.forEach(p => fresh.set(p.id, p));
         if (!alive) return;
       }
       if (alive && fresh.size) useFavorites.getState().refreshProducts(fresh);
@@ -68,9 +69,7 @@ export default function Favorites() {
     return () => {
       alive = false;
     };
-    // once per screen open / account (not on every favourite toggle)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [priceKey]);
+  }, [priceKey, favoriteIdsKey]);
 
   const startLeaving = useCallback((p: Product) => setLeaving((s) => new Set(s).add(p.id)), []);
   const remove = (p: Product) => {
