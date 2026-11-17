@@ -30,7 +30,14 @@ export type MetaCategory = { id?: number; guid: string; name: string; parentGuid
 export type Brand = { id?: number; guid: string; name: string };
 
 export type Sort = "popularity" | "price_asc" | "price_desc" | "name";
-export type Quick = "new" | "sale" | "gift";
+export type Quick = "new" | "back" | "sale" | "gift";
+export const ARRIVAL_FILTERS: { key: Quick; label: string }[] = [
+  { key: "new", label: "Новинки" },
+  { key: "back", label: "Снова в наличии" },
+];
+export function toggleArrival(quick: Quick[], key: Quick): Quick[] {
+  return quick.includes(key) ? quick.filter((x) => x !== key) : [...quick.filter((x) => x !== "new" && x !== "back"), key];
+}
 
 export type CatalogQuery = {
   page?: number;

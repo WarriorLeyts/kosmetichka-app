@@ -7,7 +7,7 @@ import { imageUrl } from "../api";
 import { plural } from "../format";
 import { useIOS } from "../ios";
 import { PRICE_TYPES, searchProducts, type PriceType, type ProductRow } from "../products";
-import { fetchCatalog, filterCount, queryOf, SORT_LABELS, useCatalogMeta, type CatalogProduct, type CatalogStore, type Sort } from "../catalog";
+import { ARRIVAL_FILTERS, toggleArrival, fetchCatalog, filterCount, queryOf, SORT_LABELS, useCatalogMeta, type CatalogProduct, type CatalogStore, type Sort } from "../catalog";
 import { SUB_FILTERS } from "../subFilters";
 import { useDesktop } from "../useDesktop";
 import { CatalogCard } from "./CatalogCard";
@@ -282,6 +282,19 @@ export function Catalog({ store, top, tab, priceType, onPriceType, onOpen, actio
           )}
         </Pressable>
       </View>
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 8 }}>
+        {ARRIVAL_FILTERS.map(({ key, label }) => {
+          const on = f.quick.includes(key);
+          return (
+            <Pressable key={key} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: on }}
+              onPress={() => { tap(); f.set({ quick: toggleArrival(f.quick, key) }); }}
+              style={[styles.typeChip, { backgroundColor: on ? VIOLET : c.cell, borderColor: VIOLET }]}>
+              <Text style={[styles.typeChipText, { color: on ? "#fff" : c.label }]}>{label}</Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
 
       {selectedCat ? (
         <Pressable onPress={() => { tap(); f.set({ categoryGuid: null }); }} accessibilityRole="button" accessibilityLabel={`Категория ${selectedCat.name}, убрать`} style={styles.catChip}>

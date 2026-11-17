@@ -1,7 +1,7 @@
 name: Team app (Косметичка Team)
 
 # Staff app from the folder team/: type check, Android APK (release "team-android-latest"),
-# and on manual run also an unsigned iPhone .ipa (release "team-ios-latest") for SideStore / AltStore / Sideloadly.
+# and an unsigned iPhone .ipa on main changes (or a manual run) (release "team-ios-latest") for SideStore / AltStore / Sideloadly.
 on:
   push:
     branches: [main]
@@ -72,7 +72,7 @@ jobs:
           gh release edit $TAG --notes "Косметичка Team, сборка 1.0.${GITHUB_RUN_NUMBER} (${GITHUB_REF_NAME}) от $(date -u +'%d.%m.%Y %H:%M') UTC. Скачайте kosmetichka-team.apk на телефон и установите."
 
   ios:
-    if: github.event_name == 'workflow_dispatch' && inputs.ios
+    if: github.event_name == 'push' || inputs.ios
     needs: check
     runs-on: macos-15
     timeout-minutes: 60
