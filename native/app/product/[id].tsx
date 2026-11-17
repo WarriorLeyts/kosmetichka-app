@@ -97,7 +97,6 @@ export default function ProductScreen() {
   const related = relLists[relTab] ?? [];
   const [error, setError] = useState("");
   const [slide, setSlide] = useState(0);
-  const [autoplay, setAutoplay] = useState(true);
   const galleryRef = useRef<FlatList<string>>(null);
   const draggingGallery = useRef(false);
   const galleryVisible = useRef(true);
@@ -168,7 +167,6 @@ export default function ProductScreen() {
   }, [images.length, desktop, S, reduceMotion]);
   useEffect(() => {
     setSlide(0);
-    setAutoplay(true);
     galleryVisible.current = true;
     galleryRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, [id, images.length]);
@@ -178,12 +176,12 @@ export default function ProductScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [S, desktop]);
   useEffect(() => {
-    if (!focused || !autoplay || reduceMotion || images.length < 2) return;
+    if (!focused || reduceMotion || images.length < 2) return;
     const timer = setInterval(() => {
       if (!draggingGallery.current && galleryVisible.current && AppState.currentState === "active" && (typeof document === "undefined" || !document.hidden)) showSlide(slide + 1);
     }, 5000);
     return () => clearInterval(timer);
-  }, [focused, autoplay, reduceMotion, images.length, showSlide, slide]);
+  }, [focused, reduceMotion, images.length, showSlide, slide]);
   const PHOTO_TOP = T;
   const thumbCenterY = T + (COMPACT - THUMB) / 2 + THUMB / 2;
   const D = Math.max(60, PHOTO_TOP + S / 2 - thumbCenterY); // scroll distance of the transition
@@ -617,9 +615,6 @@ export default function ProductScreen() {
     <Pressable accessibilityRole="button" accessibilityLabel="Следующее фото товара" onPress={() => showSlide(slide + 1)} style={{ padding: 12 }}>
       <Ionicons name="chevron-forward" size={20} color={colors.brand} />
     </Pressable>
-    {!reduceMotion && <Pressable accessibilityRole="button" accessibilityLabel={autoplay ? "Приостановить слайд-шоу" : "Включить слайд-шоу"} onPress={() => setAutoplay(v => !v)} style={{ padding: 12 }}>
-      <Ionicons name={autoplay ? "pause" : "play"} size={18} color={colors.brand} />
-    </Pressable>}
   </View> : null;
 
   if (desktop) {
