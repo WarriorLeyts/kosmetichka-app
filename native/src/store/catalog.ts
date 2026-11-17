@@ -5,15 +5,16 @@ import { api, type CatalogQuery } from "../api";
 import type { Brand, Category } from "../types";
 
 export type Sort = NonNullable<CatalogQuery["sort"]>;
-export type Quick = "new" | "sale" | "gift" | "promo";
+export type Quick = "new" | "back" | "sale" | "gift" | "promo";
 export type QuickFilter = { key: Quick; label: string; visible: boolean };
 
 /** the quick filters until the admin panel's settings arrive */
 export const QUICK_DEFAULT: QuickFilter[] = [
   { key:"promo", label:"Акции", visible:true },
   { key: "new", label: "Новинки", visible: true },
-  { key: "sale", label: "Со скидкой", visible: true },
-  { key: "gift", label: "Подарочные наборы", visible: true },
+  { key: "back", label: "Снова в наличии", visible: true },
+  { key: "sale", label: "Со скидкой", visible: false },
+  { key: "gift", label: "Подарочные наборы", visible: false },
 ];
 
 export const SORT_LABELS: Record<Sort, string> = {
@@ -68,7 +69,7 @@ export function childCategories(all: Category[], parentGuid: string): Category[]
   return all.filter((c) => c.parentGuid === parentGuid);
 }
 
-const META_KEY = "kosmetichka-catalog-meta";
+const META_KEY = "kosmetichka-catalog-meta-v2";
 type Meta = { categories: Category[]; brands: Brand[]; quick?: QuickFilter[]; quickChips?: boolean };
 // categories + brands are the same for every catalogue instance: one shared copy and one request
 let sharedMeta: Meta | null = null;

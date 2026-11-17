@@ -383,7 +383,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
                 key={q.key}
                 onPress={() => {
                   tap();
-                  f.set({ quick: on ? f.quick.filter((x) => x !== q.key) : [...f.quick, q.key] });
+                  f.set({ quick: on ? f.quick.filter((x) => x !== q.key) : [...f.quick.filter((x) => !(q.key === "new" && x === "back") && !(q.key === "back" && x === "new")), q.key] });
                   if(q.key==="promo")router.setParams({quick:on?undefined:"promo"});
                 }}
                 accessibilityRole="button"

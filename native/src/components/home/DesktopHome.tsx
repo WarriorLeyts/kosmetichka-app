@@ -19,7 +19,7 @@ import { useCatalog } from "@/store/catalog";
 import { colors, themed } from "@/theme";
 
 const PINK = "#e82c87";
-const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { promo:"flash-outline", new: "sparkles-outline", sale: "pricetag-outline", gift: "gift-outline" };
+const QUICK_ICONS: Record<Quick, keyof typeof Ionicons.glyphMap> = { promo:"flash-outline", new: "sparkles-outline", back: "refresh-outline", sale: "pricetag-outline", gift: "gift-outline" };
 
 /**
  * Home on a computer: categories on the left (always open), on the right a banner, quick links and
