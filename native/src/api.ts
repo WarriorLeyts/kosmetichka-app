@@ -100,7 +100,10 @@ async function fetchText(url: string, init: RequestInit): Promise<{ res: Respons
   }, READ_TIMEOUT_MS);
   const outer = init.signal;
   const onOuter = () => ctl.abort();
-  if (outer) outer.aborted ? ctl.abort() : outer.addEventListener("abort", onOuter);
+  if (outer) {
+    if (outer.aborted) ctl.abort();
+    else outer.addEventListener("abort", onOuter);
+  }
   try {
     const res = await fetch(url, { ...init, signal: ctl.signal });
     return { res, text: await res.text() };
@@ -135,10 +138,15 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
   }
   let data: any = null;
+  let validJson = false;
   try {
     data = text ? JSON.parse(text) : null;
+    validJson = Boolean(text);
   } catch {
     data = null;
+  }
+  if (res.ok && res.status !== 204 && !validJson) {
+    throw new ApiError("Сервер вернул некорректный ответ. Попробуйте ещё раз.", 502);
   }
   if (res.status === 401) onUnauthorized?.(path);
   if (!res.ok) {
@@ -279,7 +287,7 @@ export const api = {
     return request("/api/site/promo");
   },
   /** «О компании»: the pages for the menu and the requisites, as edited in the admin panel */
-  sitePages(): Promise<{ menu: { slug: string; title: string; path: string }[]; requisites: { label: string; value: string }[] }> {
+  sitePages(): Promise<{ menu: { slug: string; title: string; path: string }[]; requisites: { label: string; value: string }[]; contactGroups?: { title: string; rows: { label: string; value: string }[] }[] }> {
     return request("/api/site/pages");
   },
   homeStats(): Promise<{ totalProducts: number; totalBrands: number; totalCategories: number }> {

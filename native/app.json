@@ -12,8 +12,10 @@
       "bundleIdentifier": "ru.kosmetichkaopt.app",
       "supportsTablet": false,
       "infoPlist": {
-        "NSCameraUsageDescription": "Камера нужна, чтобы сканировать штрихкоды товаров.",
-        "ITSAppUsesNonExemptEncryption": false
+        "NSCameraUsageDescription": "Камера используется для поиска товаров по штрихкоду и съёмки фото и видео для менеджера в чате заказа.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "Микрофон используется для записи голосовых сообщений и звука в видео, которые вы отправляете менеджеру в чате заказа.",
+        "NSPhotoLibraryUsageDescription": "Выбранные вами фото и видео можно отправить менеджеру в чате заказа или приложить к заявке на опт."
       }
     },
     "android": {
@@ -47,8 +49,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды товаров.",
-          "recordAudioAndroid": false
+          "cameraPermission": "Камера используется для поиска товаров по штрихкоду и съёмки фото и видео для менеджера в чате заказа.",
+          "recordAudioAndroid": false,
+          "microphonePermission": "Микрофон используется для записи голосовых сообщений и звука в видео, которые вы отправляете менеджеру в чате заказа."
         }
       ],
       [
@@ -63,9 +66,9 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Доступ к фото нужен, чтобы отправлять фото и видео менеджеру в чате заказа.",
-          "cameraPermission": "Камера нужна, чтобы сканировать штрихкоды и снимать фото для менеджера.",
-          "microphonePermission": "Микрофон нужен, чтобы записывать видео для менеджера."
+          "photosPermission": "Выбранные вами фото и видео можно отправить менеджеру в чате заказа или приложить к заявке на опт.",
+          "cameraPermission": "Камера используется для поиска товаров по штрихкоду и съёмки фото и видео для менеджера в чате заказа.",
+          "microphonePermission": "Микрофон используется для записи голосовых сообщений и звука в видео, которые вы отправляете менеджеру в чате заказа."
         }
       ],
       "expo-document-picker",
@@ -81,7 +84,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "Микрофон нужен, чтобы записывать голосовые сообщения в чате заказа.",
+          "microphonePermission": "Микрофон используется для записи голосовых сообщений и звука в видео, которые вы отправляете менеджеру в чате заказа.",
           "recordAudioAndroid": true
         }
       ]
@@ -89,7 +92,7 @@
     "experiments": {
       "typedRoutes": false
     },
-    "runtimeVersion": "4",
+    "runtimeVersion": "5",
     "updates": {
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,
