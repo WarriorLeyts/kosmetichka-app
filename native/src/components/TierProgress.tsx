@@ -1,7 +1,8 @@
+import { useCampaign } from "@/useCampaign";
 import { StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { money } from "../format";
-import { bigWholesaleMinOrder, cartPriceTier, rawCartTotal, resolveCustomerPriceType, WHOLESALE_MIN_ORDER, type PriceType } from "../pricing";
+import { bigWholesaleMinOrder, cartPriceTier, rawCartTotal, resolveCustomerPriceType, wholesaleMinOrder, type PriceType } from "../pricing";
 import { FitText } from "./FitText";
 import { colors, themed } from "@/theme";
 
@@ -12,6 +13,7 @@ const GREEN = "#16A34A";
  * (where the customer is), one short line (how much more to the next price), a bar, the saving below. Reached → green.
  */
 export function TierProgress({ items, customer, dark }: { items: { quantity: number }[]; customer: { priceType?: string | null } | null; dark: boolean }) {
+  useCampaign();
   if (!customer || resolveCustomerPriceType(customer) !== "wholesale" || items.length === 0) return null;
   const tier = cartPriceTier(items, customer);
   const sum = (t: PriceType) => rawCartTotal(items, t);
@@ -20,7 +22,7 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
   // what to aim at: wholesale (in wholesale prices) → big wholesale (in big wholesale prices) → nothing more
   const goal =
     tier === "discount"
-      ? { label: "оптовых цен", min: WHOLESALE_MIN_ORDER, have: sum("wholesale"), save: discount - sum("wholesale") }
+      ? { label: "оптовых цен", min: wholesaleMinOrder(), have: sum("wholesale"), save: discount - sum("wholesale") }
       : tier === "wholesale"
         ? { label: "крупного опта", min: bigWholesaleMinOrder(), have: sum("big_wholesale"), save: sum("wholesale") - sum("big_wholesale") }
         : null;
@@ -71,8 +73,8 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
 /** «Скидка → Опт → Крупный опт», the current step highlighted, the passed ones ticked. */
 function Steps({ tier, dark }: { tier: PriceType; dark: boolean }) {
   const steps: { t: PriceType; name: string; from: string }[] = [
-    { t: "discount", name: "Скидка", from: "до 5 000 ₽" },
-    { t: "wholesale", name: "Опт", from: "от 5 000 ₽" },
+    { t: "discount", name: "Скидка", from: `до ${money(wholesaleMinOrder())}` },
+    { t: "wholesale", name: "Опт", from: `от ${money(wholesaleMinOrder())}` },
     { t: "big_wholesale", name: "Кр. опт", from: `от ${money(bigWholesaleMinOrder())}` },
   ];
   const at = steps.findIndex((s) => s.t === tier);

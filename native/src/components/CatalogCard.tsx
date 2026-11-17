@@ -1,3 +1,4 @@
+import { useCampaign } from "@/useCampaign";
 import { AssortmentPhoto } from "./AssortmentPhoto";
 import { AssortmentBadge } from "./AssortmentBadge";
 import { retailPricePromotion } from "../retailPricePromotion";
@@ -57,6 +58,7 @@ const STOCK = {
 
 /** Product card for the iOS-style catalog grid (fixed-height blocks keep rows aligned). */
 function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite, pickMode, picked = 0, picking, onPickStep, cartStepper = true }: Props) {
+  useCampaign();
   const k = useCardScale();
   const styles = k === 1 ? baseStyles : phoneStyles;
   const c = useIOS();

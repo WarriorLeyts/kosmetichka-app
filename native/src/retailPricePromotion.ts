@@ -1,4 +1,5 @@
-import { novemberPromoActive, priceFor, resolveCustomerPriceType } from "./pricing";
+import { getPricingCampaign } from "./campaignRuntime";
+import { pricingCampaignActive, priceFor, resolveCustomerPriceType } from "./pricing";
 import type { Customer, Product } from "./types";
 
 export type RetailPromotion = { retail:number|null; card:number|null; price:number; retailSaving:number; cardSaving:number };
@@ -12,12 +13,12 @@ export function retailPricePromotion(
   product:Product, customer:Pick<Customer,"priceType"|"hasCard">|null, now=Date.now()
 ):RetailPromotion|null {
   const role=resolveCustomerPriceType(customer);
-  if(role==="wholesale"||role==="big_wholesale"||!novemberPromoActive(now))return null;
+  if(role==="wholesale"||role==="big_wholesale"||!pricingCampaignActive(now)||!getPricingCampaign().usePromoPrices)return null;
   const price=positive(product.promoRetailPrice);
   if(price===null)return null;
   const ordinary=product.regularPrices??product;
-  const retail=positive(priceFor(ordinary,"retail",now));
-  const card=positive(priceFor(ordinary,"discount",now));
+  const retail=positive(priceFor(ordinary,"retail",now,{...getPricingCampaign(),usePromoPrices:false}));
+  const card=positive(priceFor(ordinary,"discount",now,{...getPricingCampaign(),usePromoPrices:false}));
   const retailSaving=retail===null?0:Math.max(0,retail-price);
   const cardSaving=card===null?0:Math.max(0,card-price);
   return retailSaving>0||cardSaving>0 ? {retail,card,price,retailSaving,cardSaving} : null;

@@ -1,21 +1,26 @@
+import { useSyncExternalStore } from "react";
+import { getPricingCampaign, campaignRevision, subscribeCampaign } from "@/campaignRuntime";
+import type { Campaign } from "@/campaign";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { novemberPromoActive } from "@/pricing";
+import { pricingCampaignActive } from "@/pricing";
 import { useCatalog } from "@/store/catalog";
 import { FitText } from "@/components/FitText";
 import { money } from "@/format";
 
 /** Responsive version of the chosen pink/violet promotion ticket. */
 export function CampaignBanner({desktop=false}:{desktop?:boolean}){
+  useSyncExternalStore(subscribeCampaign, campaignRevision, campaignRevision);
+  const campaign = getPricingCampaign();
   const {width}=useWindowDimensions();
-  if(!novemberPromoActive())return null;
+  if(!pricingCampaignActive())return null;
   const wide=desktop&&width>=1000;
   const open=()=>{
     useCatalog.getState().reset();
-    useCatalog.getState().set({quick:["promo"]});
-    router.navigate("/catalog?quick=promo");
+    useCatalog.getState().set({quick:campaign.usePromoPrices?["promo"]:[]});
+    router.navigate(campaign.usePromoPrices?"/catalog?quick=promo":"/catalog");
   };
   return <LinearGradient colors={["#fff7fd","#fbe4fa","#e9a5f2","#8b3dff"]}
     locations={[0,0.46,0.76,1]} start={{x:0,y:0}} end={{x:1,y:1}}
@@ -27,17 +32,17 @@ export function CampaignBanner({desktop=false}:{desktop?:boolean}){
       <View style={{flexDirection:"row",flexWrap:"wrap",gap:8,alignItems:"center",marginBottom:12}}>
         <Text style={{color:"#c71f75",fontSize:13,fontWeight:"800"}}>КОСМЕТИЧКА</Text>
         <Text style={{color:"#67308c",backgroundColor:"#efd8fa",borderRadius:16,
-          paddingHorizontal:10,paddingVertical:5,fontSize:11,fontWeight:"700"}}>13–30 НОЯБРЯ 2026</Text>
+          paddingHorizontal:10,paddingVertical:5,fontSize:11,fontWeight:"700"}}>{[campaign.startsAt, campaign.endsAt && new Date(Date.parse(campaign.endsAt)-1).toISOString()].filter(Boolean).map(d => new Date(d!).toLocaleDateString("ru-RU", {timeZone:"Europe/Moscow"})).join(" — ")}</Text>
       </View>
       <Text accessibilityRole="header" style={{fontSize:wide?34:28,lineHeight:wide?39:32,
-        fontWeight:"900",color:"#62033f"}}>СВЕТЛАЯ{"\n"}ПЯТНИЦА + ОПТ</Text>
+        fontWeight:"900",color:"#62033f"}}>{campaign.name}</Text>
       <Text style={{fontSize:wide?16:13,color:"#70358b",marginTop:8}}>Крупнооптовые цены стали ближе</Text>
-      {!wide?<Ticket />:null}
+      {!wide?<Ticket campaign={campaign} />:null}
       <Text style={{fontSize:wide?18:15,fontWeight:"800",color:"#c71f75",marginTop:16,marginBottom:9}}>
-        Дополнительная скидка до 5%
+        {campaign.discountSteps.length ? `Дополнительная скидка до ${Math.max(...campaign.discountSteps.map(s => s.percent))}%` : "Акционные условия"}
       </Text>
-      <View style={{flexDirection:"row",gap:6}}>
-        {[[40000,2],[100000,3],[300000,5]].map(([from,percent])=>
+      <View style={{flexDirection:"row",flexWrap:"wrap",gap:6}}>
+        {campaign.discountSteps.map(({from,percent})=>
           <View key={from} style={{flex:1,minWidth:0,borderRadius:12,backgroundColor:"rgba(255,255,255,0.94)",
             paddingHorizontal:5,paddingVertical:10}}>
             <FitText style={{fontSize:wide?12:10,textAlign:"center",color:"#62033f",fontWeight:"700"}}>от {money(from)}</FitText>
@@ -57,18 +62,18 @@ export function CampaignBanner({desktop=false}:{desktop?:boolean}){
         На шок-цены дополнительная скидка не действует. Применяется одна максимальная скидка по сумме заказа.
       </Text>
     </View>
-    {wide?<View style={{flex:0.7,minWidth:230,justifyContent:"center"}}><Ticket wide /></View>:null}
+    {wide?<View style={{flex:0.7,minWidth:230,justifyContent:"center"}}><Ticket wide campaign={campaign} /></View>:null}
   </LinearGradient>;
 }
 
-function Ticket({wide=false}:{wide?:boolean}){
+function Ticket({wide=false,campaign}:{wide?:boolean;campaign:Campaign}){
   return <View style={{backgroundColor:"#fff8ff",borderRadius:24,paddingHorizontal:20,
     paddingVertical:wide?32:12,marginTop:wide?0:14,marginHorizontal:wide?4:10,
     transform:[{rotate:wide?"-6deg":"-3deg"}],boxShadow:"0 10px 28px rgba(112,18,151,0.16)"}}>
     <Text style={{fontSize:wide?15:12,textAlign:"center",fontWeight:"700",color:"#6a347d"}}>КРУПНЫЙ ОПТ ОТ</Text>
-    <Text style={{fontSize:wide?19:14,textAlign:"center",color:"#875693",marginTop:5}}>
+    {campaign.bigWholesaleMin < 50000 && <Text style={{fontSize:wide?19:14,textAlign:"center",color:"#875693",marginTop:5}}>
       вместо <Text style={{textDecorationLine:"line-through"}}>50 000 ₽</Text>
-    </Text>
-    <FitText style={{fontSize:wide?60:38,textAlign:"center",fontWeight:"900",color:"#e00076",marginTop:3}}>25 000 ₽</FitText>
+    </Text>}
+    <FitText style={{fontSize:wide?60:38,textAlign:"center",fontWeight:"900",color:"#e00076",marginTop:3}}>{money(campaign.bigWholesaleMin)}</FitText>
   </View>;
 }

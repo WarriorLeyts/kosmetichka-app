@@ -1,3 +1,4 @@
+import { useCampaign } from "@/useCampaign";
 import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Animated, FlatList, LayoutAnimation, Pressable, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -36,6 +37,7 @@ const Removable = memo(function Removable({ leaving, onGone, children }: { leavi
 
 /** «Избранное» — the same CatalogCard as in the catalog, two columns. */
 export default function Favorites() {
+  useCampaign();
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const insets = useSafeAreaInsets();

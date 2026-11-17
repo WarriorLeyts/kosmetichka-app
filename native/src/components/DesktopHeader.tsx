@@ -1,3 +1,4 @@
+import { useCampaign } from "@/useCampaign";
 import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, usePathname } from "expo-router";
@@ -58,6 +59,7 @@ function IconBtn({ icon, label, badge, onPress, active }: { icon: IconName; labe
  * search, notifications, favourites, cart with the sum, profile. Same colours as the app.
  */
 export function DesktopHeader() {
+  useCampaign();
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const path = usePathname();

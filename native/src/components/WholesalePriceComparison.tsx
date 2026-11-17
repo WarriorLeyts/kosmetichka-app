@@ -1,3 +1,4 @@
+import { useCampaign } from "@/useCampaign";
 import { StyleSheet, Text, View } from "react-native";
 import { useCardScale } from "../cardScale";
 import { money } from "../format";
@@ -9,6 +10,7 @@ type Props = { product: Product; customer: Customer | null; large?: boolean; dar
 
 /** Each tariff's old price, current price and actual saving in one compact panel. */
 export function WholesalePriceComparison({ product, customer, large = false, dark = false }: Props) {
+  useCampaign();
   const cardScale = useCardScale();
   const comparison = wholesalePriceComparison(product, customer);
   if (!comparison) return null;

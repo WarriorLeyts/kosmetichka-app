@@ -1,3 +1,5 @@
+import { campaignActive } from "@/campaign";
+import { useCampaign } from "@/useCampaign";
 import { CardHintStrip } from "./CardHint";
 import { DESKTOP_WIDE, useDesktop } from "@/useDesktop";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -104,6 +106,8 @@ export type CatalogPick = {
  * through CatalogStoreContext).
  */
 export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
+  const pricingCampaign = useCampaign();
+  const pricingPolicyKey = JSON.stringify([pricingCampaign, campaignActive(pricingCampaign)]);
   const insets = useSafeAreaInsets();
   const c = useIOS();
   const { width } = useWindowDimensions();
@@ -207,7 +211,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
     if (needMeta) return;
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
     load(1, "replace");
-  }, [f.version, needMeta, load]);
+  }, [f.version, needMeta, load, pricingPolicyKey]);
 
   // A manager can enable an assortment while this catalogue remains open.
   // Refresh the cards when returning to the app/tab so the old plain card is replaced.

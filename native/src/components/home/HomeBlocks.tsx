@@ -1,3 +1,5 @@
+import { campaignActive } from "@/campaign";
+import { useCampaign } from "@/useCampaign";
 import { useEffect, useRef, useState } from "react";
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { Image } from "expo-image";
@@ -158,6 +160,7 @@ function Hero({ b, desktop, openCatalog }: { b: Extract<SiteBlock, { type: "hero
 }
 
 function ProductsRow({ b, openCatalog, desktop }: { b: Extract<SiteBlock, { type: "products" }>; openCatalog: OpenCatalog; desktop: boolean }) {
+  const pricingCampaign = useCampaign();
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const [items, setItems] = useState<Product[]>([]);
@@ -168,7 +171,7 @@ function ProductsRow({ b, openCatalog, desktop }: { b: Extract<SiteBlock, { type
   const addToCart = useAddToCart();
   const active = effectivePriceType(cart, customer);
   // arrivals depend on who is signed in (retail — the shop, wholesale — also the warehouse)
-  const key = JSON.stringify(b.query) + (b.query.arrivals ? `:${customer?.id ?? 0}` : "");
+  const key = JSON.stringify([b.query, pricingCampaign, campaignActive(pricingCampaign)]) + (b.query.arrivals ? `:${customer?.id ?? 0}` : "");
   useEffect(() => {
     let alive = true;
     const q = b.query;
@@ -236,6 +239,7 @@ export function ArrivalsRow({ desktop, openCatalog }: { desktop: boolean; openCa
 }
 
 function ArrivalStrip({ kind, title, desktop, onAll }: { kind: "new" | "back"; title: string; desktop: boolean; onAll?: () => void }) {
+  useCampaign();
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const [items, setItems] = useState<Product[]>([]);

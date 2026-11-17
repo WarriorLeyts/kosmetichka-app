@@ -1,3 +1,4 @@
+import type { Campaign } from "./campaign";
 /**
  * Client for the site's API (kosmetichka-opt.ru).
  * Login uses the site's own httpOnly cookie `auth_token`: iOS and Android keep
@@ -274,7 +275,7 @@ export const api = {
   siteHome(page: "home" | "catalog" = "home"): Promise<SiteHome> {
     return request(page === "home" ? "/api/site/home" : `/api/site/home?page=${page}`);
   },
-  sitePromo(): Promise<{ promo: SitePromo | null }> {
+  sitePromo(): Promise<{ promo: SitePromo | null; campaign?: Campaign }> {
     return request("/api/site/promo");
   },
   /** «О компании»: the pages for the menu and the requisites, as edited in the admin panel */
