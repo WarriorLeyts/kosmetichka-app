@@ -1,3 +1,4 @@
+import { ProductLabels } from "./ProductLabels";
 import { memo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
@@ -40,6 +41,10 @@ function CatalogCardBase({ product, priceType, onPress, actionLabel, onAction, b
   const st = n > 0 ? STOCK.in : STOCK.out;
   const byWarehouse = useWarehouseStock(n > 0 ? product.id : null);
   const price = priceOf(pricesOf(product), priceType);
+  // The API applies only the currently active campaign to flat prices.
+  const ordinary = product.regularPrices;
+  const regular = ordinary ? priceOf(pricesOf({ id: product.id, name: product.name, ...ordinary }), priceType) : price;
+  const promotion = price > 0 && regular > price;
 
   return (
     <Pressable
@@ -57,6 +62,7 @@ function CatalogCardBase({ product, priceType, onPress, actionLabel, onAction, b
         ) : (
           <Ionicons name="image-outline" size={34} color="#C7C7CC" />
         )}
+        <ProductLabels labels={product.labels} promotion={promotion} reserveFavorite={false} />
       </View>
 
       <Text numberOfLines={1} style={[styles.brand, { color: c.secondary }]}>

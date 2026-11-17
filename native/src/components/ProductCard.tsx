@@ -1,3 +1,4 @@
+import { ProductLabels } from "./ProductLabels";
 import { useCampaign } from "@/useCampaign";
 import { AssortmentPhoto } from "./AssortmentPhoto";
 import { AssortmentBadge } from "./AssortmentBadge";
@@ -5,7 +6,7 @@ import { retailPricePromotion } from "../retailPricePromotion";
 import { RetailPriceComparison } from "./RetailPriceComparison";
 import { wholesalePriceComparison } from "../wholesalePricePanels";
 import { memo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { BRAND_GRADIENT } from "./GradientText";
@@ -21,6 +22,8 @@ import type { PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
 import { FavHeart } from "./FavHeart";
 import { SafeImage } from "./SafeImage";
+
+export { ProductLabels } from "./ProductLabels";
 
 type Props = {
   product: Product;
@@ -101,33 +104,6 @@ function ProductCardBase({ product, customer, activePrice, inCart, isFavorite, o
 }
 
 export const ProductCard = memo(ProductCardBase);
-
-const LABEL_TEXT: Record<string, string> = { new: "Новинка", hit: "Хит", back: "Снова в наличии" };
-const LABEL_BG: Record<string, string> = { new: "#8b3dff", hit: "#e82c87", back: "#16a34a" };
-
-/**
- * Метки в левом верхнем углу фото: «Новинка» / «Хит» из админ-панели, и от сайта по 1С — «Новинка» (впервые
- * пришло за 10 дней) и «Снова в наличии» (довезли)
- */
-export function ProductLabels({ labels, big = false, inline = false, promotion = false }: { labels?: string[] | null; big?: boolean; inline?: boolean; promotion?: boolean }) {
-  const list = [...(promotion ? ["promotion"] : []), ...(labels ?? []).filter((l) => LABEL_TEXT[l])];
-  if (!list.length) return null;
-  return (
-    <View style={[labelStyles.wrap, big && { top: 12, left: 12 }, inline && { position: "relative", top: 0, left: 0, right: undefined, marginTop: 10 }]} pointerEvents="none">
-      {list.map((l) => (
-        <View key={l} style={[labelStyles.pill, { backgroundColor: l === "promotion" ? "#d91d79" : LABEL_BG[l] ?? "#8b3dff" }, big && { paddingHorizontal: 10, paddingVertical: 4 }]}>
-          <Text style={[labelStyles.text, big && { fontSize: 13 }]}>{l === "promotion" ? "Акция" : LABEL_TEXT[l]}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-const labelStyles = StyleSheet.create({
-  wrap: { position: "absolute", top: 8, left: 8, right: 46, flexDirection: "row", flexWrap: "wrap", gap: 4 },
-  pill: { borderRadius: 999, paddingHorizontal: 7, paddingVertical: 2 },
-  text: { color: "#fff", fontSize: 11, fontWeight: "800" },
-});
 
 /** Site's .stock-high / .stock-low / .stock-out */
 const STOCK_PILL = {

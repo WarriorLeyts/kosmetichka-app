@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
+import { ProductLabels } from "./ProductLabels";
 import { router } from "expo-router";
 import { Card, SectionTitle } from "./kit";
 import { useLoad } from "../useLoad";
@@ -30,11 +30,7 @@ export function Arrivals() {
           <Card key={it.productId} style={styles.card} onPress={() => router.push({ pathname: "/product/[id]", params: { id: String(it.productId) } })}>
             <View style={styles.imgBox}>
               {it.imageUrl ? <Image source={{ uri: it.imageUrl }} style={styles.img} contentFit="contain" /> : null}
-              {it.isNew ? (
-                <LinearGradient colors={["#8b3dff", "#e82c87"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.badge}>
-                  <Text style={styles.badgeText}>Новинка</Text>
-                </LinearGradient>
-              ) : null}
+              <ProductLabels labels={[it.isNew ? "new" : "back"]} reserveFavorite={false} />
             </View>
             <Text style={[styles.name, { color: c.label }]} numberOfLines={2}>
               {it.name}
@@ -53,7 +49,5 @@ const styles = StyleSheet.create({
   card: { width: 170, padding: 10 },
   imgBox: { height: 120, borderRadius: 10, backgroundColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
   img: { width: "90%", height: "90%" },
-  badge: { position: "absolute", top: 6, left: 6, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { color: "#fff", fontWeight: "800", fontSize: 11.5 },
   name: { marginTop: 8, fontWeight: "600", fontSize: 13.5, lineHeight: 18 },
 });

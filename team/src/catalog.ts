@@ -10,6 +10,8 @@ import { priceOf, type ProductRow } from "./products";
 import { SUB_FILTERS } from "./subFilters";
 
 export type CatalogProduct = {
+  labels?: string[] | null;
+  regularPrices?: { retailPrice?: number | null; discountPrice?: number | null; wholesalePrice?: number | null; bigWholesalePrice?: number | null };
   id: number;
   guid?: string;
   name: string;
