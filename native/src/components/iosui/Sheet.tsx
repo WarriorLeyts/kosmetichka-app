@@ -7,7 +7,7 @@ import { tap } from "../ui";
 import { colors } from "@/theme";
 
 /** iOS-style bottom sheet with a grabber; on a wide screen (computer) — a window in the middle. */
-export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
+export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode }) {
   const c = useIOS();
   const insets = useSafeAreaInsets();
   const y = useRef(new Animated.Value(400)).current;
@@ -53,16 +53,18 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
                 <Ionicons name="close" size={20} color={c.secondary} />
               </Pressable>
             </View>
-            <ScrollView contentContainerStyle={{ paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
+            {footer ? <View style={{ flexShrink: 1, minHeight: 0 }}>{children}</View> : <ScrollView contentContainerStyle={{ paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
               {children}
-            </ScrollView>
+            </ScrollView>}
+            {footer}
           </Animated.View>
         </View>
       ) : (
-      <Animated.View style={[styles.sheet, { backgroundColor: c.bg, paddingBottom: insets.bottom + 12, transform: [{ translateY: y }] }]}>
+      <Animated.View style={[styles.sheet, { backgroundColor: c.bg, paddingBottom: insets.bottom + 12, ...(footer ? { maxHeight: height - insets.top - 16 } : {}), transform: [{ translateY: y }] }]}>
         <View style={styles.grabber} />
         {title ? <Text style={[iosText.headline, { color: c.label, textAlign: "center", marginBottom: 12 }]}>{title}</Text> : null}
-        {children}
+        {footer ? <View style={{ flexShrink: 1, minHeight: 0 }}>{children}</View> : children}
+        {footer}
       </Animated.View>
       )}
     </Modal>
