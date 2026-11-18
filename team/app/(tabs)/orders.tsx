@@ -12,11 +12,13 @@ import { get, post } from "@/api";
 import { date, money, time } from "@/format";
 import { useIOS } from "@/ios";
 import { ManagerLine } from "@/components/ManagerLine";
-import { DayNav, StatusTiles } from "@/components/OrdersSummary";
+import { StatusTiles } from "@/components/OrdersSummary";
 import { STATUS_LABELS } from "@/orderStatus";
 import { clientName, managerLine, type OrderListItem, type OrdersPage } from "@/types";
 import { isUnread, useChatSeen } from "@/store/chatSeen";
 import { useAuth } from "@/store/auth";
+import { OrderDateFilter } from "@/components/OrderDateFilter";
+import type { Period } from "@/components/PeriodFilter";
 import { OrderTypeFilter, type OrderCustomerType } from "@/components/OrderTypeFilter";
 
 /** «Изменить статус» for several orders at once (as the site's orders list); the site skips orders the change doesn't fit */
@@ -31,11 +33,12 @@ export default function Orders() {
   const [status, setStatus] = useState(params.status ?? "");
   // "YYYY-MM-DD" — that working day, "" — all dates, null — the current working day
   const [day, setDay] = useState<string | null>(params.all === "1" ? "" : null);
+  const [period, setPeriod] = useState<Period | null>(null);
   const [q, setQ] = useState("");
   const isAdmin = useAuth((s) => s.user?.role === "admin");
   const [chosenType, setChosenType] = useState<OrderCustomerType>("");
   const customerType = isAdmin ? chosenType : "";
-  const [meta, setMeta] = useState<OrdersPage | null>(null);
+  const [metaSnapshot, setMeta] = useState<{ key: string; data: OrdersPage } | null>(null);
   // several orders at once: «Выбрать» → tick orders → «Изменить статус»
   const [selecting, setSelecting] = useState(false);
   const [picked, setPicked] = useState<Set<number>>(new Set());
@@ -46,27 +49,30 @@ export default function Orders() {
   const desktop = useDesktop();
   useEffect(() => {
     if (params.status !== undefined) setStatus(params.status);
-    if (params.all !== undefined) setDay(params.all === "1" ? "" : null);
+    if (params.all !== undefined) { setDay(params.all === "1" ? "" : null); setPeriod(null); }
     if (params.customer !== undefined) setQ(params.customer);
   }, [params.status, params.all, params.customer]);
 
   // the counters only from the answer for the current filters (a slower old one must not overwrite them)
-  const filterKey = `${status}|${day}|${q}|${customerType}`;
+  const filterKey = JSON.stringify([status, day, period?.from, period?.to, q, customerType]);
+  const meta = metaSnapshot?.key === filterKey ? metaSnapshot.data : null;
   const latest = useRef(filterKey);
   latest.current = filterKey;
+  useEffect(() => { setSelecting(false); setPicked(new Set()); }, [filterKey]);
   const list = usePaged<OrderListItem>(
     async (offset) => {
       const mine = filterKey;
       const p = new URLSearchParams({ page: String(Math.floor(offset / 50) + 1) });
-      if (day !== null) p.set("date", day);
+      if (period) { p.set("dateFrom", period.from); p.set("dateTo", period.to); }
+      else if (day !== null) p.set("date", day);
       if (status) p.set("status", status);
       if (q.trim()) p.set("customer", q.trim());
       if (customerType) p.set("customerType", customerType);
       const r = await get<OrdersPage>(`/api/team/orders?${p}`);
-      if (latest.current === mine) setMeta(r);
+      if (latest.current === mine) setMeta({ key: mine, data: r });
       return { items: r.orders, hasMore: r.page < r.totalPages };
     },
-    [status, day, q, customerType],
+    [status, day, period?.from, period?.to, q, customerType],
     { poll: 30_000, live: true } // new orders and statuses appear by themselves (at once with live hints)
   );
 
@@ -123,7 +129,7 @@ export default function Orders() {
           )}
         </Pressable>
       }
-      data={list.items}
+      data={meta ? list.items : []}
       keyOf={(o) => String(o.id)}
       onRefresh={list.reload}
       onEnd={list.more}
@@ -132,12 +138,12 @@ export default function Orders() {
         <>
           <SearchField value={q} onChange={setQ} placeholder="Клиент: имя, компания, телефон, ИНН" />
           {isAdmin ? <OrderTypeFilter value={customerType} onChange={(v) => { setChosenType(v); stopSelecting(); }} /> : null}
-          <DayNav day={day} today={meta?.filters.businessToday} onChange={setDay} />
+          <OrderDateFilter day={day} period={period} today={metaSnapshot?.data.filters.businessToday} onChange={(nextDay, nextPeriod) => { setDay(nextDay); setPeriod(nextPeriod); stopSelecting(); }} />
           <StatusTiles counts={meta?.counts} status={status} onChange={setStatus} desktop={desktop} />
           {meta ? <Text style={[styles.total, { color: c.secondary }]}>Найдено: {meta.totalCount}</Text> : null}
         </>
       }
-      empty={list.loading ? <Loading /> : list.error ? <ErrorState text={list.error} onRetry={list.reload} /> : <Empty icon="document-text-outline" text="Заказов нет" />}
+      empty={list.loading || (!meta && !list.error) ? <Loading /> : list.error ? <ErrorState text={list.error} onRetry={list.reload} /> : <Empty icon="document-text-outline" text="Заказов нет" />}
       renderItem={({ item: o }) => (
         <Card
           onPress={() => (selecting ? toggle(o.id) : router.push({ pathname: "/order/[id]", params: { id: String(o.id) } }))}
