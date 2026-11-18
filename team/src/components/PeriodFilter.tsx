@@ -121,7 +121,7 @@ export function PeriodFilter({ value, onChange, count }: { value: Period; onChan
 }
 
 /** Month grid; the first tap — the first day, the second — the last (in any order). Quick periods on top. */
-function RangeCalendar({ value, today, onDone }: { value: Period; today: string; onDone: (p: Period) => void }) {
+export function RangeCalendar({ value, today, onDone }: { value: Period; today: string; onDone: (p: Period) => void }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const [sel, setSel] = useState<{ a: string | null; b: string | null }>({ a: value.from || null, b: value.to || null });
