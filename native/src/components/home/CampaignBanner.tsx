@@ -1,8 +1,10 @@
 import { useSyncExternalStore } from "react";
+import { useFonts, Inter_900Black } from "@expo-google-fonts/inter";
 import { getPricingCampaign, campaignRevision, subscribeCampaign } from "@/campaignRuntime";
 import type { Campaign } from "@/campaign";
 import { Pressable, Text, View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { pricingCampaignActive } from "@/pricing";
@@ -12,6 +14,8 @@ import { money } from "@/format";
 
 /** Responsive version of the chosen pink/violet promotion ticket. */
 export function CampaignBanner({desktop=false}:{desktop?:boolean}){
+  const [fontsLoaded] = useFonts({ Inter_900Black });
+  const displayFont = fontsLoaded ? "Inter_900Black" : undefined;
   useSyncExternalStore(subscribeCampaign, campaignRevision, campaignRevision);
   const campaign = getPricingCampaign();
   const {width}=useWindowDimensions();
@@ -35,14 +39,9 @@ export function CampaignBanner({desktop=false}:{desktop?:boolean}){
           paddingHorizontal:10,paddingVertical:5,fontSize:11,fontWeight:"700"}}>{[campaign.startsAt, campaign.endsAt && new Date(Date.parse(campaign.endsAt)-1).toISOString()].filter(Boolean).map(d => new Date(d!).toLocaleDateString("ru-RU", {timeZone:"Europe/Moscow"})).join(" — ")}</Text>
       </View>
       <Text accessibilityRole="header" style={{fontSize:wide?34:28,lineHeight:wide?39:32,
-        fontWeight:"900",color:"#62033f"}}>{campaign.name}</Text>
-      <View style={{alignSelf:"flex-start",flexDirection:"row",alignItems:"center",gap:7,
-        backgroundColor:"#fff8ff",borderRadius:14,paddingHorizontal:12,paddingVertical:8,marginTop:12,maxWidth:"100%"}}>
-        <Ionicons name="sparkles-outline" size={18} color="#b51070" />
-        <Text style={{fontSize:wide?17:15,fontWeight:"800",color:"#b51070",flexShrink:1}}>Теперь и парфюмерия</Text>
-      </View>
-      <Text style={{fontSize:wide?16:13,color:"#70358b",marginTop:8}}>Косметика и парфюмерия по акционным ценам</Text>
-      {!wide?<Ticket campaign={campaign} />:null}
+        fontWeight:"900",fontFamily:displayFont,color:"#62033f"}}>{campaign.name}</Text>
+      <Text style={{fontSize:wide?16:13,color:"#70358b",marginTop:8}}>Теперь и парфюмерия — вместе с любимой косметикой</Text>
+      {!wide?<><ProductPhotos /><Ticket campaign={campaign} displayFont={displayFont} /></>:null}
       <Text style={{fontSize:wide?18:15,fontWeight:"800",color:"#c71f75",marginTop:16,marginBottom:9}}>
         {campaign.discountSteps.length ? `Дополнительная скидка до ${Math.max(...campaign.discountSteps.map(s => s.percent))}%` : "Акционные условия"}
       </Text>
@@ -57,9 +56,9 @@ export function CampaignBanner({desktop=false}:{desktop?:boolean}){
       <Pressable onPress={open} accessibilityRole="button" accessibilityLabel="Смотреть акционные товары"
         style={({pressed})=>({alignSelf:wide?"flex-start":"stretch",marginTop:16,opacity:pressed?0.85:1})}>
         <LinearGradient colors={["#ee2c93","#d40070"]} start={{x:0,y:0}} end={{x:1,y:0}}
-          style={{paddingHorizontal:24,height:46,borderRadius:25,flexDirection:"row",
+          style={{paddingHorizontal:wide?24:12,height:46,borderRadius:25,flexDirection:"row",
             gap:10,alignItems:"center",justifyContent:"center"}}>
-          <Text style={{fontSize:15,fontWeight:"800",color:"#fff"}}>Смотреть акционные товары</Text>
+          <FitText minimumFontScale={0.8} style={{fontSize:15,fontWeight:"900",fontFamily:displayFont,color:"#fff",flexShrink:1}}>Смотреть акционные товары</FitText>
           <Ionicons name="arrow-forward" color="#fff" size={19}/>
         </LinearGradient>
       </Pressable>
@@ -67,11 +66,27 @@ export function CampaignBanner({desktop=false}:{desktop?:boolean}){
         На шок-цены дополнительная скидка не действует. Применяется одна максимальная скидка по сумме заказа.
       </Text>
     </View>
-    {wide?<View style={{flex:0.7,minWidth:230,justifyContent:"center"}}><Ticket wide campaign={campaign} /></View>:null}
+    {wide?<View style={{flex:0.8,minWidth:260,justifyContent:"center"}}><ProductPhotos /><Ticket wide campaign={campaign} displayFont={displayFont} /></View>:null}
   </LinearGradient>;
 }
 
-function Ticket({wide=false,campaign}:{wide?:boolean;campaign:Campaign}){
+/** Local optimized photos keep the same composition available in the phone apps and browser. */
+function ProductPhotos(){
+  const products = [
+    {image:require("../../../assets/promo/vivienne-sabo-aerien.webp"),label:"Тон лица",name:"Тональный крем Aerien, Vivienne Sabo",left:"0%" as const,rotate:"-11deg",bottom:10},
+    {image:require("../../../assets/promo/ameerat-al-arab.webp"),label:"Парфюмерия",name:"Парфюм Ameerat Al Arab",left:"33%" as const,rotate:"2deg",bottom:20},
+    {image:require("../../../assets/promo/vivienne-sabo-arcane.webp"),label:"Для губ",name:"Блеск для губ Arcane du destin, Vivienne Sabo",left:"66%" as const,rotate:"11deg",bottom:10},
+  ];
+  return <View style={{height:211,marginTop:18,marginHorizontal:10}}>
+    {products.map((p,i)=><View key={p.label} style={{position:"absolute",left:p.left,bottom:p.bottom,width:"34%",paddingHorizontal:7,paddingVertical:9,
+      borderRadius:18,backgroundColor:"#fff",transform:[{rotate:p.rotate}],zIndex:i===1?2:1,boxShadow:"0 10px 20px rgba(129,44,117,0.15)"}}>
+      <Image source={p.image} contentFit="contain" accessibilityLabel={p.name} style={{width:"100%",height:140}} />
+      <Text style={{fontSize:10,fontWeight:"800",color:"#743661",textAlign:"center",marginTop:6}}>{p.label}</Text>
+    </View>)}
+  </View>;
+}
+
+function Ticket({wide=false,campaign,displayFont}:{wide?:boolean;campaign:Campaign;displayFont?:string}){
   return <View style={{backgroundColor:"#fff8ff",borderRadius:24,paddingHorizontal:20,
     paddingVertical:wide?32:12,marginTop:wide?0:14,marginHorizontal:wide?4:10,
     transform:[{rotate:wide?"-6deg":"-3deg"}],boxShadow:"0 10px 28px rgba(112,18,151,0.16)"}}>
@@ -79,6 +94,6 @@ function Ticket({wide=false,campaign}:{wide?:boolean;campaign:Campaign}){
     {campaign.bigWholesaleMin < 50000 && <Text style={{fontSize:wide?19:14,textAlign:"center",color:"#875693",marginTop:5}}>
       вместо <Text style={{textDecorationLine:"line-through"}}>50 000 ₽</Text>
     </Text>}
-    <FitText style={{fontSize:wide?60:38,textAlign:"center",fontWeight:"900",color:"#e00076",marginTop:3}}>{money(campaign.bigWholesaleMin)}</FitText>
+    <FitText style={{fontSize:wide?60:44,textAlign:"center",fontWeight:"900",fontFamily:displayFont,color:"#e00076",marginTop:3}}>{money(campaign.bigWholesaleMin)}</FitText>
   </View>;
 }
