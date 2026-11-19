@@ -23,6 +23,7 @@ export default function More() {
         <Section header="Работа">
           <Row icon="cube" iconBg="#FF9500" title="Товары" subtitle="Каталог, остатки, фото и варианты" onPress={() => router.navigate("/products")} />
           <Row icon="stats-chart" iconBg="#e82c87" title="Статистика" onPress={() => router.push("/stats")} />
+          <Row icon="star" iconBg="#e82c87" title="Отзывы" subtitle="Оформление заказов: оценки и комментарии" onPress={() => router.push("/reviews")} />
           {user?.role !== "manager" ? (
             <Row icon="school" iconBg="#34C759" title="Тесты сотрудников" subtitle="Результаты на сайте" onPress={() => Linking.openURL("https://kosmetichka-opt.ru/academy/results").catch(() => {})} />
           ) : null}

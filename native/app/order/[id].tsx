@@ -17,6 +17,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { OrderChangeCard } from "@/components/OrderChangeCard";
+import { OrderReviewCard } from "@/components/OrderReviewCard";
 import { VoiceComposer } from "@/components/voice/VoiceComposer";
 import { VoicePlayer } from "@/components/voice/VoicePlayer";
 import { api, ApiError, BASE_URL, imageUrl } from "@/api";
@@ -185,6 +186,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
   const editStore = useOrderEdit();
   const customer = useAuth((st) => st.customer);
   const [repeating, setRepeating] = useState(false);
+  const [reviewFor, setReviewFor] = useState<number | null>(null);
   const [kb, setKb] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -698,6 +700,14 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               </View>
             </LinearGradient>
           ) : null}
+
+          {!editing && customer ? <>
+            <Pressable accessibilityRole="button" accessibilityState={{ expanded: reviewFor === orderId }} onPress={() => setReviewFor(v => v === orderId ? null : orderId)} style={{ flexDirection: "row", gap: 8, alignItems: "center", minHeight: 48, marginTop: 10 }}>
+              <Ionicons name="star-outline" size={20} color={colors.brand} />
+              <Text style={{ color: colors.brand, fontWeight: "600", flex: 1 }}>{reviewFor === orderId ? "Скрыть отзыв" : "Оценить оформление заказа"}</Text>
+            </Pressable>
+            {reviewFor === orderId ? <OrderReviewCard key={`${customer.id}:${orderId}`} orderId={orderId} /> : null}
+          </> : null}
 
           {/* items */}
           <View style={panel}>
