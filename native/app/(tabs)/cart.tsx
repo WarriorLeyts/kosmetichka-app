@@ -583,7 +583,7 @@ export default function Cart() {
                 </>
               ) : null}
               <View style={[styles.sumRow, { marginTop: 4 }]}>
-                <Text style={[styles.totalLabel, { color: c.label }]}>Итого</Text>
+                <Text style={[styles.totalLabel, { color: c.label }]}>Итого сейчас</Text>
                 <FitText style={styles.total}>
                   {money(checkoutTotal)}
                 </FitText>
