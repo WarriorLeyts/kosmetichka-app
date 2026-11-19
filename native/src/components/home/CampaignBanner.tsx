@@ -36,7 +36,12 @@ export function CampaignBanner({desktop=false}:{desktop?:boolean}){
       </View>
       <Text accessibilityRole="header" style={{fontSize:wide?34:28,lineHeight:wide?39:32,
         fontWeight:"900",color:"#62033f"}}>{campaign.name}</Text>
-      <Text style={{fontSize:wide?16:13,color:"#70358b",marginTop:8}}>Крупнооптовые цены стали ближе</Text>
+      <View style={{alignSelf:"flex-start",flexDirection:"row",alignItems:"center",gap:7,
+        backgroundColor:"#fff8ff",borderRadius:14,paddingHorizontal:12,paddingVertical:8,marginTop:12,maxWidth:"100%"}}>
+        <Ionicons name="sparkles-outline" size={18} color="#b51070" />
+        <Text style={{fontSize:wide?17:15,fontWeight:"800",color:"#b51070",flexShrink:1}}>Теперь и парфюмерия</Text>
+      </View>
+      <Text style={{fontSize:wide?16:13,color:"#70358b",marginTop:8}}>Косметика и парфюмерия по акционным ценам</Text>
       {!wide?<Ticket campaign={campaign} />:null}
       <Text style={{fontSize:wide?18:15,fontWeight:"800",color:"#c71f75",marginTop:16,marginBottom:9}}>
         {campaign.discountSteps.length ? `Дополнительная скидка до ${Math.max(...campaign.discountSteps.map(s => s.percent))}%` : "Акционные условия"}
