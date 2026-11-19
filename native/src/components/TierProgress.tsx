@@ -1,9 +1,9 @@
 import { useCampaign } from "@/useCampaign";
-import { StyleSheet, Text, View } from "react-native";
+import { useState } from "react";
+import { Pressable, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { money } from "../format";
 import { bigWholesaleMinOrder, cartPriceTier, rawCartTotal, resolveCustomerPriceType, wholesaleMinOrder, type PriceType } from "../pricing";
-import { FitText } from "./FitText";
 import { colors, themed } from "@/theme";
 
 const GREEN = "#16A34A";
@@ -14,6 +14,7 @@ const GREEN = "#16A34A";
  */
 export function TierProgress({ items, customer, dark }: { items: { quantity: number }[]; customer: { priceType?: string | null } | null; dark: boolean }) {
   useCampaign();
+  const [explanationOpen, setExplanationOpen] = useState(true);
   if (!customer || resolveCustomerPriceType(customer) !== "wholesale" || items.length === 0) return null;
   const tier = cartPriceTier(items, customer);
   const sum = (t: PriceType) => rawCartTotal(items, t);
@@ -22,9 +23,9 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
   // what to aim at: wholesale (in wholesale prices) → big wholesale (in big wholesale prices) → nothing more
   const goal =
     tier === "discount"
-      ? { label: "оптовых цен", min: wholesaleMinOrder(), have: sum("wholesale"), save: discount - sum("wholesale") }
+      ? { title: "Как перейти на опт", basis: "оптовым ценам", balance: "В корзине по опту", priceLabel: "По оптовым ценам", currentLabel: "Сейчас по скидочной цене", min: wholesaleMinOrder(), have: sum("wholesale"), save: discount - sum("wholesale") }
       : tier === "wholesale"
-        ? { label: "крупного опта", min: bigWholesaleMinOrder(), have: sum("big_wholesale"), save: sum("wholesale") - sum("big_wholesale") }
+        ? { title: "Как перейти на крупный опт", basis: "крупнооптовым ценам", balance: "В корзине по крупному опту", priceLabel: "По крупнооптовым ценам", currentLabel: "Сейчас по оптовым ценам", min: bigWholesaleMinOrder(), have: sum("big_wholesale"), save: sum("wholesale") - sum("big_wholesale") }
         : null;
   const reached =
     tier === "wholesale" ? { title: "Оптовые цены", save: discount - sum("wholesale") } : tier === "big_wholesale" ? { title: "Крупнооптовые цены", save: discount - sum("big_wholesale") } : null;
@@ -50,19 +51,38 @@ export function TierProgress({ items, customer, dark }: { items: { quantity: num
 
       {goal && goal.have < goal.min ? (
         <View style={{ marginTop: reached ? 12 : 0 }}>
-          <FitText minimumFontScale={0.8} style={[styles.title, { color: label }]}>
-            {`До ${goal.label} — ещё ${money(goal.min - goal.have)}`}
-          </FitText>
-          <View style={[styles.track, { backgroundColor: track }]}>
-            <View style={[styles.fill, { width: `${Math.max(4, Math.min(100, (goal.have / goal.min) * 100))}%` }]} />
+          <Text style={[styles.title, { color: label }]}>{goal.title}</Text>
+          <Text style={[styles.small, { color: sub, marginTop: 4 }]}>{`Порог считается по ${goal.basis}`}</Text>
+          <View style={[styles.between, { marginTop: 16 }]}>
+            <Text style={[styles.rowLabel, { color: label }]}>{goal.balance}</Text>
+            <Text style={[styles.value, { color: label }]}>{money(goal.have)}</Text>
           </View>
-          <View style={[styles.row, { justifyContent: "space-between", marginTop: 6 }]}>
-            <Text style={[styles.small, { color: sub }]}>{`${money(goal.have)} из ${money(goal.min)}`}</Text>
+          <View accessibilityRole="progressbar" accessibilityLabel={`Сумма корзины по ${goal.basis}`} accessibilityValue={{ min: 0, max: goal.min, now: goal.have }} style={[styles.track, { backgroundColor: track }]}>
+            <View style={[styles.fill, { width: `${Math.max(0, Math.min(100, (goal.have / goal.min) * 100))}%` }]} />
           </View>
-          {goal.save > 0 ? (
-            <Text style={[styles.save, { color: sub }]}>
-              Этот заказ станет дешевле на <Text style={{ color: colors.brand, fontWeight: "700" }}>{money(goal.save)}</Text>
-            </Text>
+          <View style={[styles.between, { marginTop: 6 }]}>
+            <Text style={[styles.small, { color: sub }]}>{money(goal.have)}</Text>
+            <Text style={[styles.small, { color: sub }]}>{`Порог ${money(goal.min)}`}</Text>
+          </View>
+          <Text style={[styles.title, { color: label, marginTop: 16 }]}>{`Осталось набрать на ${money(goal.min - goal.have)}`}</Text>
+          <Text style={[styles.small, { color: sub, marginTop: 3 }]}>{`по ${goal.basis}`}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel="Почему сумма отличается?" accessibilityState={{ expanded: explanationOpen }} onPress={() => setExplanationOpen(v => !v)} style={styles.explainButton}>
+            <Text style={[styles.explainLabel, { color: colors.brand }]}>Почему сумма отличается?</Text>
+            <Ionicons name={explanationOpen ? "chevron-up" : "chevron-down"} size={18} color={colors.brand} />
+          </Pressable>
+          {explanationOpen ? (
+            <View>
+              <View style={styles.between}>
+                <Text style={[styles.rowLabel, { color: sub }]}>{goal.currentLabel}</Text>
+                <Text style={[styles.small, { color: sub }]}>{money(sum(tier))}</Text>
+              </View>
+              <View style={[styles.between, { marginTop: 6 }]}>
+                <Text style={[styles.rowLabel, { color: sub }]}>{goal.priceLabel}</Text>
+                <Text style={[styles.small, { color: sub }]}>{money(goal.have)}</Text>
+              </View>
+              <Text style={[styles.save, { color: sub }]}>{`Когда корзина достигнет ${money(goal.min)} по ${goal.basis}, цены переключатся автоматически.`}</Text>
+              {goal.save > 0 ? <Text style={[styles.save, { color: label }]}>На товарах, которые уже в корзине, экономия составит <Text style={{ fontWeight: "700" }}>{money(goal.save)}</Text>.</Text> : null}
+            </View>
           ) : null}
         </View>
       ) : null}
@@ -89,7 +109,7 @@ function Steps({ tier, dark }: { tier: PriceType; dark: boolean }) {
               {done ? "✓ " : ""}
               {s.name}
             </Text>
-            <Text style={[styles.stepFrom, { color: on ? "rgba(255,255,255,0.85)" : dark ? "rgba(255,255,255,0.6)" : "#8A7A9B" }]}>{s.from}</Text>
+            <Text style={[styles.stepFrom, { color: on ? "rgba(255,255,255,0.85)" : dark ? "rgba(255,255,255,0.6)" : "#8A7A9B" }]}>{on ? "Сейчас" : s.from}</Text>
           </View>
         );
       })}
@@ -102,6 +122,11 @@ const styles = themed(() => ({
   row: { flexDirection: "row", alignItems: "center", gap: 8 },
   reached: { flex: 1, fontSize: 17, fontWeight: "800" },
   title: { fontSize: 17, fontWeight: "800" },
+  between: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 10, flexWrap: "wrap" },
+  rowLabel: { fontSize: 13, flex: 1, minWidth: 100 },
+  value: { fontSize: 15, fontWeight: "700" },
+  explainButton: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
+  explainLabel: { fontSize: 14, flexShrink: 1 },
   track: { height: 12, borderRadius: 6, marginTop: 10, overflow: "hidden" },
   fill: { height: 12, borderRadius: 6, backgroundColor: colors.brand },
   small: { fontSize: 13 },
