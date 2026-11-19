@@ -190,6 +190,7 @@ function AppRoot() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="product/[id]" options={{ title: "", headerShown: false }} />
         <Stack.Screen name="order/[id]" options={{ title: "Заказ", headerShown: false }} />
+        <Stack.Screen name="order-success" options={{ title: "Спасибо за заказ!", headerShown: false }} />
         <Stack.Screen name="filters" options={{ title: "Фильтры", presentation: "modal" }} />
         <Stack.Screen name="scanner" options={{ title: "Сканер штрихкода", presentation: "fullScreenModal", headerShown: false }} />
         <Stack.Screen name="login" options={{ title: "Вход", presentation: "modal", headerShown: false }} />

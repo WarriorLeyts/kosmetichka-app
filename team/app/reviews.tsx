@@ -12,12 +12,15 @@ import { date, time } from "@/format";
 type Review = { orderId: number; rating: number; comment: string | null; createdAt: string; order: { customer: { name: string; companyName: string | null } } };
 type ReviewsPage = { items: Review[]; total: number; page: number; totalPages: number };
 export default function Reviews() {
-  const c = useIOS(); const role = useAuth(s => s.user?.role);
-  const allowed = role === "admin" || role === "manager";
+  const user = useAuth(s => s.user);
+  if (!user || (user.role !== "admin" && user.role !== "manager")) return <Screen title="Отзывы"><Empty icon="lock-closed-outline" text="Раздел доступен менеджерам и администратору" /></Screen>;
+  return <ReviewList key={`${user.id}:${user.role}`} />;
+}
+function ReviewList() {
+  const c = useIOS();
   const [rating, setRating] = useState(""); const [page, setPage] = useState(1);
-  const { data, error, loading, reload } = useLoad(async () => allowed ? get<ReviewsPage>(`/api/team/reviews?page=${page}${rating ? `&rating=${rating}` : ""}`) : null, [page, rating, allowed], { poll: 30000, refocus: true });
+  const { data, error, loading, reload } = useLoad(() => get<ReviewsPage>(`/api/team/reviews?page=${page}${rating ? `&rating=${rating}` : ""}`), [page, rating], { poll: 30000, refocus: true });
   return <Screen title="Отзывы" onRefresh={reload}>
-    {!allowed ? <Empty icon="lock-closed-outline" text="Раздел доступен менеджерам и администратору" /> : <>
       <Text style={{ color: c.secondary, marginBottom: 14 }}>Впечатления клиентов об оформлении заказов</Text>
       <Chips items={[{ value: "", label: "Все оценки" }, ...[5, 4, 3, 2, 1].map(n => ({ value: String(n), label: `${n} ★` }))]} value={rating} onChange={v => { setRating(v); setPage(1); }} />
       {loading ? <Loading /> : error ? <ErrorState text={error} onRetry={reload} /> : !data?.items.length ? <Empty icon="chatbubble-outline" text="Отзывов пока нет" /> : <>
@@ -33,6 +36,5 @@ export default function Reviews() {
           {page < data.totalPages ? <ActionButton label="Далее" onPress={() => setPage(p => p + 1)} /> : null}
         </View>
       </>}
-    </>}
   </Screen>;
 }
