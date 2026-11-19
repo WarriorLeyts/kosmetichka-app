@@ -230,7 +230,12 @@ export type SiteHome = { publishedAt: string | null; blocks: SiteBlock[] | null 
 
 export type CatalogPage = { products: Product[]; total: number; page: number; hasMore: boolean; nameAnyApplied?: boolean };
 
+export type OrderReview = { orderId: number; rating: number; comment: string | null; createdAt: string };
 export const api = {
+  orderReview(id: number) { return request<{ review: OrderReview | null }>(`/api/mobile/orders/${id}/review`); },
+  sendOrderReview(id: number, rating: number, comment: string) {
+    return request<{ review: OrderReview }>(`/api/mobile/orders/${id}/review`, { method: "POST", body: JSON.stringify({ rating, comment }) });
+  },
   // ── Catalog ──
   catalog(q: CatalogQuery, signal?: AbortSignal): Promise<CatalogPage> {
     const p = new URLSearchParams();

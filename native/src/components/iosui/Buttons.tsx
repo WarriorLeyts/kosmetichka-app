@@ -26,6 +26,7 @@ export function GradientButton({
   const off = disabled || loading;
   return (
     <Pressable
+      disabled={!!off}
       onPress={() => {
         if (off) return;
         tap();
@@ -35,7 +36,7 @@ export function GradientButton({
       onPressOut={p.onPressOut}
       accessibilityRole="button"
       accessibilityLabel={title}
-      accessibilityState={{ disabled: !!disabled, busy: !!loading }}
+      accessibilityState={{ disabled: !!off, busy: !!loading }}
       style={style}
     >
       <Animated.View style={{ transform: [{ scale: p.s }], opacity: disabled ? 0.5 : 1 }}>

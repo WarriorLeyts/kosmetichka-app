@@ -278,9 +278,7 @@ export default function Cart() {
       draft = null;
       setComment("");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      Alert.alert(`Заказ №${r.orderId} принят`, "Менеджер свяжется с вами для подтверждения.", [
-        { text: "Мои заказы", onPress: () => router.navigate("/orders") },
-      ]);
+      router.replace({ pathname: "/order-success", params: { id: String(r.orderId) } });
     } catch (e) {
       // MAXMA didn't confirm the bonuses: nothing was ordered — retry, or order without bonuses
       if (e instanceof ApiError && e.code === "bonuses_unavailable") {
