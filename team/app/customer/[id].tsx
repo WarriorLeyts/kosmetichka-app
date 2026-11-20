@@ -13,6 +13,7 @@ import { CustomerBadge } from "@/components/CustomerBadge";
 import type { CustomerDetail } from "@/types";
 import { PhoneKV } from "@/components/PhoneKV";
 import { useAuth } from "@/store/auth";
+import { CustomerLoyalty } from "@/components/CustomerLoyalty";
 
 /** Customer card: contacts, 1C data, price type; approve / return to «waiting» (as the site's buttons). */
 export default function Customer() {
@@ -177,6 +178,7 @@ export default function Customer() {
             <KV k="Код 1С" v={x.oneCId} />
             <KV k="Заказов" v={x.ordersCount} onPress={() => router.navigate({ pathname: "/orders", params: { all: "1", status: "", customer: x.phone || x.companyName || x.name || "" } })} />
           </Card>
+          {x.id === Number(id) && ["retail", "discount"].includes(x.priceType) ? <CustomerLoyalty customerId={x.id} /> : null}
           {/* wholesale proof the customer sent: where he resells + photos / videos */}
           {x.shopType || x.proofs?.length ? (
             <Card>

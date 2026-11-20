@@ -1,5 +1,5 @@
 /** Data shapes of the site's staff API (kosmetichka-b2b app/api/team/README.md). */
-export type CustomerShort = { name: string | null; companyName: string | null; phone: string | null; manager?: string | null; priceType?: string; oneCId?: string | null };
+export type CustomerShort = { name: string | null; companyName: string | null; phone: string | null; manager?: string | null; priceType?: string; canPurchaseCard?: boolean; oneCId?: string | null };
 
 /** the order card line about the customer's 1С manager: «Менеджер: Имя» or, for a wholesaler without one, «Менеджер не назначен» */
 export function managerLine(c: CustomerShort): { text: string; warn: boolean } | null {
@@ -81,7 +81,7 @@ export type OrderDetail = {
     };
     oneCExportedAt: string | null; bitrixDealId: number | null; createdAt: string; updatedAt: string;
     customerId: number;
-    customer: { id: number; companyName: string | null; name: string | null; phone: string | null; email: string | null; city: string | null; address?: string | null; inn: string | null; manager: string | null; oneCId?: string | null; priceType: string; priceTier?: string };
+    customer: { id: number; companyName: string | null; name: string | null; phone: string | null; email: string | null; city: string | null; address?: string | null; inn: string | null; manager: string | null; oneCId?: string | null; priceType: string; priceTier?: string; canPurchaseCard?: boolean };
     pickerId: number | null; picker: { id: number; name: string } | null;
     items: OrderItem[];
     removedItems?: RemovedItem[];
