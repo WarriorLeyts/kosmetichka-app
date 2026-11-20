@@ -20,7 +20,7 @@ const PINK = "#e82c87";
 export function useCardHint(): boolean {
   const customer = useAuth((s) => s.customer);
   // cardLinked: any card is linked (hasCard — the card gives the discount price: «900…» / «Максма Скидка»)
-  return SITE_RETAIL_DISCOUNT && customer?.priceType === "retail" && !(customer.cardLinked ?? customer.hasCard);
+  return SITE_RETAIL_DISCOUNT && !!customer && ["retail", "discount"].includes(customer.priceType ?? "") && !(customer.cardLinked ?? customer.hasCard);
 }
 
 const openLink = () => {
@@ -75,7 +75,7 @@ export function CardHintTotal({ withCard, now }: { withCard: number; now: number
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const customer = useAuth((s) => s.customer);
-  if (customer?.priceType !== "retail" || customer.hasCard) return null;
+  if (!["retail", "discount"].includes(customer?.priceType ?? "") || customer?.hasCard) return null;
   const tint = dark ? "#C9A8FF" : "#6B2BD9";
   return (
     <View style={{ marginTop: 6 }}>
