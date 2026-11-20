@@ -25,6 +25,7 @@ import { useDesktop } from "@/useDesktop";
 import { priceOf } from "@/products";
 import { openInvoicePdf, shareInvoice } from "@/invoiceShare";
 import { barcodeList } from "@/barcodes";
+import { AssemblyCardPurchase } from "@/components/AssemblyCardPurchase";
 
 type Tab = "items" | "customer" | "history";
 const PROBLEM_LABELS: Record<string, string> = {
@@ -518,6 +519,7 @@ export default function OrderScreen() {
           <KV k="Цены заказа" v={{ discount: "Скидочная (меньше 5 000 ₽)", wholesale: "Опт (от 5 000 ₽)", big_wholesale: "Крупный опт (от 50 000 ₽)" }[cust.priceTier] ?? cust.priceTier} />
         ) : null}
       </Card>
+      {o.status === "assembly" && cust.priceType === "retail" && cust.canPurchaseCard !== false ? <AssemblyCardPurchase key={orderId} orderId={orderId} name={cust.name} phone={cust.phone} hasPurchase={o.items.some(i => i.productName === "Карта Косметичка")} disabled={!!busy || !!edit} onChanged={reload} onBusy={b => { running.current = b; setBusy(b ? "card-purchase" : ""); }} /> : null}
       <Sheet open={groupSheet} onClose={() => setGroupSheet(false)} title="Менеджер 1С (папка)">
         {groups ? (
           <SheetOptions options={groups.map((g) => ({ value: g, label: g }))} value={cust.manager ?? ""} onSelect={chooseGroup} />

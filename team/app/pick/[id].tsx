@@ -24,6 +24,7 @@ import { ChangePill, RemovedItems } from "@/components/OrderChanges";
 import { StockLine } from "@/components/StockLine";
 import { WarehouseSplit } from "@/components/WarehouseSplit";
 import { barcodeList } from "@/barcodes";
+import { AssemblyCardPurchase } from "@/components/AssemblyCardPurchase";
 
 type Code = "ok" | "out_of_stock" | "expired" | "bad_condition" | "insufficient_qty";
 // «Просрочен» and «Плохой вид» are not offered any more (owner); old checks with them still show their names
@@ -358,6 +359,7 @@ export default function Pick() {
         ) : null}
       </Card>
 
+      {o.customer.priceType === "retail" && o.customer.canPurchaseCard !== false ? <AssemblyCardPurchase key={orderId} orderId={orderId} name={o.customer.name} phone={o.customer.phone} hasPurchase={o.items.some(i => i.productName === "Карта Косметичка")} disabled={changing || submitting} onChanged={reload} onBusy={setChanging} /> : null}
       <View style={styles.findRow}>
         <View style={[styles.find, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : "#fff", borderColor: dark ? "rgba(200,160,255,0.3)" : "#E9E4F5" }]}>
           <Ionicons name="search-outline" size={18} color={VIOLET} />
