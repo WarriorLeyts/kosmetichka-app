@@ -52,6 +52,8 @@ export type Category = { id?: number; guid: string; name: string; parentGuid?: s
 export type Brand = { id?: number; guid: string; name: string };
 
 export type CartItem = Product & {
+  /** Recomputed from current assortment metadata. */
+  variantIssue?: "required" | "unavailable";
   cartKey: string;
   quantity: number;
   variantId?: number;

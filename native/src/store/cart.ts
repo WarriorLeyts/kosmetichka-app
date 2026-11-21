@@ -1,3 +1,4 @@
+import { cartVariantIssue, replaceCartVariants } from "../cartAssortment";
 import { cartProductSnapshot as slim, mergeCartProductPrices as withPrices } from "../cartProductSnapshot";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -15,6 +16,7 @@ type CartState = {
   setComment: (comment: string) => void;
   add: (product: Product, quantity?: number) => void;
   addVariants: (product: Product, entries: { variant: Variant; quantity: number }[]) => void;
+  replaceVariants: (product: Product, entries: { variant: Variant; quantity: number }[], expected: string) => void;
   setQuantity: (cartKey: string, quantity: number) => void;
   remove: (cartKey: string) => void;
   clear: () => void;
@@ -73,6 +75,8 @@ export const useCartStore = create<CartState>()(
         set({ items });
       },
 
+      replaceVariants: (product, entries, expected) => set({ items: replaceCartVariants(get().items, slim(product), entries, expected) }),
+
       setQuantity: (cartKey, quantity) => {
         if (!Number.isFinite(quantity)) return;
         quantity = Math.floor(quantity);
@@ -99,7 +103,10 @@ export const useCartStore = create<CartState>()(
             // today's stock: never more in the cart than the shop has (0 = out of stock, shown on the line)
             const stock = typeof p.stock === "number" ? p.stock : null;
             const quantity = stock !== null && stock > 0 ? Math.min(i.quantity, stock) : i.quantity;
-            return { ...i, ...withPrices(slim(p), i), cartKey: i.cartKey, quantity, gone: false };
+            const issue = cartVariantIssue(i, p);
+            const variant = !issue && p.assortmentEnabled ? p.variants?.find(v => i.variantId != null ? v.id === i.variantId : v.name === i.variantName) : undefined;
+            return { ...i, ...withPrices(slim(p), i), cartKey: i.cartKey, quantity, gone: false, variantIssue: issue,
+              ...(variant ? { variantId: variant.id, variantName: variant.name } : {}) };
           }),
         }),
       clear: () => set({ items: [] }),
