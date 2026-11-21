@@ -6,7 +6,7 @@ import { put } from "@/api";
 import { useIOS } from "@/ios";
 import { VIOLET } from "@/components/kit";
 
-export type Split = { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number; onlyStock?: boolean; primary?: "shop" | "stock" };
+export type Split = { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number; onlyStock?: boolean; shopKeep?: number; primary?: "shop" | "stock" };
 export type WarehouseLabels = { shop: string; stock: string };
 
 type Mode = "shop" | "stock" | "split";
@@ -14,7 +14,7 @@ type Mode = "shop" | "stock" | "split";
 /**
  * Wholesale: where a line is taken from — one switch «Магазин / Склад / Разделить» (owner's choice «Б»,
  * 2026-11-09). 1С gets two «Заказ покупателя»: the shop («Мега Косметичка», ≥ 12 must stay on its
- * shelves) and the warehouse («Склад»). «Разделить» shows a − / + for the pieces from the warehouse.
+ * shelves; original perfume has no reserve) and the warehouse («Склад»). «Разделить» shows a − / + for the pieces from the warehouse.
  * Until the picker touches it the server suggests the split («подсказка»): all from the shop when it has the whole
  * order, otherwise the warehouse gives what it has and the shop the rest (owner, 2026-11-11).
  */
@@ -84,14 +84,15 @@ export function WarehouseSplit({ orderId, itemId, quantity, split, labels }: { o
     }
   };
 
+  const keep = split.shopKeep ?? 12;
   const shopLeft = split.shopQty - shop; // what stays on the shop shelves
   const warn =
     shop > 0 && shop > split.shopQty
       ? `В магазине только ${split.shopQty} шт.`
       : stock > split.stockQty
         ? `На складе только ${split.stockQty} шт.`
-        : shop > 0 && shopLeft < 12
-          ? `В магазине останется ${shopLeft} шт. (меньше 12) — только по согласованию с администратором`
+        : shop > 0 && shopLeft < keep
+          ? `В магазине останется ${shopLeft} шт. (меньше ${keep}) — только по согласованию с администратором`
           : null;
 
   const soft = dark ? "#352044" : "#F1EEF7";

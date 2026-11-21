@@ -172,7 +172,7 @@ export type PickerOrder = {
       stock?: number | null;
       stockByWarehouse?: { name: string; qty: number }[];
       /** wholesale: pieces from the shop / the warehouse (the picker's choice, or the 12-piece rule's `suggested`) */
-      warehouseSplit?: { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number } | null;
+      warehouseSplit?: { shop: number; stock: number; suggested: boolean; shopQty: number; stockQty: number; shopKeep?: number } | null;
       check: null | { status: string; statuses: string[]; availableQty: number | null; note: string | null; pickerId: number | null; checkedAt: string };
       photos: { id: number; url: string; createdAt: string }[];
       customerChange?: LineChange | null;
