@@ -1,12 +1,14 @@
+import { loadCartProducts } from "@/cartAssortment";
+import { useAssortmentPicker } from "@/components/AssortmentPicker";
 import { campaignActive } from "@/campaign";
 import { useCampaign } from "@/useCampaign";
 import { cardPricingCustomer } from "@/cardPurchase";
 import { scaleStyles, useCardScale, withFonts } from "@/cardScale";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Linking, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View, type NativeScrollEvent, type NativeSyntheticEvent } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -108,26 +110,16 @@ export default function Cart() {
   // customer (a product added before signing in has only the retail price — the order would then be
   // priced differently by the site than the cart shows)
   const priceKey = `${customer?.id ?? 0}:${customer?.priceType ?? ""}`;
-  const refreshedFor = useRef("");
-  useEffect(() => {
-    // also for guests: a product removed from the catalogue or out of stock shows up before checkout
-    // (a guest's answer has no wholesale prices — the cart keeps the ones it knows)
-    if (items.length === 0 || refreshedFor.current === priceKey) return;
+  const productIdsKey = [...new Set(items.map(i => i.id))].sort((a, b) => a - b).join(",");
+  useFocusEffect(useCallback(() => {
+    if (!productIdsKey) return;
     let alive = true;
-    (async () => {
-      const ids = [...new Set(items.map((i) => i.id))].slice(0, 120);
-      // one request for the whole cart (it was one request per line — 120 for a big cart)
-      const got = await api.productsByIds(ids).catch(() => null);
-      if (!alive || !got) return; // a change of the cart meanwhile: the effect runs again; offline: next time
-      const fresh = new Map<number, Product>(got.products.map((p) => [p.id, p]));
-      useCartStore.getState().refreshProducts(fresh, new Set(ids));
-      refreshedFor.current = priceKey;
-    })();
-    return () => {
-      alive = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [priceKey, items.length]);
+    const ids = productIdsKey.split(",").map(Number);
+    void loadCartProducts(ids, batch => api.productsByIds(batch)).then(fresh => {
+      if (alive) useCartStore.getState().refreshProducts(fresh, new Set(ids));
+    }).catch(() => {});
+    return () => { alive = false; };
+  }, [priceKey, productIdsKey]));
   const cardInCart = items.find((i) => i.cardRegistration);
   const cartCustomer = cardPricingCustomer(items, customer);
   const setQty = useCartStore((s) => s.setQuantity);
@@ -136,6 +128,20 @@ export default function Cart() {
   const setComment = useCartStore((s) => s.setComment);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [problemProductId, setProblemProductId] = useState<number | null>(null);
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const editKinds = async (id: number) => {
+    if (editingProductId !== null) return;
+    setEditingProductId(id);
+    try {
+      const [product, response] = await Promise.all([api.product(id), api.variants(id)]);
+      if (!product.assortmentEnabled || !response.variants.length) throw new Error("Сейчас нет доступных видов. Удалите этот товар из корзины или дождитесь поступления.");
+      useCartStore.getState().refreshProducts(new Map([[id, product]]));
+      useAssortmentPicker.getState().edit(product, response.variants);
+    } catch (e) { setError(e instanceof Error ? e.message : "Не удалось загрузить виды"); }
+    finally { setEditingProductId(null); }
+  };
+
   // a second tap before the re-render must not send the same order twice
   const submitting = useRef(false);
   // one id per order attempt: a repeat tap after a lost answer gets the first order back, not a second one
@@ -151,7 +157,10 @@ export default function Cart() {
   const [calc, setCalc] = useState<CheckoutCalc | null>(null);
   const [calcBusy, setCalcBusy] = useState(false);
   const calcSeq = useRef(0);
-  const cartKey = JSON.stringify(items.map((i) => [i.id, i.quantity, i.variantName ?? null, i.cardRegistration ?? null]));
+  const cartKey = JSON.stringify(items.map((i) => [i.id, i.quantity, i.variantId ?? null, i.variantName ?? null, i.variantIssue ?? null, i.cardRegistration ?? null]));
+  useEffect(() => { setError(""); setProblemProductId(null); }, [cartKey]);
+  const firstVariantProblem = items.find(i => i.variantIssue || i.assortmentEnabled && i.variantId == null && !i.variantName);
+  const fixProductId = problemProductId ?? firstVariantProblem?.id;
   const maxRef = useRef(0);
   maxRef.current = calc?.bonuses?.maxToApply ?? maxRef.current;
   // price type switched in the profile (retail ↔ wholesale): bonuses are retail-only — start over
@@ -253,7 +262,17 @@ export default function Cart() {
     setError("");
     try {
       // the latest cart from the store (not this render's copy), whole positive quantities only
+      const currentIds = [...new Set(useCartStore.getState().items.map(i => i.id))];
+      const fresh = await loadCartProducts(currentIds, batch => api.productsByIds(batch));
+      useCartStore.getState().refreshProducts(fresh, new Set(currentIds));
       const lines = useCartStore.getState().items.filter((i) => Number.isInteger(i.quantity) && i.quantity > 0);
+      const needsKind = lines.find(i => i.variantIssue || i.assortmentEnabled && i.variantId == null && !i.variantName);
+      if (needsKind) {
+        setProblemProductId(needsKind.id);
+        setError(`«${needsKind.name}»: ${needsKind.variantIssue === "unavailable" ? "выбранный вид больше недоступен" : "есть товар без выбранного вида"}. Выберите виды в корзине.`);
+        await editKinds(needsKind.id);
+        return;
+      }
       if (lines.length === 0) return;
       if (customer.hasCard && lines.some((i) => i.cardRegistration)) {
         setError("Скидочная карта уже оформлена. Уберите карту из корзины — скидочные цены сохранятся."); return;
@@ -295,6 +314,7 @@ export default function Cart() {
         ]);
         return;
       }
+      if (e instanceof ApiError && e.productId && e.code?.startsWith("assortment_")) setProblemProductId(e.productId);
       setError(e instanceof Error ? e.message : "Не удалось оформить заказ");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       // the login expired on the server: show the signed-out state instead of failing again and again
@@ -305,6 +325,12 @@ export default function Cart() {
     }
   };
 
+  const kindsButton = (item: CartItem) => item.assortmentEnabled || item.variantId || item.variantIssue ? (
+    <Pressable accessibilityRole="button" accessibilityLabel={`Выбрать виды: ${item.name}`} disabled={editingProductId !== null} onPress={() => void editKinds(item.id)} style={{ marginTop: 6, paddingVertical: 6, alignSelf: "flex-start" }}>
+      <Text style={{ color: item.variantIssue ? "#E5484D" : colors.brand, fontWeight: "700", fontSize: 14 }}>{editingProductId === item.id ? "Загружаем виды…" : item.variantIssue ? "Выбрать виды" : "Изменить виды"}</Text>
+      {item.variantIssue ? <Text style={{ color: "#E5484D", fontSize: 12, marginTop: 3 }}>{item.variantIssue === "required" ? "Вид не выбран" : "Вид больше недоступен"} · {item.quantity} шт.</Text> : null}
+    </Pressable>
+  ) : null;
   const renderItem = ({ item }: { item: CartItem }) => {
     if (item.cardRegistration) return (
       <View style={[styles.card, { backgroundColor: c.cell, padding: 18, marginBottom: 12, gap: 8 }]}>
@@ -357,6 +383,7 @@ export default function Cart() {
               </Text>
             </Pressable>
             {item.variantName ? <Text style={lineBase.variant}>{item.variantName}</Text> : null}
+            {kindsButton(item)}
             <Text style={{ color: c.secondary, fontSize: 13, marginTop: 3 }}>{shock !== null ? "Акция · " : ""}{money(price)} за шт.</Text>
             {unavailable ? (
               <Text style={[styles.stockHint, { color: "#E5484D", fontWeight: "600" }]}>{unavailable}</Text>
@@ -406,6 +433,7 @@ export default function Cart() {
           ) : null}
           <Text style={[li.name, { color: c.label }]} numberOfLines={k === 1 ? undefined : 2}>{item.name}</Text>
           {item.variantName ? <Text style={li.variant}>{item.variantName}</Text> : null}
+          {kindsButton(item)}
           <Text style={[li.unit, { color: c.secondary }]}>
             {shock !== null ? "Акция · " : ""}{money(price)} × {item.quantity}
           </Text>
@@ -590,6 +618,10 @@ export default function Cart() {
               {!cardInCart ? <CardHintTotal withCard={rawCartTotal(items, "discount")} now={total} /> : null}
             </View>
 
+            {fixProductId ? <Pressable accessibilityRole="button" onPress={() => void editKinds(fixProductId)} disabled={editingProductId !== null} style={{ marginBottom: 12, padding: 14, borderRadius: 14, backgroundColor: pinkSoft }}>
+              <Text style={{ color: "#E5484D", fontWeight: "600" }}>В корзине есть товар без доступного вида</Text>
+              <Text style={{ color: colors.brand, fontWeight: "700", marginTop: 6 }}>{editingProductId !== null ? "Загружаем виды…" : "Выбрать виды и сохранить корзину"}</Text>
+            </Pressable> : null}
             {error ? (
               <View style={styles.errorBox}>
                 <Ionicons name="alert-circle" size={18} color="#FF3B30" />

@@ -65,10 +65,12 @@ export class ApiError extends Error {
   status: number;
   /** machine-readable reason from the server, e.g. «bonuses_unavailable» */
   code?: string;
-  constructor(message: string, status: number, code?: string) {
+  productId?: number;
+  constructor(message: string, status: number, code?: string, productId?: number) {
     super(message);
     this.status = status;
     this.code = code;
+    this.productId = productId;
   }
 }
 
@@ -152,7 +154,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (!res.ok) {
     // only a string can be shown in <Text> — anything else would crash the screen that renders it
     const msg = typeof data?.error === "string" && data.error ? data.error : `Ошибка сервера (${res.status})`;
-    throw new ApiError(msg, res.status, typeof data?.code === "string" ? data.code : undefined);
+    throw new ApiError(msg, res.status, typeof data?.code === "string" ? data.code : undefined, Number.isInteger(data?.productId) ? data.productId : undefined);
   }
   return data as T;
 }
