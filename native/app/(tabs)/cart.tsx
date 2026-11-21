@@ -130,16 +130,20 @@ export default function Cart() {
   const [error, setError] = useState("");
   const [problemProductId, setProblemProductId] = useState<number | null>(null);
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const editingKinds = useRef(false);
   const editKinds = async (id: number) => {
-    if (editingProductId !== null) return;
+    if (editingKinds.current) return;
+    editingKinds.current = true;
+    const owner = useAuth.getState().customer?.id;
     setEditingProductId(id);
     try {
       const [product, response] = await Promise.all([api.product(id), api.variants(id)]);
+      if (owner !== useAuth.getState().customer?.id || !useCartStore.getState().items.some(i => i.id === id)) return;
       if (!product.assortmentEnabled || !response.variants.length) throw new Error("Сейчас нет доступных видов. Удалите этот товар из корзины или дождитесь поступления.");
       useCartStore.getState().refreshProducts(new Map([[id, product]]));
       useAssortmentPicker.getState().edit(product, response.variants);
     } catch (e) { setError(e instanceof Error ? e.message : "Не удалось загрузить виды"); }
-    finally { setEditingProductId(null); }
+    finally { editingKinds.current = false; setEditingProductId(null); }
   };
 
   // a second tap before the re-render must not send the same order twice
@@ -251,7 +255,7 @@ export default function Cart() {
   }
 
   const checkout = async (noBonuses = false) => {
-    if (submitting.current) return;
+    if (submitting.current || editingKinds.current || useAssortmentPicker.getState().data) return;
     if (!customer) {
       router.push("/login");
       return;
@@ -638,7 +642,7 @@ export default function Cart() {
               </Text>
             ) : null}
             <GradientButton
-              disabled={minimumShortfall > 0}
+              disabled={minimumShortfall > 0 || editingProductId !== null}
               title={minimumShortfall > 0 ? `Добавьте ещё на ${money(minimumShortfall)}` : customer ? "Оформить заказ" : "Войти и оформить"}
               icon={customer ? undefined : "log-in-outline"}
               loading={loading || (calcBusy && (!!promoCode || spend))}
