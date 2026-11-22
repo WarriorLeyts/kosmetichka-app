@@ -1,3 +1,4 @@
+import { loadProofDraft } from "@/proofs/storage";
 import { AssortmentPicker } from "@/components/AssortmentPicker";
 import "@/webAlert";
 import "@/webIOS";
@@ -5,7 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { Animated, AppState, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { useReduceMotion } from "@/useReduceMotion";
 import { disabled } from "@/debugFlags";
-import { Stack, usePathname, type ErrorBoundaryProps } from "expo-router";
+import { router, Stack, usePathname, type ErrorBoundaryProps } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import Constants, { ExecutionEnvironment } from "expo-constants";
@@ -119,6 +120,15 @@ function AppRoot() {
   const desktop = useDesktop();
   const refresh = useAuth((s) => s.refresh);
   const loading = useAuth((s) => s.loading);
+  const proofResumeChecked = useRef(false);
+  useEffect(() => {
+    if (loading || proofResumeChecked.current) return;
+    proofResumeChecked.current = true;
+    void loadProofDraft().then(draft => {
+      const id = useAuth.getState().customer?.id;
+      if (draft && (id === draft.customerId || !id && draft.registration)) router.replace("/proofs");
+    }).catch(() => {});
+  }, [loading, customerId]);
   // re-mount the whole UI when the theme changes so every screen re-reads the palette
   const mode = useTheme((s) => s.mode);
   // the promotion's colour (admin panel → Акция) also re-mounts it (src/promo.ts)

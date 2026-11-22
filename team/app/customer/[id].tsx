@@ -1,5 +1,6 @@
+import { ProofPhoto } from "@/components/ProofPhoto";
 import { useRef, useState } from "react";
-import { Alert, Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { router, useLocalSearchParams } from "expo-router";
@@ -195,6 +196,7 @@ export default function Customer() {
                   }}
                 />
               ) : null}
+              {(x.proofUploadExpected ?? 0) > 0 && !x.proofUploadCompletedAt ? <Text style={{ color: "#B45309", marginTop: 8 }}>Клиент завершает загрузку: получено {x.proofs?.length ?? 0} из {x.proofUploadExpected} файлов.</Text> : null}
               {x.proofs?.length ? (
                 <View style={styles.proofs}>
                   {x.proofs.map((p) => (
@@ -211,13 +213,13 @@ export default function Customer() {
                           <Text style={{ color: c.secondary, fontSize: 12 }}>{Math.max(1, Math.round(p.size / 1048576))} МБ</Text>
                         </View>
                       ) : (
-                        <Image source={{ uri: BASE_URL + p.url }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+                        <ProofPhoto uri={BASE_URL + (p.thumbnailUrl || p.url)} />
                       )}
                     </Pressable>
                   ))}
                 </View>
               ) : (
-                <Text style={{ color: c.secondary, marginTop: 6 }}>Фото и видео ещё не загружены</Text>
+                <Text style={{ color: c.secondary, marginTop: 6 }}>Фото и видео от клиента не получены</Text>
               )}
             </Card>
           ) : null}

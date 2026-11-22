@@ -1,3 +1,4 @@
+import { loadProofDraft, saveProofDraft } from "@/proofs/storage";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Alert, Animated, KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, Stack } from "expo-router";
@@ -16,7 +17,7 @@ import { AuthBackdrop } from "@/components/iosui/AuthBackdrop";
 import { useIOS } from "@/ios";
 import { useReduceMotion } from "@/useReduceMotion";
 import { RETAIL_ENABLED, SITE_RETAIL_DISCOUNT } from "@/siteMode";
-import { WholesaleProofForm, WholesaleTerms, uploadProofs, type ProofFile, type ShopType } from "@/components/WholesaleProof";
+import { WholesaleProofForm, WholesaleTerms, type ProofFile, type ShopType } from "@/components/WholesaleProof";
 
 const VIOLET = "#8b1ee6";
 
@@ -117,7 +118,7 @@ export default function Register() {
   // wholesale proof: where the customer resells + photos / videos (sent right after the application)
   const [shopType, setShopType] = useState<ShopType | null>(null);
   const [proofs, setProofs] = useState<ProofFile[]>([]);
-  const [uploading, setUploading] = useState("");
+  const [preparingProofs, setPreparingProofs] = useState(false);
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
   const [foreignPhone, setForeignPhone] = useState(false);
@@ -183,7 +184,10 @@ export default function Register() {
   };
 
   const submit = async () => {
-    if (submitting.current) return; // no double submit
+    if (submitting.current || preparingProofs) return;
+    const pending = await loadProofDraft().catch(() => null);
+    if (submitting.current) return;
+    if (pending?.registration) { router.replace({ pathname: "/proofs", params: { registration: "1" } }); return; } // no double submit
     const e: Errors = {};
     if (!f.name.trim()) e.name = "Укажите имя";
     // wholesale: the shop's address is required (orders are sent there)
@@ -215,27 +219,19 @@ export default function Register() {
         smsCode: foreignPhone ? "" : smsCode.trim(),
         ...(foreignPhone ? { foreignPhone: true, emailCode: smsCode.trim(), emailChallengeId } : {}),
         priceType,
+        ...(wholesale ? { proofCount: proofs.length } : {}),
         ...(wholesale && shopType ? { shopType } : {}),
         ...(RETAIL_ENABLED ? {} : { source: "site" as const }),
         ...(refSource ? { referralSource: refSource === "Другое" && refOther.trim() ? `Другое: ${refOther.trim()}` : refSource } : {}),
         ...(orderedBefore !== null ? { orderedBefore } : {}),
       });
-      // the application is saved — now the photos / videos (the pass is valid 3 days)
-      if (wholesale && r.proofToken && proofs.length) {
-        let left = proofs;
-        for (;;) {
-          const res = await uploadProofs(left, r.proofToken, (d, t) => setUploading(d < t ? `Загружаем файлы: ${d + 1} из ${t}` : ""));
-          if (!res.failed.length) break;
-          left = res.failed;
-          const again = await new Promise<boolean>((done) =>
-            Alert.alert("Не все файлы загрузились", `${res.error}\nНе загружено: ${left.length}. Заявка уже отправлена.`, [
-              { text: "Пропустить", style: "cancel", onPress: () => done(false) },
-              { text: "Повторить", onPress: () => done(true) },
-            ])
-          );
-          if (!again) break;
-        }
-        setUploading("");
+      if (wholesale) {
+        if (!r.proofToken || !r.proofCustomerId) throw new Error("Аккаунт создан, но не удалось открыть загрузку фото. Напишите в поддержку.");
+        if (r.autoLogin) await clearPendingLogout();
+        const durable = await saveProofDraft({ customerId: r.proofCustomerId, token: r.proofToken, registration: true, autoLogin: r.autoLogin, message: r.message, files: proofs, createdAt: Date.now() });
+        if (!durable) Alert.alert("Не закрывайте приложение", "Не удалось сохранить незавершённую загрузку на устройстве. Отправьте фото сейчас.");
+        router.replace({ pathname: "/proofs", params: { registration: "1" } });
+        return;
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       if (r.autoLogin) {
@@ -320,6 +316,8 @@ export default function Register() {
                     setShopType(t);
                     setErrors((p) => ({ ...p, shopType: undefined }));
                   }}
+                  disabled={busy === "submit"}
+                  onPreparing={setPreparingProofs}
                   files={proofs}
                   setFiles={(fl) => {
                     setProofs(fl);
@@ -481,8 +479,8 @@ export default function Register() {
           ) : null}
 
           <GradientButton
-            title={busy === "submit" ? uploading || "Отправляем…" : wholesale ? "Отправить заявку" : "Зарегистрироваться"}
-            loading={busy === "submit"}
+            title={busy === "submit" ? "Создаём аккаунт…" : wholesale ? "Отправить заявку" : "Зарегистрироваться"}
+            loading={busy === "submit" || preparingProofs}
             onPress={submit}
             style={{ marginTop: 6 }}
           />

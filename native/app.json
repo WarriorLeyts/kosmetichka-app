@@ -92,7 +92,7 @@
     "experiments": {
       "typedRoutes": false
     },
-    "runtimeVersion": "5",
+    "runtimeVersion": "6",
     "updates": {
       "checkAutomatically": "ON_LOAD",
       "fallbackToCacheTimeout": 0,

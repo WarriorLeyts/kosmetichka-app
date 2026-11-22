@@ -1,3 +1,4 @@
+import { removeProofFile } from "@/proofs/storage";
 import { useState } from "react";
 import { Alert, KeyboardAvoidingView, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
@@ -26,9 +27,10 @@ export default function WholesaleRequest() {
   const [files, setFiles] = useState<ProofFile[]>([]);
   const [errors, setErrors] = useState<{ shopType?: string; proofs?: string }>({});
   const [busy, setBusy] = useState("");
+  const [preparing, setPreparing] = useState(false);
 
   const send = async () => {
-    if (busy) return;
+    if (busy || preparing) return;
     const e: typeof errors = {};
     if (!shopType) e.shopType = "Выберите, где вы продаёте";
     if (!files.length) e.proofs = "Добавьте хотя бы одно фото или видео";
@@ -41,6 +43,7 @@ export default function WholesaleRequest() {
       if (up.failed.length === files.length) throw new Error(up.error || "Файлы не загрузились");
       if (up.failed.length) setFiles(up.failed);
       const r = await api.roleSet(target, { shopType: shopType! });
+      for (const file of files.filter(f => !up.failed.some(x => x.id === f.id))) await removeProofFile(file);
       if (customer) setCustomer({ ...customer, priceType: r.priceType, wholesaleAccess: r.wholesaleAccess, roleRequest: r.roleRequest, roleRequestStatus: r.roleRequestStatus });
       Alert.alert(
         "Заявка отправлена",
@@ -69,7 +72,7 @@ export default function WholesaleRequest() {
           <Text style={[styles.h1, { color: c.label }]}>Заявка на «{LABELS[target]}»</Text>
           <WholesaleTerms />
           <View style={[styles.panel, { backgroundColor: c.cell }]}>
-            <WholesaleProofForm
+            <WholesaleProofForm disabled={!!busy} onPreparing={setPreparing}
               shopType={shopType}
               setShopType={(t) => {
                 setShopType(t);

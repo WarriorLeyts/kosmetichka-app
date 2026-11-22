@@ -9,7 +9,7 @@ describe("iPhone distribution profiles", () => {
     vi.stubEnv("IOS_DISTRIBUTION", "sideload");
     const c = configure({ config: original });
     expect(c.plugins).toContain("./plugins/withNoPushEntitlementIOS");
-    expect(c.runtimeVersion).toBe("5");
+    expect(c.runtimeVersion).toBe("6");
     expect(c.extra.iosPushEnabled).toBe(false);
     expect(c.updates.enabled).not.toBe(false);
   });
@@ -20,7 +20,7 @@ describe("iPhone distribution profiles", () => {
     expect(c.ios.entitlements["aps-environment"]).toBe("production");
     expect(c.extra.iosPushEnabled).toBe(true);
     expect(c.extra.eas.projectId).toBe(original.extra.eas.projectId);
-    expect(c.runtimeVersion).toBe("5-app-store");
+    expect(c.runtimeVersion).toBe("6-app-store");
     expect(c.updates.enabled).toBe(false);
   });
   it("rejects misspelled distribution profiles instead of silently creating a wrong build", () => {

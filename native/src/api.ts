@@ -349,10 +349,10 @@ export const api = {
   register(body: {
     name: string; companyName?: string; address?: string; phone: string; email: string; password: string;
     captchaToken: string; smsCode: string; foreignPhone?: boolean; emailCode?: string; emailChallengeId?: string; priceType: string; source?: "site";
-    shopType?: string; shopLink?: string; referralSource?: string; orderedBefore?: boolean;
+    shopType?: string; shopLink?: string; referralSource?: string; orderedBefore?: boolean; proofCount?: number;
   }) {
     // proofToken: wholesale applicant — 3 days to upload the shop photos / videos (uploadProof)
-    return request<{ success: boolean; autoLogin: boolean; message: string; proofToken?: string }>("/api/auth/register", {
+    return request<{ success: boolean; autoLogin: boolean; message: string; proofToken?: string; proofCustomerId?: number }>("/api/auth/register", {
       method: "POST",
       body: json(body),
     });
@@ -530,26 +530,39 @@ export const api = {
     }
     return data as ChatUpload;
   },
-  /** A wholesale proof photo / video. `token` — the registration pass (not signed in yet); else the login cookie. */
-  async uploadProof(file: { uri: string; name: string; mime: string }, token: string | null): Promise<{ id: number }> {
+  proofStatus(token: string | null) {
+    return request<{ files: { id: number; uploadId: string | null; kind: string; size: number }[]; expected: number; completed: boolean }>("/api/proofs", { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  },
+  completeProofs(token: string | null, discardFailed = false) {
+    return request<{ ok: boolean; count: number }>("/api/proofs/complete", { method: "POST", body: json({ discardFailed }), headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  },
+  /** Upload IDs allow resuming safely after a timeout or a lost server response. */
+  async uploadProof(file: { uri: string; name: string; mime: string; id?: string }, token: string | null, options: { onProgress?: (percent: number) => void; signal?: AbortSignal } = {}): Promise<{ id: number }> {
     const form = new FormData();
     form.append("file", await formFile(file.uri, file.name, file.mime), file.name);
-    let res: Response;
-    try {
-      res = await fetch(BASE_URL + "/api/proofs", {
-        method: "POST",
-        body: form,
-        credentials: "include",
-        headers: { Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-      });
-    } catch {
-      throw new ApiError("Нет связи с сервером. Проверьте интернет.", 0);
-    }
-    const data = await res.json().catch(() => null);
-    if (!res.ok || typeof data?.id !== "number") {
-      throw new ApiError(typeof data?.error === "string" && data.error ? data.error : `Не удалось загрузить файл (${res.status})`, res.status);
-    }
-    return data;
+    if (file.id) form.append("uploadId", file.id);
+    return await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      let done = false;
+      const finish = (error?: Error, value?: { id: number }) => { if (done) return; done = true; options.signal?.removeEventListener("abort", abort); if (error) reject(error); else resolve(value!); };
+      const abort = () => xhr.abort();
+      xhr.open("POST", BASE_URL + "/api/proofs"); xhr.withCredentials = true; xhr.timeout = 90000;
+      xhr.setRequestHeader("Accept", "application/json");
+      if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+      if (xhr.upload) xhr.upload.onprogress = e => { if (e.lengthComputable) options.onProgress?.(Math.min(99, Math.round(100 * e.loaded / e.total))); };
+      xhr.onload = () => {
+        let data: { id?: number; error?: string } = {};
+        try { data = JSON.parse(xhr.responseText); } catch { /* retry with the same upload ID */ }
+        if (xhr.status >= 200 && xhr.status < 300 && typeof data.id === "number") { options.onProgress?.(100); finish(undefined, { id: data.id }); }
+        else finish(new ApiError(data.error || `Не удалось загрузить файл (${xhr.status})`, xhr.status));
+      };
+      xhr.onerror = () => finish(new ApiError("Нет связи с сервером. Файлы сохранены — повторите отправку.", 0));
+      xhr.ontimeout = () => finish(new ApiError("Фото или видео отправляется слишком долго. Проверьте интернет и повторите: файл сохранён.", 0));
+      xhr.onabort = () => finish(new ApiError("Загрузка приостановлена. Файлы сохранены для повторной отправки.", 0));
+      if (options.signal?.aborted) { finish(new ApiError("Загрузка приостановлена", 0)); return; }
+      options.signal?.addEventListener("abort", abort, { once: true });
+      xhr.send(form);
+    });
   },
   sendMessage(orderId: number, text: string) {
     return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ text }) });
