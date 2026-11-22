@@ -1,19 +1,19 @@
-import { Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import { tap } from "@/components/ui";
 import { iosText, useIOS } from "@/ios";
 import { api } from "@/api";
+import { useRef, useState } from "react";
+import { prepareProof, removeProofFile, type ProofFile } from "@/proofs/storage";
 import { colors } from "@/theme";
+export type { ProofFile } from "@/proofs/storage";
 
 const PINK = "#e82c87";
 
-export type ProofFile = { uri: string; name: string; mime: string; video: boolean };
 export type ShopType = "offline" | "online" | "both";
 
 export const PROOF_MAX = 10;
-const MB = 1024 * 1024;
-const LIMIT = { img: 15 * MB, video: 50 * MB };
 
 /** The text every wholesale applicant reads (the owner's wording). */
 export function WholesaleTerms() {
@@ -62,53 +62,41 @@ export function WholesaleProofForm({
   setShopType,
   files,
   setFiles,
-  errors,
+  errors, disabled = false, hideShopType = false, onPreparing, maxFiles = PROOF_MAX,
 }: {
   shopType: ShopType | null;
   setShopType: (t: ShopType) => void;
   files: ProofFile[];
   setFiles: (f: ProofFile[]) => void;
   errors: { shopType?: string; proofs?: string };
+  maxFiles?: number; disabled?: boolean; hideShopType?: boolean; onPreparing?: (value: boolean) => void;
 }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
 
+  const [preparing, setPreparing] = useState(false);
+  const choosing = useRef(false);
   const add = async () => {
+    if (choosing.current || disabled) return;
+    choosing.current = true; setPreparing(true); onPreparing?.(true);
     tap();
     try {
-      const r = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ["images", "videos"],
-        allowsMultipleSelection: true,
-        selectionLimit: Math.max(1, PROOF_MAX - files.length),
-        quality: 0.8,
-        videoMaxDuration: 120,
-      });
+      const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images", "videos"], allowsMultipleSelection: true, selectionLimit: Math.max(1, maxFiles - files.length), quality: 0.85, videoMaxDuration: 120 });
       if (r.canceled) return;
-      const picked: ProofFile[] = [];
-      let tooBig = 0;
-      for (const a of r.assets) {
-        const video = a.type === "video";
-        const ext = (a.fileName?.split(".").pop() || a.uri.split(".").pop() || (video ? "mp4" : "jpg")).toLowerCase().slice(0, 5);
-        if (a.fileSize && a.fileSize > (video ? LIMIT.video : LIMIT.img)) {
-          tooBig++;
-          continue;
-        }
-        picked.push({
-          uri: a.uri,
-          video,
-          name: a.fileName || `${video ? "video" : "photo"}-${Date.now()}-${picked.length}.${ext}`,
-          mime: a.mimeType || (video ? (ext === "mov" ? "video/quicktime" : "video/mp4") : ext === "png" ? "image/png" : "image/jpeg"),
-        });
+      const picked: ProofFile[] = []; const errors: string[] = [];
+      for (const a of r.assets.slice(0, maxFiles - files.length)) {
+        try { picked.push(await prepareProof(a)); }
+        catch (e) { errors.push(e instanceof Error ? e.message : "Файл не подготовлен"); }
       }
-      setFiles([...files, ...picked].slice(0, PROOF_MAX));
-      if (tooBig) Alert.alert("Слишком большие файлы", `Не добавлено: ${tooBig}. Фото — до 15 МБ, видео — до 50 МБ.`);
-    } catch (e) {
-      Alert.alert("Не получилось", e instanceof Error ? e.message : "Попробуйте ещё раз");
-    }
+      setFiles([...files, ...picked].slice(0, maxFiles));
+      if (errors.length) Alert.alert("Не все файлы добавлены", errors[0]);
+    } catch (e) { Alert.alert("Не получилось", e instanceof Error ? e.message : "Попробуйте ещё раз"); }
+    finally { choosing.current = false; setPreparing(false); onPreparing?.(false); }
   };
 
   return (
     <View style={{ gap: 4, marginBottom: 14 }}>
+      {!hideShopType ? <>
       <Text style={[st.label, { color: c.secondary }]}>Где вы продаёте</Text>
       <View style={st.types}>
         {TYPES.map((t) => {
@@ -131,6 +119,7 @@ export function WholesaleProofForm({
         })}
       </View>
       {errors.shopType ? <Text style={st.err}>{errors.shopType}</Text> : null}
+      </> : null}
 
 
       <Text style={[st.label, { color: c.secondary, marginTop: 6 }]}>Фото или видео магазина либо онлайн-заказов</Text>
@@ -146,7 +135,8 @@ export function WholesaleProofForm({
               <Image source={{ uri: f.uri }} style={StyleSheet.absoluteFill} resizeMode="cover" />
             )}
             <Pressable
-              onPress={() => setFiles(files.filter((_, k) => k !== i))}
+              disabled={disabled || preparing}
+              onPress={() => { setFiles(files.filter((_, k) => k !== i)); void removeProofFile(f); }}
               hitSlop={8}
               accessibilityRole="button"
               accessibilityLabel="Убрать файл"
@@ -156,8 +146,9 @@ export function WholesaleProofForm({
             </Pressable>
           </View>
         ))}
-        {files.length < PROOF_MAX ? (
+        {files.length < maxFiles ? (
           <Pressable
+            disabled={disabled || preparing}
             onPress={add}
             accessibilityRole="button"
             accessibilityLabel="Добавить фото или видео"
@@ -168,8 +159,9 @@ export function WholesaleProofForm({
           </Pressable>
         ) : null}
       </View>
+      {preparing ? <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}><ActivityIndicator color={colors.brand} /><Text style={{ color: c.secondary }}>Подготавливаем и сжимаем фото…</Text></View> : null}
       <Text style={[iosText.footnote, { color: errors.proofs ? "#ff3b30" : c.secondary }]}>
-        {errors.proofs || `Хотя бы одно фото или видео, до ${PROOF_MAX} файлов. Фото — до 15 МБ, видео — до 50 МБ.`}
+        {errors.proofs || `Хотя бы одно фото или видео, до ${PROOF_MAX} файлов. Фото сжимаются перед отправкой, видео — до 50 МБ.`}
       </Text>
     </View>
   );

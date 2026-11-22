@@ -1,3 +1,4 @@
+import { discardAccountProofDraft } from "../proofs/storage";
 import { create } from "zustand";
 import { AppState } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -204,6 +205,7 @@ export const useAuth = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
+    const proofOwnerId = get().customer?.id;
     ++epoch;
     await unregisterPush();
     useNotifications.getState().reset();
@@ -215,6 +217,7 @@ export const useAuth = create<AuthState>((set, get) => ({
       // otherwise the account would silently come back after a restart
       await AsyncStorage.setItem(LOGOUT_PENDING_KEY, "1").catch(() => {});
     }
+    if (proofOwnerId) await discardAccountProofDraft(proofOwnerId).catch(() => {});
     clearLocalAccountData();
     saveCustomer(null);
     await AsyncStorage.removeItem(OWNER_KEY).catch(() => {});

@@ -118,6 +118,7 @@ export default function Profile() {
       ? [{ icon: "pricetags-outline" as IconName, title: "Тип цен", value: PRICE_LABEL[customer.priceType ?? ""] ?? undefined, onPress: () => setRoleOpen(true) }]
       : []),
     ...(customer ? [{ icon: "notifications-outline" as IconName, title: "Уведомления", onPress: () => setNotifyOpen(true) }] : []),
+    ...(customer && ["wholesale", "big_wholesale"].includes(customer.priceType ?? "") ? [{ icon: "images-outline" as IconName, title: "Фото и видео магазина", onPress: () => go("/proofs", true) }] : []),
     { icon: "cube-outline", title: "Мои заказы", needsAuth: true, onPress: () => (customer ? router.navigate("/orders") : router.push("/login")) },
     { pane: "waitlist", icon: "time-outline", title: "Лист ожидания", needsAuth: true, count: customer ? waitCount : 0, onPress: () => open("waitlist", "/waitlist", true) },
     { pane: "favorites", icon: "heart-outline", title: "Избранное", fav: true, count: favCount, onPress: () => open("favorites", "/favorites") },
