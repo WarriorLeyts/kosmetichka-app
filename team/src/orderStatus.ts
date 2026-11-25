@@ -5,11 +5,12 @@ export const STATUS_LABELS: Record<string, string> = {
   assembly: "Сборка",
   consultation: "На проверке",
   payment: "Заказ оформлен",
+  no_contact: "Нет связи",
   exported: "Выгружен в 1С",
   cancelled: "Отменён",
 };
 
-export const STATUS_ORDER = ["pending", "approved", "assembly", "consultation", "payment", "exported", "cancelled"];
+export const STATUS_ORDER = ["pending", "approved", "assembly", "consultation", "payment", "no_contact", "exported", "cancelled"];
 
 /** buttons on the order card, as on the site */
 export const STATUS_ACTIONS: Record<string, { label: string; to: string; kind: "primary" | "soft" | "danger" | "success" }[]> = {
@@ -44,6 +45,7 @@ const COLORS: Record<string, [string, string, string, string]> = {
   assembly: ["#DBEAFE", "#1E40AF", "rgba(96,165,250,0.18)", "#93C5FD"],
   consultation: ["#FFEDD5", "#9A3412", "rgba(251,146,60,0.18)", "#FDBA74"],
   payment: ["#DCFCE7", "#166534", "rgba(52,211,153,0.16)", "#6EE7B7"],
+  no_contact: ["#F3E8FF", "#6B21A8", "rgba(168,85,247,0.18)", "#D8B4FE"],
   exported: ["#D1FAE5", "#065F46", "rgba(16,185,129,0.18)", "#6EE7B7"],
   cancelled: ["#FEE2E2", "#991B1B", "rgba(248,113,113,0.18)", "#FCA5A5"],
 };

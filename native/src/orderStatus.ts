@@ -14,6 +14,7 @@ const ICONS: Record<string, IconName> = {
   assembly: "cube-outline",
   consultation: "chatbubble-ellipses-outline",
   payment: "checkmark-done-circle-outline",
+  no_contact: "call-outline",
   exported: "sparkles-outline",
   cancelled: "close-circle-outline",
 };

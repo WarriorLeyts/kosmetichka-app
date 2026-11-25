@@ -133,6 +133,7 @@ export function ActionButton({ label, kind = "primary", onPress, loading, icon, 
         tap();
         onPress();
       }}
+      accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled, busy: !!loading }}
       style={({ pressed }) => [styles.action, { backgroundColor: look.bg, opacity: disabled ? 0.45 : pressed ? 0.85 : 1 }]}
     >

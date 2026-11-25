@@ -674,6 +674,10 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             <Text style={[iosText.subhead, { color: c.secondary }]}>от {dateLong(order.createdAt)}</Text>
           </View>
           {order.status === "exported" ? <OrderDone /> : null}
+          {order.status === "no_contact" ? <View style={[panel, { gap: 6 }]}>
+            <Text style={[iosText.headline, { color: c.label }]}>Ожидаем связи с вами</Text>
+            <Text style={[iosText.subhead, { color: c.secondary }]}>Обработка заказа приостановлена. Напишите менеджеру в чате заказа, чтобы продолжить.</Text>
+          </View> : null}
 
           {needsConfirm ? (
             <View style={[panel, { gap: 10 }]}>

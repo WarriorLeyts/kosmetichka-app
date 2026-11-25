@@ -34,6 +34,7 @@ const FILTERS: { key: string; label: string }[] = [
   { key: "assembly", label: "Сборка" },
   { key: "consultation", label: "На проверке" },
   { key: "payment", label: "Заказ оформлен" },
+  { key: "no_contact", label: "Ждут связи" },
   { key: "exported", label: "Выполнены" },
   { key: "cancelled", label: "Отменены" },
 ];
