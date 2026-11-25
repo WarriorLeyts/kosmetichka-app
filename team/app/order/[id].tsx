@@ -158,6 +158,28 @@ export default function OrderScreen() {
     ]);
   };
 
+  const changeContact = (action: "hold" | "resume") => {
+    const title = action === "hold" ? "Клиент не выходит на связь?" : "Вернуть заказ в работу?";
+    const message = action === "hold"
+      ? "Заказ перейдёт в раздел «Нет связи». Когда клиент ответит, можно будет вернуть его на прежний этап. Состав и отметки сборки сохранятся."
+      : `Заказ вернётся на этап «${STATUS_LABELS[o?.contactResumeStatus ?? ""] ?? "В работе"}».`;
+    const save = async () => {
+      if (running.current) return;
+      running.current = true;
+      setBusy(action);
+      try {
+        await post(`/api/admin/orders/${orderId}/contact`, { action });
+        await reload();
+      } catch (e) {
+        Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+        await reload();
+      } finally { running.current = false; setBusy(""); }
+    };
+    if (Platform.OS === "web") {
+      if (window.confirm(`${title}\n\n${message}`)) void save();
+    } else Alert.alert(title, message, [{ text: "Назад", style: "cancel" }, { text: "Подтвердить", onPress: () => void save() }]);
+  };
+
   const refuse = async (confirmed = false) => {
     const save = async () => {
       if (running.current) return;
@@ -381,7 +403,7 @@ export default function OrderScreen() {
           <StatusPill status={o.status} label={o.statusLabel} />
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
-        {o.oneCError ? (
+        {o.oneCError && o.status !== "no_contact" ? (
           // «Заказ оформлен», but 1С didn't take it yet: why (the site tries again by itself)
           <View style={styles.onecError}>
             <Text style={{ color: "#B91C1C", fontWeight: "700" }}>Заказ не ушёл в 1С</Text>
@@ -454,6 +476,14 @@ export default function OrderScreen() {
             <Text style={{ color: "#16A34A", fontWeight: "600", flex: 1 }}>Клиент подтвердил заказ — можно нажать «Заказ оформлен»</Text>
           </View>
         ) : null}
+        {o.status === "no_contact" ? <View style={{ marginTop: 14, gap: 10, padding: 14, borderRadius: 16, backgroundColor: dark ? "rgba(168,85,247,0.16)" : "#F3E8FF" }}>
+          <Text style={{ color: c.label, fontWeight: "700" }}>Клиент не выходит на связь</Text>
+          <Text style={{ color: c.secondary }}>Обработка на паузе. Состав заказа и отметки сборки сохранены.{o.contactResumeStatus ? ` При возврате продолжим с этапа «${STATUS_LABELS[o.contactResumeStatus] ?? o.contactResumeStatus}».` : ""}</Text>
+          {o.contactResumeStatus ? <ActionButton label="Вернуть в работу" kind="primary" loading={busy === "resume"} disabled={!!busy} onPress={() => changeContact("resume")} /> : null}
+        </View> : null}
+        {o.canHoldForContact ? <View style={{ marginTop: 12 }}>
+          <ActionButton label="Клиент не выходит на связь" kind="soft" disabled={!!edit || !!busy} loading={busy === "hold"} onPress={() => changeContact("hold")} />
+        </View> : null}
         {actions.length && edit ? (
           // unsaved changes of the items: the status can't move until they are saved or cancelled
           <View style={[styles.note, { backgroundColor: "rgba(245,158,11,0.14)" }]}>

@@ -206,12 +206,13 @@ const DOT: Record<string, string> = {
   assembly: "#3B82F6",
   consultation: "#F97316",
   payment: "#22C55E",
+  no_contact: "#A855F7",
   exported: "#10B981",
   cancelled: "#EF4444",
 };
 const SHORT: Record<string, string> = { payment: "Оформлен", exported: "В 1С" };
 // «Оформлен» (payment) is not a tile: «Заказ собран» sends the order to 1С at once (owner, 2026-11-09)
-const TILES = ["pending", "assembly", "consultation", "exported", "cancelled"];
+const TILES = ["pending", "assembly", "consultation", "no_contact", "exported", "cancelled"];
 
 /**
  * Summary tiles: «Все заказы» + one per stage, count and sum; a tap filters the list.

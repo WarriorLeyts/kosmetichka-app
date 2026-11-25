@@ -194,6 +194,7 @@ export const STATUS_LABELS: Record<string, string> = {
   assembly: "Сборка",
   consultation: "На проверке",
   payment: "Заказ оформлен",
+  no_contact: "Ожидаем связи с вами",
   exported: "Выполнен",
   cancelled: "Отменён",
 };
@@ -205,6 +206,7 @@ export const STATUS_COLORS: Record<string, { fg: string; bg: string; border: str
   assembly: { fg: "#1e40af", bg: "#dbeafe", border: "#bfdbfe" },
   consultation: { fg: "#9a3412", bg: "#ffedd5", border: "#fed7aa" },
   payment: { fg: "#065f46", bg: "#d1fae5", border: "#a7f3d0" },
+  no_contact: { fg: "#6b21a8", bg: "#f3e8ff", border: "#e9d5ff" },
   exported: { fg: "#475569", bg: "#f1f5f9", border: "#e2e8f0" },
   cancelled: { fg: "#b91c1c", bg: "#fee2e2", border: "#fecaca" },
 };
@@ -216,6 +218,7 @@ export const STATUS_ICONS: Record<string, string> = {
   assembly: "📦",
   consultation: "💬",
   payment: "✅",
+  no_contact: "☎️",
   exported: "🎉",
   cancelled: "❌",
 };
