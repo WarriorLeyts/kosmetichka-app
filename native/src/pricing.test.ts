@@ -12,11 +12,17 @@ describe("retail minimum and a standalone loyalty card", () => {
     expect(minOrderFor({ priceType }, [card, p({ retailPrice: 1 })])).toBe(1000);
     expect(minOrderFor({ priceType }, [{ ...card, quantity: 2 }])).toBe(1000);
   });
-  it("counts the remainder and leaves wholesale without a minimum", () => {
+  it("counts the retail remainder", () => {
     expect(amountUntilMinOrder([p({ retailPrice: 999 })], { priceType: "retail" })).toBe(1);
     expect(amountUntilMinOrder([p({ retailPrice: 1000 })], { priceType: "retail" })).toBe(0);
-    expect(minOrderFor({ priceType: "wholesale" })).toBe(0);
-    expect(minOrderFor({ priceType: "big_wholesale" })).toBe(0);
+  });
+  it.each(["wholesale", "big_wholesale"])("%s requires 1000 and counts the remainder at the customer's prices", (priceType) => {
+    expect(minOrderFor({ priceType })).toBe(1000);
+    expect(minOrderFor({ priceType }, [card])).toBe(1000);
+    const goods = (price: number) => [p({ retailPrice: price, discountPrice: price, wholesalePrice: price, bigWholesalePrice: price })];
+    expect(amountUntilMinOrder(goods(999), { priceType })).toBe(1);
+    expect(amountUntilMinOrder(goods(1000), { priceType })).toBe(0);
+    expect(amountUntilMinOrder(goods(1001), { priceType })).toBe(0);
   });
 });
 

@@ -260,7 +260,7 @@ export default function Cart() {
       router.push("/login");
       return;
     }
-    if (minimumShortfall > 0) { setError(`Минимальная сумма розничного заказа — ${money(orderMinimum)}. Добавьте товары ещё на ${money(minimumShortfall)}.`); return; }
+    if (minimumShortfall > 0) { setError(`Минимальная сумма заказа — ${money(orderMinimum)}. Добавьте товары ещё на ${money(minimumShortfall)}.`); return; }
     submitting.current = true;
     setLoading(true);
     setError("");
@@ -633,7 +633,7 @@ export default function Cart() {
               </View>
             ) : null}
             {minimumShortfall > 0 ? <View style={{ borderRadius: 14, padding: 14, marginBottom: 12, backgroundColor: pinkSoft }} accessibilityRole="alert">
-              <Text style={{ color: c.label, fontWeight: "700" }}>Розничный заказ — от {money(orderMinimum)}</Text>
+              <Text style={{ color: c.label, fontWeight: "700" }}>Минимальная сумма заказа — {money(orderMinimum)}</Text>
               <Text style={{ color: c.secondary, marginTop: 4 }}>Добавьте товары ещё на {money(minimumShortfall)}.</Text>
             </View> : null}
             {!customer ? (

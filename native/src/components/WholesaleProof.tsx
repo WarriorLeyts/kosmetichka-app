@@ -28,7 +28,7 @@ export function WholesaleTerms() {
       <View style={st.rule}>
         <Ionicons name="cart-outline" size={18} color={colors.brand} />
         <Text style={[st.termsText, { color: c.label, flex: 1 }]}>
-          Минимальный оптовый заказ — <Text style={st.b}>5 000 ₽</Text>, эту сумму нужно набирать в каждом заказе.
+          Минимальный заказ — <Text style={st.b}>1 000 ₽</Text>. Оптовые цены — от <Text style={st.b}>5 000 ₽</Text> в каждом заказе.
         </Text>
       </View>
       <View style={st.rule}>
