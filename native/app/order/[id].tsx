@@ -692,6 +692,10 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                 </Text>
               </View>
               <GradientButton title="Подтвердить заказ" icon="checkmark-done" loading={busy === "confirm"} onPress={confirm} />
+              <Pressable accessibilityRole="button" accessibilityLabel="Перейти в чат заказа" onPress={() => scrollRef.current?.scrollToEnd({ animated: true })} style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 10, minHeight: 44 }}>
+                <Ionicons name="chatbubble-ellipses-outline" size={19} color={colors.brand} />
+                <Text style={{ fontWeight: "600", fontSize: 15, color: colors.brand }}>Написать менеджеру</Text>
+              </Pressable>
             </View>
           ) : null}
 
