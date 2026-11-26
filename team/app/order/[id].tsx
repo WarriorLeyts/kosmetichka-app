@@ -91,10 +91,12 @@ export default function OrderScreen() {
       setGroupBusy(true);
       try {
         const r = await post<{ created: boolean; moved: boolean; contractCreated: boolean }>(`/api/team/customers/${cust.id}/group`, { group });
-        Alert.alert("Готово", r.created ? `Клиент заведён в 1С в папке «${group}».` : r.moved ? `Контрагент перенесён в папку «${group}».` : `Привязка к контрагенту в папке «${group}» проверена.`);
+        const notice = r.created ? `Клиент заведён в 1С в папке «${group}».` : r.moved ? `Контрагент перенесён в папку «${group}».` : `Привязка к контрагенту в папке «${group}» проверена.`;
+        if (Platform.OS === "web") window.alert(notice); else Alert.alert("Готово", notice);
         await reload();
       } catch (e) {
-        Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+        if (Platform.OS === "web") window.alert(e instanceof Error ? e.message : "Не удалось проверить привязку");
+        else Alert.alert("Не получилось", e instanceof Error ? e.message : "");
       } finally { setGroupBusy(false); }
     };
     if (Platform.OS === "web") {
