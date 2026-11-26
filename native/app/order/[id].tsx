@@ -474,7 +474,9 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
     setBusy("confirm");
     try {
       await api.confirmOrder(order.id);
-      setOrder({ ...order, customerConfirmed: true, needsConfirm: false });
+      setOrder({ ...order, customerConfirmed: true, needsConfirm: false,
+        service: order.service?.phase === "confirmation" ? { ...order.service, title: "Вы подтвердили заказ", description: "Спасибо! Менеджер продолжит оформление и согласует с вами оплату и получение." } : order.service,
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     } catch (e) {
       Alert.alert("Ошибка", e instanceof Error ? e.message : "Не удалось подтвердить");
@@ -675,7 +677,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             <Text style={[iosText.subhead, { color: c.secondary }]}>от {dateLong(order.createdAt)}</Text>
           </View>
           {order.status === "exported" ? <OrderDone /> : null}
-          {order.service && !["paused", "done", "cancelled"].includes(order.service.phase) ? <OrderServiceCard service={order.service} onChat={() => scrollRef.current?.scrollToEnd({ animated: true })} /> : null}
+          {order.service && !needsConfirm && !["paused", "done", "cancelled"].includes(order.service.phase) ? <OrderServiceCard service={order.service} onChat={() => scrollRef.current?.scrollToEnd({ animated: true })} /> : null}
           {order.status === "no_contact" ? <View style={[panel, { gap: 6 }]}>
             <Text style={[iosText.headline, { color: c.label }]}>Ожидаем связи с вами</Text>
             <Text style={[iosText.subhead, { color: c.secondary }]}>Обработка заказа приостановлена. Напишите менеджеру в чате заказа, чтобы продолжить.</Text>
