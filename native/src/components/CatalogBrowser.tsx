@@ -416,6 +416,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           <Ionicons name="close" size={15} color={colors.brand} />
         </Pressable>
       ) : null}
+      {!pick ? <Pressable accessibilityRole="button" onPress={() => router.push(`/request-product?search=${encodeURIComponent(f.search ?? "")}`)} style={{ marginHorizontal: 16, marginBottom: 12, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 7 }}><Ionicons name="search-outline" size={17} color={colors.brand} /><Text style={{ color: colors.brand, fontSize: 14, fontWeight: "600" }}>Не нашли нужный товар?</Text></Pressable> : null}
       {/* retail without a loyalty card: what «Скидка по карте» needs */}
       <CardHintStrip />
 
@@ -502,13 +503,13 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
             busy || loading ? (
               <ActivityIndicator style={{ marginTop: 60 }} color={colors.brand} size="large" />
             ) : (
-              <Empty
+              <View><Empty
                 icon="search-outline"
                 title="Ничего не нашлось"
                 text="Попробуйте изменить запрос или сбросить фильтры"
                 action={filterCount > 0 || f.search || f.categoryGuid ? "Сбросить фильтры" : undefined}
                 onAction={() => f.reset()}
-              />
+              />{!pick ? <Pressable accessibilityRole="button" onPress={() => router.push(`/request-product?search=${encodeURIComponent(f.search ?? "")}`)} style={{ alignSelf: "center", padding: 16 }}><Text style={{ color: colors.brand, fontWeight: "600" }}>Оставить пожелание о товаре</Text></Pressable> : null}</View>
             )
           }
           ListFooterComponent={loading && !busy && products.length > 0 ? <ActivityIndicator style={{ margin: 24 }} color={colors.brand} /> : null}

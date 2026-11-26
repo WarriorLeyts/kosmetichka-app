@@ -4,6 +4,9 @@ import { api } from "../api";
 /** «Лист ожидания» — server-side list of out-of-stock products the customer waits for. */
 type WaitState = {
   ids: number[];
+  missingCount: number;
+  quantities: Record<number, number>;
+  save: (productId: number, quantity: number) => Promise<void>;
   load: () => Promise<void>;
   toggle: (productId: number) => Promise<boolean>;
   remove: (productId: number) => Promise<void>;
@@ -15,11 +18,13 @@ let gen = 0;
 
 export const useWaitlistStore = create<WaitState>((set, get) => ({
   ids: [],
+  missingCount: 0,
+  quantities: {},
   load: async () => {
     const my = gen;
     try {
       const r = await api.wishlist();
-      if (my === gen) set({ ids: r?.productIds ?? [] });
+      if (my === gen) set({ ids: r?.productIds ?? [], missingCount: r.missingCount ?? 0, quantities: Object.fromEntries((r.products ?? []).filter(p => p.quantity != null).map(p => [p.id, p.quantity!])) });
     } catch {
       /* not logged in */
     }
@@ -32,6 +37,11 @@ export const useWaitlistStore = create<WaitState>((set, get) => ({
     set({ ids: added ? [...ids, productId] : ids });
     return added;
   },
+  save: async (productId, quantity) => {
+    const my = gen;
+    await api.wishlistSave(productId, quantity);
+    if (my === gen) set({ ids: [...get().ids.filter(id => id !== productId), productId], quantities: { ...get().quantities, [productId]: quantity } });
+  },
   remove: async (productId) => {
     const my = gen;
     await api.wishlistRemove(productId);
@@ -40,6 +50,6 @@ export const useWaitlistStore = create<WaitState>((set, get) => ({
   },
   reset: () => {
     gen++;
-    set({ ids: [] });
+    set({ ids: [], missingCount: 0, quantities: {} });
   },
 }));

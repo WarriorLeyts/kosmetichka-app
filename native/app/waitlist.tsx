@@ -2,10 +2,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Animated, FlatList, LayoutAnimation, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { router, Stack } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { api, imageUrl } from "@/api";
+import { api, imageUrl, type ProductWish } from "@/api";
+import { DEMAND_NOTICE } from "@/demand";
 import { stockLabel } from "@/format";
 import { useWaitlistStore } from "@/store/waitlist";
 import { ErrorView, tap } from "@/components/ui";
@@ -16,7 +17,7 @@ import { useReduceMotion } from "@/useReduceMotion";
 import type { Product } from "@/types";
 import { colors, themed } from "@/theme";
 
-type Row = Product & { notified: boolean };
+type Row = Product & { notified: boolean; quantity: number | null };
 
 
 /** One waitlist card: fades in, fades out on delete. */
@@ -68,6 +69,7 @@ function WaitCard({ item, index, onRemoved }: { item: Row; index: number; onRemo
             </Text>
           ) : null}
           <Text style={[styles.name, { color: c.label }]}>{item.name}</Text>
+          <Pressable accessibilityRole="button" onPress={e => { e.stopPropagation(); router.push(`/wait-request?id=${item.id}`); }} style={{ paddingVertical: 7 }}><Text style={{ color: colors.brand, fontSize: 14 }}>{item.quantity ? `Нужно: ${item.quantity} шт. · изменить` : "Указать нужное количество"}</Text></Pressable>
           {back ? (
             <View style={[styles.pill, { backgroundColor: "rgba(52,199,89,0.12)" }]}>
               <Ionicons name="checkmark-circle-outline" size={18} color="#1f8a3b" />
@@ -95,14 +97,16 @@ export default function Waitlist() {
   const insets = useSafeAreaInsets();
   const reduce = useReduceMotion();
   const [items, setItems] = useState<Row[] | null>(null);
+  const [wishes, setWishes] = useState<ProductWish[]>([]);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setError("");
     try {
-      const r = await api.wishlist();
+      const [r, missing] = await Promise.all([api.wishlist(), api.productWishes()]);
       setItems(Array.isArray(r?.products) ? r.products : []);
+      setWishes(missing.items.filter(w => !w.linkedProductId && !w.closed));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка");
     } finally {
@@ -110,9 +114,7 @@ export default function Waitlist() {
     }
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   const removed = (id: number) => {
     if (!reduce) LayoutAnimation.configureNext(LayoutAnimation.create(220, "easeInEaseOut", "opacity"));
@@ -123,6 +125,12 @@ export default function Waitlist() {
   const header = (
     <View style={styles.wrap}>
       <TitleBar title="Лист ожидания" />
+      <Text style={{ color: c.secondary, fontSize: 13, lineHeight: 20, marginBottom: 16 }}>{DEMAND_NOTICE}</Text>
+      {wishes.map(w => <View key={w.id} style={{ backgroundColor: c.cell, borderRadius: 22, padding: 18, marginBottom: 12, gap: 8 }}>
+        <Text style={{ color: colors.brand, fontSize: 12 }}>Ваше пожелание к ассортименту</Text><Text style={{ color: c.label, fontWeight: "600", fontSize: 17 }}>{w.name}</Text><Text style={{ color: c.secondary }}>Нужно: {w.quantity} шт.</Text>
+        {w.comment ? <Text style={{ color: c.secondary }}>{w.comment}</Text> : null}
+        <Pressable accessibilityRole="button" onPress={async () => { try { await api.removeProductWish(w.id); setWishes(xs => xs.filter(x => x.id !== w.id)); } catch (e) { Alert.alert("Не удалось удалить", e instanceof Error ? e.message : "Попробуйте ещё раз"); } }} style={{ paddingVertical: 8 }}><Text style={{ color: colors.brand }}>Удалить пожелание</Text></Pressable>
+      </View>)}
     </View>
   );
 
@@ -154,7 +162,7 @@ export default function Waitlist() {
           />
         }
         ListHeaderComponent={header}
-        ListEmptyComponent={
+        ListEmptyComponent={wishes.length ? null :
           <View style={[styles.wrap, styles.empty, { backgroundColor: c.cell }, !dark && styles.shadow]}>
             <View style={styles.emptyIcon}>
               <Ionicons name="time-outline" size={34} color={colors.brand} />

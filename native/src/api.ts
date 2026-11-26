@@ -573,7 +573,7 @@ export const api = {
   },
 
   // ── Waiting list ──
-  wishlist(): Promise<{ productIds: number[]; products: (Product & { notified: boolean; wishlistItemId: number; prices?: { priceType: string; price: number }[] })[] }> {
+  wishlist(): Promise<{ productIds: number[]; missingCount: number; products: (Product & { quantity: number | null; notifiedAt: string | null; notified: boolean; wishlistItemId: number; prices?: { priceType: string; price: number }[] })[] }> {
     return request("/api/wishlist");
   },
   /** Toggles: adds if absent, removes if present. */
@@ -583,4 +583,20 @@ export const api = {
   wishlistRemove(productId: number) {
     return request(`/api/wishlist?productId=${seg(productId)}`, { method: "DELETE" });
   },
+  wishlistSave(productId: number, quantity: number) { return request<{ added: boolean; quantity: number }>("/api/wishlist", { method: "PUT", body: json({ productId, quantity }) }); },
+  productWishes() { return request<{ items: ProductWish[] }>("/api/demand"); },
+  saveProductWish(body: { name: string; quantity: number; comment?: string; photoName?: string | null }) { return request<{ id: number; notice: string }>("/api/demand", { method: "POST", body: json(body) }); },
+  removeProductWish(id: number) { return request(`/api/demand?id=${seg(id)}`, { method: "DELETE" }); },
+  restocks() { return request<{ items: RestockArrival[] }>("/api/mobile/restocks"); },
+  async uploadDemandPhoto(file: { uri: string; name: string; mime: string }) {
+    const form = new FormData();
+    form.append("file", await formFile(file.uri, file.name, file.mime), file.name);
+    const res = await fetch(BASE_URL + "/api/demand/photo", { method: "POST", body: form, credentials: "include", headers: { Accept: "application/json" } });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.photoName) throw new ApiError(data?.error || "Не удалось загрузить фото", res.status);
+    return data as { photoName: string; url: string };
+  },
 };
+
+export type ProductWish = { id: number; name: string; quantity: number; comment: string | null; photoName: string | null; linkedProductId: number | null; closed: boolean; createdAt: string };
+export type RestockArrival = { id: number; name: string; imagePath: string | null; quantity: number | null; notifiedAt: string; expiresAt: string };
