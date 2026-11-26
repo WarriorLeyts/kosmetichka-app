@@ -18,6 +18,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { OrderChangeCard } from "@/components/OrderChangeCard";
 import { OrderReviewCard } from "@/components/OrderReviewCard";
+import { OrderServicePreview } from "@/components/OrderServicePreview";
 import { VoiceComposer } from "@/components/voice/VoiceComposer";
 import { VoicePlayer } from "@/components/voice/VoicePlayer";
 import { api, ApiError, BASE_URL, imageUrl } from "@/api";
@@ -668,12 +669,13 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             {order.status === "exported" ? null : (
               <View style={[styles.status, { backgroundColor: s.bg }]}>
                 <Ionicons name={s.icon} size={22} color={s.fg} />
-                <Text style={[styles.statusText, { color: s.fg }]}>{s.label}</Text>
+                <Text style={[styles.statusText, { color: s.fg }]}>{process.env.EXPO_PUBLIC_ORDER_SERVICE_PREVIEW === "1" && order.serviceCarePreview ? order.serviceCarePreview.phase === "queued" ? "Заказ получен" : order.serviceCarePreview.phase === "checking" ? "В работе у менеджера" : "Собираем заказ" : s.label}</Text>
               </View>
             )}
             <Text style={[iosText.subhead, { color: c.secondary }]}>от {dateLong(order.createdAt)}</Text>
           </View>
           {order.status === "exported" ? <OrderDone /> : null}
+          {process.env.EXPO_PUBLIC_ORDER_SERVICE_PREVIEW === "1" && order.serviceCarePreview ? <OrderServicePreview care={order.serviceCarePreview} onChat={() => scrollRef.current?.scrollToEnd({ animated: true })} /> : null}
           {order.status === "no_contact" ? <View style={[panel, { gap: 6 }]}>
             <Text style={[iosText.headline, { color: c.label }]}>Ожидаем связи с вами</Text>
             <Text style={[iosText.subhead, { color: c.secondary }]}>Обработка заказа приостановлена. Напишите менеджеру в чате заказа, чтобы продолжить.</Text>

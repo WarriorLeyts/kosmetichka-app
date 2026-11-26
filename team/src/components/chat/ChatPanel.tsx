@@ -24,13 +24,14 @@ export type ChatMsg = { id: number | string; text: string; createdAt: string; mi
  * Polls every 10 s while the screen is open.
  */
 export function ChatPanel({
-  load, send, empty, extraActions, liveOrderId,
+  load, send, empty, extraActions, liveOrderId, quickReplies,
 }: {
   /** reload at once when the site says this order changed (a new message) */
   liveOrderId?: number;
   load: () => Promise<ChatMsg[]>;
   send: (text: string) => Promise<unknown>;
   empty?: string;
+  quickReplies?: { label: string; text: string }[];
   /** e.g. «send a product card» */
   extraActions?: { value: string; label: string; run: () => void }[];
 }) {
@@ -169,6 +170,14 @@ export function ChatPanel({
         </View>
       ) : null}
 
+      {quickReplies?.length ? <View style={{ marginTop: 14, marginBottom: 10, gap: 8 }}>
+        <Text style={{ color: c.secondary, fontSize: 13, fontWeight: "600" }}>Быстрые ответы</Text>
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>
+          {quickReplies.map(reply => <Pressable key={reply.label} accessibilityRole="button" accessibilityLabel={reply.label} disabled={sending || !!uploading} onPress={() => setText(reply.text)} style={{ backgroundColor: dark ? "#392049" : "#F3ECFE", padding: 12, borderRadius: 13, minHeight: 44, justifyContent: "center" }}>
+            <Text style={{ color: dark ? "#D7B8FF" : "#6D28D9", fontWeight: "600", fontSize: 13 }}>{reply.label}</Text>
+          </Pressable>)}
+        </View>
+      </View> : null}
       <View style={styles.composer}>
         <Pressable
           onPress={() => {

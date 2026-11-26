@@ -398,6 +398,15 @@ export default function OrderScreen() {
           <StatusPill status={o.status} label={o.statusLabel} />
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
+        {process.env.EXPO_PUBLIC_ORDER_SERVICE_PREVIEW === "1" && o.serviceCarePreview ? <View style={{ marginTop: 16, padding: 14, borderRadius: 16, gap: 9, backgroundColor: dark ? "#392049" : "#F5EDFF" }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: c.label }}>{o.serviceCarePreview.phase === "queued" ? "Клиент ждёт первого ответа" : "Клиент знает, что заказ в работе"}</Text>
+          <Text style={{ color: c.secondary, lineHeight: 20 }}>{o.serviceCarePreview.phase === "queued" ? "После нажатия клиент увидит менеджера и получит сообщение в чате." : `Заказом занимается ${o.serviceCarePreview.managerName || "менеджер"}. Быстрые ответы доступны в чате с клиентом.`}</Text>
+          {o.serviceCarePreview.phase === "queued" ? <ActionButton label="Взять заказ в работу" icon="hand-left-outline" loading={busy === "service-preview"} onPress={async () => {
+            if (running.current) return; running.current = true; setBusy("service-preview");
+            try { await post(`/api/preview/order-service/${orderId}/take`, {}); await reload(); }
+            finally { running.current = false; setBusy(""); }
+          }} /> : null}
+        </View> : null}
         {o.oneCError && o.status !== "no_contact" ? (
           // «Заказ оформлен», but 1С didn't take it yet: why (the site tries again by itself)
           <View style={styles.onecError}>
@@ -715,6 +724,11 @@ export default function OrderScreen() {
               load={loadCustomer}
               send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })}
               empty="Клиент ещё не писал"
+              quickReplies={process.env.EXPO_PUBLIC_ORDER_SERVICE_PREVIEW === "1" ? [
+                { label: "Проверяем наличие", text: "Здравствуйте! Ваш заказ уже в работе. Проверяем наличие и итоговую сумму. Напишем вам после проверки." },
+                { label: "Уточняем остатки", text: "Сейчас уточняем остатки на складе. Ваш заказ в работе — как только получим ответ, сразу напишем вам здесь." },
+                { label: "Есть вопрос", text: "Есть вопрос по одной позиции в вашем заказе. Удобно обсудить его здесь, в чате?" },
+              ] : undefined}
               extraActions={[{ value: "product", label: "Карточка товара из каталога", run: () => setCatalog("customer") }]}
             />
           </ProductRequestContext.Provider>

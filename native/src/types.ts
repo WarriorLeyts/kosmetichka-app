@@ -152,6 +152,8 @@ export type RemovedOrderItem = {
 };
 
 export type Order = {
+  /** Synthetic data supplied only by the isolated order-service preview. */
+  serviceCarePreview?: import("./components/OrderServicePreview").ServiceCarePreview;
   id: number;
   status: string;
   total: number;
