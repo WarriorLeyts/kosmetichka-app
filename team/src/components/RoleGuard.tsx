@@ -3,7 +3,7 @@ import { Redirect } from "expo-router";
 import { useAuth, type Role } from "../store/auth";
 
 /** admin-only screens (staff management) */
-const ADMIN_ROUTES = new Set(["users", "user/new", "user/[id]", "push", "app-errors"]);
+const ADMIN_ROUTES = new Set(["users", "user/new", "user/[id]", "customer/new", "push", "app-errors"]);
 /** screens reachable without a session */
 const PUBLIC_ROUTES = new Set(["login", "+not-found"]);
 
