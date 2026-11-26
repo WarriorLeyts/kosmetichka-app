@@ -129,7 +129,7 @@ export default function Waitlist() {
       {wishes.map(w => <View key={w.id} style={{ backgroundColor: c.cell, borderRadius: 22, padding: 18, marginBottom: 12, gap: 8 }}>
         <Text style={{ color: colors.brand, fontSize: 12 }}>Ваше пожелание к ассортименту</Text><Text style={{ color: c.label, fontWeight: "600", fontSize: 17 }}>{w.name}</Text><Text style={{ color: c.secondary }}>Нужно: {w.quantity} шт.</Text>
         {w.comment ? <Text style={{ color: c.secondary }}>{w.comment}</Text> : null}
-        <Pressable accessibilityRole="button" onPress={async () => { try { await api.removeProductWish(w.id); setWishes(xs => xs.filter(x => x.id !== w.id)); } catch (e) { Alert.alert("Не удалось удалить", e instanceof Error ? e.message : "Попробуйте ещё раз"); } }} style={{ paddingVertical: 8 }}><Text style={{ color: colors.brand }}>Удалить пожелание</Text></Pressable>
+        <Pressable accessibilityRole="button" onPress={async () => { try { await api.removeProductWish(w.id); setWishes(xs => xs.filter(x => x.id !== w.id)); void useWaitlistStore.getState().load(); } catch (e) { Alert.alert("Не удалось удалить", e instanceof Error ? e.message : "Попробуйте ещё раз"); } }} style={{ paddingVertical: 8 }}><Text style={{ color: colors.brand }}>Удалить пожелание</Text></Pressable>
       </View>)}
     </View>
   );
