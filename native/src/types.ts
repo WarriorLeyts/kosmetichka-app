@@ -151,7 +151,14 @@ export type RemovedOrderItem = {
   at: string;
 };
 
+export type OrderService = {
+  phase: "queued" | "checking" | "assembly" | "confirmation" | "processing" | "paused" | "done" | "cancelled";
+  title: string; description: string; timingText: string | null; expectedAt: string | null;
+  overdue: boolean; managerName: string | null; startedAt: string | null; canTake: boolean;
+};
+
 export type Order = {
+  service?: OrderService;
   id: number;
   status: string;
   total: number;
@@ -186,10 +193,10 @@ export type OrdersPage = {
   orders: Order[];
 };
 
-export type ChatMessage = { id: number; text: string; isFromManager: boolean; createdAt: string };
+export type ChatMessage = { automatic?: boolean; id: number; text: string; isFromManager: boolean; createdAt: string };
 
 export const STATUS_LABELS: Record<string, string> = {
-  pending: "Ожидает подтверждения",
+  pending: "Заказ получен",
   approved: "Подтверждён",
   assembly: "Сборка",
   consultation: "На проверке",

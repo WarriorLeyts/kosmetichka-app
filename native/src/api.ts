@@ -505,7 +505,7 @@ export const api = {
   orderStatus(): Promise<{
     pending: number;
     /** needsConfirm: the manager waits for the customer to check and confirm the order */
-    statuses: { id: number; status: string; needsConfirm?: boolean }[];
+    statuses: { id: number; status: string; needsConfirm?: boolean; serviceStarted?: boolean }[];
     managerMessages: { orderId: number; latestAt: string; preview: string }[];
     isApproved?: boolean;
   }> {

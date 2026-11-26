@@ -18,6 +18,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
 import { OrderChangeCard } from "@/components/OrderChangeCard";
 import { OrderReviewCard } from "@/components/OrderReviewCard";
+import { OrderServiceCard } from "@/components/OrderServiceCard";
 import { VoiceComposer } from "@/components/voice/VoiceComposer";
 import { VoicePlayer } from "@/components/voice/VoicePlayer";
 import { api, ApiError, BASE_URL, imageUrl } from "@/api";
@@ -535,9 +536,9 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
   const panel = [styles.panel, { backgroundColor: c.cell }, !dark && styles.shadow];
   const outBubble = dark ? "rgba(139,61,255,0.28)" : "#F6E9FB";
 
-  const bubble = (key: string | number, mine: boolean, body: string, at: string, extra?: ReactNode) => (
+  const bubble = (key: string | number, mine: boolean, body: string, at: string, extra?: ReactNode, automatic = false) => (
     <View key={key} style={[styles.bubble, mine ? [styles.mine, { backgroundColor: outBubble }] : [styles.theirs, { backgroundColor: dark ? "#352044" : "#F2F2F7" }]]}>
-      {!mine ? <Text style={styles.from}>Менеджер</Text> : null}
+      {!mine ? <Text style={styles.from}>{automatic ? "Косметичка · автоматически" : "Менеджер"}</Text> : null}
       <MessageBody text={body} color={c.label} fromManager={!mine} />
       <View style={styles.metaRow}>
         {extra}
@@ -564,7 +565,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             ) : messages.length === 0 && pending.length === 0 ? (
               <Text style={[iosText.subhead, { color: c.secondary, textAlign: "center", marginVertical: 14 }]}>Напишите, если есть вопросы по заказу</Text>
             ) : null}
-            {messages.map((m) => bubble(m.id, !m.isFromManager, m.text, m.createdAt))}
+            {messages.map((m) => bubble(m.id, !m.isFromManager, m.text, m.createdAt, undefined, m.automatic))}
             {pending.map((p) =>
               p.failed ? (
                 <Pressable key={p.key} onPress={() => send(p.text, p.key)} accessibilityRole="button" accessibilityLabel="Не отправлено. Нажмите, чтобы повторить">
@@ -668,12 +669,13 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
             {order.status === "exported" ? null : (
               <View style={[styles.status, { backgroundColor: s.bg }]}>
                 <Ionicons name={s.icon} size={22} color={s.fg} />
-                <Text style={[styles.statusText, { color: s.fg }]}>{s.label}</Text>
+                <Text style={[styles.statusText, { color: s.fg }]}>{order.service?.phase === "checking" ? "В работе у менеджера" : s.label}</Text>
               </View>
             )}
             <Text style={[iosText.subhead, { color: c.secondary }]}>от {dateLong(order.createdAt)}</Text>
           </View>
           {order.status === "exported" ? <OrderDone /> : null}
+          {order.service && !["paused", "done", "cancelled"].includes(order.service.phase) ? <OrderServiceCard service={order.service} onChat={() => scrollRef.current?.scrollToEnd({ animated: true })} /> : null}
           {order.status === "no_contact" ? <View style={[panel, { gap: 6 }]}>
             <Text style={[iosText.headline, { color: c.label }]}>Ожидаем связи с вами</Text>
             <Text style={[iosText.subhead, { color: c.secondary }]}>Обработка заказа приостановлена. Напишите менеджеру в чате заказа, чтобы продолжить.</Text>
@@ -692,7 +694,7 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
           ) : null}
 
           {/* the manager collects the order: he calls about the payment and the delivery */}
-          {!needsConfirm && (order.status === "assembly" || order.status === "consultation" || order.status === "payment") ? (
+          {!order.service && !needsConfirm && (order.status === "assembly" || order.status === "consultation" || order.status === "payment") ? (
             // a bright card: the customer must not miss it
             <LinearGradient colors={VIOLET_PINK} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.contactCard}>
               <View style={styles.contactIcon}>
