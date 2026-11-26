@@ -52,7 +52,6 @@ export default function OrderScreen() {
   const desktop = useDesktop();
   const [tab, setTab] = useState<Tab>("items");
   const [busy, setBusy] = useState("");
-  const [serviceError, setServiceError] = useState("");
   // status / picker / items changes: one request at a time (a state flag is too late for two quick taps)
   const running = useRef(false);
   const [edit, setEdit] = useState<Draft[] | null>(null);
@@ -402,15 +401,8 @@ export default function OrderScreen() {
         </View>
         {o.service && ["queued", "checking"].includes(o.service.phase) ? <View style={{ marginTop: 16, padding: 14, borderRadius: 16, gap: 9, backgroundColor: dark ? "#392049" : "#F5EDFF" }}>
           <Text style={{ fontSize: 16, fontWeight: "700", color: c.label }}>{o.service.canTake ? "Клиент ждёт первого ответа" : o.service.managerName ? `Заказ в работе: ${o.service.managerName}` : "Заказ уже в работе"}</Text>
-          <Text style={{ color: c.secondary, lineHeight: 20 }}>{o.service.canTake ? "Возьмите заказ в работу — клиент увидит менеджера и получит сообщение в чате." : "Клиент видит, что заказ в работе. Ответьте ему в чате или продолжите сборку."}</Text>
+          <Text style={{ color: c.secondary, lineHeight: 20 }}>{o.service.canTake ? "Нажмите «Собрать заказ» — клиент получит сообщение о начале сборки." : "Клиент видит, что заказ в работе. Ответьте ему в чате или продолжите сборку."}</Text>
           {o.service.timingText ? <Text style={{ color: o.service.overdue ? "#C2410C" : c.secondary, fontWeight: o.service.overdue ? "600" : "400" }}>{o.service.timingText}</Text> : null}
-          {serviceError ? <Text accessibilityRole="alert" style={{ color: "#DC2626" }}>{serviceError}</Text> : null}
-          {o.service.canTake ? <ActionButton label="Взять заказ в работу" icon="hand-left-outline" loading={busy === "service"} disabled={!!busy} onPress={async () => {
-            if (running.current) return; running.current = true; setBusy("service"); setServiceError("");
-            try { await post(`/api/team/orders/${orderId}/service`, {}); await reload(); }
-            catch (e) { setServiceError(e instanceof Error ? e.message : "Не удалось взять заказ в работу"); await reload(); }
-            finally { running.current = false; setBusy(""); }
-          }} /> : null}
         </View> : null}
         {o.oneCError && o.status !== "no_contact" ? (
           // «Заказ оформлен», but 1С didn't take it yet: why (the site tries again by itself)
