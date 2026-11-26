@@ -45,7 +45,7 @@ function OrderCard({ order, message, stage }: { order: Order; message: boolean; 
   const unread = message || stage;
   const c = useIOS();
   const dark = c.blurTint === "dark";
-  const s = statusLook(order.status, dark);
+  const s = { ...statusLook(order.status, dark), ...(order.service?.phase === "checking" ? { label: "В работе у менеджера" } : {}) };
   const needsConfirm = !!order.needsConfirm;
   const confirmed = !needsConfirm && order.status === "consultation" && order.customerConfirmed;
   return (
@@ -106,7 +106,7 @@ function OrderCard({ order, message, stage }: { order: Order; message: boolean; 
 function DeskOrderRow({ order, unread, active, onOpen }: { order: Order; unread: boolean; active: boolean; onOpen: (id: number) => void }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
-  const s = statusLook(order.status, dark);
+  const s = { ...statusLook(order.status, dark), ...(order.service?.phase === "checking" ? { label: "В работе у менеджера" } : {}) };
   const activeBg = dark ? "rgba(139,61,255,0.22)" : "#F4EBFF";
   return (
     <Pressable

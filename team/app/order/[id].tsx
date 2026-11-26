@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Screen } from "@/components/Screen";
 import { ActionButton, Card, Chips, ErrorState, KV, Loading, SectionTitle, StatusPill, VIOLET } from "@/components/kit";
 import { ChatPanel, type ChatMsg } from "@/components/chat/ChatPanel";
+import { orderReplies } from "@/orderReplies";
 import { PhoneKV } from "@/components/PhoneKV";
 import { ProductRequestContext, type ProductRequest } from "@/components/chat/MessageBody";
 import { openUrl } from "@/components/chat/MessageBody";
@@ -51,6 +52,7 @@ export default function OrderScreen() {
   const desktop = useDesktop();
   const [tab, setTab] = useState<Tab>("items");
   const [busy, setBusy] = useState("");
+  const [serviceError, setServiceError] = useState("");
   // status / picker / items changes: one request at a time (a state flag is too late for two quick taps)
   const running = useRef(false);
   const [edit, setEdit] = useState<Draft[] | null>(null);
@@ -398,12 +400,15 @@ export default function OrderScreen() {
           <StatusPill status={o.status} label={o.statusLabel} />
           <Text style={styles.total}>{money(o.total)}</Text>
         </View>
-        {process.env.EXPO_PUBLIC_ORDER_SERVICE_PREVIEW === "1" && o.serviceCarePreview ? <View style={{ marginTop: 16, padding: 14, borderRadius: 16, gap: 9, backgroundColor: dark ? "#392049" : "#F5EDFF" }}>
-          <Text style={{ fontSize: 16, fontWeight: "700", color: c.label }}>{o.serviceCarePreview.phase === "queued" ? "Клиент ждёт первого ответа" : "Клиент знает, что заказ в работе"}</Text>
-          <Text style={{ color: c.secondary, lineHeight: 20 }}>{o.serviceCarePreview.phase === "queued" ? "После нажатия клиент увидит менеджера и получит сообщение в чате." : `Заказом занимается ${o.serviceCarePreview.managerName || "менеджер"}. Быстрые ответы доступны в чате с клиентом.`}</Text>
-          {o.serviceCarePreview.phase === "queued" ? <ActionButton label="Взять заказ в работу" icon="hand-left-outline" loading={busy === "service-preview"} onPress={async () => {
-            if (running.current) return; running.current = true; setBusy("service-preview");
-            try { await post(`/api/preview/order-service/${orderId}/take`, {}); await reload(); }
+        {o.service && ["queued", "checking"].includes(o.service.phase) ? <View style={{ marginTop: 16, padding: 14, borderRadius: 16, gap: 9, backgroundColor: dark ? "#392049" : "#F5EDFF" }}>
+          <Text style={{ fontSize: 16, fontWeight: "700", color: c.label }}>{o.service.canTake ? "Клиент ждёт первого ответа" : o.service.managerName ? `Заказ в работе: ${o.service.managerName}` : "Заказ уже в работе"}</Text>
+          <Text style={{ color: c.secondary, lineHeight: 20 }}>{o.service.canTake ? "Возьмите заказ в работу — клиент увидит менеджера и получит сообщение в чате." : "Клиент видит, что заказ в работе. Ответьте ему в чате или продолжите сборку."}</Text>
+          {o.service.timingText ? <Text style={{ color: o.service.overdue ? "#C2410C" : c.secondary, fontWeight: o.service.overdue ? "600" : "400" }}>{o.service.timingText}</Text> : null}
+          {serviceError ? <Text accessibilityRole="alert" style={{ color: "#DC2626" }}>{serviceError}</Text> : null}
+          {o.service.canTake ? <ActionButton label="Взять заказ в работу" icon="hand-left-outline" loading={busy === "service"} disabled={!!busy} onPress={async () => {
+            if (running.current) return; running.current = true; setBusy("service"); setServiceError("");
+            try { await post(`/api/team/orders/${orderId}/service`, {}); await reload(); }
+            catch (e) { setServiceError(e instanceof Error ? e.message : "Не удалось взять заказ в работу"); await reload(); }
             finally { running.current = false; setBusy(""); }
           }} /> : null}
         </View> : null}
@@ -724,11 +729,7 @@ export default function OrderScreen() {
               load={loadCustomer}
               send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })}
               empty="Клиент ещё не писал"
-              quickReplies={process.env.EXPO_PUBLIC_ORDER_SERVICE_PREVIEW === "1" ? [
-                { label: "Проверяем наличие", text: "Здравствуйте! Ваш заказ уже в работе. Проверяем наличие и итоговую сумму. Напишем вам после проверки." },
-                { label: "Уточняем остатки", text: "Сейчас уточняем остатки на складе. Ваш заказ в работе — как только получим ответ, сразу напишем вам здесь." },
-                { label: "Есть вопрос", text: "Есть вопрос по одной позиции в вашем заказе. Удобно обсудить его здесь, в чате?" },
-              ] : undefined}
+              quickReplies={orderReplies(o.status)}
               extraActions={[{ value: "product", label: "Карточка товара из каталога", run: () => setCatalog("customer") }]}
             />
           </ProductRequestContext.Provider>

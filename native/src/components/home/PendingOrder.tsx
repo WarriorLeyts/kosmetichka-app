@@ -9,7 +9,7 @@ import { VIOLET_PINK } from "@/components/TabBar";
 import { colors } from "@/theme";
 
 /** Orders still in work (not «Выполнен» / «Отменён»), newest first, with their stage; follows live changes. */
-type Active = { id: number; status: string; needsConfirm?: boolean };
+type Active = { id: number; status: string; needsConfirm?: boolean; serviceStarted?: boolean };
 
 /** …the ones waiting for the customer's confirmation go first — he has to act on them. */
 export function useActiveOrders(enabled: boolean): Active[] {
@@ -40,7 +40,7 @@ export function useActiveOrders(enabled: boolean): Active[] {
 
 /** the order's way, as the customer sees it */
 const STEPS = [
-  { status: "pending", label: "Ожидает" },
+  { status: "pending", label: "Получен" },
   { status: "approved", label: "Принят" },
   { status: "assembly", label: "Сборка" },
   { status: "consultation", label: "Проверка" },
@@ -50,14 +50,14 @@ const STEPS = [
 const STEP_INDEX: Record<string, number> = Object.fromEntries(STEPS.map((x, i) => [x.status, i]));
 
 const TITLES: Record<string, string> = {
-  pending: "ожидает подтверждения",
+  pending: "получен",
   approved: "подтверждён",
   assembly: "собирается",
   consultation: "на проверке",
   payment: "оформлен",
 };
 const NOTES: Record<string, string> = {
-  pending: "Менеджер проверит его и свяжется с вами",
+  pending: "В очереди на проверку. Менеджер напишет вам в заказе",
   approved: "Скоро начнём сборку",
   assembly: "Собираем ваш заказ",
   consultation: "Менеджер согласует заказ с вами",
@@ -71,11 +71,11 @@ const NOTES: Record<string, string> = {
 /** `wide` — the computer's home column: the full width, no top gap */
 export function PendingOrderNote({ orders, wide }: { orders: Active[]; wide?: boolean }) {
   if (!orders.length) return null;
-  const { id, status, needsConfirm } = orders[0];
+  const { id, status, needsConfirm, serviceStarted } = orders[0];
   const more = orders.length - 1;
   // the manager collected the order and waits for the customer: say what to do
-  const title = needsConfirm ? `Заказ №${id} собран — подтвердите` : `Заказ №${id} ${TITLES[status] ?? ""}`.trim();
-  const note = needsConfirm ? "Проверьте состав и нажмите «Подтвердить заказ»" : NOTES[status] ?? "";
+  const title = needsConfirm ? `Заказ №${id} собран — подтвердите` : serviceStarted && status === "pending" ? `Заказ №${id} в работе у менеджера` : `Заказ №${id} ${TITLES[status] ?? ""}`.trim();
+  const note = needsConfirm ? "Проверьте состав и нажмите «Подтвердить заказ»" : serviceStarted && status === "pending" ? "Проверяем наличие и сумму. Напишем вам в чате заказа" : NOTES[status] ?? "";
   const sub = more > 0 ? `${note} · ещё ${more} в работе` : note;
   return (
     <Pressable

@@ -62,8 +62,7 @@ export type RemovedItem = {
 export type StaffMsg = { id: number; text: string; isFromPicker: boolean; userId: number | null; userName: string | null; userRole?: string | null; createdAt: string };
 export type OrderDetail = {
   order: {
-    /** Synthetic data supplied only by the isolated order-service preview. */
-    serviceCarePreview?: { phase: "queued" | "checking" | "assembly"; managerName: string | null; expectedAt: string };
+    service?: { phase: string; title: string; description: string; timingText: string | null; expectedAt: string | null; overdue: boolean; managerName: string | null; startedAt: string | null; canTake: boolean };
     id: number; status: string; statusLabel: string; total: number; comment: string | null; deliveryType?: "pickup" | "delivery" | null; deliveryAddress?: string | null; customerConfirmed: boolean;
     /** «Заказ покупателя» in 1С, or why it couldn't go there yet */
     oneCNumber?: string | null; oneCError?: string | null;
