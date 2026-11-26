@@ -385,7 +385,10 @@ export default function Register() {
             {/* real Yandex SmartCaptcha (same key as the site) */}
             <Captcha
               key={captchaKey}
-              onStatusChange={setCaptchaStatus}
+              onStatusChange={(status) => {
+                setCaptchaStatus(status);
+                if (status !== "failed") setErrors((previous) => ({ ...previous, captcha: undefined }));
+              }}
               onToken={(t) => {
                 setCaptcha(t);
                 if (errors.captcha) setErrors({ ...errors, captcha: undefined });
