@@ -9,6 +9,8 @@ import * as WebBrowser from "expo-web-browser";
 import { api, BASE_URL } from "@/api";
 import { clearPendingLogout, useAuth } from "@/store/auth";
 import { Captcha } from "@/components/Captcha";
+import type { CaptchaStatus } from "@/captchaConfig";
+import { registrationPhoneError, smsRegistrationPhone } from "@/registrationPhone";
 import { tap } from "@/components/ui";
 import { TitleBar } from "@/components/iosui/TitleBar";
 import { IOSField } from "@/components/iosui/Field";
@@ -121,6 +123,7 @@ export default function Register() {
   const [preparingProofs, setPreparingProofs] = useState(false);
   const [captcha, setCaptcha] = useState<string | null>(null);
   const [captchaKey, setCaptchaKey] = useState(0);
+  const [captchaStatus, setCaptchaStatus] = useState<CaptchaStatus>("loading");
   const [foreignPhone, setForeignPhone] = useState(false);
   const [emailChallengeId, setEmailChallengeId] = useState("");
   const [smsSent, setSmsSent] = useState(false);
@@ -158,8 +161,9 @@ export default function Register() {
   const sendSms = async () => {
     if (smsBusy.current) return; // a double tap would send two SMS (the second one fails with «wait 60 s»)
     const e: Errors = {};
-    if (!captcha) e.captcha = "Сначала отметьте «Я не робот»";
-    if (foreignPhone ? !/^\+[1-9]\d{6,14}$/.test(f.phone.replace(/[\s().-]/g, "")) || f.phone.trim().startsWith("+7") : f.phone.replace(/\D/g, "").length < 10) e.phone = foreignPhone ? "Введите иностранный номер с + и кодом страны" : "Введите номер телефона";
+    if (!captcha) e.captcha = captchaStatus === "failed" ? "Проверка не загрузилась. Нажмите «Повторить» выше." : "Сначала пройдите проверку «Я не робот»";
+    const phoneError = registrationPhoneError(f.phone, foreignPhone);
+    if (phoneError) e.phone = phoneError;
     if (foreignPhone && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = "Укажите email для получения кода";
     if (e.captcha || e.phone || e.email) {
       setErrors({ ...errors, ...e });
@@ -197,7 +201,8 @@ export default function Register() {
     if (!f.email.trim()) e.email = "Укажите email";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim())) e.email = "Проверьте email";
     if (f.password.length < 6) e.password = "Пароль должен быть не короче 6 символов";
-    if (foreignPhone ? !/^\+[1-9]\d{6,14}$/.test(f.phone.replace(/[\s().-]/g, "")) || f.phone.trim().startsWith("+7") : f.phone.replace(/\D/g, "").length < 10) e.phone = foreignPhone ? "Введите иностранный номер с + и кодом страны" : "Введите номер телефона";
+    const phoneError = registrationPhoneError(f.phone, foreignPhone);
+    if (phoneError) e.phone = phoneError;
     if (!captcha) e.captcha = "Отметьте «Я не робот»";
     if (!smsSent) e.smsCode = foreignPhone ? "Получите код на почту" : "Получите код по SMS";
     else if (smsCode.trim().length !== 6) e.smsCode = foreignPhone ? "Введите 6 цифр из письма" : "Введите код из SMS";
@@ -373,9 +378,17 @@ export default function Register() {
               <Text style={{ color: c.label, fontSize: 16 }}>Иностранный номер</Text>
             </Pressable>
             {foreignPhone ? <Text style={[styles.sub, { color: c.secondary, marginBottom: 16 }]}>Код подтверждения придёт на вашу электронную почту. Телефон нужен для связи в WhatsApp — укажите его с кодом страны.</Text> : null}
+            {foreignPhone && smsRegistrationPhone(f.phone) ? <View style={{ marginBottom: 14, gap: 8 }}>
+              <Text style={{ color: c.secondary }}>Этот номер можно подтвердить по SMS. Снимите отметку «Иностранный номер».</Text>
+              <OutlineButton title="Подтвердить номер по SMS" disabled={!!busy} onPress={() => { setForeignPhone(false); setSmsSent(false); setSmsCode(""); setEmailChallengeId(""); setCooldown(0); setErrors({}); setError(""); }} />
+            </View> : null}
             {/* real Yandex SmartCaptcha (same key as the site) */}
             <Captcha
               key={captchaKey}
+              onStatusChange={(status) => {
+                setCaptchaStatus(status);
+                if (status !== "failed") setErrors((previous) => ({ ...previous, captcha: undefined }));
+              }}
               onToken={(t) => {
                 setCaptcha(t);
                 if (errors.captcha) setErrors({ ...errors, captcha: undefined });
