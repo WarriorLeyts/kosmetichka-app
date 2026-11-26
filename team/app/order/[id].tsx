@@ -490,9 +490,6 @@ export default function OrderScreen() {
           <Text style={{ color: c.secondary }}>Обработка на паузе. Состав заказа и отметки сборки сохранены.{o.contactResumeStatus ? ` При возврате продолжим с этапа «${STATUS_LABELS[o.contactResumeStatus] ?? o.contactResumeStatus}».` : ""}</Text>
           {o.contactResumeStatus ? <ActionButton label="Вернуть в работу" kind="primary" loading={busy === "resume"} disabled={!!busy} onPress={() => changeContact("resume")} /> : null}
         </View> : null}
-        {o.canHoldForContact ? <View style={{ marginTop: 12 }}>
-          <ActionButton label="Клиент не выходит на связь" kind="soft" disabled={!!edit || !!busy} loading={busy === "hold"} onPress={() => changeContact("hold")} />
-        </View> : null}
         {actions.length && edit ? (
           // unsaved changes of the items: the status can't move until they are saved or cancelled
           <View style={[styles.note, { backgroundColor: "rgba(245,158,11,0.14)" }]}>
@@ -506,9 +503,6 @@ export default function OrderScreen() {
             ))}
           </View>
         ) : null}
-        {o.status !== "cancelled" ? <View style={{ marginTop: 12 }}>
-          <ActionButton label="Клиент отказался от заказа" kind="danger" disabled={!!edit || !!busy} loading={busy === "refuse"} onPress={() => void refuse()} />
-        </View> : null}
         {/* invoice: PDF to open / send (phones: the file into the share sheet) */}
         <View style={[styles.actions, { marginTop: 10 }]}>
           {Platform.OS === "web" ? (
@@ -532,6 +526,12 @@ export default function OrderScreen() {
             }}
           />
         </View>
+        {o.canHoldForContact ? <View style={{ marginTop: 12 }}>
+          <ActionButton label="Клиент не выходит на связь" kind="soft" disabled={!!edit || !!busy} loading={busy === "hold"} onPress={() => changeContact("hold")} />
+        </View> : null}
+        {o.status !== "cancelled" ? <View style={{ marginTop: 12 }}>
+          <ActionButton label="Клиент отказался от заказа" kind="danger" disabled={!!edit || !!busy} loading={busy === "refuse"} onPress={() => void refuse()} />
+        </View> : null}
       </Card>
 
       <Card onPress={() => router.push({ pathname: "/customer/[id]", params: { id: String(cust.id) } })}>
