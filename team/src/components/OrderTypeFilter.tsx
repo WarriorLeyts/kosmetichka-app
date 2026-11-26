@@ -31,7 +31,7 @@ export function OrderTypeFilter({ value, onChange }: { value: OrderCustomerType;
           accessibilityLabel={`Тип клиента: ${OPTIONS.find((o) => o.value === value)?.label}`}
           accessibilityState={{ expanded: !!position }}
           onPress={open}
-          style={[styles.button, { backgroundColor: c.cell, borderColor: c.blurTint === "dark" ? c.separator : "#E9E4F5" }]}
+          style={[styles.button, { backgroundColor: c.cell, borderColor: c.blurTint === "dark" ? "transparent" : "#E9E4F5" }]}
         >
           <Text style={[styles.label, { color: c.label }]} numberOfLines={1}>
             <Text style={{ color: c.secondary }}>Тип клиента: </Text>{OPTIONS.find((o) => o.value === value)?.label}
@@ -42,7 +42,7 @@ export function OrderTypeFilter({ value, onChange }: { value: OrderCustomerType;
       <Modal visible={!!position} transparent animationType="none" onRequestClose={close}>
         <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityRole="button" accessibilityLabel="Закрыть список типов клиентов" />
         {position ? (
-          <View accessibilityViewIsModal style={[styles.menu, position, { backgroundColor: c.cell, borderColor: c.separator }]}>
+          <View accessibilityViewIsModal style={[styles.menu, position, { backgroundColor: c.cell, borderColor: c.blurTint === "dark" ? "transparent" : c.separator }]}>
             {OPTIONS.map((o) => (
               <Pressable
                 key={o.value}

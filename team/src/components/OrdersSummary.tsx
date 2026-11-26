@@ -35,7 +35,7 @@ export function DayNav({ day, today, onChange }: { day: string | null; today: st
   const all = day === "";
   const shown = day || today;
   const atToday = !all && (day === null || day === today);
-  const box = { backgroundColor: dark ? "#2B193D" : "#FFFFFF", borderColor: dark ? "rgba(200,160,255,0.2)" : "#E9E4F5" };
+  const box = { backgroundColor: dark ? "#2B193D" : "#FFFFFF", borderColor: dark ? "transparent" : "#E9E4F5" };
   const arrowBg = dark ? "rgba(139,61,255,0.25)" : "#F3EDFC";
   const [calendar, setCalendar] = useState(false);
   const go = (by: number) => {
@@ -139,7 +139,7 @@ function Calendar({ value, today, onPick }: { value: string | null; today: strin
               tap();
               onPick(q.d);
             }}
-            style={[st.quick, { borderColor: value === q.d ? VIOLET : dark ? "rgba(200,160,255,0.25)" : "#E9E4F5", backgroundColor: value === q.d ? VIOLET : "transparent" }]}
+            style={[st.quick, { borderColor: value === q.d ? VIOLET : dark ? "transparent" : "#E9E4F5", backgroundColor: value === q.d ? VIOLET : "transparent" }]}
           >
             <Text style={{ color: value === q.d ? "#fff" : c.label, fontWeight: "600", fontSize: 15 }}>{q.label}</Text>
           </Pressable>
@@ -301,7 +301,7 @@ function AllContent({ counts, small, on }: { counts: OrdersPage["counts"] | unde
   );
 }
 
-const tileBox = (dark: boolean) => ({ backgroundColor: dark ? "#2B193D" : "#FFFFFF", borderColor: dark ? "rgba(200,160,255,0.2)" : "#ECE6F4" });
+const tileBox = (dark: boolean) => ({ backgroundColor: dark ? "#2B193D" : "#FFFFFF", borderColor: dark ? "transparent" : "#ECE6F4" });
 
 const st = StyleSheet.create({
   navRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 8, marginBottom: 12 },

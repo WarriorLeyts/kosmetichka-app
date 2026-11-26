@@ -53,7 +53,7 @@ export function Chips<T extends string>({ items, value, onChange }: { items: { v
               tap();
               onChange(it.value);
             }}
-            style={[styles.chip, { backgroundColor: on ? VIOLET : dark ? "#2B193D" : "#FFFFFF", borderColor: on ? VIOLET : dark ? "rgba(200,160,255,0.2)" : "#E9E4F5" }]}
+            style={[styles.chip, { backgroundColor: on ? VIOLET : dark ? "#2B193D" : "#FFFFFF", borderColor: on ? VIOLET : dark ? "transparent" : "#E9E4F5" }]}
           >
             <Text style={[styles.chipText, { color: on ? "#fff" : c.label }]}>
               {it.label}
@@ -172,7 +172,7 @@ export function SearchField({ value, onChange, placeholder }: { value: string; o
   const c = useIOS();
   const dark = c.blurTint === "dark";
   return (
-    <View style={[searchStyles.box, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : "rgba(250,247,255,0.9)", borderColor: dark ? "rgba(200,160,255,0.3)" : "rgba(121,37,214,0.2)" }]}>
+    <View style={[searchStyles.box, { backgroundColor: dark ? "rgba(255,255,255,0.08)" : "rgba(250,247,255,0.9)", borderColor: dark ? "transparent" : "rgba(121,37,214,0.2)" }]}>
       <Ionicons name="search-outline" size={19} color={dark ? "#FAF7FD" : "#7925D6"} />
       <TextInput
         value={value}
