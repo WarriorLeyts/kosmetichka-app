@@ -24,6 +24,7 @@ export default function Customer() {
   const canEdit = useAuth((s) => s.user?.role === "admin");
   const [busy, setBusy] = useState("");
   const [form, setForm] = useState<Form | null>(null); // «Изменить данные»
+  const [saveError, setSaveError] = useState("");
   const running = useRef(false);
   const { data, error, loading, reload } = useLoad(() => get<CustomerDetail>(`/api/team/customers/${id}`), [id]);
   const x = data?.customer;
@@ -177,6 +178,10 @@ export default function Customer() {
             {x.orderedBefore != null ? <KV k="Заказывал(а) раньше" v={x.orderedBefore ? "Да" : "Нет, впервые"} /> : null}
             <KV k="Менеджер 1С" v={x.manager} />
             <KV k="Код 1С" v={x.oneCId} />
+            {["wholesale", "big_wholesale"].includes(x.priceType) && x.manager && !x.oneCId ? <View style={{ marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: "#FFF4E5" }}>
+              <Text style={{ color: "#92400E", fontWeight: "700" }}>Нет привязки к контрагенту 1С</Text>
+              <Text style={{ color: "#92400E", marginTop: 4 }}>Менеджер назначен, но заказы пока не смогут уйти в 1С. Откройте «Изменить данные» и сохраните карточку, чтобы проверить и восстановить привязку.</Text>
+            </View> : null}
             <KV k="Заказов" v={x.ordersCount} onPress={() => router.navigate({ pathname: "/orders", params: { all: "1", status: "", customer: x.phone || x.companyName || x.name || "" } })} />
           </Card>
           {x.id === Number(id) && ["retail", "discount"].includes(x.priceType) ? <CustomerLoyalty customerId={x.id} /> : null}
@@ -267,19 +272,21 @@ export default function Customer() {
           {!canEdit ? null : form ? (
             <CustomerForm
               form={form}
-              setForm={setForm}
+              setForm={(next) => { setForm(next); setSaveError(""); }}
+              error={saveError}
               busy={busy === "save"}
-              onCancel={() => setForm(null)}
+              onCancel={() => { setForm(null); setSaveError(""); }}
               onSave={async () => {
                 if (running.current) return;
                 running.current = true;
                 setBusy("save");
+                setSaveError("");
                 try {
                   await put(`/api/admin/customers/${id}`, { ...form, isActive: form.isActive === "active", isApproved: form.isApproved === "yes", showRetailPrice: form.showRetailPrice === "yes" });
                   setForm(null);
                   await reload();
                 } catch (e) {
-                  Alert.alert("Не сохранено", e instanceof Error ? e.message : "");
+                  setSaveError(e instanceof Error ? e.message : "Не удалось сохранить изменения");
                 } finally {
                   running.current = false;
                   setBusy("");
@@ -315,7 +322,7 @@ type Form = {
 };
 
 /** «Изменить данные» — the same fields as the old admin form */
-function CustomerForm({ form, setForm, busy, onCancel, onSave }: { form: Form; setForm: (f: Form) => void; busy: boolean; onCancel: () => void; onSave: () => void }) {
+function CustomerForm({ form, setForm, busy, error, onCancel, onSave }: { form: Form; setForm: (f: Form) => void; busy: boolean; error: string; onCancel: () => void; onSave: () => void }) {
   const c = useIOS();
   const dark = c.blurTint === "dark";
   const set = (p: Partial<Form>) => setForm({ ...form, ...p });
@@ -374,7 +381,9 @@ function CustomerForm({ form, setForm, busy, onCancel, onSave }: { form: Form; s
         <Chips items={[{ value: "yes", label: "Подтверждён" }, { value: "no", label: "Не подтверждён" }]} value={form.isApproved} onChange={(v) => set({ isApproved: v })} />
         {field("manager", "Менеджер (1С)")}
         {field("oneCId", "ID в 1С")}
+        <Text style={{ color: c.secondary, fontSize: 13, marginBottom: 12 }}>При назначении менеджера проверим привязку к контрагенту в 1С. Если найдётся несколько совпадений, потребуется указать точный ID в 1С.</Text>
         {field("password", "Новый пароль", { secure: true, placeholder: "Оставьте пустым, чтобы не менять" })}
+        {error ? <Text accessibilityRole="alert" style={{ color: "#DC2626", marginVertical: 10 }}>{error}</Text> : null}
         <View style={{ flexDirection: "row", gap: 8, marginTop: 6 }}>
           <ActionButton label="Отмена" kind="soft" onPress={onCancel} />
           <ActionButton label="Сохранить" kind="primary" loading={busy} onPress={onSave} />

@@ -81,32 +81,27 @@ export default function OrderScreen() {
   const chooseGroup = (group: string) => {
     setGroupSheet(false);
     const cust = o?.customer;
-    if (!cust || group === cust.manager) return;
-    Alert.alert(
-      `Передать клиента «${group}»?`,
-      cust.oneCId
-        ? `В 1С контрагент будет перенесён в папку «${group}».`
-        : `Клиента ещё нет в 1С: он будет заведён в папке «${group}» с договором.`,
-      [
-        { text: "Отмена", style: "cancel" },
-        {
-          text: "Передать",
-          onPress: async () => {
-            if (groupBusy) return;
-            setGroupBusy(true);
-            try {
-              const r = await post<{ created: boolean; moved: boolean; contractCreated: boolean }>(`/api/team/customers/${cust.id}/group`, { group });
-              Alert.alert("Готово", r.created ? `Клиент заведён в 1С в папке «${group}».` : r.moved ? `Контрагент перенесён в папку «${group}».` : `Клиент уже в папке «${group}».`);
-              await reload();
-            } catch (e) {
-              Alert.alert("Не получилось", e instanceof Error ? e.message : "");
-            } finally {
-              setGroupBusy(false);
-            }
-          },
-        },
-      ]
-    );
+    if (!cust) return;
+    const title = `Передать клиента «${group}»?`;
+    const message = cust.oneCId
+      ? `В 1С контрагент будет проверен и перенесён в папку «${group}», если это необходимо.`
+      : `Проверим существующего контрагента в 1С и привяжем клиента к папке «${group}». Если совпадений нет, создадим контрагента с договором.`;
+    const save = async () => {
+      if (groupBusy) return;
+      setGroupBusy(true);
+      try {
+        const r = await post<{ created: boolean; moved: boolean; contractCreated: boolean }>(`/api/team/customers/${cust.id}/group`, { group });
+        const notice = r.created ? `Клиент заведён в 1С в папке «${group}».` : r.moved ? `Контрагент перенесён в папку «${group}».` : `Привязка к контрагенту в папке «${group}» проверена.`;
+        if (Platform.OS === "web") window.alert(notice); else Alert.alert("Готово", notice);
+        await reload();
+      } catch (e) {
+        if (Platform.OS === "web") window.alert(e instanceof Error ? e.message : "Не удалось проверить привязку");
+        else Alert.alert("Не получилось", e instanceof Error ? e.message : "");
+      } finally { setGroupBusy(false); }
+    };
+    if (Platform.OS === "web") {
+      if (window.confirm(`${title}\n\n${message}`)) void save();
+    } else Alert.alert(title, message, [{ text: "Отмена", style: "cancel" }, { text: "Передать", onPress: () => void save() }]);
   };
 
   const changeStatus = (to: string, label: string) => {
