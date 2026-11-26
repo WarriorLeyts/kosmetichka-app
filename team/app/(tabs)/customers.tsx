@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ListScreen } from "@/components/ListScreen";
-import { Card, Empty, ErrorState, Loading, SearchField } from "@/components/kit";
+import { ActionButton, Card, Empty, ErrorState, Loading, SearchField } from "@/components/kit";
 import { usePaged } from "@/usePaged";
 import { get } from "@/api";
 import { date } from "@/format";
@@ -72,6 +72,7 @@ export default function Customers() {
       loadingMore={list.loadingMore}
       header={
         <>
+          {admin ? <View style={{ marginBottom: 12 }}><ActionButton label="Создать клиента" icon="person-add-outline" onPress={() => router.push("/customer/new")} /></View> : null}
           <SearchField value={q} onChange={setQ} placeholder="Имя, компания, телефон, email" />
           <PeriodFilter value={period} onChange={setPeriod} count={counts?.all} />
           <CustomerTiles counts={counts} status={status} setStatus={setStatus} type={type} setType={setType} desktop={desktop} showTypes={!retailAccount} showStatuses={!retailAccount} hideTypes={groupManager ? ["retail"] : []} />
