@@ -43,7 +43,7 @@ export function OrderDateFilter({ day, period, today: serverToday, onChange }: {
   return (
     <View style={{ marginBottom: 10 }}>
       <View style={styles.row}>
-        <View style={[styles.nav, { backgroundColor: c.cell, borderColor: dark ? "#59416F" : "#E9E4F5" }]}>
+        <View style={[styles.nav, { backgroundColor: c.cell, borderColor: dark ? "transparent" : "#E9E4F5" }]}>
           <Pressable accessibilityRole="button" accessibilityLabel={period ? "Предыдущий период" : "Предыдущий день"} onPress={() => move(-1)} style={[styles.arrow, { backgroundColor: soft }]}><Ionicons name="chevron-back" size={18} color={VIOLET} /></Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Выбрать интервал дат" onPress={() => { tap(); setOpen(true); }} style={styles.choose}>
             <Ionicons name="calendar-outline" size={17} color={VIOLET} />

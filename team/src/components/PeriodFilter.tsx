@@ -65,7 +65,7 @@ export function PeriodFilter({ value, onChange, count }: { value: Period; onChan
   const chips = presets(today).filter((x) => ["all", "today", "7", "30"].includes(x.key));
   const custom = !chips.some((x) => same(x.p, value));
   const chipBg = (on: boolean) => (on ? VIOLET : dark ? "rgba(255,255,255,0.07)" : "#FFFFFF");
-  const chipBorder = (on: boolean) => (on ? VIOLET : dark ? "rgba(200,160,255,0.2)" : "#E9E4F5");
+  const chipBorder = (on: boolean) => (on ? VIOLET : dark ? "transparent" : "#E9E4F5");
   const any = !!(value.from || value.to);
   return (
     <View style={{ marginBottom: 10 }}>
@@ -157,7 +157,7 @@ export function RangeCalendar({ value, today, onDone }: { value: Period; today: 
                 tap();
                 onDone(x.p);
               }}
-              style={[st.quick, { borderColor: dark ? "rgba(200,160,255,0.25)" : "#E9E4F5" }]}
+              style={[st.quick, { borderColor: dark ? "transparent" : "#E9E4F5" }]}
             >
               <Text style={{ color: c.label, fontWeight: "600", fontSize: 15 }}>{x.label}</Text>
             </Pressable>

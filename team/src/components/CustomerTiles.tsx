@@ -59,7 +59,7 @@ export function CustomerTiles({
   const gap = desktop ? 10 : 8;
   const cell = w ? (w - gap * (cols - 1)) / cols : 0;
   const small = !desktop;
-  const box = { backgroundColor: dark ? "#2B193D" : "#FFFFFF", borderColor: dark ? "rgba(200,160,255,0.2)" : "#ECE6F4" };
+  const box = { backgroundColor: dark ? "#2B193D" : "#FFFFFF", borderColor: dark ? "transparent" : "#ECE6F4" };
   const pick = (s: string) => {
     tap();
     setStatus(s === status ? "" : s);
@@ -129,7 +129,7 @@ export function CustomerTiles({
       </View>
 
       {showTypes ? (
-      <View style={[st.seg, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF", borderColor: dark ? "rgba(200,160,255,0.2)" : "#ECE6F4" }]}>
+      <View style={[st.seg, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF", borderColor: dark ? "transparent" : "#ECE6F4" }]}>
         {TYPES.filter((t) => !hideTypes.includes(t.value)).map((t) => {
           const on = type === t.value;
           return (
