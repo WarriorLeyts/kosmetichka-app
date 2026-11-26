@@ -1,6 +1,6 @@
 import { useWaitlistStore } from "./store/waitlist";
 import { beforeEach, expect, it, vi } from "vitest";
-const api = vi.hoisted(() => ({ wishlist: vi.fn(), wishlistToggle: vi.fn(), wishlistRemove: vi.fn() }));
+const api = vi.hoisted(() => ({ wishlist: vi.fn(), wishlistToggle: vi.fn(), wishlistRemove: vi.fn(), wishlistSave: vi.fn() }));
 vi.mock("./api", () => ({ api }));
 beforeEach(() => { vi.resetAllMocks(); useWaitlistStore.getState().reset(); });
 it("uses the shared subscription state for catalog and detail: add, then remove", async () => {
@@ -33,4 +33,20 @@ it("does not remove a new account's local subscription when an old account's req
   resolve();
   await pending;
   expect(useWaitlistStore.getState().ids).toEqual([12]);
+});
+it("saves quantity without toggling an existing membership off", async () => {
+  api.wishlistSave.mockResolvedValue({ added: true, quantity: 15 });
+  useWaitlistStore.setState({ ids: [12], quantities: { 12: 1 } });
+  await useWaitlistStore.getState().save(12, 15);
+  await useWaitlistStore.getState().save(12, 15);
+  expect(useWaitlistStore.getState().ids).toEqual([12]);
+  expect(useWaitlistStore.getState().quantities[12]).toBe(15);
+  expect(api.wishlistToggle).not.toHaveBeenCalled();
+});
+it("does not save another account's quantity after logout", async () => {
+  let resolve!: () => void;
+  api.wishlistSave.mockReturnValue(new Promise<void>(r => { resolve = r; }));
+  const pending = useWaitlistStore.getState().save(12, 15);
+  useWaitlistStore.getState().reset(); resolve(); await pending;
+  expect(useWaitlistStore.getState().quantities).toEqual({});
 });

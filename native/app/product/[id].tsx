@@ -86,7 +86,6 @@ export default function ProductScreen() {
   const toggleFav = useFavorites((s) => s.toggle);
   const favorites = useFavorites((s) => s.items);
   const waitIds = useWaitlistStore((s) => s.ids);
-  const toggleWait = useWaitlistStore((s) => s.toggle);
   const addToCart = useAddToCart();
 
   const [product, setProduct] = useState<Product | null>(() => takeSeed(id));
@@ -103,7 +102,6 @@ export default function ProductScreen() {
   const draggingGallery = useRef(false);
   const galleryVisible = useRef(true);
   const focused = useIsFocused();
-  const [waitBusy, setWaitBusy] = useState(false);
   const [qty, setLocalQty] = useState(1);
   const [titleBox, setTitleBox] = useState<{ y: number; h: number } | null>(null);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -115,8 +113,6 @@ export default function ProductScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const padY = useRef(0);
   const picked = useRef(false);
-  // the waitlist call is a toggle: a double tap would add and immediately remove the product
-  const waitRef = useRef(false);
   // the current variant selection, read once per «Добавить» tap (a double tap adds it only once)
   const variantQtyRef = useRef(variantQty);
   variantQtyRef.current = variantQty;
@@ -302,25 +298,7 @@ export default function ProductScreen() {
     else setLocalQty(Math.max(min, Math.min(n, maxQty)));
   };
 
-  const onWait = async () => {
-    if (!customer) {
-      router.push("/login");
-      return;
-    }
-    if (waitRef.current) return;
-    waitRef.current = true;
-    setWaitBusy(true);
-    try {
-      const added = await toggleWait(product.id);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      if (added) Alert.alert("Готово", "Сообщим, когда товар появится в наличии.");
-    } catch (e) {
-      Alert.alert("Ошибка", e instanceof Error ? e.message : "Не удалось");
-    } finally {
-      waitRef.current = false;
-      setWaitBusy(false);
-    }
-  };
+  const onWait = () => router.push(customer ? `/wait-request?id=${product.id}` : "/login");
 
   const gallery =
     images.length > 0 ? (
@@ -540,7 +518,6 @@ export default function ProductScreen() {
             <GradientButton
               title={waiting ? "Вы в листе ожидания" : "Сообщить о поступлении"}
               icon={waiting ? "notifications" : "notifications-outline"}
-              loading={waitBusy}
               onPress={onWait}
             />
           ) : product.assortmentEnabled ? (

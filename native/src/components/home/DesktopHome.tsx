@@ -1,3 +1,4 @@
+import { YourRestocks } from "@/components/home/YourRestocks";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -54,6 +55,7 @@ export function DesktopHome({
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.main} showsVerticalScrollIndicator={false}>
         <CampaignBanner desktop />
         <PendingOrderNote orders={orders} wide />
+        <YourRestocks />
 
         {/* until the admin-panel home arrives — nothing (not the built-in banner flashing for a moment) */}
         {blocks === undefined ? null : blocks ? (

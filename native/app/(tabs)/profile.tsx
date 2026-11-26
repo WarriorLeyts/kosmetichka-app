@@ -102,7 +102,7 @@ export default function Profile() {
   const [roleOpen, setRoleOpen] = useState(false);
   const [notifyOpen, setNotifyOpen] = useState(false);
   const favCount = useFavorites((s) => s.items.length);
-  const waitCount = useWaitlistStore((s) => s.ids.length);
+  const waitCount = useWaitlistStore((s) => s.ids.length + s.missingCount);
 
   // computer: the menu on the left, the chosen section on the right (signed-in customers)
   const desktop = useDesktop();
