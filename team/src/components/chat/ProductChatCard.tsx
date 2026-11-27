@@ -31,11 +31,11 @@ export function ProductChatCard({ r, color }: { r: ProductRequest; color: string
     {r.variantName ? <Text style={{ color }}>{r.variantName}</Text> : null}
     {r.question ? <Text style={{ color, fontSize: 15, lineHeight: 21 }}>{r.question}</Text> : <Text style={{ color, fontWeight: "700" }}>{r.quantity} шт.{r.price > 0 ? ` × ${money(r.price)}` : ""}</Text>}
     {r.added ? <Text style={{ color: c.blurTint === "dark" ? "#86efac" : "#15803d", fontWeight: "700" }}>✓ Добавлено в заказ{r.addedQuantity ? ` · ${r.addedQuantity} шт.` : ""}</Text> : null}
-    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 7 }}>
-      {r.question && r.messageId && ctx?.reply ? <Pressable accessibilityRole="button" accessibilityLabel="Ответить на вопрос о товаре" onPress={() => ctx.reply?.({ messageId: r.messageId!, name: r.name, question: r.question! })} style={[button, { backgroundColor: "rgba(139,61,255,0.14)", flexGrow: 1 }]}><Ionicons name="return-up-back" size={17} color={VIOLET} /><Text style={{ color: VIOLET, fontWeight: "700", fontSize: 13 }}>Ответить</Text></Pressable> : null}
-      {!r.added && r.messageId && ctx ? <Pressable accessibilityRole="button" accessibilityLabel="Добавить товар в заказ" onPress={() => { setQuantity(String(r.question ? 1 : r.quantity)); setError(""); setOpen(true); }} style={[button, { backgroundColor: VIOLET, flexGrow: 1 }]}><Ionicons name="bag-add-outline" size={18} color="#fff" /><Text style={{ color: "#fff", fontWeight: "700", fontSize: 13 }}>Добавить в заказ</Text></Pressable> : null}
+    <View style={{ flexDirection: "row", gap: 7 }}>
+      {r.question && r.messageId && ctx?.reply ? <Pressable accessibilityRole="button" accessibilityLabel="Ответить на вопрос о товаре" onPress={() => ctx.reply?.({ messageId: r.messageId!, name: r.name, question: r.question! })} style={[button, { backgroundColor: "rgba(139,61,255,0.14)", width: 88, paddingHorizontal: 5 }]}><Ionicons name="return-up-back" size={17} color={VIOLET} /><Text style={{ color: VIOLET, fontWeight: "700", fontSize: 12, flexShrink: 1 }}>Ответить</Text></Pressable> : null}
+      {!r.added && r.messageId && ctx ? <Pressable accessibilityRole="button" accessibilityLabel="Добавить товар в заказ" onPress={() => { setQuantity(String(r.question ? 1 : r.quantity)); setError(""); setOpen(true); }} style={[button, { backgroundColor: VIOLET, flex: 1, minWidth: 0, paddingHorizontal: 5 }]}><Ionicons name="bag-add-outline" size={18} color="#fff" /><Text style={{ color: "#fff", fontWeight: "700", fontSize: 12, flexShrink: 1 }}>Добавить в заказ</Text></Pressable> : null}
     </View>
-    <Sheet open={open} onClose={() => { if (!busy) setOpen(false); }} title="Добавить товар в заказ">
+    <Sheet avoidKeyboard open={open} onClose={() => { if (!busy) setOpen(false); }} title="Добавить товар в заказ">
       <View style={{ gap: 14, paddingBottom: 12 }}>
         <Text style={{ color: c.label, fontWeight: "600", fontSize: 16 }}>{r.name}{r.variantName ? ` · ${r.variantName}` : ""}</Text>
         <Text style={{ color: c.label, fontWeight: "600" }}>Количество, шт.</Text>

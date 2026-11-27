@@ -28,7 +28,7 @@ export function ProductQuestionSheet({ product, orderId, onClose, onSent }: { pr
     catch (e) { if (alive.current) setError(e instanceof Error ? e.message : "Вопрос не отправлен"); }
     finally { lock.current = false; if (alive.current) setBusy(false); }
   };
-  return <Sheet open onClose={() => { if (!busy) onClose(); }} title="Вопрос о товаре">
+  return <Sheet open avoidKeyboard onClose={() => { if (!busy) onClose(); }} title="Вопрос о товаре">
     <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 520 }} contentContainerStyle={{ gap: 14, paddingBottom: 12 }}>
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}><Image source={{ uri: imageUrl(product.images?.[0]?.path, 160) ?? undefined }} style={{ width: 64, height: 76, borderRadius: 10 }} contentFit="contain" /><Text style={{ color: c.label, flex: 1, fontWeight: "600", fontSize: 15 }}>{product.name}</Text></View>
       {loading ? <ActivityIndicator color="#8b3dff" /> : variants.length ? <><Text style={{ color: c.secondary }}>Вариант (необязательно)</Text><View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>{[{ name: "О товаре в целом", value: null }, ...variants.map(v => ({ name: v.name, value: v.name }))].map(v => <Pressable key={v.name} accessibilityRole="radio" accessibilityState={{ selected: variant === v.value }} disabled={busy} onPress={() => { requestId.current = newChatRequestId(); setVariant(v.value); }} style={{ padding: 10, borderRadius: 14, backgroundColor: variant === v.value ? "#8b3dff" : c.cell }}><Text style={{ color: variant === v.value ? "#fff" : c.label }}>{v.name}</Text></Pressable>)}</View></> : null}
