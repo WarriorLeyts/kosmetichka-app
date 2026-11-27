@@ -81,9 +81,16 @@ export default function Proofs() {
     } catch (e) { if (mounted.current && mine === generation.current) setError(e instanceof Error ? e.message : "Файл не загрузился. Повторите отправку."); }
     finally { sending.current = false; if (mounted.current) { setBusy(false); setProgress(""); } }
   };
+  const finishReceived = async (discardFailed: boolean) => {
+    if (!received || sending.current || preparing) return;
+    sending.current = true; setBusy(true);
+    try { await finish(discardFailed); }
+    catch (e) { setError(e instanceof Error ? e.message : "Не удалось завершить загрузку"); }
+    finally { sending.current = false; setBusy(false); }
+  };
   // Register already saved the selected files. Send them on arrival/resume; only failures need a tap.
   // One automatic attempt per load avoids a retry loop on a bad connection. Upload IDs make reloads safe.
-  autoUpload.current = () => { if (files.length) void upload(); else completeReceived(); };
+  autoUpload.current = () => { if (files.length) void upload(); else void finishReceived(false); };
   useEffect(() => {
     const d = current.current;
     if (!ready || completed || sending.current || !d?.registration || (!d.files.length && !received)) return;
@@ -95,9 +102,8 @@ export default function Proofs() {
   const completeReceived = () => {
     if (!received || sending.current) return;
     if (preparing) return;
-    const send = async () => { sending.current = true; setBusy(true); try { await finish(true); } catch (e) { setError(e instanceof Error ? e.message : "Не удалось завершить загрузку"); } finally { sending.current = false; setBusy(false); } };
-    if (files.length) Alert.alert("Завершить с полученными файлами?", `Менеджер получит ${received} файлов. Неотправленных: ${files.length}.`, [{ text: "Продолжить загрузку", style: "cancel" }, { text: "Завершить", onPress: () => void send() }]);
-    else void send();
+    if (files.length) Alert.alert("Завершить с полученными файлами?", `Менеджер получит ${received} файлов. Неотправленных: ${files.length}.`, [{ text: "Продолжить загрузку", style: "cancel" }, { text: "Завершить", onPress: () => void finishReceived(true) }]);
+    else void finishReceived(true);
   };
   return <ScrollView style={{ flex: 1, backgroundColor: c.bg }} contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 18, paddingBottom: insets.bottom + 32, gap: 16 }} keyboardShouldPersistTaps="handled">
     <TitleBar title={(completed ? sentDraft?.registration : draft?.registration) ? "Отправка заявки" : "Фото и видео магазина"} />
