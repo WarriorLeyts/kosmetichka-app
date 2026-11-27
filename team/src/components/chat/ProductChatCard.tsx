@@ -36,7 +36,7 @@ export function ProductChatCard({ r, color }: { r: ProductRequest; color: string
       {!r.added && r.messageId && ctx ? <Pressable accessibilityRole="button" accessibilityLabel="Добавить товар в заказ" onPress={() => { setQuantity(String(r.question ? 1 : r.quantity)); setError(""); setOpen(true); }} style={[button, { backgroundColor: VIOLET, flex: 1, minWidth: 0, paddingHorizontal: 5 }]}><Ionicons name="bag-add-outline" size={18} color="#fff" /><Text style={{ color: "#fff", fontWeight: "700", fontSize: 12, flexShrink: 1 }}>Добавить в заказ</Text></Pressable> : null}
     </View>
     <Sheet avoidKeyboard open={open} onClose={() => { if (!busy) setOpen(false); }} title="Добавить товар в заказ">
-      <View style={{ gap: 14, paddingBottom: 12 }}>
+      <View style={{ gap: 14, paddingHorizontal: 20, paddingBottom: 12 }}>
         <Text style={{ color: c.label, fontWeight: "600", fontSize: 16 }}>{r.name}{r.variantName ? ` · ${r.variantName}` : ""}</Text>
         <Text style={{ color: c.label, fontWeight: "600" }}>Количество, шт.</Text>
         <View style={{ flexDirection: "row", gap: 12, justifyContent: "center", alignItems: "center" }}>
