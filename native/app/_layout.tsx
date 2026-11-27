@@ -27,6 +27,7 @@ import { DesktopHeader } from "@/components/DesktopHeader";
 import { PromoStrip } from "@/components/promo/PromoStrip";
 import { startPromo, usePromo } from "@/promo";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { StorageNotice } from "@/components/StorageNotice";
 import { stormWatch } from "@/stormWatch";
 import { useDesktop } from "@/useDesktop";
 import { titleForPath, usePageTitle } from "@/pageTitle";
@@ -223,6 +224,7 @@ function AppRoot() {
       </Stack>
       <AssortmentPicker />
       <ThemeFade mode={mode} />
+      <StorageNotice />
       {inExpoGo || desktop ? null : <AnimatedSplash onReady={onSplashReady} />}
       {/* website on a phone: «установите приложение» */}
       {Platform.OS === "web" ? <InstallPrompt /> : null}

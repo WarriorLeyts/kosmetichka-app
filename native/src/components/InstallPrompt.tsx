@@ -7,6 +7,7 @@ import { tap } from "@/components/ui";
 import { onNextTap } from "@/webTap";
 import { isIOSDevice, standalone } from "@/webPush";
 import { colors } from "@/theme";
+import { useStorageNotice } from "@/store/storageNotice";
 
 /**
  * Website on a phone: offer to install the site to the home screen.
@@ -46,14 +47,17 @@ function touchDevice(): boolean {
 
 if (isWeb && !isIOSDevice()) {
   let disarm: (() => void) | null = null;
-  window.addEventListener("beforeinstallprompt", (ev) => {
-    if (!touchDevice() || standalone() || recently(ANDROID_KEY, 7 * DAY)) return;
-    ev.preventDefault();
-    const e = ev as InstallEvent;
+  let pending: InstallEvent | null = null;
+  let readyAt = 0;
+  const arm = () => {
     disarm?.();
+    disarm = null;
+    if (!pending || useStorageNotice.getState().status !== "dismissed" || Date.now() < readyAt) return;
     disarm = onNextTap(() => {
       disarm = null;
-      if (standalone()) return false;
+      const e = pending;
+      pending = null;
+      if (!e || standalone()) return false;
       e.prompt()
         .then(() => e.userChoice)
         .then((c) => {
@@ -62,10 +66,25 @@ if (isWeb && !isIOSDevice()) {
         .catch(() => {});
       return true;
     }, true);
+  };
+  useStorageNotice.subscribe((state, previous) => {
+    if (state.status === previous.status) return;
+    // Acknowledging the notice must not also trigger the browser's install dialog.
+    if (previous.status === "visible" && state.status === "dismissed") {
+      readyAt = Date.now() + 850;
+      setTimeout(arm, 850);
+    } else arm();
+  });
+  window.addEventListener("beforeinstallprompt", (ev) => {
+    if (!touchDevice() || standalone() || recently(ANDROID_KEY, 7 * DAY)) return;
+    ev.preventDefault();
+    pending = ev as InstallEvent;
+    arm();
   });
   window.addEventListener("appinstalled", () => {
     disarm?.();
     disarm = null;
+    pending = null;
   });
 }
 
@@ -93,14 +112,15 @@ function shareWhere(b: IOSBrowser): string {
 export function InstallPrompt() {
   const c = useIOS();
   const [open, setOpen] = useState(false);
+  const noticeDismissed = useStorageNotice((s) => s.status === "dismissed");
   const [browser] = useState<IOSBrowser>(() => (isWeb && isIOSDevice() && !standalone() ? iosBrowser() : null));
 
   useEffect(() => {
-    if (!browser || recently(IOS_KEY, 3 * DAY)) return;
+    if (!browser || !noticeDismissed || recently(IOS_KEY, 3 * DAY)) return;
     // after the launch animation
     const t = setTimeout(() => setOpen(true), 2500);
     return () => clearTimeout(t);
-  }, [browser]);
+  }, [browser, noticeDismissed]);
 
   if (!browser) return null;
   const close = () => {
