@@ -43,7 +43,7 @@ export function OrderDateFilter({ day, period, today: serverToday, onChange }: {
   return (
     <View style={{ marginBottom: 10 }}>
       <View style={styles.row}>
-        <View style={[styles.nav, { backgroundColor: c.cell, borderColor: dark ? "transparent" : "#E9E4F5" }]}>
+        <View style={[styles.nav, { backgroundColor: c.cell, borderColor: "transparent" }]}>
           <Pressable accessibilityRole="button" accessibilityLabel={period ? "Предыдущий период" : "Предыдущий день"} onPress={() => move(-1)} style={[styles.arrow, { backgroundColor: soft }]}><Ionicons name="chevron-back" size={18} color={VIOLET} /></Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel="Выбрать интервал дат" onPress={() => { tap(); setOpen(true); }} style={styles.choose}>
             <Ionicons name="calendar-outline" size={17} color={VIOLET} />
@@ -51,7 +51,7 @@ export function OrderDateFilter({ day, period, today: serverToday, onChange }: {
           </Pressable>
           <Pressable accessibilityRole="button" accessibilityLabel={period ? "Следующий период" : "Следующий день"} accessibilityState={{ disabled: nextDisabled }} disabled={nextDisabled} onPress={() => move(1)} style={[styles.arrow, { backgroundColor: soft, opacity: nextDisabled ? 0.35 : 1 }]}><Ionicons name="chevron-forward" size={18} color={VIOLET} /></Pressable>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Все даты" accessibilityState={{ selected: all }} onPress={() => { tap(); onChange("", null); }} style={[styles.all, { backgroundColor: all ? VIOLET : c.cell, borderColor: VIOLET }]}><Text style={{ color: all ? "#fff" : c.label, fontSize: 14, fontWeight: "600" }}>Все даты</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Все даты" accessibilityState={{ selected: all }} onPress={() => { tap(); onChange("", null); }} style={[styles.all, { backgroundColor: all ? VIOLET : c.cell, borderColor: all || dark ? VIOLET : "transparent" }]}><Text style={{ color: all ? "#fff" : c.label, fontSize: 14, fontWeight: "600" }}>Все даты</Text></Pressable>
       </View>
       {!all ? <Text style={[styles.hint, { color: c.secondary }]}>
         {period ? `${fullDate(period.from)} — ${fullDate(period.to)} · рабочие дни` : "Рабочий день"}

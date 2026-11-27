@@ -81,7 +81,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View style={[styles.wrap, { pointerEvents: "box-none" }, { bottom: Math.max(insets.bottom, 10) }]}>
-      <View style={[styles.bar, { borderColor: dark ? "transparent" : "rgba(81,91,137,0.08)" }]}>
+      <View style={[styles.bar, { borderColor: "transparent" }]}>
         {disabled("blur") ? null : <BlurView
           intensity={70}
           tint={c.blurTint}
