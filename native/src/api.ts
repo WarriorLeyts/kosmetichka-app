@@ -234,6 +234,7 @@ export type CatalogPage = { products: Product[]; total: number; page: number; ha
 
 export type OrderReview = { orderId: number; rating: number; comment: string | null; createdAt: string };
 export const api = {
+  stories() { return request<{ items: import("./storyTypes").Story[] }>("/api/stories"); },
   orderReview(id: number) { return request<{ review: OrderReview | null }>(`/api/mobile/orders/${id}/review`); },
   sendOrderReview(id: number, rating: number, comment: string) {
     return request<{ review: OrderReview }>(`/api/mobile/orders/${id}/review`, { method: "POST", body: JSON.stringify({ rating, comment }) });

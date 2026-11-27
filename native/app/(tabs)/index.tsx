@@ -1,4 +1,5 @@
 import { YourRestocks } from "@/components/home/YourRestocks";
+import { Stories } from "@/components/stories/Stories";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
@@ -148,6 +149,7 @@ export default function Home() {
           </Pressable>
         </View>
         )}
+        <Stories openCatalog={openCatalog} />
         <YourRestocks />
         <PendingOrderNote orders={activeOrders} />
         {/* retail without a loyalty card: how to get the discount prices */}
