@@ -5,60 +5,9 @@ import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { chatFileUrl, imageUrl, safeOpenUrl } from "../../api";
 import { money } from "../../format";
-import { createContext, useContext, useState } from "react";
+import { ProductChatCard, type ProductRequest } from "./ProductChatCard";
 import { VoicePlayer } from "../voice/VoicePlayer";
-
-/** «Добавить товар» cards from the customer: what the order screen can do with them (no provider → no button) */
-export type ProductRequest = { messageId: number | null; added: boolean; id: number; name: string; variantName: string | null; imagePath: string | null; quantity: number; price: number };
-export const ProductRequestContext = createContext<{
-  /** pieces of this product already in the order (0 = not there) */
-  inOrder: (r: ProductRequest) => number;
-  add: (r: ProductRequest) => Promise<void>;
-} | null>(null);
-
-function ProductRequestCard({ r, color }: { r: ProductRequest; color: string }) {
-  const ctx = useContext(ProductRequestContext);
-  const [busy, setBusy] = useState(false);
-  const have = ctx?.inOrder(r) ?? 0;
-  return (
-    <View style={{ width: 230, gap: 4 }}>
-      <Text style={{ color, fontSize: 13, opacity: 0.75 }}>🛒 Клиент просит добавить в заказ</Text>
-      {r.imagePath ? <Image source={{ uri: imageUrl(r.imagePath, 320) ?? undefined }} style={styles.product} contentFit="contain" /> : null}
-      <Text style={{ fontWeight: "600", color }}>{r.name}</Text>
-      {r.variantName ? <Text style={{ color: VIOLET }}>{r.variantName}</Text> : null}
-      <Text style={{ color, fontWeight: "800", fontSize: 15 }}>
-        {r.quantity} шт.{r.price > 0 ? <Text style={{ color: "#e82c87" }}>{`  × ${money(r.price)}`}</Text> : null}
-      </Text>
-      {r.added ? (
-        <View style={[styles.reqBtn, { backgroundColor: "rgba(22,163,74,0.14)" }]}>
-          <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
-          <Text style={{ color: "#16A34A", fontWeight: "700" }}>Добавлено в заказ</Text>
-        </View>
-      ) : ctx ? (
-        <>
-          {have > 0 ? <Text style={{ color, fontSize: 13, opacity: 0.75 }}>Уже в заказе: {have} шт. — добавим ещё {r.quantity} шт.</Text> : null}
-          <Pressable
-            onPress={async () => {
-              if (busy) return;
-              setBusy(true);
-              try {
-                await ctx.add(r);
-              } finally {
-                setBusy(false);
-              }
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`Добавить в заказ ${r.name}, ${r.quantity} шт.`}
-            style={({ pressed }) => [styles.reqBtn, { backgroundColor: VIOLET, opacity: busy ? 0.6 : pressed ? 0.85 : 1 }]}
-          >
-            <Ionicons name="add-circle-outline" size={18} color="#fff" />
-            <Text style={{ color: "#fff", fontWeight: "700" }}>{busy ? "Добавляем…" : "Добавить в заказ"}</Text>
-          </Pressable>
-        </>
-      ) : null}
-    </View>
-  );
-}
+export { ProductRequestContext, type ProductRequest, type ProductReply } from "./ProductChatCard";
 
 const VIOLET = "#8b3dff";
 
@@ -87,6 +36,9 @@ export function messagePreview(text: string): string {
     if (o?._t === "img") return "📷 Фото";
     if (o?._t === "video") return "🎬 Видео";
     if (o?._t === "file") return `📎 ${o.name ?? "Файл"}`;
+    if (o?._t === "product-question") return `Вопрос о товаре: ${o.name ?? "Товар"}`;
+    if (o?._t === "product-request") return `Добавить в заказ: ${o.name ?? "Товар"}`;
+    if (o?._t === "product-answer") return `Ответ о товаре: ${o.answer ?? ""}`;
     if (o?._t === "product") return `📦 ${o.name ?? "Товар"}`;
     if (o?._t === "audio") return "🎤 Голосовое сообщение";
     if (o?._t === "product-problem") return `⚠️ ${o.name ?? "Проблема с товаром"}`;
@@ -138,14 +90,18 @@ export function MessageBody({ id, text, color }: { id?: number; text: string; co
       );
     }
     if (o?._t === "order-change" && Array.isArray(o.lines)) return <OrderChangeCard data={o} color={color} />;
-    if (o?._t === "product-request" && typeof o.name === "string" && Number.isInteger(o.id)) {
+    if ((o?._t === "product-request" || o?._t === "product-question") && typeof o.name === "string" && Number.isInteger(o.id)) {
       const r: ProductRequest = {
         messageId: typeof id === "number" && id > 0 ? id : null, added: o.added === true,
         id: o.id, name: o.name, variantName: typeof o.variantName === "string" && o.variantName ? o.variantName : null,
         imagePath: typeof o.imagePath === "string" && o.imagePath ? o.imagePath : null,
         quantity: Math.max(1, Math.floor(Number(o.quantity) || 1)), price: Number(o.price) || 0,
+        question: o._t === "product-question" && typeof o.question === "string" ? o.question : undefined, addedQuantity: Number(o.addedQuantity) || undefined,
       };
-      return <ProductRequestCard r={r} color={color} />;
+      return <ProductChatCard r={r} color={color} />;
+    }
+    if (o?._t === "product-answer" && typeof o.product?.name === "string" && typeof o.answer === "string") {
+      return <View style={{ width: 230, maxWidth: "100%", gap: 8 }}><View style={{ borderLeftWidth: 3, borderLeftColor: "#b183ef", paddingLeft: 10, gap: 4 }}><Text style={{ color, fontWeight: "700" }}>{o.product.name}</Text><Text style={{ color, opacity: 0.8 }}>{o.question}</Text></View><Text style={{ color, fontSize: 16, lineHeight: 22 }}>{o.answer}</Text></View>;
     }
     if ((o?._t === "product" || o?._t === "product-problem") && typeof o.name === "string") {
       return (

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Animated, Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Animated, KeyboardAvoidingView, Modal, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { iosText, useIOS } from "../../ios";
@@ -7,7 +7,7 @@ import { tap } from "../ui";
 import { colors } from "@/theme";
 
 /** iOS-style bottom sheet with a grabber; on a wide screen (computer) — a window in the middle. */
-export function Sheet({ open, onClose, title, children, footer }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode }) {
+export function Sheet({ open, onClose, title, children, footer, avoidKeyboard = false }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; footer?: ReactNode; avoidKeyboard?: boolean }) {
   const c = useIOS();
   const insets = useSafeAreaInsets();
   const y = useRef(new Animated.Value(400)).current;
@@ -60,12 +60,14 @@ export function Sheet({ open, onClose, title, children, footer }: { open: boolea
           </Animated.View>
         </View>
       ) : (
+      <KeyboardAvoidingView enabled={avoidKeyboard} behavior="height" style={{ flex: 1 }} pointerEvents="box-none">
       <Animated.View style={[styles.sheet, { backgroundColor: c.bg, paddingBottom: insets.bottom + 12, ...(footer ? { maxHeight: height - insets.top - 16 } : {}), transform: [{ translateY: y }] }]}>
         <View style={styles.grabber} />
         {title ? <Text style={[iosText.headline, { color: c.label, textAlign: "center", marginBottom: 12 }]}>{title}</Text> : null}
         {footer ? <View style={{ flexShrink: 1, minHeight: 0 }}>{children}</View> : children}
         {footer}
       </Animated.View>
+      </KeyboardAvoidingView>
       )}
     </Modal>
   );

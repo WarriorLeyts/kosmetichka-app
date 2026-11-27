@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Animated, Modal, Pressable, StyleSheet, Text, View } from "react-native";
+import { Animated, KeyboardAvoidingView, Modal, Pressable, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { iosText, useIOS } from "../../ios";
 import { tap } from "../ui";
 
 /** iOS-style bottom sheet with a grabber. */
-export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title?: string; children: ReactNode }) {
+export function Sheet({ open, onClose, title, children, avoidKeyboard = false }: { open: boolean; onClose: () => void; title?: string; children: ReactNode; avoidKeyboard?: boolean }) {
   const c = useIOS();
   const insets = useSafeAreaInsets();
   const y = useRef(new Animated.Value(400)).current;
@@ -34,11 +34,13 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
       <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.35)", opacity: fade }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Закрыть" />
       </Animated.View>
+      <KeyboardAvoidingView enabled={avoidKeyboard} behavior="height" style={{ flex: 1 }} pointerEvents="box-none">
       <Animated.View style={[styles.sheet, { backgroundColor: c.bg, paddingBottom: insets.bottom + 12, transform: [{ translateY: y }] }]}>
         <View style={styles.grabber} />
         {title ? <Text style={[iosText.headline, { color: c.label, textAlign: "center", marginBottom: 12 }]}>{title}</Text> : null}
         {children}
       </Animated.View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

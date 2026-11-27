@@ -9,7 +9,7 @@ import { TitleBar } from "@/components/iosui/TitleBar";
 import { IOSField } from "@/components/iosui/Field";
 import { GradientButton } from "@/components/iosui/Buttons";
 import { useIOS } from "@/ios";
-import { useAuth } from "@/store/auth";
+import { useAuth, applyCardState } from "@/store/auth";
 import { colors } from "@/theme";
 
 /**
@@ -55,9 +55,11 @@ export default function LoyaltyAdd() {
   const confirm = () =>
     run(async () => {
       if (!code.replace(/\D/g, "")) throw new Error("Введите код из СМС");
-      await api.loyaltyConfirm(code);
+      const customer = useAuth.getState().customer;
+      const result = await api.loyaltyConfirm(code);
+      if (customer && typeof result.hasCard === "boolean" && typeof result.cardLinked === "boolean") applyCardState(customer.id, { hasCard: result.hasCard, cardLinked: result.cardLinked, cardType: result.cardType });
       // the card decides the website prices — the cart recounts at once
-      void useAuth.getState().reloadCustomer();
+      await useAuth.getState().reloadCustomer();
       router.back(); // the profile reloads the card when it comes back into view
     });
 

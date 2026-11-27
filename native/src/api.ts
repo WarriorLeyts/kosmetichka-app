@@ -386,7 +386,7 @@ export const api = {
     return request("/api/mobile/loyalty/link", { method: "POST", body: json({ query }) });
   },
   /** step 2: the code from the SMS → the card is linked to this account */
-  loyaltyConfirm(code: string): Promise<{ card: { number: string; name: string; level: string | null; cashback: string | null; bonuses: number; pendingBonuses: number } }> {
+  loyaltyConfirm(code: string): Promise<{ hasCard: boolean; cardLinked: boolean; cardType: "discount" | "bonus" | null; card: { number: string; name: string; level: string | null; cashback: string | null; bonuses: number; pendingBonuses: number } }> {
     return request("/api/mobile/loyalty/link", { method: "POST", body: json({ code }) });
   },
   loyaltyUnlink(): Promise<{ ok: boolean }> {
@@ -569,8 +569,11 @@ export const api = {
     return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ text }) });
   },
   /** «Добавить товар» in the order chat: the site writes a product card the manager adds to the order with one tap */
-  requestProduct(orderId: number, line: { productId: number; quantity: number; variantName?: string | null }) {
-    return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ productRequest: line }) });
+  requestProduct(orderId: number, line: { productId: number; quantity: number; variantName?: string | null }, requestId?: string) {
+    return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ productRequest: line, requestId }) });
+  },
+  questionProduct(orderId: number, line: { productId: number; question: string; variantName?: string | null }, requestId?: string) {
+    return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ productQuestion: line, requestId }) });
   },
 
   // ── Waiting list ──

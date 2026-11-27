@@ -8,7 +8,7 @@ import { ActionButton, Card, Chips, ErrorState, KV, Loading, SectionTitle, Statu
 import { ChatPanel, type ChatMsg } from "@/components/chat/ChatPanel";
 import { orderReplies } from "@/orderReplies";
 import { PhoneKV } from "@/components/PhoneKV";
-import { ProductRequestContext, type ProductRequest } from "@/components/chat/MessageBody";
+import { ProductRequestContext, type ProductRequest, type ProductReply } from "@/components/chat/MessageBody";
 import { openUrl } from "@/components/chat/MessageBody";
 import { ProductPicker, type Picked } from "@/components/ProductPicker";
 import { Sheet, SheetOptions } from "@/components/iosui/Sheet";
@@ -217,47 +217,24 @@ export default function OrderScreen() {
   };
 
 
-  // «Добавить в заказ» on the customer's product card in the chat (the order changes only during «Сборка»)
-  const requestActions = useMemo(
-    () => ({
-      inOrder: (r: ProductRequest) => o?.items.find((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null))?.quantity ?? 0,
-      add: async (r: ProductRequest) => {
-        if (!o) return;
-        if (o.status !== "assembly") {
-          Alert.alert("Сейчас добавить нельзя", o.status === "pending" || o.status === "approved" ? "Состав меняется во время сборки — нажмите «Собрать заказ», потом добавьте товар." : o.status === "consultation" ? "Состав меняется во время сборки — нажмите «Вернуть на сборку», потом добавьте товар." : "Этот заказ уже нельзя изменить.");
-          return;
-        }
-        if (edit) {
-          Alert.alert("Сначала сохраните изменения", "Вы меняете состав заказа — сохраните или отмените, потом добавьте товар из чата.");
-          return;
-        }
-        if (running.current) return;
-        running.current = true;
-        try {
-          // the price is set by the site (the customer's price type)
-          // already in the order → that line gets the requested pieces more; otherwise a new line
-          const line = o.items.find((i) => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null));
-          await put(`/api/admin/orders/${orderId}/items`, {
-            items: line ? [{ id: line.id, quantity: line.quantity + r.quantity, price: line.price }] : [],
-            removeIds: [],
-            newItems: line ? [] : [{ productId: r.id, productName: r.name, barcode: null, quantity: r.quantity, price: 0, variantName: r.variantName, variantImageUrl: r.variantName && r.imagePath ? imageUrl(r.imagePath) : null }],
-            // the card in the chat becomes «Добавлено в заказ»
-            requestMessageId: r.messageId,
-          });
-          await reload();
-          setChatKey((k) => k + 1);
-          // Keep assembly open so every request in the chat can be added first.
-          // The manager sends the complete order with the separate status button.
-        } catch (e) {
-          Alert.alert("Не добавлено", e instanceof Error ? e.message : "");
-        } finally {
-          running.current = false;
-        }
-      },
-    }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [o, edit, orderId]
-  );
+  const [productReply, setProductReply] = useState<ProductReply | null>(null);
+  const requestActions = useMemo(() => ({
+    inOrder: (r: ProductRequest) => o?.items.find(i => i.productId === r.id && (i.variantName ?? null) === (r.variantName ?? null))?.quantity ?? 0,
+    reply: (r: ProductReply) => setProductReply(r),
+    add: async (r: ProductRequest) => {
+      if (!o || !r.messageId) throw new Error("Обновите чат и повторите");
+      if (o.status !== "assembly") throw new Error(o.status === "pending" || o.status === "approved" ? "Сначала нажмите «Собрать заказ»." : o.status === "consultation" ? "Сначала верните заказ на сборку." : "Этот заказ уже нельзя изменить.");
+      if (edit) throw new Error("Сначала сохраните или отмените изменения состава заказа.");
+      if (running.current) throw new Error("Дождитесь завершения предыдущего действия.");
+      running.current = true;
+      try {
+        const result = await put<{ loyaltyWarning?: string; promoWarning?: string }>(`/api/admin/orders/${orderId}/items`, { chatProduct: { messageId: r.messageId, quantity: r.quantity } });
+        await reload(); setChatKey(k => k + 1);
+        if (result?.loyaltyWarning) Alert.alert("Бонусы", result.loyaltyWarning);
+        if (result?.promoWarning) Alert.alert("Промокод", result.promoWarning);
+      } finally { running.current = false; }
+    },
+  }), [o, edit, orderId, reload]);
 
   // leaving the screen with unsaved changes to the items: ask first (they were lost silently)
   const navigation = useNavigation();
@@ -719,7 +696,13 @@ export default function OrderScreen() {
               key={"c" + chatKey}
               liveOrderId={orderId}
               load={loadCustomer}
-              send={(text) => post(`/api/admin/orders/${orderId}/customer-messages`, { text })}
+              replyTo={productReply}
+              onCancelReply={() => setProductReply(null)}
+              send={async (text, replyToProductMessageId) => {
+                const response = await post(`/api/admin/orders/${orderId}/customer-messages`, { text, replyToProductMessageId });
+                if (replyToProductMessageId) setProductReply(p => p?.messageId === replyToProductMessageId ? null : p);
+                return response;
+              }}
               empty="Клиент ещё не писал"
               quickReplies={orderReplies(o.status)}
               extraActions={[{ value: "product", label: "Карточка товара из каталога", run: () => setCatalog("customer") }]}

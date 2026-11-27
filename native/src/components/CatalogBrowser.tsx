@@ -88,6 +88,7 @@ function SearchInput() {
 
 /** «Добавить товар» to an order: the cards pick products instead of putting them into the cart. */
 export type CatalogPick = {
+  questionMode?: boolean;
   title: string;
   onBack: () => void;
   /** product id → picked quantity (all its variants together) */
@@ -258,6 +259,7 @@ export function CatalogBrowser({ pick }: { pick?: CatalogPick }) {
           onAdd={pick ? pick.onAdd : addToCart}
           onFavorite={toggleFav}
           pickMode={!!pick}
+          questionMode={pick?.questionMode}
           picked={pick?.counts.get(item.id) ?? 0}
           picking={pick?.busyId === item.id}
           onPickStep={pick?.onStep}
