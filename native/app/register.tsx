@@ -492,7 +492,7 @@ export default function Register() {
           ) : null}
 
           <GradientButton
-            title={busy === "submit" ? "Создаём аккаунт…" : wholesale ? "Отправить заявку" : "Зарегистрироваться"}
+            title={busy === "submit" ? wholesale ? "Отправляем заявку…" : "Создаём аккаунт…" : wholesale ? "Отправить заявку" : "Зарегистрироваться"}
             loading={busy === "submit" || preparingProofs}
             onPress={submit}
             style={{ marginTop: 6 }}

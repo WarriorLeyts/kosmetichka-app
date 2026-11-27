@@ -26,7 +26,7 @@ export default function Customer() {
   const [form, setForm] = useState<Form | null>(null); // «Изменить данные»
   const [saveError, setSaveError] = useState("");
   const running = useRef(false);
-  const { data, error, loading, reload } = useLoad(() => get<CustomerDetail>(`/api/team/customers/${id}`), [id]);
+  const { data, error, loading, reload } = useLoad(() => get<CustomerDetail>(`/api/team/customers/${id}`), [id], { refocus: true, poll: 15000, paused: !!busy || !!form });
   const x = data?.customer;
 
   const deleteCustomer = () => {
@@ -201,7 +201,7 @@ export default function Customer() {
                   }}
                 />
               ) : null}
-              {(x.proofUploadExpected ?? 0) > 0 && !x.proofUploadCompletedAt ? <Text style={{ color: "#B45309", marginTop: 8 }}>Клиент завершает загрузку: получено {x.proofs?.length ?? 0} из {x.proofUploadExpected} файлов.</Text> : null}
+              {(x.proofUploadExpected ?? 0) > 0 && !x.proofUploadCompletedAt ? <Text style={{ color: c.blurTint === "dark" ? "#FDBA74" : "#B45309", marginTop: 8 }}>Загрузка не завершена: получено {x.proofs?.length ?? 0} из {x.proofUploadExpected} файлов.</Text> : null}
               {x.proofs?.length ? (
                 <View style={styles.proofs}>
                   {x.proofs.map((p) => (
