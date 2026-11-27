@@ -1,5 +1,6 @@
 import { YourRestocks } from "@/components/home/YourRestocks";
 import { Stories } from "@/components/stories/Stories";
+import { HomeBrands } from "@/components/home/HomeBrands";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -35,7 +36,7 @@ export function DesktopHome({
 }: {
   categories: Category[];
   orders: ReturnType<typeof useActiveOrders>;
-  openCatalog: (patch: { categoryGuid?: string | null; quick?: Quick[] }) => void;
+  openCatalog: (patch: { categoryGuid?: string | null; quick?: Quick[]; brandGuids?: string[] }) => void;
   /** home blocks published in the admin panel; null — the built-in home below; undefined — still loading */
   blocks?: SiteBlock[] | null;
 }) {
@@ -131,6 +132,8 @@ export function DesktopHome({
 
           </>
         )}
+
+        <HomeBrands desktop openCatalog={openCatalog} />
 
         <Pressable
           style={styles.contacts}

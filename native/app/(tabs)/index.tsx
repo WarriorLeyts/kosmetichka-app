@@ -1,5 +1,6 @@
 import { YourRestocks } from "@/components/home/YourRestocks";
 import { Stories } from "@/components/stories/Stories";
+import { HomeBrands } from "@/components/home/HomeBrands";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { useEffect, useRef, useState } from "react";
 import { Alert, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from "react-native";
@@ -217,6 +218,7 @@ export default function Home() {
         </>
       )}
 
+      <HomeBrands openCatalog={openCatalog} />
       <Pressable style={styles.contacts} onPress={() => router.push("/info")}>
         <Ionicons name="call-outline" size={18} color={colors.muted} />
         <Text style={{ color: colors.muted, fontWeight: "600" }}>Контакты и документы</Text>
