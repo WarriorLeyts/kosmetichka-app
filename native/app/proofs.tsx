@@ -20,19 +20,23 @@ export default function Proofs() {
   const sending = useRef(false), controller = useRef<AbortController | null>(null), mounted = useRef(true), current = useRef<ProofDraft | null>(null);
   const autoStarted = useRef<string | null>(null);
   const autoUpload = useRef<() => void>(() => {});
+  const generation = useRef(0);
   const persist = async (next: ProofDraft) => { current.current = next; setDraft(next); await saveProofDraft(next); };
   const load = useCallback(async () => {
+    const mine = ++generation.current;
     try {
       const customer = useAuth.getState().customer;
       if (customer?.id !== customerId) return;
       setReady(false);
+      autoStarted.current = null;
       const stored = await loadProofDraft();
+      if (!mounted.current || mine !== generation.current || useAuth.getState().customer?.id !== customerId) return;
       const active = stored && (customer?.id === stored.customerId || !customer && stored.registration) ? stored : null;
       const next = active ?? (customer ? { customerId: customer.id, token: null, registration: false, autoLogin: true, message: "", files: [], createdAt: Date.now() } : null);
       if (!next) throw new Error("Не удалось найти незавершённую загрузку. Войдите в аккаунт или напишите в поддержку.");
       current.current = next; setDraft(next);
       const status = await api.proofStatus(next.token);
-      if (!mounted.current || useAuth.getState().customer?.id !== customerId) return;
+      if (!mounted.current || mine !== generation.current || useAuth.getState().customer?.id !== customerId) return;
       const savedIds = new Set(status.files.map(f => f.uploadId));
       const remaining = next.files.filter(f => !savedIds.has(f.id));
       setReceived(status.files.length); setFiles(remaining);
@@ -40,7 +44,7 @@ export default function Proofs() {
       if (active) await saveProofDraft({ ...next, files: remaining });
       current.current = { ...next, files: remaining }; setDraft(current.current);
       setError(next.registration && !remaining.length && !status.files.length ? "Выберите фото или видео, чтобы завершить отправку заявки." : ""); setReady(true);
-    } catch (e) { setError(e instanceof Error ? e.message : "Не удалось проверить загрузку"); }
+    } catch (e) { if (mounted.current && mine === generation.current) setError(e instanceof Error ? e.message : "Не удалось проверить загрузку"); }
   }, [customerId]);
   useEffect(() => { mounted.current = true; void load(); return () => { mounted.current = false; controller.current?.abort(); }; }, [load]);
 
@@ -60,32 +64,34 @@ export default function Proofs() {
     if (sending.current || !ready || !current.current || !files.length) return;
     const owner = useAuth.getState().customer?.id;
     if (owner ? owner !== current.current.customerId : !current.current.registration) return;
-    sending.current = true; setBusy(true); setError(""); controller.current = new AbortController();
+    const mine = generation.current, token = current.current.token, ctl = new AbortController();
+    sending.current = true; setBusy(true); setError(""); controller.current = ctl;
     const batch = [...files];
     try {
       for (let i = 0; i < batch.length; i++) {
-        if (controller.current.signal.aborted) return;
+        if (ctl.signal.aborted || mine !== generation.current) return;
         setProgress(`Файл ${i + 1} из ${batch.length} · 0%`);
-        await api.uploadProof(batch[i], current.current!.token, { signal: controller.current.signal, onProgress: p => { if (mounted.current) setProgress(p === 100 ? "Сохраняем файл на сервере…" : `Файл ${i + 1} из ${batch.length} · ${p}%`); } });
+        await api.uploadProof(batch[i], token, { signal: ctl.signal, onProgress: p => { if (mounted.current && mine === generation.current) setProgress(p === 100 ? "Сохраняем файл на сервере…" : `Файл ${i + 1} из ${batch.length} · ${p}%`); } });
+        if (!mounted.current || mine !== generation.current) return;
         const next: ProofDraft = { ...current.current!, files: current.current!.files.filter(f => f.id !== batch[i].id) };
         current.current = next; await saveProofDraft(next); await removeProofFile(batch[i]);
         if (mounted.current) { setFiles(next.files); setDraft(next); setReceived(n => n + 1); }
       }
-      if (mounted.current) await finish(false);
-    } catch (e) { if (mounted.current) setError(e instanceof Error ? e.message : "Файл не загрузился. Повторите отправку."); }
+      if (mounted.current && mine === generation.current) await finish(false);
+    } catch (e) { if (mounted.current && mine === generation.current) setError(e instanceof Error ? e.message : "Файл не загрузился. Повторите отправку."); }
     finally { sending.current = false; if (mounted.current) { setBusy(false); setProgress(""); } }
   };
   // Register already saved the selected files. Send them on arrival/resume; only failures need a tap.
-  // One automatic attempt per draft avoids a retry loop on a bad connection. Upload IDs make reloads safe.
+  // One automatic attempt per load avoids a retry loop on a bad connection. Upload IDs make reloads safe.
   autoUpload.current = () => { if (files.length) void upload(); else completeReceived(); };
   useEffect(() => {
     const d = current.current;
-    if (!ready || !d?.registration || (!d.files.length && !received)) return;
+    if (!ready || completed || sending.current || !d?.registration || (!d.files.length && !received)) return;
     const key = `${d.customerId}:${d.createdAt}`;
     if (autoStarted.current === key) return;
     autoStarted.current = key;
     autoUpload.current();
-  }, [ready, files.length, received, draft?.customerId, draft?.createdAt]);
+  }, [ready, busy, completed, files.length, received, draft?.customerId, draft?.createdAt]);
   const completeReceived = () => {
     if (!received || sending.current) return;
     if (preparing) return;
