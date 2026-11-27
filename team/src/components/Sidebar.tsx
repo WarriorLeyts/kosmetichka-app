@@ -38,6 +38,7 @@ export const SECTIONS: { title?: string; items: Item[] }[] = [
     items: [
       { href: "/academy/results", label: "Тесты сотрудников", icon: "school-outline", roles: STAFF, external: true },
       { href: "/users", label: "Сотрудники", icon: "people-circle-outline", roles: ["admin"], match: (p) => p.startsWith("/users") || p.startsWith("/user/") },
+      { href: "/stories", label: "Сторис", icon: "play-circle-outline", roles: ["admin"] },
       { href: "/push", label: "Рассылки", icon: "megaphone-outline", roles: ["admin"] },
       { href: "/app-errors", label: "Ошибки приложений", icon: "bug-outline", roles: ["admin"] },
     ],

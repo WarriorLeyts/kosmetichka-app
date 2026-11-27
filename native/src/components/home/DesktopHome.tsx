@@ -1,4 +1,5 @@
 import { YourRestocks } from "@/components/home/YourRestocks";
+import { Stories } from "@/components/stories/Stories";
 import { CampaignBanner } from "@/components/home/CampaignBanner";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -53,6 +54,7 @@ export function DesktopHome({
         <DesktopCategories categories={categories} selected={null} onSelect={(guid) => openCatalog(guid ? { categoryGuid: guid } : {})} />
       </View>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.main} showsVerticalScrollIndicator={false}>
+        <Stories openCatalog={openCatalog} />
         <CampaignBanner desktop />
         <PendingOrderNote orders={orders} wide />
         <YourRestocks />
