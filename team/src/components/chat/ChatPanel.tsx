@@ -10,6 +10,7 @@ import { useIOS } from "../../ios";
 import { tap } from "../ui";
 import { Sheet, SheetOptions } from "../iosui/Sheet";
 import { MessageBody } from "./MessageBody";
+import type { ProductReply } from "./ProductChatCard";
 import { ATTACH_OPTIONS, afterSheet, pickFile, prepareForUpload, type AttachHow } from "./Attach";
 import { onLiveHint } from "../../live";
 import { VoiceComposer } from "../voice/VoiceComposer";
@@ -24,12 +25,14 @@ export type ChatMsg = { id: number | string; text: string; createdAt: string; mi
  * Polls every 10 s while the screen is open.
  */
 export function ChatPanel({
-  load, send, empty, extraActions, liveOrderId, quickReplies,
+  load, send, empty, extraActions, liveOrderId, quickReplies, replyTo, onCancelReply,
 }: {
   /** reload at once when the site says this order changed (a new message) */
   liveOrderId?: number;
   load: () => Promise<ChatMsg[]>;
-  send: (text: string) => Promise<unknown>;
+  send: (text: string, replyToProductMessageId?: number) => Promise<unknown>;
+  replyTo?: ProductReply | null;
+  onCancelReply?: () => void;
   empty?: string;
   quickReplies?: { label: string; text: string }[];
   /** e.g. «send a product card» */
@@ -46,6 +49,8 @@ export function ChatPanel({
   const [voiceOpen, setVoiceOpen] = useState(false);
   const alive = useRef(true);
   const seq = useRef(0);
+  const input = useRef<TextInput>(null);
+  useEffect(() => { if (replyTo) input.current?.focus(); }, [replyTo]);
 
   const refresh = useCallback(async () => {
     const my = ++seq.current;
@@ -89,7 +94,7 @@ export function ChatPanel({
     sendingRef.current = true;
     setSending(true);
     try {
-      await send(t);
+      await send(t, replyTo?.messageId);
       setText("");
       await refresh();
     } catch (e) {
@@ -178,6 +183,7 @@ export function ChatPanel({
           </Pressable>)}
         </View>
       </View> : null}
+      {replyTo ? <View style={{ marginTop: 12, padding: 12, backgroundColor: dark ? "#392049" : "#F3ECFE", borderRadius: 14, flexDirection: "row", gap: 8, alignItems: "center" }}><View style={{ flex: 1, gap: 3 }}><Text style={{ color: VIOLET, fontWeight: "700" }}>Ответ на вопрос · {replyTo.name}</Text><Text numberOfLines={2} style={{ color: c.label }}>{replyTo.question}</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Отменить ответ на вопрос" onPress={onCancelReply} style={{ padding: 12 }}><Ionicons name="close" color={VIOLET} size={22} /></Pressable></View> : null}
       <View style={styles.composer}>
         <Pressable
           onPress={() => {
@@ -192,6 +198,7 @@ export function ChatPanel({
           {uploading ? <ActivityIndicator size="small" color={VIOLET} /> : <Ionicons name="attach" size={26} color={VIOLET} />}
         </Pressable>
         <TextInput
+          ref={input}
           value={text}
           onChangeText={setText}
           placeholder="Сообщение…"

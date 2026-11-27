@@ -131,6 +131,20 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
         </View>
       );
     }
+    if (obj?._t === "product-question" && typeof obj.name === "string" && typeof obj.question === "string") {
+      return <View style={{ width: 220, gap: 7 }}>
+        <Text style={{ color, fontSize: 14, fontWeight: "700" }}>Вопрос о товаре</Text>
+        {typeof obj.imagePath === "string" && imageUrl(obj.imagePath, 320)?.startsWith(BASE_URL + "/") ? <Image source={{ uri: imageUrl(obj.imagePath, 320) ?? undefined }} style={{ width: 220, height: 130, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" /> : null}
+        <Text style={{ color, fontWeight: "600" }}>{obj.name}</Text>
+        {obj.variantName ? <Text style={{ color }}>{obj.variantName}</Text> : null}
+        <Text style={{ color, fontSize: 15, lineHeight: 21 }}>{obj.question}</Text>
+        <Text style={{ color, opacity: 0.75, fontSize: 13 }}>Вопрос отправлен менеджеру</Text>
+        {obj.added ? <Text style={{ color: "#16A34A", fontWeight: "700" }}>✓ Менеджер добавил в заказ{obj.addedQuantity ? ` · ${obj.addedQuantity} шт.` : ""}</Text> : null}
+      </View>;
+    }
+    if (fromManager && obj?._t === "product-answer" && typeof obj.product?.name === "string" && typeof obj.answer === "string") {
+      return <View style={{ width: 220, gap: 8 }}><View style={{ borderLeftWidth: 3, borderLeftColor: "#b183ef", paddingLeft: 10, gap: 4 }}><Text style={{ color, fontWeight: "700" }}>{obj.product.name}</Text>{obj.product.variantName ? <Text style={{ color }}>{obj.product.variantName}</Text> : null}<Text style={{ color, opacity: 0.8 }}>{obj.question}</Text></View><Text style={{ color, fontSize: 16, lineHeight: 22 }}>{obj.answer}</Text></View>;
+    }
     // product cards only from the manager — a customer can't fake them by typing JSON
     if (!fromManager) return <Text style={{ color, fontSize: 16, lineHeight: 21 }}>{text}</Text>;
     if (obj?._t === "product" && typeof obj.name === "string") {
@@ -596,6 +610,10 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
   // message input, pinned to the bottom (stays above the keyboard)
   const composer = (
       <View style={[styles.composer, { paddingBottom: kb ? 8 : Math.max(insets.bottom, 8), backgroundColor: split ? "transparent" : dark ? "#211032" : "#fff" }, !dark && !split && styles.composerShadow]}>
+        <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 10, width: "100%", maxWidth: 1100, alignSelf: "center" }}>
+          {canRequest ? <Pressable accessibilityRole="button" accessibilityLabel="Добавить товар в заказ" disabled={!!uploading} onPress={() => { Keyboard.dismiss(); router.push(`/order-add?order=${orderId}&mode=chat`); }} style={{ flex: 1, minHeight: 54, padding: 10, borderRadius: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#e82c87" }}><Ionicons name="bag-add-outline" size={21} color="#fff" /><Text style={{ color: "#fff", fontWeight: "600", fontSize: 14, flexShrink: 1 }}>Добавить товар в заказ</Text></Pressable> : null}
+          <Pressable accessibilityRole="button" accessibilityLabel="Задать вопрос о товаре" disabled={!!uploading} onPress={() => { Keyboard.dismiss(); router.push(`/order-add?order=${orderId}&mode=question`); }} style={{ flex: 1, minHeight: 54, padding: 10, borderRadius: 16, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: dark ? "#39234E" : "#F5EBFA" }}><Ionicons name="chatbubble-ellipses-outline" size={21} color={colors.brand} /><Text style={{ color: colors.brand, fontWeight: "600", fontSize: 14, flexShrink: 1 }}>Задать вопрос о товаре</Text></Pressable>
+        </View>
         <View style={[styles.wrap, { flexDirection: "row", alignItems: "flex-end", gap: 10 }]}>
           <Pressable
             onPress={() => {
@@ -610,20 +628,6 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
           >
             {uploading ? <ActivityIndicator size="small" color={colors.brand} /> : <Ionicons name="attach" size={26} color={colors.brand} />}
           </Pressable>
-          {canRequest ? (
-            <Pressable
-              onPress={() => {
-                tap();
-                Keyboard.dismiss();
-                router.push(`/order-add?order=${orderId}&mode=chat`);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Добавить товар в заказ"
-              style={({ pressed }) => [styles.attach, { backgroundColor: dark ? "#2B193D" : "#F2F2F7", opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Ionicons name="bag-add-outline" size={24} color={colors.brand} />
-            </Pressable>
-          ) : null}
           <TextInput
             value={text}
             onChangeText={setText}

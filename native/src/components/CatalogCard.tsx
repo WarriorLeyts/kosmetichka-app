@@ -38,6 +38,7 @@ type Props = {
   onFavorite: (p: Product) => void;
   /** «Добавить товар» to an order: the button picks the product (onAdd) instead of the cart */
   pickMode?: boolean;
+  questionMode?: boolean;
   picked?: number;
   /** variants are being checked */
   picking?: boolean;
@@ -57,7 +58,7 @@ const STOCK = {
 };
 
 /** Product card for the iOS-style catalog grid (fixed-height blocks keep rows aligned). */
-function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite, pickMode, picked = 0, picking, onPickStep, cartStepper = true }: Props) {
+function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, onAdd, onFavorite, pickMode, questionMode, picked = 0, picking, onPickStep, cartStepper = true }: Props) {
   useCampaign();
   const k = useCardScale();
   const styles = k === 1 ? baseStyles : phoneStyles;
@@ -195,17 +196,17 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
         </Pressable>
       ) : (
         <Pressable
-          disabled={out || picking}
+          disabled={(!questionMode && out) || picking}
           accessibilityRole="button"
-          accessibilityLabel={out ? "Нет в наличии" : pickMode ? `Добавить ${product.name}` : product.assortmentEnabled ? "Выбрать виды" : "Добавить в корзину"}
+          accessibilityLabel={questionMode ? `Задать вопрос: ${product.name}` : out ? "Нет в наличии" : pickMode ? `Добавить ${product.name}` : product.assortmentEnabled ? "Выбрать виды" : "Добавить в корзину"}
           onPress={() => {
             tap();
             onAdd(product);
           }}
-          style={({ pressed }) => [{ opacity: out ? 0.45 : pressed ? 0.88 : 1 }]}
+          style={({ pressed }) => [{ opacity: out && !questionMode ? 0.45 : pressed ? 0.88 : 1 }]}
         >
           <LinearGradient
-            colors={out ? ["#AEAEB2", "#AEAEB2"] : VIOLET_PINK}
+            colors={out && !questionMode ? ["#AEAEB2", "#AEAEB2"] : VIOLET_PINK}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.button, !out && { boxShadow: "0 4px 12px rgba(139,61,255,0.3)" }]}
@@ -213,10 +214,10 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
             {picking ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Ionicons name={pickMode && !out ? "add" : "cart-outline"} size={(pickMode && !out ? 20 : 18) * k} color="#fff" />
+              <Ionicons name={questionMode ? "chatbubble-ellipses-outline" : pickMode && !out ? "add" : "cart-outline"} size={(pickMode && !out ? 20 : 18) * k} color="#fff" />
             )}
             <Text numberOfLines={1} style={styles.buttonText}>
-              {out ? "Нет в наличии" : pickMode ? "Добавить" : product.assortmentEnabled ? "Выбрать виды" : "В корзину"}
+              {questionMode ? "Задать вопрос" : out ? "Нет в наличии" : pickMode ? "Добавить" : product.assortmentEnabled ? "Выбрать виды" : "В корзину"}
             </Text>
           </LinearGradient>
         </Pressable>

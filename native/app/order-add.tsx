@@ -10,6 +10,8 @@ import { NO_LINES, useOrderEdit, type AddedLine } from "@/store/orderEdit";
 import { CatalogStoreContext, usePickCatalog } from "@/store/catalog";
 import { CatalogBrowser, type CatalogPick } from "@/components/CatalogBrowser";
 import { Sheet } from "@/components/iosui/Sheet";
+import { ProductQuestionSheet } from "@/components/ProductQuestionSheet";
+import { newChatRequestId } from "@/chatRequest";
 import { tap } from "@/components/ui";
 import { useIOS } from "@/ios";
 import type { Product, Variant } from "@/types";
@@ -26,7 +28,9 @@ const PICK_STORE = { store: usePickCatalog, name: "pick" as const };
  */
 export default function OrderAddScreen() {
   const { order, mode } = useLocalSearchParams<{ order: string; mode?: string }>();
-  const chat = mode === "chat";
+  const questionMode = mode === "question";
+  const chat = mode === "chat" || questionMode;
+  const [questionFor, setQuestionFor] = useState<Product | null>(null);
   const orderId = /^[0-9]+$/.test(String(order ?? "")) ? Number(order) : NaN;
   const c = useIOS();
   const dark = c.blurTint === "dark";
@@ -37,8 +41,10 @@ export default function OrderAddScreen() {
   // chat mode: a separate list, the order's edit draft is not touched
   const [picked, setPicked] = useState<AddedLine[]>([]);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false), requestIds = useRef(new Map<string, string>());
   const added = chat ? picked : draft;
   const addLine = (oid: number, product: Product, quantity: number, variant?: { name: string; imageUrl: string } | null) => {
+    if (sendingRef.current) return;
     if (!chat) return useOrderEdit.getState().add(oid, product, quantity, variant);
     const key = `${product.id}:${variant?.name ?? ""}`;
     setPicked((list) =>
@@ -49,6 +55,7 @@ export default function OrderAddScreen() {
   };
   /** new quantity of a picked line; below the minimum order it is removed */
   const setLineQty = (key: string, quantity: number, min: number) => {
+    if (sendingRef.current) return;
     if (!chat) {
       const s = useOrderEdit.getState();
       return quantity < min ? s.remove(key) : s.setQty(key, quantity);
@@ -63,6 +70,8 @@ export default function OrderAddScreen() {
   const stepOf = (p: Product) => Math.max(1, p.minOrderQty ?? 1);
 
   const onAdd = async (p: Product) => {
+    if (sendingRef.current) return;
+    if (questionMode) { setQuestionFor(p); return; }
     if (checking !== null) return;
     let variants = variantCache.current.get(p.id);
     if (!variants) {
@@ -102,19 +111,24 @@ export default function OrderAddScreen() {
   const done = async () => {
     tap();
     if (!chat || picked.length === 0) return back();
-    if (sending) return;
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       // one card per product: the manager adds each with one tap
       // each card that went out leaves the list, so «Готово» again after an error doesn't send it twice
       for (const l of picked) {
-        await api.requestProduct(orderId, { productId: l.product.id, quantity: l.quantity, variantName: l.variantName });
+        const requestKey = `${l.key}:${l.quantity}`;
+        if (!requestIds.current.has(requestKey)) requestIds.current.set(requestKey, newChatRequestId());
+        await api.requestProduct(orderId, { productId: l.product.id, quantity: l.quantity, variantName: l.variantName }, requestIds.current.get(requestKey));
         setPicked((cur) => cur.filter((x) => x.key !== l.key));
+        requestIds.current.delete(requestKey);
       }
       back();
     } catch (e) {
       Alert.alert("Не отправлено", e instanceof Error ? e.message : "Попробуйте ещё раз");
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -128,7 +142,8 @@ export default function OrderAddScreen() {
   const stableStep = useCallback((p: Product, dir: 1 | -1) => handlers.current.onStep(p, dir), []);
   const pick: CatalogPick = useMemo(
     () => ({
-      title: chat ? "Добавить товар" : "Добавить товары",
+      title: questionMode ? "Задать вопрос о товаре" : chat ? "Добавить товар" : "Добавить товары",
+      questionMode,
       onBack: back,
       counts,
       busyId: checking,
@@ -136,7 +151,7 @@ export default function OrderAddScreen() {
       onStep: stableStep,
       bottomSpace: bottomPad + 86,
     }),
-    [chat, back, counts, checking, bottomPad, stableAdd, stableStep]
+    [chat, questionMode, back, counts, checking, bottomPad, stableAdd, stableStep]
   );
 
   return (
@@ -158,6 +173,7 @@ export default function OrderAddScreen() {
         </Pressable>
       </View>
 
+      {questionFor ? <ProductQuestionSheet key={questionFor.id} product={questionFor} orderId={orderId} onClose={() => setQuestionFor(null)} onSent={back} /> : null}
       <Sheet open={!!variantFor} onClose={() => setVariantFor(null)} title="Выберите вариант">
         {variantFor ? (
           <View style={{ gap: 8, paddingBottom: 8 }}>

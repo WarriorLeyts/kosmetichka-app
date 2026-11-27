@@ -569,8 +569,11 @@ export const api = {
     return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ text }) });
   },
   /** «Добавить товар» in the order chat: the site writes a product card the manager adds to the order with one tap */
-  requestProduct(orderId: number, line: { productId: number; quantity: number; variantName?: string | null }) {
-    return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ productRequest: line }) });
+  requestProduct(orderId: number, line: { productId: number; quantity: number; variantName?: string | null }, requestId?: string) {
+    return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ productRequest: line, requestId }) });
+  },
+  questionProduct(orderId: number, line: { productId: number; question: string; variantName?: string | null }, requestId?: string) {
+    return request(`/api/orders/${seg(orderId)}/messages`, { method: "POST", body: json({ productQuestion: line, requestId }) });
   },
 
   // ── Waiting list ──
