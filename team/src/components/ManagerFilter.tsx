@@ -15,7 +15,7 @@ export function ManagerFilter({ value, onChange, counts }: { value: string; onCh
   const dark = c.blurTint === "dark";
   const warn = dark ? "#FDBA74" : "#C2410C";
   return (
-    <View style={[st.seg, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF", borderColor: dark ? "transparent" : "#ECE6F4" }]}>
+    <View style={[st.seg, { backgroundColor: dark ? "rgba(255,255,255,0.06)" : "#FFFFFF", borderColor: "transparent" }]}>
       {OPTIONS.map((o) => {
         const on = value === o.value;
         const n = counts?.[o.key];
