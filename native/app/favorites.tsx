@@ -50,6 +50,7 @@ export default function Favorites() {
   const cart = useCartStore((s) => s.items);
   const addToCart = useAddToCart();
   const active = effectivePriceType(cart, customer);
+  const [unavailable, setUnavailable] = useState<Set<number>>(new Set());
   const [leaving, setLeaving] = useState<Set<number>>(new Set());
 
   // Refresh old snapshots for guests too, including assortment metadata.
@@ -61,12 +62,21 @@ export default function Favorites() {
     (async () => {
       const ids = [...new Set(favoriteIdsKey.split(",").map(Number))];
       const fresh = new Map<number, Product>();
+      const checked = new Set<number>();
       for (let k = 0; k < ids.length; k += 120) {
         const got = await api.productsByIds(ids.slice(k, k + 120)).catch(() => null);
-        got?.products.forEach(p => fresh.set(p.id, p));
+        if (got) { ids.slice(k, k + 120).forEach(id => checked.add(id)); got.products.forEach(p => fresh.set(p.id, p)); }
         if (!alive) return;
       }
-      if (alive && fresh.size) useFavorites.getState().refreshProducts(fresh);
+      if (alive) {
+        // Only successful reads can hide a saved card. Network failures retain the last known list.
+        setUnavailable(previous => {
+          const next = new Set(previous);
+          checked.forEach(id => { if (fresh.has(id)) next.delete(id); else next.add(id); });
+          return next;
+        });
+        if (fresh.size) useFavorites.getState().refreshProducts(fresh);
+      }
     })();
     return () => {
       alive = false;
@@ -90,7 +100,7 @@ export default function Favorites() {
     <View style={{ flex: 1, backgroundColor: bg }}>
       <FlatList
         key={columns}
-        data={items}
+        data={items.filter(p => !unavailable.has(p.id))}
         numColumns={columns}
         keyExtractor={(p) => String(p.id)}
         contentContainerStyle={{ paddingTop: insets.top, paddingHorizontal: 11, paddingBottom: insets.bottom + 24, flexGrow: 1, width: "100%", maxWidth: 1240, alignSelf: "center" }}
