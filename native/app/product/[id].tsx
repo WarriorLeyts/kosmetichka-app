@@ -239,7 +239,7 @@ export default function ProductScreen() {
       <Animated.View style={[{ flex: 1, alignItems: "center" }, !simple && anim.fadeEarly]}>
         <Wordmark />
       </Animated.View>
-      {product ? (
+      {product && !product.orderOnly ? (
         <Pressable
           onPress={() => {
             tap();
@@ -338,6 +338,7 @@ export default function ProductScreen() {
 
   const details = (
     <>
+      {product.orderOnly ? <View style={{ backgroundColor: c.cell, borderRadius: 18, padding: 16, gap: 6, marginBottom: 16 }}><Text style={{ color: c.label, fontWeight: "700", fontSize: 17 }}>Товар из вашего заказа</Text><Text style={{ color: c.secondary, fontSize: 15, lineHeight: 21 }}>Чтобы изменить количество или задать вопрос, напишите в чат заказа.</Text></View> : null}
           <View style={styles.metaRow}>
             {volume ? (
               <View style={[styles.volume, { backgroundColor: dark ? "#352044" : "#EFEAFF" }]}>
@@ -512,7 +513,9 @@ export default function ProductScreen() {
     </>
   );
 
-  const actions = (
+  const actions = product.orderOnly ? (
+    <GradientButton title="К заказу" icon="document-text-outline" onPress={() => router.push(`/order/${product.orderId}`)} />
+  ) : (
     <>
           {out ? (
             <GradientButton
@@ -615,14 +618,14 @@ export default function ProductScreen() {
               ) : (
                 <Ionicons name="image-outline" size={56} color={c.secondary} />
               )}
-              <Pressable
+              {!product.orderOnly ? <Pressable
                 onPress={() => { tap(); toggleFav(product); }}
                 accessibilityRole="button"
                 accessibilityLabel={isFav ? "Убрать из избранного" : "В избранное"}
                 style={styles.dFav}
               >
                 <FavHeart size={26} active={isFav} />
-              </Pressable>
+              </Pressable> : null}
             </View>
             {galleryControls}
             {images.length > 1 ? (
