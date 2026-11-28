@@ -11,7 +11,7 @@ import { SUB_FILTERS } from "./subFilters";
 
 export type CatalogProduct = {
   labels?: string[] | null;
-  regularPrices?: { retailPrice?: number | null; discountPrice?: number | null; wholesalePrice?: number | null; bigWholesalePrice?: number | null };
+  regularPrices?: { retailPrice?: number | null; discountPrice?: number | null; wholesalePrice?: number | null; franchisePrice?: number | null; bigWholesalePrice?: number | null };
   id: number;
   guid?: string;
   name: string;
@@ -22,7 +22,7 @@ export type CatalogProduct = {
   retailPrice?: number | null;
   discountPrice?: number | null;
   wholesalePrice?: number | null;
-  bigWholesalePrice?: number | null;
+  franchisePrice?: number | null; bigWholesalePrice?: number | null;
   prices?: { priceType: string; price: number }[];
   images?: { path: string }[];
   category?: { guid: string; name: string } | null;
@@ -94,6 +94,7 @@ export function pricesOf(p: CatalogProduct): { priceType: string; price: number 
     const n = Number(v ?? 0);
     if (Number.isFinite(n) && n > 0 && !out.some((x) => x.priceType === t)) out.push({ priceType: t, price: n });
   };
+  add("franchise", p.franchisePrice);
   add("retail", p.retailPrice);
   add("discount", p.discountPrice);
   add("wholesale", p.wholesalePrice);

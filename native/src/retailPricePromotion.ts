@@ -13,7 +13,7 @@ export function retailPricePromotion(
   product:Product, customer:Pick<Customer,"priceType"|"hasCard">|null, now=Date.now()
 ):RetailPromotion|null {
   const role=resolveCustomerPriceType(customer);
-  if(role==="wholesale"||role==="big_wholesale"||!pricingCampaignActive(now)||!getPricingCampaign().usePromoPrices)return null;
+  if(role==="franchise"||role==="wholesale"||role==="big_wholesale"||!pricingCampaignActive(now)||!getPricingCampaign().usePromoPrices)return null;
   const price=positive(product.promoRetailPrice);
   if(price===null)return null;
   const ordinary=product.regularPrices??product;

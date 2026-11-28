@@ -136,17 +136,17 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
         <WholesalePriceComparison product={product} customer={customer} dark={dark} />
       ) : retailPromotion ? (
         <RetailPriceComparison promotion={retailPromotion} dark={dark} />
-      ) : narrowPrices ? (
+      ) : narrowPrices || customer?.priceType === "franchise" ? (
         // a narrow card (the home carousel on a computer): three columns cut the prices to «149…» —
         // one price per line instead (audit BUG-03)
-        <View onLayout={onPricesLayout} style={[styles.pricesList, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
+        <View onLayout={onPricesLayout} style={[styles.pricesList, customer?.priceType === "franchise" && { minHeight: 78, paddingHorizontal: 8 }, { backgroundColor: dark ? "#FBF3FA" : "#fdf2f8" }]}>
           {rows.map((r, i) => (
-            <View key={r.label} style={styles.priceLine}>
+            <View key={r.label} style={[styles.priceLine, r.pending && { flexDirection: "column", alignItems: "flex-start", gap: 1 }]}>
               <Text numberOfLines={1} style={[styles.priceLabel, { color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B", textAlign: "left", flexShrink: 1 }]}>
                 {r.label}
               </Text>
               <FitText minimumFontScale={0.75} style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: 13, marginTop: 0 }]}>
-                {money(r.value)}
+                {r.pending ? "Цена не установлена" : money(r.value)}
               </FitText>
             </View>
           ))}
@@ -162,7 +162,7 @@ function CatalogCardBase({ product, customer, activePrice, inCart, isFavorite, o
               minimumFontScale={0.6}
               style={[styles.priceValue, { color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A", fontSize: k === 1 ? (rows.length >= 3 ? 15 : 20) : rows.length >= 3 ? 11 : 15 }]}
             >
-              {money(r.value)}
+              {r.pending ? "Цена не установлена" : money(r.value)}
             </FitText>
           </View>
         ))}

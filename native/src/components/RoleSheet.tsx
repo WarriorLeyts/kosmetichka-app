@@ -13,9 +13,10 @@ import { colors } from "@/theme";
 
 const PINK = "#e82c87";
 
-const LABELS: Record<string, string> = { retail: "Розница", wholesale: "Опт", big_wholesale: "Крупный опт" };
+const LABELS: Record<string, string> = { franchise: "Франшиза", retail: "Розница", wholesale: "Опт", big_wholesale: "Крупный опт" };
 const HINTS: Record<string, string> = {
   retail: "Розничные цены, бонусы по карте",
+  franchise: "Цены франшизы включаются администратором",
   wholesale: "Цена по сумме заказа: от 5 000 ₽ — опт, от 50 000 ₽ — крупный опт, меньше — скидочная",
   big_wholesale: "Цены крупного опта при любой сумме — по согласованию с менеджером",
 };
@@ -152,7 +153,7 @@ export function RoleSheet({ open, onClose }: { open: boolean; onClose: () => voi
             </Text>
           ) : (
             <Text style={[iosText.footnote, styles.note, { color: c.secondary }]}>
-              {info.wholesaleAccess
+              {info.priceType === "franchise" ? "Цены франшизы назначены администратором." : info.wholesaleAccess
                 ? "Между розницей и оптом переключайтесь сами. Уже оформленные заказы не меняются."
                 : "Оптовые цены открываются после подтверждения менеджером."}
             </Text>

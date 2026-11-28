@@ -125,7 +125,7 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
           <Text style={{ fontWeight: "600", color }}>{obj.name}</Text>
           {typeof obj.variantName === "string" && obj.variantName ? <Text style={{ color, opacity: 0.8 }}>{obj.variantName}</Text> : null}
           <Text style={{ color, fontWeight: "700" }}>
-            {Number(obj.quantity) || 1} шт.{typeof obj.price === "number" && obj.price > 0 ? ` × ${money(obj.price)}` : ""}
+            {Number(obj.quantity) || 1} шт.{typeof obj.price === "number" && obj.price > 0 ? ` × ${obj.price <= 0 ? "Цена не установлена" : money(obj.price)}` : ""}
           </Text>
           {obj.added === true ? <Text style={{ color: "#16A34A", fontWeight: "700" }}>✓ Менеджер добавил в заказ</Text> : null}
         </View>
@@ -154,7 +154,7 @@ function MessageBody({ text, color, fromManager }: { text: string; color: string
             <Image source={{ uri: imageUrl(obj.imagePath) ?? undefined }} style={{ width: 210, height: 120, borderRadius: 10, backgroundColor: "#fff" }} contentFit="contain" />
           ) : null}
           <Text style={{ fontWeight: "600", marginTop: 6, color }}>{obj.name}</Text>
-          {typeof obj.price === "number" ? <Text style={{ color: PINK, fontWeight: "700" }}>{money(obj.price)}</Text> : null}
+          {typeof obj.price === "number" ? <Text style={{ color: PINK, fontWeight: "700" }}>{obj.price <= 0 ? "Цена не установлена" : money(obj.price)}</Text> : null}
         </View>
       );
     }
@@ -786,14 +786,14 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
                       ) : (
                         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
                           <Stepper value={q} onChange={(n) => setQty((m) => ({ ...m, [it.id]: n }))} />
-                          <Text style={{ color: c.secondary, fontSize: 14 }}>× {money(it.price)}</Text>
+                          <Text style={{ color: c.secondary, fontSize: 14 }}>× {order.hasPendingPrices && it.price <= 0 ? "Цена не установлена" : money(it.price)}</Text>
                         </View>
                       )
                     ) : (
                       <>
                         <View style={[styles.pricePill, { backgroundColor: dark ? "rgba(139,61,255,0.22)" : "rgba(139,61,255,0.09)" }]}>
-                          <Text style={styles.priceText}>
-                            {money(it.price)}
+                          <Text style={[styles.priceText, order.hasPendingPrices && it.price <= 0 && { fontSize: 13 }]}>
+                            {order.hasPendingPrices && it.price <= 0 ? "Цена не установлена" : money(it.price)}
                             {it.quantity > 1 ? ` × ${it.quantity}` : ""}
                           </Text>
                         </View>
@@ -908,9 +908,10 @@ export default function OrderScreen({ id: idProp, split = false }: { id?: string
               </View>
             ) : null}
             <View style={[styles.totalRow, { borderTopColor: c.separator }]}>
-              <Text style={[iosText.headline, { color: c.label }]}>Итого</Text>
-              <Text style={styles.total}>{money(order.total)}</Text>
+              <Text style={[iosText.headline, { color: c.label }]}>{order.hasPendingPrices ? "Сумма" : "Итого"}</Text>
+              <Text style={styles.total}>{order.hasPendingPrices && order.total <= 0 ? "Уточняется" : money(order.total)}</Text>
             </View>
+            {order.hasPendingPrices ? <Text style={{ color: c.secondary, marginTop: 8 }}>Предварительная сумма · цены уточняются в 1С</Text> : null}
             {order.bonusesCollected && order.status !== "cancelled" ? (
               <Text style={[iosText.footnote, { color: c.secondary, marginTop: 6 }]}>
                 {order.status === "exported" ? "Начислено" : "Начислится после выполнения"}: {order.bonusesCollected.toLocaleString("ru-RU")} бонусов

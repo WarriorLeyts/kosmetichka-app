@@ -367,9 +367,9 @@ export default function ProductScreen() {
                 <Text numberOfLines={1} style={{ fontSize: 13, color: r.color ?? PRICE_COLORS[i] ?? "#6B5A7B" }}>
                   {r.label}
                 </Text>
-                <FitText minimumFontScale={0.6} style={{ fontSize: rows.length >= 4 ? 17 : rows.length >= 3 ? 20 : 22, fontWeight: "700", color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A" }}>
+                {r.pending ? <Text style={{ fontSize: 12, lineHeight: 16, fontWeight: "700", textAlign: "center", color: r.color ?? "#8b3dff" }}>Цена не установлена</Text> : <FitText minimumFontScale={0.6} style={{ fontSize: rows.length >= 4 ? 17 : rows.length >= 3 ? 20 : 22, fontWeight: "700", color: r.color ?? PRICE_COLORS[i] ?? "#2A1A3A" }}>
                   {money(r.value)}
-                </FitText>
+                </FitText>}
                 {r.hint ? <Text numberOfLines={1} style={{ fontSize: 11, color: "#8A7A9B", marginTop: 1 }}>{r.hint}</Text> : null}
               </View>
             ))}

@@ -55,7 +55,7 @@ function OrderCard({ order, message, stage }: { order: Order; message: boolean; 
         router.push(`/order/${order.id}`);
       }}
       accessibilityRole="button"
-      accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${money(order.total)}${message ? ", новое сообщение" : ""}${stage ? ", статус изменился" : ""}`}
+      accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${order.hasPendingPrices ? order.total <= 0 ? "Цена уточняется" : `Предв. ${money(order.total)}` : money(order.total)}${message ? ", новое сообщение" : ""}${stage ? ", статус изменился" : ""}`}
       style={({ pressed }) => [styles.card, { backgroundColor: pressed ? c.cellPressed : c.cell }, !dark && styles.shadow]}
     >
       <View style={styles.cardRow}>
@@ -70,7 +70,7 @@ function OrderCard({ order, message, stage }: { order: Order; message: boolean; 
             <Ionicons name={s.icon} size={16} color={s.fg} />
             <Text style={[styles.pillText, { color: s.fg }]}>{s.label}</Text>
           </View>
-          <Text style={[styles.total, { color: c.label }]}>{money(order.total)}</Text>
+          <Text style={[styles.total, { color: c.label }]}>{order.hasPendingPrices ? order.total <= 0 ? "Цена уточняется" : `Предв. ${money(order.total)}` : money(order.total)}</Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color={c.chevron} />
       </View>
@@ -116,7 +116,7 @@ function DeskOrderRow({ order, unread, active, onOpen }: { order: Order; unread:
       }}
       accessibilityRole="button"
       accessibilityState={{ selected: active }}
-      accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${money(order.total)}${unread ? ", есть новое" : ""}`}
+      accessibilityLabel={`Заказ №${order.id}, ${s.label}, ${order.hasPendingPrices ? order.total <= 0 ? "Цена уточняется" : `Предв. ${money(order.total)}` : money(order.total)}${unread ? ", есть новое" : ""}`}
       style={(st: { pressed: boolean; hovered?: boolean }) => [styles.row, active && { backgroundColor: activeBg }, st.hovered && !active ? { backgroundColor: dark ? "rgba(255,255,255,0.05)" : "#FAF6FE" } : null]}
     >
       <View style={[styles.rowIcon, { backgroundColor: s.bg }]}>
@@ -129,7 +129,7 @@ function DeskOrderRow({ order, unread, active, onOpen }: { order: Order; unread:
             №{order.id} <Text style={[styles.rowSub, { color: c.secondary, fontWeight: "400" }]}>· {dateShort(order.createdAt)}</Text>
           </Text>
           <Text style={[styles.rowSum, { color: c.label }]} numberOfLines={1}>
-            {money(order.total)}
+            {order.hasPendingPrices ? order.total <= 0 ? "Цена уточняется" : `Предв. ${money(order.total)}` : money(order.total)}
           </Text>
         </View>
         <Text style={[styles.rowSub, { color: s.fg }]} numberOfLines={1}>

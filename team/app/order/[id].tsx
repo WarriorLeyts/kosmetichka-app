@@ -310,12 +310,12 @@ export default function OrderScreen() {
       }
       setEdit((d) => [
         ...(d ?? []),
-        { productId: product.id, productName: product.name, barcode: product.barcode, quantity, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null, stockByWarehouse: product.stockByWarehouse },
+        { productId: product.id, productName: product.name, barcode: product.barcode, quantity, price: Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType)), variantName: variant?.name ?? null, variantImageUrl: variant?.imageUrl ?? null, imageUrl: imageUrl(product.imagePath), stock: product.stock ?? null, stockByWarehouse: product.stockByWarehouse },
       ]);
       return;
     }
     // the price this customer would pay (his type / the order's prices), not the catalogue's retail one
-    const price = Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType) || product.price);
+    const price = Math.round(priceOf(product.prices, o?.customer.priceTier ?? o?.customer.priceType));
     const card = JSON.stringify({ _t: "product", id: product.id, name: variant ? `${product.name} (${variant.name})` : product.name, price, imagePath: product.imagePath });
     try {
       await post(`/api/admin/orders/${orderId}/customer-messages`, { text: card });
@@ -374,7 +374,7 @@ export default function OrderScreen() {
       <Card>
         <View style={styles.row}>
           <StatusPill status={o.status} label={o.statusLabel} />
-          <Text style={styles.total}>{money(o.total)}</Text>
+          <Text style={styles.total}>{o.hasPendingPrices ? o.total <= 0 ? "Уточняется" : `Предв. ${money(o.total)}` : money(o.total)}</Text>
         </View>
         {o.service && ["queued", "checking"].includes(o.service.phase) ? <View style={{ marginTop: 16, padding: 14, borderRadius: 16, gap: 9, backgroundColor: dark ? "#392049" : "#F5EDFF" }}>
           <Text style={{ fontSize: 16, fontWeight: "700", color: c.label }}>{o.service.canTake ? "Клиент ждёт первого ответа" : o.service.managerName ? `Заказ в работе: ${o.service.managerName}` : "Заказ уже в работе"}</Text>
@@ -521,7 +521,7 @@ export default function OrderScreen() {
         ) : (
           <KV k="Менеджер 1С" v={cust.manager} />
         )}
-        <KV k="Тип цен" v={{ retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" }[cust.priceType] ?? cust.priceType} />
+        <KV k="Тип цен" v={{ franchise: "Франшиза", retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" }[cust.priceType] ?? cust.priceType} />
         {cust.priceType === "wholesale" && cust.priceTier ? (
           // «Опт»: the order's prices go by its sum and are recalculated when the order changes
           <KV k="Цены заказа" v={{ discount: "Скидочная (меньше 5 000 ₽)", wholesale: "Опт (от 5 000 ₽)", big_wholesale: "Крупный опт (от 50 000 ₽)" }[cust.priceTier] ?? cust.priceTier} />
@@ -641,7 +641,7 @@ export default function OrderScreen() {
                       </View>
                       <Text style={{ color: c.secondary }}>×</Text>
                       {/* the price is the catalogue's, by the customer's price type — nobody changes it in an order */}
-                      <Text style={{ color: c.label, fontSize: 15.5, fontWeight: "600" }}>{money(d.price)}</Text>
+                      <Text style={{ color: c.label, fontSize: 15.5, fontWeight: "600" }}>{cust.priceType === "franchise" && d.price <= 0 ? "Цена не установлена" : money(d.price)}</Text>
                       <Text style={{ color: c.label, fontWeight: "800", fontSize: 15.5, marginLeft: "auto" }}>{money(d.quantity * d.price)}</Text>
                     </View>
                   </Card>
@@ -767,7 +767,7 @@ export default function OrderScreen() {
             ) : null}
             <View style={[styles.row, { marginTop: 6 }]}>
               <Text style={{ color: c.secondary }}>
-                {it.quantity} × {money(it.price)}
+                {it.quantity} × {cust.priceType === "franchise" && it.price <= 0 ? "Цена не установлена" : money(it.price)}
               </Text>
               <Text style={{ color: c.label, fontWeight: "700" }}>{money(it.total)}</Text>
             </View>

@@ -36,6 +36,7 @@ const PINK = "#e82c87";
 const TIER: Record<string, string> = {
   retail: "Розничный покупатель",
   discount: "Постоянный клиент · скидка",
+  franchise: "Клиент франшизы",
   wholesale: "Оптовый клиент",
   big_wholesale: "Крупный оптовый клиент",
 };
@@ -58,7 +59,7 @@ export default function Profile() {
   // «Добавить карту» only once the site's MAXMA connection is set up
 
   const customerId = customer?.id;
-  const wholesale = customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale";
+  const wholesale = customer?.priceType === "franchise" || customer?.priceType === "wholesale" || customer?.priceType === "big_wholesale";
   // the price type / data may have been changed by a manager meanwhile
   useFocusEffect(
     useCallback(() => {
@@ -271,7 +272,7 @@ export default function Profile() {
   );
 }
 
-const PRICE_LABEL: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
+const PRICE_LABEL: Record<string, string> = { franchise: "Франшиза", retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
 const THEME_LABEL: Record<ThemePref, string> = { system: "Как в телефоне", light: "Светлая", dark: "Тёмная" };
 const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
   { value: "system", label: "Как в телефоне" },
