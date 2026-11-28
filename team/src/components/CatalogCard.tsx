@@ -60,7 +60,7 @@ function CatalogCardBase({ product, priceType, onPress, actionLabel, onAction, b
         {img ? (
           <Image source={{ uri: img }} style={styles.image} contentFit="contain" transition={150} recyclingKey={String(product.id)} />
         ) : (
-          <Ionicons name="image-outline" size={34} color="#C7C7CC" />
+          <View style={{ alignItems: "center", gap: 6 }}><Ionicons name="image-outline" size={34} color="#8E8E93" /><Text style={{ fontSize: 12, color: "#8E8E93" }}>Без фото</Text></View>
         )}
         <ProductLabels labels={product.labels} promotion={promotion} reserveFavorite={false} />
       </View>

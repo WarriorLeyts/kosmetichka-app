@@ -89,6 +89,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
       ...init,
       headers: {
         Accept: "application/json",
+        "X-Kosmetichka-Client": "team",
         ...(init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
         ...(init.headers || {}),
       },

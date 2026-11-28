@@ -1,6 +1,9 @@
 export type ProductImage = { path: string; alt?: string | null };
 
 export type Product = {
+  /** A photo-less product is visible only through the customer’s own order. */
+  orderOnly?: boolean;
+  orderId?: number;
   assortmentEnabled?: boolean;
   variants?: { id: number; name: string; imageId: number; image: { path: string } }[];
   cardRegistration?: { fullName: string; birthDate: string };
