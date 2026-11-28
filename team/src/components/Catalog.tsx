@@ -24,7 +24,7 @@ import { ClearX } from "@/components/ClearX";
 
 const VIOLET = "#8b3dff";
 const SORT_OPTIONS = (Object.keys(SORT_LABELS) as Sort[]).map((v) => ({ value: v, label: SORT_LABELS[v] }));
-const PRICE_SHORT: Record<PriceType, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
+const PRICE_SHORT: Record<PriceType, string> = { franchise: "Франшиза", retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
 const SIDEBAR = 248; // Sidebar.tsx
 
 /** Search field with its own state: typing re-renders only this field, not the whole catalog. */

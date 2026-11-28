@@ -5,7 +5,7 @@ import { money } from "../format";
 import { wholesaleMinOrder, bigWholesaleMinOrder, priceFor, resolveCustomerPriceType, type PriceType } from "../pricing";
 import type { Customer, Product } from "../types";
 
-type Row = { label: string; value: number; active: boolean; color?: string; hint?: string };
+type Row = { label: string; value: number; active: boolean; color?: string; hint?: string; pending?: boolean };
 
 /** «Опт» customers see three prices (Скидка до 5 000 ₽ / Опт от 5 000 / Кр. опт от 50 000), all alike. */
 
@@ -13,7 +13,12 @@ type Row = { label: string; value: number; active: boolean; color?: string; hint
 export function priceRows(product: Product, customer: Customer | null, active: PriceType): Row[] {
   const base = resolveCustomerPriceType(customer);
   const rows: Row[] = [];
-  if (base === "wholesale") {
+  if (base === "franchise") {
+    const price = priceFor(product, "franchise");
+    rows.push({ label: "Франшиза", value: price, pending: price <= 0, active: true, color: "#8b3dff" });
+    rows.push({ label: "По карте", value: priceFor(product, "discount"), active: false, color: "#c71f75" });
+    rows.push({ label: "Розница", value: priceFor(product, "retail"), active: false, color: "#6B4E8A" });
+  } else if (base === "wholesale") {
     // the price depends on the order sum: under 5 000 ₽ — discount, from 5 000 — wholesale, from 50 000 — big
     rows.push({ label: "Скидка", hint: `до ${money(wholesaleMinOrder())}`, value: priceFor(product, "discount"), active: active === "discount", color: "#6B4E8A" });
     rows.push({ label: "Опт", hint: `от ${money(wholesaleMinOrder())}`, value: priceFor(product, "wholesale"), active: active === "wholesale", color: "#c71f75" });
@@ -33,24 +38,25 @@ export function PriceRows({ rows, large }: { rows: Row[]; large?: boolean }) {
   return (
     <View style={{ gap: large ? 6 : 2 }}>
       {rows.map((r) => (
-        <View key={r.label} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View key={r.label} style={{ flexDirection: r.pending ? "column" : "row", justifyContent: "space-between", alignItems: r.pending ? "flex-start" : "center" }}>
           <Text style={{ fontSize: large ? 15 : 13, color: r.active ? colors.text : colors.faint, fontWeight: r.active ? "600" : "400" }}>
             {r.label}
           </Text>
-          {r.active && !large ? (
+          {r.active && !large && !r.pending ? (
             // catalog card: active price in the site's brand gradient (like .price-row-active b)
             <GradientText style={{ fontSize: 15, fontWeight: "800" }} colors={BRAND_GRADIENT}>
-              {money(r.value)}
+              {r.pending ? "Цена не установлена" : money(r.value)}
             </GradientText>
           ) : (
             <Text
               style={{
-                fontSize: large ? (r.active ? 22 : 17) : r.active ? 15 : 13,
+                fontSize: r.pending ? 12 : large ? (r.active ? 22 : 17) : r.active ? 15 : 13,
+                flexShrink: 1, textAlign: "right",
                 fontWeight: r.active ? "800" : "500",
                 color: r.active ? colors.pink : colors.faint,
               }}
             >
-              {money(r.value)}
+              {r.pending ? "Цена не установлена" : money(r.value)}
             </Text>
           )}
         </View>

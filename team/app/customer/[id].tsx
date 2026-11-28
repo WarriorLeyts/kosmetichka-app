@@ -178,7 +178,7 @@ export default function Customer() {
             {x.orderedBefore != null ? <KV k="Заказывал(а) раньше" v={x.orderedBefore ? "Да" : "Нет, впервые"} /> : null}
             <KV k="Менеджер 1С" v={x.manager} />
             <KV k="Код 1С" v={x.oneCId} />
-            {["wholesale", "big_wholesale"].includes(x.priceType) && x.manager && !x.oneCId ? <View style={{ marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: "#FFF4E5" }}>
+            {["wholesale", "big_wholesale", "franchise"].includes(x.priceType) && x.manager && !x.oneCId ? <View style={{ marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: "#FFF4E5" }}>
               <Text style={{ color: "#92400E", fontWeight: "700" }}>Нет привязки к контрагенту 1С</Text>
               <Text style={{ color: "#92400E", marginTop: 4 }}>Менеджер назначен, но заказы пока не смогут уйти в 1С. Откройте «Изменить данные» и сохраните карточку, чтобы проверить и восстановить привязку.</Text>
             </View> : null}
@@ -355,6 +355,7 @@ function CustomerForm({ form, setForm, busy, error, onCancel, onSave }: { form: 
         <Text style={[fs.label, { color: c.secondary }]}>Тип цен</Text>
         <Chips
           items={[
+            { value: "franchise", label: "Франшиза" },
             { value: "retail", label: "Розница" },
             { value: "discount", label: "Скидка по карте" },
             { value: "wholesale", label: "Опт" },

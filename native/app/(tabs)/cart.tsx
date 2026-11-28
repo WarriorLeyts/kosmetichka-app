@@ -20,7 +20,7 @@ import { CardHintTotal } from "@/components/CardHint";
 import { useAuth } from "@/store/auth";
 import { useCartStore } from "@/store/cart";
 import {
-  calculateCart, minOrderFor, priceFor, promotionalPrice, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
+  hasPendingFranchisePrices, calculateCart, minOrderFor, priceFor, promotionalPrice, priceTypeLabel, rawCartTotal, resolveCustomerPriceType, type PriceType,
 } from "@/pricing";
 import { iosText, useIOS } from "@/ios";
 import { BrandHeader } from "@/components/iosui/BrandHeader";
@@ -219,7 +219,8 @@ export default function Cart() {
   const active = pricing.tier;
   const total = pricing.total;
   const checkoutTotal = calc?.total ?? total;
-  const orderMinimum = minOrderFor(customer, items);
+  const pendingFranchisePrices = hasPendingFranchisePrices(items, customer);
+  const orderMinimum = minOrderFor(customer, items, pendingFranchisePrices);
   const minimumShortfall = Math.max(0, orderMinimum - checkoutTotal);
   const campaign = calc?.wholesalePromo ?? (pricing.percent > 0 ? { name:pricingCampaign.name, percent:pricing.percent, discount:pricing.discount } : null);
   const wholesaleCustomer = resolveCustomerPriceType(customer) === "wholesale";
@@ -349,6 +350,7 @@ export default function Cart() {
     const lk = k === 1 ? 1 : CART_LINE_SCALE;
     const img = item.variantImageUrl ? imageUrl(item.variantImageUrl) : imageUrl(item.images?.[0]?.path, 160);
     const price = priceFor(item, active);
+    const pricePending = active === "franchise" && price <= 0;
     const shock = promotionalPrice(item, active);
     const min = item.assortmentEnabled || item.variantId ? 1 : Math.max(1, item.minOrderQty ?? 1);
     const stock = typeof item.stock === "number" && item.stock > 0 ? item.stock : null;
@@ -388,7 +390,7 @@ export default function Cart() {
             </Pressable>
             {item.variantName ? <Text style={lineBase.variant}>{item.variantName}</Text> : null}
             {kindsButton(item)}
-            <Text style={{ color: c.secondary, fontSize: 13, marginTop: 3 }}>{shock !== null ? "Акция · " : ""}{money(price)} за шт.</Text>
+            <Text style={{ color: c.secondary, fontSize: 13, marginTop: 3 }}>{shock !== null ? "Акция · " : ""}{pricePending ? "Цена не установлена" : `${money(price)} за шт.`}</Text>
             {unavailable ? (
               <Text style={[styles.stockHint, { color: "#E5484D", fontWeight: "600" }]}>{unavailable}</Text>
             ) : showStock ? (
@@ -406,7 +408,7 @@ export default function Cart() {
               </LinearGradient>
             </Pressable>
           </View>
-          <FitText style={styles.deskSum}>{money(price * item.quantity)}</FitText>
+          <FitText style={styles.deskSum}>{pricePending ? "Уточняется" : money(price * item.quantity)}</FitText>
           <Pressable
             onPress={() => {
               tap();
@@ -439,10 +441,10 @@ export default function Cart() {
           {item.variantName ? <Text style={li.variant}>{item.variantName}</Text> : null}
           {kindsButton(item)}
           <Text style={[li.unit, { color: c.secondary }]}>
-            {shock !== null ? "Акция · " : ""}{money(price)} × {item.quantity}
+            {shock !== null ? "Акция · " : ""}{pricePending ? "Цена не установлена" : `${money(price)} × ${item.quantity}`}
           </Text>
           <FitText style={li.sum}>
-            {money(price * item.quantity)}
+            {pricePending ? "Уточняется" : money(price * item.quantity)}
           </FitText>
           <View style={li.stepRow}>
             <View style={[li.stepper, { backgroundColor: soft }]}>
@@ -613,15 +615,16 @@ export default function Cart() {
                 </>
               ) : null}
               <View style={[styles.sumRow, { marginTop: 4 }]}>
-                <Text style={[styles.totalLabel, { color: c.label }]}>Итого сейчас</Text>
+                <Text style={[styles.totalLabel, { color: c.label }]}>{pendingFranchisePrices ? "Сумма" : "Итого сейчас"}</Text>
                 <FitText style={styles.total}>
-                  {money(checkoutTotal)}
+                  {pendingFranchisePrices && checkoutTotal <= 0 ? "Уточняется" : money(checkoutTotal)}
                 </FitText>
               </View>
               {/* retail without a loyalty card: the same cart with the card */}
               {!cardInCart ? <CardHintTotal withCard={rawCartTotal(items, "discount")} now={total} /> : null}
             </View>
 
+            {pendingFranchisePrices ? <Text style={{ color: c.secondary, fontSize: 14, lineHeight: 20, marginBottom: 14 }}>Сумма предварительная: в заказе есть товары без установленной цены. Менеджер установит цены в 1С; окончательная сумма будет уточнена.</Text> : null}
             {fixProductId ? <Pressable accessibilityRole="button" onPress={() => void editKinds(fixProductId)} disabled={editingProductId !== null} style={{ marginBottom: 12, padding: 14, borderRadius: 14, backgroundColor: pinkSoft }}>
               <Text style={{ color: "#E5484D", fontWeight: "600" }}>В корзине есть товар без доступного вида</Text>
               <Text style={{ color: colors.brand, fontWeight: "700", marginTop: 6 }}>{editingProductId !== null ? "Загружаем виды…" : "Выбрать виды и сохранить корзину"}</Text>
@@ -711,11 +714,11 @@ export default function Cart() {
             listRef.current?.scrollToEnd({ animated: true });
           }}
           accessibilityRole="button"
-          accessibilityLabel={`К оформлению, итого ${money(checkoutTotal)}`}
+          accessibilityLabel={`К оформлению, итого ${pendingFranchisePrices && checkoutTotal <= 0 ? "Уточняется" : money(checkoutTotal)}`}
           style={[styles.jump, { bottom: bottomSpace + 6 }]}
         >
           <LinearGradient colors={[colors.brand, "#b832e0", PINK]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.jumpInner}>
-            <Text style={styles.jumpText}>К оформлению · {money(checkoutTotal)}</Text>
+            <Text style={styles.jumpText}>К оформлению · {pendingFranchisePrices && checkoutTotal <= 0 ? "Уточняется" : money(checkoutTotal)}</Text>
             <Ionicons name="arrow-down" size={18} color="#fff" />
           </LinearGradient>
         </Pressable>

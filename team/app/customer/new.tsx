@@ -7,7 +7,7 @@ import { post } from "@/api";
 import { useIOS } from "@/ios";
 import { useAuth } from "@/store/auth";
 
-const PRICES = [{ value: "retail", label: "Розница" }, { value: "wholesale", label: "Опт" }, { value: "big_wholesale", label: "Крупный опт" }];
+const PRICES = [{ value: "franchise", label: "Франшиза" }, { value: "retail", label: "Розница" }, { value: "wholesale", label: "Опт" }, { value: "big_wholesale", label: "Крупный опт" }];
 const INITIAL = { name: "", companyName: "", phone: "", email: "", address: "", password: "", priceType: "retail", isApproved: true };
 
 /** Admin-created customer accounts work in the existing customer website, Android and iPhone apps. */

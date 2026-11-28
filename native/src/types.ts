@@ -21,6 +21,7 @@ export type Product = {
   discountPrice?: number | null;
   wholesalePrice?: number | null;
   bigWholesalePrice?: number | null;
+  franchisePrice?: number | null;
   promoRetailPrice?: number | null;
   promoWholesalePrice?: number | null;
   promoBigWholesalePrice?: number | null;
@@ -29,6 +30,7 @@ export type Product = {
     discountPrice?: number | null;
     wholesalePrice?: number | null;
     bigWholesalePrice?: number | null;
+  franchisePrice?: number | null;
   };
   images?: ProductImage[];
   category?: { guid: string; name: string } | null;
@@ -159,6 +161,8 @@ export type OrderService = {
 };
 
 export type Order = {
+  hasPendingPrices?: boolean;
+  priceType?: string;
   service?: OrderService;
   id: number;
   status: string;

@@ -4,7 +4,7 @@ export type CustomerShort = { name: string | null; companyName: string | null; p
 /** the order card line about the customer's 1С manager: «Менеджер: Имя» or, for a wholesaler without one, «Менеджер не назначен» */
 export function managerLine(c: CustomerShort): { text: string; warn: boolean } | null {
   if (c.manager) return { text: `Менеджер: ${c.manager}`, warn: false };
-  if (c.priceType === "wholesale" || c.priceType === "big_wholesale") return { text: "Менеджер не назначен", warn: true };
+  if (c.priceType === "franchise" || c.priceType === "wholesale" || c.priceType === "big_wholesale") return { text: "Менеджер не назначен", warn: true };
   return null;
 }
 export type Paging = { page: number; pageSize: number; totalCount: number; totalPages: number };
@@ -84,6 +84,7 @@ export type OrderDetail = {
     };
     oneCExportedAt: string | null; bitrixDealId: number | null; createdAt: string; updatedAt: string;
     customerId: number;
+    hasPendingPrices?: boolean;
     customer: { id: number; companyName: string | null; name: string | null; phone: string | null; email: string | null; city: string | null; address?: string | null; inn: string | null; manager: string | null; oneCId?: string | null; priceType: string; priceTier?: string; canPurchaseCard?: boolean };
     pickerId: number | null; picker: { id: number; name: string } | null;
     items: OrderItem[];

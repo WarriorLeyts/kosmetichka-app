@@ -6,7 +6,7 @@ export function cartProductSnapshot(p: Product): Product {
   const metadata = cleanPromoSnapshot(p) as Pick<Product, "regularPrices" | "promoRetailPrice" | "promoWholesalePrice" | "promoBigWholesalePrice">;
   return { assortmentEnabled:p.assortmentEnabled, cardRegistration:p.cardRegistration, id:p.id, name:p.name, barcode:p.barcode, article:p.article, stock:p.stock, minOrderQty:p.minOrderQty,
     retailPrice:p.retailPrice, discountPrice:p.discountPrice, wholesalePrice:p.wholesalePrice,
-    bigWholesalePrice:p.bigWholesalePrice, ...metadata,
+    bigWholesalePrice:p.bigWholesalePrice, franchisePrice:p.franchisePrice, ...metadata,
     images:p.images?.slice(0,1), brand:p.brand ? { name:p.brand.name } : null };
 }
 
@@ -14,7 +14,7 @@ export function cartProductSnapshot(p: Product): Product {
 export function mergeCartProductPrices(fresh: Product, known: Product): Product {
   const keep = (k: "retailPrice" | "discountPrice" | "wholesalePrice" | "bigWholesalePrice") =>
     Number(fresh[k] ?? 0) > 0 ? fresh[k] : known[k];
-  return { ...known, ...fresh, retailPrice:keep("retailPrice"), discountPrice:keep("discountPrice"),
+  return { ...known, ...fresh, franchisePrice:fresh.franchisePrice, retailPrice:keep("retailPrice"), discountPrice:keep("discountPrice"),
     wholesalePrice:keep("wholesalePrice"), bigWholesalePrice:keep("bigWholesalePrice"),
     ...(known.regularPrices || fresh.regularPrices ? { regularPrices:{...known.regularPrices,...fresh.regularPrices} } : {}) };
 }

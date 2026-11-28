@@ -25,7 +25,7 @@ type Props = {
   busy?: boolean;
 };
 
-const PRICE_NAMES: Record<PriceType, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
+const PRICE_NAMES: Record<PriceType, string> = { franchise: "Франшиза", retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
 
 const STOCK = {
   in: { dot: "#34C759", bg: "rgba(52,199,89,0.12)", fg: "#1f8a3b" },
@@ -86,7 +86,7 @@ function CatalogCardBase({ product, priceType, onPress, actionLabel, onAction, b
           {PRICE_NAMES[priceType]}
         </FitText>
         <FitText minimumFontScale={0.6} style={styles.priceValue}>
-          {price > 0 ? money(price) : "—"}
+          {price > 0 ? money(price) : priceType === "franchise" ? "Цена не установлена" : "—"}
         </FitText>
       </View>
 

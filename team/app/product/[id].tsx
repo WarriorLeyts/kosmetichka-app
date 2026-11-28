@@ -19,7 +19,7 @@ import { useIOS } from "@/ios";
 type Product = { id: number; name: string; barcode: string | null; article: string | null; guid: string; stock?: number | null; stockByWarehouse?: { name: string; qty: number }[]; barcodes?: { barcode: string; unitName: string | null }[]; images: { id: number; path: string }[]; prices?: { priceType: string; price: number }[] };
 type Variants = { enabled: boolean; variants: { id: number; imageId: number; imageUrl: string; name: string; sortOrder: number; available: boolean }[]; images: { id: number; path: string; url: string }[] };
 
-const PRICE_NAMES: Record<string, string> = { retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
+const PRICE_NAMES: Record<string, string> = { franchise: "Франшиза", retail: "Розница", discount: "Скидка по карте", wholesale: "Опт", big_wholesale: "Крупный опт" };
 
 /** Товар: data from 1C, photo (replace / delete — as the site), variant names per photo. */
 export default function ProductScreen() {
@@ -132,7 +132,7 @@ export default function ProductScreen() {
               <Card>
                 {/* read only: prices come from 1C */}
                 {PRICE_TYPES.map((t) => {
-                  const v = p.prices!.find((x) => x.priceType === t)?.price;
+                  const v = p.prices!.find((x) => (x.priceType === t || t === "franchise" && x.priceType === "франшиза"))?.price;
                   return <KV key={t} k={PRICE_NAMES[t]} v={v && v > 0 ? money(v) : "—"} />;
                 })}
                 <Text style={{ color: c.secondary, fontSize: 12.5, marginTop: 6 }}>Цены приходят из 1С</Text>

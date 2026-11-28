@@ -35,7 +35,7 @@ export const useFavorites = create<FavState>()(
           retailPrice: p.retailPrice,
           discountPrice: p.discountPrice,
           wholesalePrice: p.wholesalePrice,
-          bigWholesalePrice: p.bigWholesalePrice,
+          bigWholesalePrice: p.bigWholesalePrice, franchisePrice: p.franchisePrice,
           minOrderQty: p.minOrderQty,
           images: p.images?.slice(0, 1),
           brand: p.brand ? { name: p.brand.name } : null,
@@ -51,7 +51,7 @@ export const useFavorites = create<FavState>()(
           items: get().items.map((i) => {
             const p = fresh.get(i.id);
             return p
-              ? { ...i, assortmentEnabled: p.assortmentEnabled, variants: p.variants, stock: p.stock, minOrderQty: p.minOrderQty, retailPrice: p.retailPrice, discountPrice: p.discountPrice, wholesalePrice: p.wholesalePrice, bigWholesalePrice: p.bigWholesalePrice }
+              ? { ...i, assortmentEnabled: p.assortmentEnabled, variants: p.variants, stock: p.stock, minOrderQty: p.minOrderQty, retailPrice: p.retailPrice, discountPrice: p.discountPrice, wholesalePrice: p.wholesalePrice, bigWholesalePrice: p.bigWholesalePrice, franchisePrice: p.franchisePrice }
               : i;
           }),
         }),
